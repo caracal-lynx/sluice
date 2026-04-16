@@ -1,0 +1,3 @@
+# Force LF line endings for .env files on all platforms
+*.env text eol=lf
+.env.example text eol=lf

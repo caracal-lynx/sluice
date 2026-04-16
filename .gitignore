@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+clients/
+output/
+*.duckdb
+coverage/
+*.tsbuildinfo

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node -e \"require\\('./node_modules/zod'\\)\")",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx eslint:*)",
+      "Bash(./node_modules/.bin/eslint src:*)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(node:*)",
+      "Bash(npm --version)",
+      "Bash(npm ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
