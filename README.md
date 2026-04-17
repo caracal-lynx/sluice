@@ -338,7 +338,6 @@ All three tiers use the same registry interfaces and are invoked identically by 
 | Client | Source | Target | Adapter |
 |--------|--------|--------|---------|
 | Acme Corp | MSSQL legacy DB | IFS ERP | `ifs` |
-| Acme Corp | MSSQL legacy DB | Business Central | `bc` |
 | Style Co | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
 
 ---
