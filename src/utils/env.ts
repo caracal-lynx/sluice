@@ -14,8 +14,10 @@ export function loadEnv(envFile?: string): void {
 }
 
 export function requireEnv(name: string): string {
+  // Treat an explicitly-set empty string as set. "Not set" means the
+  // variable is absent from the environment, not that it is empty.
   const value = process.env[name];
-  if (!value) {
+  if (value === undefined) {
     throw new ConfigError(`Required environment variable not set: ${name}`);
   }
   return value;

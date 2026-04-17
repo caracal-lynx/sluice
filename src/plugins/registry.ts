@@ -9,7 +9,7 @@
  */
 
 import type { RulePlugin, TransformPlugin } from './types.js';
-import { ConfigError } from '@/utils/errors.js';
+import { ConfigError } from '../utils/errors.js';
 
 export class RuleRegistry {
   private readonly plugins = new Map<string, RulePlugin>();

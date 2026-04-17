@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ZodError } from 'zod';
-import { PipelineSchema } from '../../../src/config/schema.js';
+import { PipelineSchema, CompositeRuleSchema } from '../../../src/config/schema.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const fixturesDir = path.resolve(__dirname, '../../fixtures');
@@ -123,5 +123,113 @@ describe('PipelineSchema', () => {
       const raw = { ...minimal, transform: { fields: [] } };
       expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
     });
+  });
+
+  describe('TargetSchema.onConflict / upsertKey', () => {
+    it('throws ZodError when onConflict is "upsert" but upsertKey is missing', () => {
+      const raw = {
+        ...minimal,
+        target: { adapter: 'pg', table: 'customers', onConflict: 'upsert' },
+      };
+      expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
+    });
+
+    it('throws ZodError when onConflict is "upsert" and upsertKey is empty', () => {
+      const raw = {
+        ...minimal,
+        target: { adapter: 'pg', table: 'customers', onConflict: 'upsert', upsertKey: [] },
+      };
+      expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
+    });
+
+    it('passes when onConflict is "upsert" and upsertKey is set', () => {
+      const raw = {
+        ...minimal,
+        target: {
+          adapter: 'pg',
+          table: 'customers',
+          onConflict: 'upsert',
+          upsertKey: ['customer_no'],
+        },
+      };
+      expect(() => PipelineSchema.parse(raw)).not.toThrow();
+    });
+
+    it('passes when onConflict is "fail" without upsertKey', () => {
+      const raw = {
+        ...minimal,
+        target: { adapter: 'pg', table: 'customers', onConflict: 'fail' },
+      };
+      expect(() => PipelineSchema.parse(raw)).not.toThrow();
+    });
+  });
+
+  describe('FieldMappingSchema.from requirement', () => {
+    const withFields = (fields: unknown[]) => ({ ...minimal, transform: { fields } });
+
+    it('throws ZodError when type: string omits "from"', () => {
+      expect(() => PipelineSchema.parse(withFields([{ to: 'Foo', type: 'string' }]))).toThrow(ZodError);
+    });
+
+    it('throws ZodError when type: lookup omits "from"', () => {
+      expect(() =>
+        PipelineSchema.parse(withFields([{ to: 'Foo', type: 'lookup', lookup: 'm' }])),
+      ).toThrow(ZodError);
+    });
+
+    it('throws ZodError when type: concat omits "from"', () => {
+      expect(() =>
+        PipelineSchema.parse(withFields([{ to: 'Foo', type: 'concat', separator: ',' }])),
+      ).toThrow(ZodError);
+    });
+
+    it('allows type: constant without "from"', () => {
+      expect(() =>
+        PipelineSchema.parse(withFields([{ to: 'Foo', type: 'constant', value: 'bar' }])),
+      ).not.toThrow();
+    });
+
+    it('allows type: expression without "from"', () => {
+      expect(() =>
+        PipelineSchema.parse(withFields([{ to: 'Foo', type: 'expression', value: 'row.x' }])),
+      ).not.toThrow();
+    });
+
+    it('allows type: custom without "from" (customOp set)', () => {
+      expect(() =>
+        PipelineSchema.parse(withFields([{ to: 'Foo', type: 'custom', customOp: 'myOp' }])),
+      ).not.toThrow();
+    });
+  });
+});
+
+describe('CompositeRuleSchema', () => {
+  it('accepts a valid composite rule', () => {
+    const raw = {
+      id: 'eribeStyleNo',
+      checks: [{ type: 'pattern', value: '^[A-Z]{2}$', severity: 'critical' }],
+    };
+    expect(() => CompositeRuleSchema.parse(raw)).not.toThrow();
+  });
+
+  it('rejects an id that collides with a built-in check type', () => {
+    const raw = {
+      id: 'notNull',
+      checks: [{ type: 'pattern', value: '.+', severity: 'critical' }],
+    };
+    expect(() => CompositeRuleSchema.parse(raw)).toThrow(ZodError);
+  });
+
+  it('rejects an id with invalid characters', () => {
+    const raw = {
+      id: '123-bad',
+      checks: [{ type: 'notNull', severity: 'critical' }],
+    };
+    expect(() => CompositeRuleSchema.parse(raw)).toThrow(ZodError);
+  });
+
+  it('rejects a composite rule with no checks', () => {
+    const raw = { id: 'myRule', checks: [] };
+    expect(() => CompositeRuleSchema.parse(raw)).toThrow(ZodError);
   });
 });

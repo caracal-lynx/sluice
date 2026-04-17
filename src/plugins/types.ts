@@ -6,7 +6,7 @@
  * Plugins must be pure — no I/O, no side effects, no async.
  */
 
-import type { CheckConfig } from '@/config/types.js';
+import type { CheckConfig } from '../config/types.js';
 import type { RuleRegistry, TransformRegistry } from './registry.js';
 
 // ── DQ rule plugin ────────────────────────────────────────────────────────────

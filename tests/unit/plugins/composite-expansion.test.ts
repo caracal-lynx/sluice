@@ -21,6 +21,24 @@ const SHARED_RULES_YAML = readFileSync(
   'utf-8',
 );
 
+/**
+ * Install a readFile mock that dispatches by path substring. More robust than
+ * mockResolvedValueOnce chains — doesn't care about the order the loader
+ * happens to read files in.
+ */
+const installReadFileByPath = (entries: Record<string, string | Error>) => {
+  mockReadFile.mockImplementation(async (p: unknown) => {
+    const pathStr = String(p);
+    for (const [needle, value] of Object.entries(entries)) {
+      if (pathStr.includes(needle)) {
+        if (value instanceof Error) throw value;
+        return value as unknown as Buffer;
+      }
+    }
+    throw new Error(`Unexpected readFile call: ${pathStr}`);
+  });
+};
+
 // Pipeline YAML that references the shared rules file and uses composite checks
 const makePipelineWithCompositeRules = (checks: string, extraDqFields = '') => `
 pipeline:
@@ -81,9 +99,10 @@ describe('Composite rule expansion', () => {
     const pipeline = makePipelineWithCompositeRules(
       '- { type: eribeStyleNo }',
     );
-    mockReadFile
-      .mockResolvedValueOnce(pipeline as unknown as Buffer)
-      .mockResolvedValueOnce(SHARED_RULES_YAML as unknown as Buffer);
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    SHARED_RULES_YAML,
+    });
 
     const result = await ConfigLoader.load('/fake/pipeline.yaml');
     const checks = result.dq.rules[0].checks;
@@ -95,15 +114,29 @@ describe('Composite rule expansion', () => {
     expect(checks[2].type).toBe('maxLength');
   });
 
+  it('drops dq.rulesFile from the parsed config after expansion', async () => {
+    const pipeline = makePipelineWithCompositeRules(
+      '- { type: eribeStyleNo }',
+    );
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    SHARED_RULES_YAML,
+    });
+
+    const result = await ConfigLoader.load('/fake/pipeline.yaml');
+    expect((result.dq as { rulesFile?: string }).rulesFile).toBeUndefined();
+  });
+
   it('applies a severity override to ALL checks when present on the composite entry', async () => {
     // ifsCustomerNo has: notNull(critical), unique(critical), pattern(warning)
     // Override to 'warning' should downgrade all three
     const pipeline = makePipelineWithCompositeRules(
       '- { type: ifsCustomerNo, severity: warning }',
     );
-    mockReadFile
-      .mockResolvedValueOnce(pipeline as unknown as Buffer)
-      .mockResolvedValueOnce(SHARED_RULES_YAML as unknown as Buffer);
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    SHARED_RULES_YAML,
+    });
 
     const result = await ConfigLoader.load('/fake/pipeline.yaml');
     const checks = result.dq.rules[0].checks;
@@ -119,9 +152,10 @@ describe('Composite rule expansion', () => {
         - { type: eribeStyleNo }
         - { type: unique, severity: critical }
     `);
-    mockReadFile
-      .mockResolvedValueOnce(pipeline as unknown as Buffer)
-      .mockResolvedValueOnce(SHARED_RULES_YAML as unknown as Buffer);
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    SHARED_RULES_YAML,
+    });
 
     const result = await ConfigLoader.load('/fake/pipeline.yaml');
     const checks = result.dq.rules[0].checks;
@@ -138,9 +172,10 @@ describe('Composite rule expansion', () => {
     const pipeline = makePipelineWithCompositeRules(
       '- { type: unknownRule, severity: critical }',
     );
-    mockReadFile
-      .mockResolvedValueOnce(pipeline as unknown as Buffer)
-      .mockResolvedValueOnce(SHARED_RULES_YAML as unknown as Buffer);
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    SHARED_RULES_YAML,
+    });
 
     const err = await ConfigLoader.load('/fake/pipeline.yaml').catch(e => e);
 
@@ -158,14 +193,39 @@ describe('Composite rule expansion', () => {
     );
     const enoentError = Object.assign(new Error('ENOENT: no such file'), { code: 'ENOENT' });
 
-    mockReadFile
-      .mockResolvedValueOnce(pipeline as unknown as Buffer)
-      .mockRejectedValueOnce(enoentError);
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    enoentError,
+    });
 
     const err = await ConfigLoader.load('/fake/pipeline.yaml').catch(e => e);
 
     expect(err).toBeInstanceOf(ConfigError);
     expect(err.message).toContain('rulesFile not found');
+  });
+
+  it('throws ConfigError when the rules library has duplicate ids', async () => {
+    const dupLibrary = `
+version: "1.0"
+rules:
+  - id: dup
+    checks:
+      - { type: notNull, severity: critical }
+  - id: dup
+    checks:
+      - { type: unique, severity: critical }
+`;
+    const pipeline = makePipelineWithCompositeRules('- { type: dup }');
+    installReadFileByPath({
+      'pipeline.yaml': pipeline,
+      'rules.yaml':    dupLibrary,
+    });
+
+    const err = await ConfigLoader.load('/fake/pipeline.yaml').catch(e => e);
+
+    expect(err).toBeInstanceOf(ConfigError);
+    expect(err.message).toContain('Duplicate composite rule id');
+    expect(err.message).toContain('dup');
   });
 
   it('a valid rulesFile parses correctly against CompositeRuleLibrarySchema', async () => {
