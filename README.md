@@ -338,7 +338,6 @@ All three tiers use the same registry interfaces and are invoked identically by 
 | Client | Source | Target | Adapter |
 |--------|--------|--------|---------|
 | Cochran Group (Annan) | MSSQL legacy DB | IFS ERP | `ifs` |
-| Cochran Group (Annan) | MSSQL legacy DB | Business Central | `bc` |
 | Eribé Knitwear | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
 
 ---
