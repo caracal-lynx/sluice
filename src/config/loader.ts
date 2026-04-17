@@ -19,7 +19,11 @@ export class ConfigLoader {
       throw err;
     }
 
-    // 2. Interpolate ${ENV_VAR} tokens
+    // 2. Interpolate ${ENV_VAR} tokens.
+    // Operates on the raw YAML text, so tokens anywhere — including inside
+    // comments or unrelated string values — are resolved. Missing vars throw
+    // ConfigError before the YAML is parsed. This is intentional: it keeps
+    // the resolver trivial and predictable for single-pass pipelines.
     const interpolated = raw.replace(/\$\{([^}]+)\}/g, (_match, name: string) =>
       requireEnv(name),
     );
@@ -80,6 +84,19 @@ async function expandCompositeRules(raw: unknown, pipelineYamlPath: string): Pro
   // Validate library schema (let ZodError propagate)
   const library = CompositeRuleLibrarySchema.parse(rawLibrary);
 
+  // Reject duplicate ids explicitly — silently picking the last one would
+  // surprise anyone authoring a rules library.
+  const seen = new Set<string>();
+  for (const r of library.rules) {
+    if (seen.has(r.id)) {
+      throw new ConfigError(
+        `Duplicate composite rule id "${r.id}" in ${rulesFilePath}. ` +
+        `Each id in the rules library must be unique.`,
+      );
+    }
+    seen.add(r.id);
+  }
+
   // Build composite map: id → checks[]
   const compositeMap = new Map(library.rules.map(r => [r.id, r.checks]));
 
@@ -91,6 +108,10 @@ async function expandCompositeRules(raw: unknown, pipelineYamlPath: string): Pro
   if (!Array.isArray(rules)) {
     return raw;
   }
+
+  // rulesFile has served its purpose — drop it so the post-expansion shape
+  // matches the engine's expectation that only built-in check types exist.
+  delete dq['rulesFile'];
 
   dq['rules'] = rules.map((rule: unknown) => {
     const r = rule as Record<string, unknown>;

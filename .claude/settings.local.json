@@ -14,7 +14,8 @@
       "Bash(npm ls:*)",
       "Bash(npx tsc:*)",
       "Bash(npx vitest:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

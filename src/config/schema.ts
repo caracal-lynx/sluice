@@ -55,6 +55,9 @@ export const SourceSchema = z.object({
 
 // ── DQ ────────────────────────────────────────────────────────────────────────
 
+// Exported because (a) ConfigLoader needs .options at runtime to discriminate
+// built-in checks from composite-rule references during expansion, and
+// (b) plugin authors may want to introspect the built-in check set.
 export const CheckType = z.enum([
   'notNull', 'unique', 'pattern', 'email', 'ukPostcode',
   'maxLength', 'min', 'max', 'allowedValues',
@@ -94,6 +97,13 @@ const FieldType = z.enum([
   'custom',    // Phase 2: delegates to a TransformPlugin via customOp
 ]);
 
+// Field types that read from the source row — `from` must be set.
+// `constant` emits a fixed value, `expression` evaluates against the full row,
+// `custom` receives the whole row and chooses what to use — all three may omit `from`.
+const TYPES_REQUIRING_FROM = new Set<string>([
+  'string', 'number', 'decimal', 'boolean', 'date', 'lookup', 'concat',
+]);
+
 const FieldMappingSchema = z.object({
   from:      z.union([z.string(), z.array(z.string())]).optional(),
   to:        z.string(),
@@ -113,6 +123,9 @@ const FieldMappingSchema = z.object({
 }).refine(
   m => m.type !== 'custom' || !!m.customOp,
   { message: 'type: custom requires customOp to be set', path: ['customOp'] }
+).refine(
+  m => !TYPES_REQUIRING_FROM.has(m.type) || m.from !== undefined,
+  { message: 'this field type requires "from" to be set', path: ['from'] }
 );
 
 export const TransformSchema = z.object({
@@ -144,7 +157,10 @@ export const TargetSchema = z.object({
   // PostgreSQL:
   table:         z.string().optional(),
   schema:        z.string().default('public'),
-});
+}).refine(
+  t => t.onConflict !== 'upsert' || (t.upsertKey !== undefined && t.upsertKey.length > 0),
+  { message: 'upsertKey is required when onConflict is "upsert"', path: ['upsertKey'] }
+);
 
 // ── Run ───────────────────────────────────────────────────────────────────────
 
@@ -189,8 +205,14 @@ export const ToolkitConfigSchema = z.object({
 
 // ── Phase 2: composite rule library (shared/rules.yaml) ──────────────────────
 
+const BUILT_IN_CHECK_NAMES = new Set<string>(CheckType.options);
+
 export const CompositeRuleSchema = z.object({
-  id:          z.string().regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/),
+  id: z.string()
+    .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/)
+    .refine(id => !BUILT_IN_CHECK_NAMES.has(id), {
+      message: 'composite rule id must not collide with a built-in check type',
+    }),
   description: z.string().optional(),
   checks:      z.array(CheckSchema).min(1),
 });
