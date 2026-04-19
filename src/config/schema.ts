@@ -71,8 +71,9 @@ const CheckSchema = z.object({
 });
 
 const DqRuleSchema = z.object({
-  field:  z.string(),
-  checks: z.array(CheckSchema).min(1),
+  field:    z.string(),
+  sourceId: z.string().optional(),   // Phase 3 prep Change 2: scopes rule to a named source; parsed & ignored in Phase 1
+  checks:   z.array(CheckSchema).min(1),
 });
 
 export const DqSchema = z.object({

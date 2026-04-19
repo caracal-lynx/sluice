@@ -146,6 +146,36 @@ target:
     });
   });
 
+  describe('Phase 3 prep Change 2 — sourceId on DQ rules', () => {
+    it('parses a DQ rule with `sourceId: sql-server` without error', async () => {
+      const yaml = `
+pipeline:
+  name: test
+  client: test
+  version: "1.0"
+  entity: Test
+source:
+  adapter: csv
+  file: ./t.csv
+dq:
+  rules:
+    - field: CUST_CODE
+      sourceId: sql-server
+      checks:
+        - { type: notNull, severity: critical }
+transform:
+  fields:
+    - { from: id, to: Id, type: string }
+target:
+  adapter: csv
+`;
+      mockReadFile.mockResolvedValueOnce(yaml as unknown as Buffer);
+      const result = await ConfigLoader.load('/any/path.yaml');
+      // @ts-expect-error — sourceId is on the inferred type after Phase 3 prep
+      expect(result.dq.rules[0].sourceId).toBe('sql-server');
+    });
+  });
+
   describe('integration: real fixture content', () => {
     it('processes acme-corp-customers.pipeline.yaml content correctly', async () => {
       const content = readFileSync(
