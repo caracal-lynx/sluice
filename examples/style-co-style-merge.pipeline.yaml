@@ -1,0 +1,226 @@
+# Example: Multi-source merge — Style Co style master data
+#
+# This pipeline demonstrates merging style master data from two sources:
+# 1. IFS ERP (priority 1) — authoritative master data
+# 2. Excel supplement (priority 2) — enrichment data and corrections
+#
+# Strategy: coalesce
+#   - Uses first non-null value by priority
+#   - Fills gaps where ERP data is sparse
+#   - Respects field-level overrides (e.g., cost always from IFS)
+#
+# Usage:
+#   sluice run style-co-style-merge.pipeline.yaml
+
+pipeline:
+  name: style-co-style-merge
+  client: style-co
+  version: "1.0.0"
+  entity: style
+  description: |
+    Merge Style Co internal style master (IFS) with Excel enrichment,
+    coalesce by priority, validate, then prepare for sync.
+
+# ───── Multi-source block ─────────────────────────────────────────
+
+sources:
+
+  # Source 1: IFS ERP — Primary source (priority 1 = checked first)
+  - id: ifs-master
+    priority: 1
+    adapter: mssql
+    connection: ${IFS_CONNECTION}  # env var: mssql://user:pass@host:port/ifs
+    query: |
+      SELECT
+        StyleNo         AS style_no,
+        Description     AS description,
+        ColourCode      AS colour_code,
+        SeasonCode      AS season_code,
+        UnitCost        AS unit_cost,
+        TargetRetail    AS target_retail,
+        LaunchDate      AS launch_date,
+        NULL            AS sustainability_notes,
+        NULL            AS best_price_vendor
+      FROM StyleMaster
+      WHERE IsActive = 1
+
+  # Source 2: Excel enrichment — Secondary source (priority 2)
+  - id: excel-enrichment
+    priority: 2
+    adapter: xlsx
+    file: ./data/style-co-style-enrichment.xlsx
+    sheet: "Style Enrichment"
+    rename:
+      "STYLE_NO": "style_no"
+      "Colour Code": "colour_code"
+      "Season": "season_code"
+      "Best Price Vendor": "best_price_vendor"
+      "Sustainability Notes": "sustainability_notes"
+      "Description": "description"
+      "Cost": "unit_cost"
+      "Retail": "target_retail"
+      "Launch": "launch_date"
+
+# ───── Merge configuration ─────────────────────────────────────────
+
+merge:
+  key: style_no                  # Join on style number
+
+  strategy: coalesce             # Coalesce (first non-null by priority)
+  # strategy: union              # Alt: include all rows from both sources
+  # strategy: intersect          # Alt: only styles present in both
+
+  onUnmatched:
+    include                       # Include unmatched styles; warn if found
+    # warn                        # Same as above; explicit logging
+    # exclude                     # Drop rows only in one source (inner join)
+    # error                       # Fail pipeline if any unmatched rows
+
+  # Field-level strategy overrides
+  fieldStrategies:
+
+    # Always trust IFS for cost (business rule)
+    - field: unit_cost
+      source: ifs-master
+
+    # Always trust IFS for launch date
+    - field: launch_date
+      source: ifs-master
+
+    # For description, prefer enriched version if present (override priority)
+    - field: description
+      strategy: priority-override   # Highest-priority non-null wins
+
+  # Log conflicting values (rows where sources differ)
+  conflictLog: ./logs/style-merge-conflicts.csv
+
+# ───── Data quality ─────────────────────────────────────────────
+
+dq:
+  stopOnCritical: true
+  rejectionFile: ./logs/merged-styles-rejected.csv
+
+  rules:
+
+    # Style number format (from shared rules)
+    - field: style_no
+      sourceId: ifs-master            # Only validate where ERP is source
+      checks:
+        - type: notNull
+          severity: critical
+        - type: pattern
+          value: "^[A-Z]{2}[0-9]{4}$"
+          severity: critical
+          message: "Expected format: XX#### (e.g., AC0123)"
+
+    # Colour code format
+    - field: colour_code
+      checks:
+        - type: notNull
+          severity: critical
+        - type: pattern
+          value: "^[0-9]{3}$"
+          severity: critical
+
+    # Season code
+    - field: season_code
+      checks:
+        - type: pattern
+          value: "^(SS|AW)[0-9]{2}$"
+          severity: warning
+          message: "Expected SS## or AW## (e.g., SS25)"
+
+    # Cost is numeric and positive
+    - field: unit_cost
+      checks:
+        - type: notNull
+          severity: critical
+        - type: min
+          value: 0.01
+          severity: warning
+
+    # Retail is numeric and positive
+    - field: target_retail
+      checks:
+        - type: min
+          value: 0
+          severity: info
+
+# ───── Transform ─────────────────────────────────────────────────
+
+transform:
+  fields:
+
+    # Key columns
+    - name: style_no
+      type: string
+      source: style_no
+
+    - name: colour_code
+      type: string
+      source: colour_code
+
+    - name: season_code
+      type: string
+      source: season_code
+
+    # Enriched columns
+    - name: description
+      type: string
+      source: description
+
+    - name: unit_cost
+      type: decimal
+      source: unit_cost
+
+    - name: target_retail
+      type: decimal
+      source: target_retail
+
+    - name: launch_date
+      type: date
+      source: launch_date
+
+    - name: sustainability_notes
+      type: string
+      source: sustainability_notes
+
+    - name: best_price_vendor
+      type: string
+      source: best_price_vendor
+
+    # Derived: retail margin %
+    - name: margin_pct
+      type: decimal
+      expression: |
+        CASE
+          WHEN unit_cost > 0 AND target_retail > 0
+          THEN ROUND((target_retail - unit_cost) / target_retail * 100, 1)
+          ELSE NULL
+        END
+
+    # Audit columns
+    - name: merged_at
+      type: date
+      constant: "2026-04-15"
+
+    - name: merge_source
+      type: string
+      expression: "CASE WHEN source_ifs_master THEN 'IFS' ELSE 'Excel' END"
+
+# ───── Target ────────────────────────────────────────────────────
+
+target:
+  adapter: pg
+  connection: ${PG_CONNECTION}   # env var: postgresql://user:pass@host/sluice
+  table: stg_style-co_style_merged
+  mode: replace                  # Drop and recreate each run
+
+# ───── Runtime options ────────────────────────────────────────────
+
+run:
+  mode: full                      # full | dryRun | test
+  concurrency:
+    sources: 2
+    transforms: 4
+    target: 1

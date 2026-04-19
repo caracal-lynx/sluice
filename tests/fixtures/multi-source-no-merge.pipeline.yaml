@@ -1,0 +1,28 @@
+pipeline:
+  name: ms-no-merge
+  client: test
+  version: "1.0"
+  entity: TestEntity
+sources:
+  - id: one
+    priority: 1
+    adapter: csv
+    file: ./tests/fixtures/sample-styles.csv
+  - id: two
+    priority: 2
+    adapter: csv
+    file: ./tests/fixtures/sample-styles.csv
+dq:
+  stopOnCritical: true
+  rules: []
+transform:
+  fields:
+    - from: STYLE_NO
+      to: StyleNo
+      type: string
+target:
+  adapter: csv
+  output: ./output/ms-no-merge.csv
+run:
+  mode: full
+  outputDir: ./output

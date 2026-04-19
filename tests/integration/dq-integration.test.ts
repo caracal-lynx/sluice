@@ -79,7 +79,7 @@ run: { stagingDb: ":memory:", outputDir: ${yamlPath(workDir)} }
 
   it('continues through load when stopOnCritical is false', async () => {
     const inputCsv = join(workDir, 'input.csv');
-    writeFileSync(inputCsv, 'CUST_CODE,CUST_NAME\nA001,Alice\nA001,Bob\n', 'utf8');
+    writeFileSync(inputCsv, 'CUST_CODE,CUST_NAME\nA001,Alice\nA001,Bob\nB002,Bea\n', 'utf8');
     const outputCsv = join(workDir, 'output.csv');
 
     const pipelineYaml = `
@@ -106,8 +106,48 @@ run: { stagingDb: ":memory:", outputDir: ${yamlPath(workDir)} }
 
     const result = await new PipelineRunner().run(yaml);
     expect(result.dq.violations.critical).toBeGreaterThan(0);
+    expect(result.dq.rowsRejected).toBe(2);
     expect(result.load).not.toBeNull();
     expect(existsSync(outputCsv)).toBe(true);
+    const output = readFileSync(outputCsv, 'utf-8');
+    expect(output).toContain('CustomerNo');
+    expect(output).toContain('B002');
+    expect(output).not.toContain('A001');
+  });
+
+  it('keeps warning-only rows in the output', async () => {
+    const inputCsv = join(workDir, 'input.csv');
+    writeFileSync(inputCsv, 'CUST_CODE,CUST_NAME\nA001,Alice\nA001,Bob\nB002,Bea\n', 'utf8');
+    const outputCsv = join(workDir, 'output.csv');
+
+    const pipelineYaml = `
+pipeline:
+  name: dq-warning-pass
+  client: test
+  version: "1.0"
+  entity: Test
+source: { adapter: csv, file: ${yamlPath(inputCsv)} }
+dq:
+  stopOnCritical: false
+  rules:
+    - field: CUST_CODE
+      checks:
+        - { type: unique, severity: warning }
+transform:
+  fields:
+    - { from: CUST_CODE, to: CustomerNo, type: string }
+target: { adapter: csv, output: ${yamlPath(outputCsv)}, includeHeader: true }
+run: { stagingDb: ":memory:", outputDir: ${yamlPath(workDir)} }
+`;
+    const yaml = join(workDir, 'pipeline.yaml');
+    writeFileSync(yaml, pipelineYaml, 'utf8');
+
+    const result = await new PipelineRunner().run(yaml);
+    expect(result.dq.violations.warning).toBeGreaterThan(0);
+    expect(result.dq.rowsRejected).toBe(0);
+    const output = readFileSync(outputCsv, 'utf-8');
+    expect(output).toContain('A001');
+    expect(output).toContain('B002');
   });
 
   it('writes a custom rejection file when dq.rejectionFile is set', async () => {

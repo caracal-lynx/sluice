@@ -4,6 +4,7 @@ dist/
 clients/
 output/
 *.duckdb
+.tmp/
 coverage/
 *.tsbuildinfo
 ./claude/settings.local.json
