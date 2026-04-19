@@ -1,0 +1,89 @@
+pipeline:
+  name: eribe-products-merged
+  client: eribe-knitwear
+  version: "1.0"
+  entity: Style
+  description: Product master assembled from SQL Server, Odoo, and Excel
+
+sources:
+  - id: sql-server
+    priority: 1
+    adapter: mssql
+    connection: ${ERIBE_MSSQL}
+    query: |
+      SELECT STYLE_NO, STYLE_DESC, COST_PRICE, RETAIL_PRICE
+      FROM dbo.Styles WHERE Active = 1
+
+  - id: odoo
+    priority: 2
+    adapter: rest
+    endpoint: ${ODOO_BASE}/products
+    headers:
+      Authorization: Bearer ${ODOO_TOKEN}
+    pagination:
+      type: offset
+      pageSize: 100
+      dataField: result
+    rename:
+      name: STYLE_DESC
+      product_code: STYLE_NO
+      cost: COST_PRICE
+
+  - id: excel
+    priority: 3
+    adapter: xlsx
+    file: ./data/product-data.xlsx
+    sheet: "Products"
+    rename:
+      Style Number: STYLE_NO
+      Description: STYLE_DESC
+      Fibre: FIBRE_CONTENT
+
+merge:
+  key: STYLE_NO
+  strategy: coalesce
+  onUnmatched: include
+  fieldStrategies:
+    - field: FIBRE_CONTENT
+      source: excel
+  conflictLog: ./output/eribe-products-conflicts.csv
+  incrementalSource: sql-server
+
+dq:
+  stopOnCritical: true
+  rejectionFile: ./output/eribe-products-merged-rejected.csv
+  rules:
+    - field: STYLE_NO
+      sourceId: sql-server
+      checks:
+        - { type: notNull, severity: critical }
+        - { type: unique,  severity: critical }
+    - field: STYLE_DESC
+      checks:
+        - { type: notNull,   severity: critical }
+        - { type: maxLength, value: 255, severity: warning }
+    - field: COST_PRICE
+      checks:
+        - { type: min, value: 0, severity: critical }
+
+transform:
+  fields:
+    - { from: STYLE_NO,      to: StyleNo,      type: string,  max: 20,  cleanse: trim|uppercase }
+    - { from: STYLE_DESC,    to: StyleDesc,    type: string,  max: 255, cleanse: trim }
+    - { from: COST_PRICE,    to: CostPrice,    type: decimal, precision: 2, optional: true }
+    - { from: RETAIL_PRICE,  to: RetailPrice,  type: decimal, precision: 2, optional: true }
+    - { from: FIBRE_CONTENT, to: FibreContent, type: string,  max: 200,  optional: true }
+    - { to: ActiveFlag,      type: constant,   value: "Y" }
+
+target:
+  adapter: bluecherry
+  entity: Style
+  output: ./output/eribe-products-merged-bc.csv
+  includeHeader: true
+  dateFormat: MM/DD/YYYY
+
+run:
+  mode: full
+  batchSize: 200
+  logLevel: info
+  dryRun: false

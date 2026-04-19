@@ -93,6 +93,11 @@ sluice run customers.pipeline.yaml
 
 # Profile source data (column stats, no DQ)
 sluice profile customers.pipeline.yaml
+
+# Inspect loaded plugins and merge strategies
+sluice plugins
+sluice merge list-strategies
+sluice merge info coalesce
 ```
 
 ### CLI flags
@@ -102,7 +107,11 @@ sluice profile customers.pipeline.yaml
 | `--log-level debug\|info\|warn\|error` | How chatty do you want the logs? |
 | `--env <file>` | Path to your `.env` file (default: `./.env`) |
 | `--output <dir>` | Override the output directory |
+| `--plugins <dir...>` | Load additional plugin directories (alongside the pipeline `plugins/` folder) |
 | `--dry-run` | Extract + DQ + transform, but don't write a single byte to the target |
+
+When multiple plugin directories resolve to the same absolute path (for example,
+`--plugins ./plugins`), Sluice de-duplicates them before loading.
 
 ### Exit codes
 
@@ -332,6 +341,44 @@ plugins:
 ```
 
 All three tiers use the same registry interfaces and are invoked identically by the engines. The engine doesn't know or care which tier a rule came from. 🤷
+
+### List Loaded Plugins
+
+```bash
+sluice plugins
+
+# Include extra plugin directories outside the pipeline folder
+sluice plugins --plugins ./shared/plugins ./team/plugins
+```
+
+Output:
+```
+📋 Data Quality Rules:
+  • ukVatNumber
+  • bcAccountCode
+  • iso8601Date
+
+🔄 Transform Operations:
+  • slugGenerator
+  • normalizeCompanyName
+  • fixedDecimal
+
+🔀 Merge Strategies:
+  • coalesce
+  • priority-override
+  • union
+  • intersect
+```
+
+### Getting Started with Plugins
+
+Detailed guide: **[PLUGINS.md](./PLUGINS.md)**
+
+- Create a custom DQ rule
+- Create a custom transform operation
+- Package plugins as npm packages
+- Test and debug plugins
+- Real-world examples
 
 ---
 

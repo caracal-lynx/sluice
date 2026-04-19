@@ -1,0 +1,104 @@
+# ERP Reconciliation Example
+# Purpose: Compare legacy ERP system with new BC system to identify reconciliation issues
+# Use Case: Post-migration validation — ensure all records exist in both systems
+# Merge Strategy: INTERSECT (only common records)
+
+pipeline:
+  name: erp-reconciliation
+  client: cochran-group
+  version: "1.0"
+  entity: CustomerReconciliation
+  description: |
+    Post-migration reconciliation between legacy IFS ERP and new Business Central.
+    Uses intersect merge to identify customers that exist in BOTH systems.
+    Any customers only in the legacy system indicate incomplete migration.
+    This pipeline serves as a validation gate before cutover.
+
+sources:
+  # Legacy IFS ERP — source of truth until migration complete
+  - id: ifs-legacy
+    priority: 1
+    adapter: csv
+    file: ./data/ifs-customers-export.csv
+    delimiter: ","
+    description: Complete export from IFS ERP production
+
+  # New Business Central — target of migration
+  - id: business-central
+    priority: 2
+    adapter: csv
+    file: ./data/bc-customers-export.csv
+    delimiter: ","
+    description: Complete export from BC production environment
+
+merge:
+  strategy: intersect
+  # Use customer number as the unique identifier
+  key: CUSTOMER_NO
+  # Do NOT include unmatched records — we want ONLY those in both systems
+  onUnmatched: exclude
+  # Log all unmatched records to a separate file for manual review
+  conflictLog: ./output/reconciliation-unmatched.csv
+  
+  # Field-level strategy: use IFS as source of truth for master data
+  fieldStrategies:
+    - field: CUSTOMER_NAME
+      source: ifs-legacy
+    - field: ADDRESS_1
+      source: ifs-legacy
+    - field: COUNTRY_CODE
+      source: ifs-legacy
+
+dq:
+  stopOnCritical: true
+  rejectionFile: ./output/erp-reconciliation-rejected.csv
+  rules:
+    # Critical: customer number must be present and unique
+    - field: CUSTOMER_NO
+      checks:
+        - { type: notNull,  severity: critical }
+        - { type: unique,   severity: critical }
+    
+    # Warning: validate country codes
+    - field: COUNTRY_CODE
+      checks:
+        - { type: allowedValues, value: [GB, IE, US, DE, FR, NL, BE], severity: warning }
+    
+    # Warning: postal codes
+    - field: POST_CODE
+      checks:
+        - { type: ukPostcode, severity: warning }
+
+transform:
+  # No lookups needed for reconciliation
+  lookups: []
+  
+  fields:
+    # Key field — required for matching
+    - { from: CUSTOMER_NO,   to: CUSTOMER_NO,   type: string,  max: 20 }
+    
+    # Master data from IFS (priority source)
+    - { from: CUSTOMER_NAME, to: CUSTOMER_NAME, type: string,  max: 100, cleanse: trim|titleCase }
+    - { from: ADDRESS_1,     to: ADDRESS_1,     type: string,  max: 100, cleanse: trim }
+    - { from: COUNTRY_CODE,  to: COUNTRY_CODE,  type: string,  default: GB }
+    - { from: POST_CODE,     to: POST_CODE,     type: string,  cleanse: trim|uppercase }
+    
+    # Status fields for reconciliation reporting
+    - { to: reconciliation_status, type: constant, value: MATCHED }
+    - { to: reconciliation_date,   type: expression, value: "new Date().toISOString().split('T')[0]" }
+
+target:
+  adapter: csv
+  output: ./output/erp-reconciliation-matched.csv
+  includeHeader: true
+  delimiter: ","
+  encoding: utf-8
+
+run:
+  mode: full
+  batchSize: 500
+  logLevel: info
+  dryRun: false
+  outputDir: ./output
+  # Use dedicated database for reconciliation (don't mix with other pipelines)
+  stagingDb: ./output/reconciliation.duckdb

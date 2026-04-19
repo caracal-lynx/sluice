@@ -10,4 +10,8 @@ export type {
   ToolkitConfig,
   CompositeRule,
   CompositeRuleLibrary,
+  MergeConfig,
+  MultiSourceEntry,
 } from './schema.js';
+
+export { isSingleSource, isMultiSource } from './schema.js';

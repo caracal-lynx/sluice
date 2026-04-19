@@ -7,6 +7,7 @@
  */
 
 import type { CheckConfig } from '../config/types.js';
+import type { MergeStrategyRegistry } from '../merge/index.js';
 import type { RuleRegistry, TransformRegistry } from './registry.js';
 
 // ── DQ rule plugin ────────────────────────────────────────────────────────────
@@ -83,5 +84,6 @@ export interface PluginPackage {
     rules:      RuleRegistry,
     transforms: TransformRegistry,
     options?:   Record<string, unknown>,
+    mergeStrategies?: typeof MergeStrategyRegistry,
   ): void;
 }

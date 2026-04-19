@@ -37,7 +37,7 @@ const PaginationSchema = z.object({
 
 // ── Source ────────────────────────────────────────────────────────────────────
 
-export const SourceSchema = z.object({
+const SourceBaseSchema = z.object({
   adapter:    SourceAd,
   connection: z.string().optional(),
   query:      z.string().optional(),
@@ -48,7 +48,9 @@ export const SourceSchema = z.object({
   encoding:   z.string().default('utf-8'),
   sheet:      z.union([z.string(), z.number()]).optional(),
   pagination: PaginationSchema.optional(),
-}).refine(
+});
+
+export const SourceSchema = SourceBaseSchema.refine(
   s => s.query || s.file || s.endpoint,
   { message: 'source must have query, file, or endpoint' }
 );
@@ -177,22 +179,81 @@ export const RunSchema = z.object({
   incrementalSince: z.string().optional(),
 });
 
+// ── Multi-source merge ────────────────────────────────────────────────────────
+
+const MergeFieldStrategySchema = z.object({
+  field:    z.string(),
+  strategy: z.enum(['coalesce', 'priority-override']).optional(),
+  source:   z.string().optional(),   // named source id
+}).refine(
+  s => s.strategy !== undefined || s.source !== undefined,
+  { message: 'fieldStrategy must specify strategy, source, or both' },
+);
+
+export const MergeSchema = z.object({
+  key:               z.union([z.string(), z.array(z.string())]),
+  strategy:          z.enum(['coalesce', 'priority-override', 'union', 'intersect'])
+                       .default('coalesce'),
+  onUnmatched:       z.enum(['include', 'exclude', 'warn', 'error']).default('include'),
+  fieldStrategies:   z.array(MergeFieldStrategySchema).default([]),
+  conflictLog:       z.string().optional(),
+  incrementalSource: z.string().optional(),  // source id; required when run.mode = 'incremental'
+});
+
+export const MultiSourceEntrySchema = SourceBaseSchema.extend({
+  id:       z.string().regex(/^[a-z0-9-]+$/, {
+    message: 'source id must be lowercase alphanumeric with hyphens only',
+  }),
+  priority: z.number().int().positive(),
+  rename:   z.record(z.string()).optional(),  // { 'old column': 'new column' }
+}).refine(
+  s => s.query || s.file || s.endpoint,
+  { message: 'source must have query, file, or endpoint' },
+);
+
 // ── Pipeline root ─────────────────────────────────────────────────────────────
 
+const PipelineMetaSchema = z.object({
+  name:        z.string().regex(/^[a-z0-9-]+$/, 'name must be lowercase-hyphenated'),
+  client:      z.string(),
+  version:     z.string(),
+  entity:      z.string(),
+  description: z.string().optional(),
+});
+
 export const PipelineSchema = z.object({
-  pipeline: z.object({
-    name:        z.string().regex(/^[a-z0-9-]+$/, 'name must be lowercase-hyphenated'),
-    client:      z.string(),
-    version:     z.string(),
-    entity:      z.string(),
-    description: z.string().optional(),
-  }),
-  source:    SourceSchema,
+  pipeline:  PipelineMetaSchema,
+  source:    SourceSchema.optional(),
+  sources:   z.array(MultiSourceEntrySchema).min(2).optional(),
+  merge:     MergeSchema.optional(),
   dq:        DqSchema,
   transform: TransformSchema,
   target:    TargetSchema,
   run:       RunSchema.default({}),
-});
+}).refine(
+  p => (!!p.source && !p.sources && !p.merge) || (!p.source && !!p.sources && !!p.merge),
+  { message: 'pipeline must have either source (single) or both sources and merge (multi)' },
+).refine(
+  p => {
+    if (!p.sources) return true;
+    const ids = p.sources.map(s => s.id);
+    return new Set(ids).size === ids.length;
+  },
+  { message: 'duplicate source ids in sources array' },
+).refine(
+  p => {
+    if (!p.sources || !p.merge || p.run?.mode !== 'incremental') return true;
+    return !!p.merge.incrementalSource;
+  },
+  { message: 'merge.incrementalSource is required when run.mode is incremental' },
+).refine(
+  p => {
+    if (!p.sources || !p.merge || !p.merge.incrementalSource) return true;
+    const ids = new Set(p.sources.map(s => s.id));
+    return ids.has(p.merge.incrementalSource);
+  },
+  { message: 'merge.incrementalSource must match one of the source ids in sources' },
+);
 
 // ── Phase 2: toolkit-level config (sluice.config.yaml) ───────────────────────
 
@@ -237,3 +298,19 @@ export type Lookup               = z.infer<typeof LookupSchema>;
 export type ToolkitConfig        = z.infer<typeof ToolkitConfigSchema>;
 export type CompositeRule        = z.infer<typeof CompositeRuleSchema>;
 export type CompositeRuleLibrary = z.infer<typeof CompositeRuleLibrarySchema>;
+export type MergeConfig          = z.infer<typeof MergeSchema>;
+export type MultiSourceEntry     = z.infer<typeof MultiSourceEntrySchema>;
+
+// ── Type guards ───────────────────────────────────────────────────────────────
+
+/** Narrows a Pipeline to one with a defined `source` (single-source pipeline). */
+export function isSingleSource(p: Pipeline): p is Pipeline & { source: SourceConfig } {
+  return p.source !== undefined;
+}
+
+/** Narrows a Pipeline to one with defined `sources` and `merge` (multi-source pipeline). */
+export function isMultiSource(
+  p: Pipeline,
+): p is Pipeline & { sources: MultiSourceEntry[]; merge: MergeConfig } {
+  return p.sources !== undefined;
+}
