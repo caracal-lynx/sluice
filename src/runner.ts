@@ -7,11 +7,6 @@
  *     MultiSourcePipelineRunner can override each phase cleanly.
  *   - `runDQ` carries an unused `sourceId?: string` parameter reserved for Phase 3.
  *   - `writeStateFile` is protected so the multi-source runner can override it.
- *
- * Phase 4 MVP: `runDQ`, `runTransform`, and `writeStateFile` are minimal stubs.
- *   - DQ: zero-violation summary (real engine lands in Phase 5).
- *   - Transform: CREATE OR REPLACE TABLE stg_transformed AS SELECT * FROM stg_raw.
- *   - writeStateFile: log-only (real implementation lands in Phase 9).
  */
 
 import * as fs from 'node:fs/promises';
@@ -25,10 +20,15 @@ import type { ColumnMeta } from './staging/index.js';
 import { SourceAdapterRegistry, type ExtractResult } from './adapters/source/index.js';
 import { TargetAdapterRegistry, type LoadResult } from './adapters/target/index.js';
 import { ConfigLoader } from './config/loader.js';
+import { isMultiSource } from './config/schema.js';
 import type { Pipeline } from './config/types.js';
 import { DQEngine, type DQSummary } from './dq/index.js';
-import { StagingStore } from './staging/index.js';
+import { MergeStrategyRegistry } from './merge/index.js';
+import { StagingStore, quoteIdent } from './staging/index.js';
 import { TransformEngine, type TransformResult } from './transform/index.js';
+import { RuleRegistry, TransformRegistry } from './plugins/registry.js';
+import { loadPlugins, loadNpmPlugins } from './plugins/loader.js';
+import type { RulePlugin, TransformPlugin } from './plugins/types.js';
 import { ConfigError, PipelineDQError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
 
@@ -39,6 +39,7 @@ export interface RunResult {
   dq: DQSummary;
   transform: TransformResult | null;
   load: LoadResult | null;
+  merge?: { rowsMerged: number; conflicts: number; unmatched: number };
   /** Path to the state JSON written at the end of a successful run. */
   stateFilePath?: string;
   /** Set by `sluice profile`; absent for other commands. */
@@ -50,22 +51,89 @@ export interface RunOverrides {
   outputDir?: string;
   dryRun?: boolean;
   mode?: Pipeline['run']['mode'];
+  pluginDirs?: string[];
 }
 
 export class PipelineRunner {
-  protected readonly dqEngine: DQEngine = new DQEngine();
-  protected readonly transformEngine: TransformEngine = new TransformEngine();
+  protected readonly ruleRegistry: RuleRegistry;
+  protected readonly transformRegistry: TransformRegistry;
+  protected readonly dqEngine: DQEngine;
+  protected readonly transformEngine: TransformEngine;
+  private pluginsLoaded = false;
+  private incrementalSinceUsed = '';
+
+  constructor(
+    ruleRegistry?: RuleRegistry,
+    transformRegistry?: TransformRegistry,
+  ) {
+    this.ruleRegistry = ruleRegistry ?? new RuleRegistry();
+    this.transformRegistry = transformRegistry ?? new TransformRegistry();
+    this.dqEngine = new DQEngine(this.ruleRegistry);
+    this.transformEngine = new TransformEngine(this.transformRegistry);
+  }
+
+  /**
+   * Load plugins from the file system and npm packages.
+   * Called once per runner instance at the start of the first pipeline run.
+   *
+   * - Tier 2: Scans `{cwd}/plugins/` for `*.rule.{ts,js}` and `*.transform.{ts,js}`.
+   * - Tier 3: Reads `{cwd}/sluice.config.yaml` for npm plugin declarations.
+   */
+  protected async loadAllPlugins(cwd: string, pluginDirs: string[] = []): Promise<void> {
+    if (this.pluginsLoaded) return;
+
+    const defaultPluginDir = path.join(cwd, 'plugins');
+    const allPluginDirs = Array.from(new Set([
+      defaultPluginDir,
+      ...pluginDirs.map((d) => path.resolve(d)),
+    ]));
+
+    for (const pluginDir of allPluginDirs) {
+      await loadPlugins(pluginDir, this.ruleRegistry, this.transformRegistry, MergeStrategyRegistry);
+    }
+
+    const configPath = path.join(cwd, 'sluice.config.yaml');
+    await loadNpmPlugins(
+      configPath,
+      this.ruleRegistry,
+      this.transformRegistry,
+      MergeStrategyRegistry,
+    );
+
+    this.pluginsLoaded = true;
+    logger.info(
+      {
+        rules: this.ruleRegistry.list().length,
+        transforms: this.transformRegistry.list().length,
+        pluginDirs: allPluginDirs,
+      },
+      'plugins: all loaded',
+    );
+  }
 
   async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    this.incrementalSinceUsed = '';
+
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
+    await this.loadAllPlugins(
+      path.dirname(path.resolve(yamlPath)),
+      overrides.pluginDirs ?? [],
+    );
     logger.info(
       { pipeline: config.pipeline.name, yaml: yamlPath, mode: config.run.mode },
       'pipeline: start',
     );
 
-    if (config.run.mode === 'incremental') {
-      throw new ConfigError('incremental mode is not yet implemented (Phase 1 limitation)');
+    if (isMultiSource(config)) {
+      throw new ConfigError(
+        `Pipeline "${config.pipeline.name}" declares multiple sources. ` +
+        'Use MultiSourcePipelineRunner (Phase 3) to run multi-source pipelines.',
+      );
+    }
+
+    if (config.run.mode === 'incremental' && !config.run.incrementalField) {
+      throw new ConfigError('run.incrementalField is required for incremental pipelines');
     }
 
     const outputDir = path.resolve(config.run.outputDir);
@@ -76,26 +144,57 @@ export class PipelineRunner {
       await store.open();
 
       const extractResult = await this.runExtract(config, store, 'stg_raw');
+      if (config.run.mode === 'incremental' && config.run.incrementalField) {
+        const incrementalSince = await this.resolveIncrementalSince(config);
+        this.incrementalSinceUsed = incrementalSince;
+        if (incrementalSince) {
+          await this.applyIncrementalFilter(
+            store,
+            extractResult.tableName,
+            config.run.incrementalField,
+            incrementalSince,
+          );
+          extractResult.rowsExtracted = await store.rowCount(extractResult.tableName);
+          logger.info(
+            {
+              tableName: extractResult.tableName,
+              incrementalField: config.run.incrementalField,
+              incrementalSince,
+              rowsAfterFilter: extractResult.rowsExtracted,
+            },
+            'pipeline: incremental filter applied',
+          );
+        }
+      }
+
       const dqSummary = await this.runDQ(config, store, extractResult.tableName);
 
       if (config.dq.stopOnCritical && dqSummary.violations.critical > 0) {
         throw new PipelineDQError(dqSummary.violations.critical, dqSummary.reportPath);
       }
 
+      const transformSourceTable = await this.materializeAcceptedRows(
+        store,
+        extractResult.tableName,
+        extractResult.columns,
+        dqSummary.rejectedRowIndices ?? [],
+      );
+
+      const transformResult = await this.runTransform(
+        config,
+        store,
+        transformSourceTable,
+        'stg_transformed',
+      );
+
       if (config.run.dryRun || config.run.mode === 'validate-only') {
         logger.info(
           { dryRun: config.run.dryRun, mode: config.run.mode },
           'pipeline: stopping before load',
         );
-        return this.buildRunResult(config, extractResult, dqSummary, null, null);
+        return this.buildRunResult(config, extractResult, dqSummary, transformResult, null);
       }
 
-      const transformResult = await this.runTransform(
-        config,
-        store,
-        extractResult.tableName,
-        'stg_transformed',
-      );
       const loadResult = await this.runLoad(config, store);
       const stateFilePath = await this.writeStateFile(config, extractResult, dqSummary, loadResult);
 
@@ -124,6 +223,11 @@ export class PipelineRunner {
     store: StagingStore,
     tableName = 'stg_raw',
   ): Promise<ExtractResult> {
+    if (!config.source) {
+      throw new ConfigError(
+        'runExtract called on a multi-source pipeline; use MultiSourcePipelineRunner',
+      );
+    }
     const adapter = SourceAdapterRegistry.get(config.source.adapter);
     await adapter.connect(config.source);
     try {
@@ -221,7 +325,7 @@ export class PipelineRunner {
       rowsLoaded: load.rowsLoaded,
       criticalViolations: dq.violations.critical,
       warnings: dq.violations.warning,
-      incrementalSince: config.run.incrementalSince ?? '',
+      incrementalSince: this.incrementalSinceUsed || (config.run.incrementalSince ?? ''),
     };
     await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
     logger.debug({ stateFilePath }, 'pipeline: state file written');
@@ -237,8 +341,18 @@ export class PipelineRunner {
   async profile(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
-    if (config.run.mode === 'incremental') {
-      throw new ConfigError('incremental mode is not yet implemented (Phase 1 limitation)');
+    await this.loadAllPlugins(
+      path.dirname(path.resolve(yamlPath)),
+      overrides.pluginDirs ?? [],
+    );
+    if (isMultiSource(config)) {
+      throw new ConfigError(
+        `Pipeline "${config.pipeline.name}" declares multiple sources. ` +
+        'Use MultiSourcePipelineRunner (Phase 3) to profile multi-source pipelines.',
+      );
+    }
+    if (config.run.mode === 'incremental' && !config.run.incrementalField) {
+      throw new ConfigError('run.incrementalField is required for incremental pipelines');
     }
     const outputDir = path.resolve(config.run.outputDir);
     await fs.mkdir(outputDir, { recursive: true });
@@ -247,6 +361,28 @@ export class PipelineRunner {
     try {
       await store.open();
       const extractResult = await this.runExtract(config, store, 'stg_raw');
+      if (config.run.mode === 'incremental' && config.run.incrementalField) {
+        const incrementalSince = await this.resolveIncrementalSince(config);
+        if (incrementalSince) {
+          await this.applyIncrementalFilter(
+            store,
+            extractResult.tableName,
+            config.run.incrementalField,
+            incrementalSince,
+          );
+          extractResult.rowsExtracted = await store.rowCount(extractResult.tableName);
+          logger.info(
+            {
+              tableName: extractResult.tableName,
+              incrementalField: config.run.incrementalField,
+              incrementalSince,
+              rowsAfterFilter: extractResult.rowsExtracted,
+            },
+            'pipeline: incremental filter applied (profile)',
+          );
+        }
+      }
+
       const profile = await this.buildProfile(store, extractResult.tableName, extractResult.columns);
       const profilePath = path.join(outputDir, `${config.pipeline.name}-profile.json`);
       await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, 'utf-8');
@@ -305,7 +441,7 @@ export class PipelineRunner {
     return result;
   }
 
-  private applyOverrides(config: Pipeline, overrides: RunOverrides): Pipeline {
+  protected applyOverrides(config: Pipeline, overrides: RunOverrides): Pipeline {
     if (Object.keys(overrides).length === 0) return config;
     const run = { ...config.run };
     if (overrides.outputDir !== undefined) run.outputDir = overrides.outputDir;
@@ -314,7 +450,7 @@ export class PipelineRunner {
     return { ...config, run };
   }
 
-  private resolveStagingDb(config: Pipeline): string {
+  protected resolveStagingDb(config: Pipeline): string {
     if (config.run.stagingDb) return config.run.stagingDb;
     if (config.run.dryRun) return ':memory:';
     return path.join(
@@ -323,7 +459,107 @@ export class PipelineRunner {
     );
   }
 
-  private buildRunResult(
+  protected async resolveIncrementalSince(config: Pipeline): Promise<string> {
+    if (config.run.incrementalSince) return config.run.incrementalSince;
+
+    const statePath = path.join(
+      path.resolve(config.run.outputDir),
+      `${config.pipeline.name}-state.json`,
+    );
+
+    try {
+      const raw = await fs.readFile(statePath, 'utf-8');
+      const parsed = JSON.parse(raw) as { lastRunAt?: string };
+      return typeof parsed.lastRunAt === 'string' ? parsed.lastRunAt : '';
+    } catch {
+      return '';
+    }
+  }
+
+  protected async applyIncrementalFilter(
+    store: StagingStore,
+    tableName: string,
+    incrementalField: string,
+    incrementalSince: string,
+  ): Promise<void> {
+    const columns = await store.columnNames(tableName);
+    if (!columns.includes(incrementalField)) {
+      throw new ConfigError(
+        `incrementalField "${incrementalField}" was not found in source table "${tableName}"`,
+      );
+    }
+
+    const sinceCheck = await store.query<{ ts: unknown }>(
+      'SELECT TRY_CAST(? AS TIMESTAMP) AS ts',
+      [incrementalSince],
+    );
+    if (!sinceCheck[0]?.ts) {
+      throw new ConfigError(
+        `run.incrementalSince "${incrementalSince}" is not a valid timestamp`,
+      );
+    }
+
+    const invalidRows = await store.query<{ n: unknown }>(
+      `
+      SELECT count(*) AS n
+      FROM ${quoteIdent(tableName)}
+      WHERE ${quoteIdent(incrementalField)} IS NOT NULL
+        AND TRY_CAST(${quoteIdent(incrementalField)} AS TIMESTAMP) IS NULL
+      `,
+    );
+    const invalidCount = Number(invalidRows[0]?.n ?? 0);
+    if (invalidCount > 0) {
+      throw new ConfigError(
+        `incrementalField "${incrementalField}" contains ${invalidCount} non-parseable timestamp value(s)`,
+      );
+    }
+
+    await store.query(
+      `
+      CREATE OR REPLACE TABLE ${quoteIdent(tableName)} AS
+      SELECT *
+      FROM ${quoteIdent(tableName)}
+      WHERE TRY_CAST(${quoteIdent(incrementalField)} AS TIMESTAMP) >= TRY_CAST(? AS TIMESTAMP)
+      `,
+      [incrementalSince],
+    );
+  }
+
+  protected async materializeAcceptedRows(
+    store: StagingStore,
+    tableName: string,
+    columns: ColumnMeta[],
+    rejectedRowIndices: number[],
+  ): Promise<string> {
+    if (rejectedRowIndices.length === 0) return tableName;
+
+    const rejected = new Set(rejectedRowIndices);
+    const rows = await store.query<Record<string, unknown>>(
+      `SELECT * FROM ${quoteIdent(tableName)}`,
+    );
+    const acceptedRows = rows.filter((_row, index) => !rejected.has(index));
+    const acceptedTable = `${tableName}_accepted`;
+
+    await store.dropTable(acceptedTable);
+    await store.createTable(acceptedTable, columns);
+    if (acceptedRows.length > 0) {
+      await store.insertBatch(acceptedTable, acceptedRows);
+    }
+
+    logger.info(
+      {
+        sourceTable: tableName,
+        acceptedTable,
+        rejectedRows: rejectedRowIndices.length,
+        acceptedRows: acceptedRows.length,
+      },
+      'pipeline: filtered rejected rows before transform',
+    );
+
+    return acceptedTable;
+  }
+
+  protected buildRunResult(
     config: Pipeline,
     extract: ExtractResult,
     dq: DQSummary,

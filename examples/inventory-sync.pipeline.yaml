@@ -1,0 +1,142 @@
+# Inventory Sync Example
+# Purpose: Merge inventory data from multiple warehouses/distribution centers
+# Use Case: Real-time inventory aggregation from regional systems
+# Merge Strategy: UNION (all rows from all sources, deduplicated)
+
+pipeline:
+  name: inventory-sync
+  client: style-co
+  version: "1.0"
+  entity: InventoryBalance
+  description: |
+    Aggregate inventory data from three regional distribution centers (UK, EU, US)
+    into a unified view for supply chain planning and reorder analysis.
+    Uses union merge to combine all warehouse locations and style-color-size combinations.
+
+sources:
+  # UK Distribution Center — primary warehouse
+  - id: warehouse-uk
+    priority: 1
+    adapter: csv
+    file: ./data/inventory-uk-dc.csv
+    delimiter: ","
+    description: |
+      UK warehouse inventory (Sheffield distribution center).
+      Updated daily from WMS extract at 06:00 GMT.
+
+  # EU Distribution Center — secondary
+  - id: warehouse-eu
+    priority: 2
+    adapter: csv
+    file: ./data/inventory-eu-dc.csv
+    delimiter: ","
+    description: |
+      EU warehouse inventory (Rotterdam distribution center).
+      Updated daily from WMS extract at 07:00 CET.
+
+  # US Distribution Center — tertiary
+  - id: warehouse-us
+    priority: 3
+    adapter: csv
+    file: ./data/inventory-us-dc.csv
+    delimiter: ","
+    description: |
+      US warehouse inventory (New Jersey distribution center).
+      Updated daily from WMS extract at 01:00 EST (previous day).
+
+merge:
+  strategy: union
+  # Use (warehouse, style, color, size) as composite key
+  key: [WAREHOUSE_ID, STYLE_NO, COLOUR_CODE, SIZE_CODE]
+  # Include all rows from all warehouses
+  onUnmatched: include
+  # Log any duplicate keys found (should not happen with distinct warehouses)
+  conflictLog: ./output/inventory-duplicates.csv
+
+dq:
+  stopOnCritical: false
+  rejectionFile: ./output/inventory-rejected.csv
+  rules:
+    # Critical: style number required
+    - field: STYLE_NO
+      checks:
+        - { type: notNull,   severity: critical }
+        - { type: pattern,   value: "^[A-Z0-9]{4,10}$", severity: warning }
+    
+    # Critical: warehouse identifier
+    - field: WAREHOUSE_ID
+      checks:
+        - { type: notNull,     severity: critical }
+        - { type: allowedValues, value: [UK, EU, US], severity: critical }
+    
+    # Warning: color/size codes
+    - field: COLOUR_CODE
+      checks:
+        - { type: maxLength, value: 10, severity: warning }
+    
+    - field: SIZE_CODE
+      checks:
+        - { type: maxLength, value: 5, severity: warning }
+    
+    # Warning: quantity on hand
+    - field: QTY_ON_HAND
+      checks:
+        - { type: min, value: 0, severity: warning }
+        - { type: max, value: 99999, severity: warning }
+
+transform:
+  lookups:
+    # Map warehouse codes to full names
+    - name: warehouse-names
+      source:
+        adapter: csv
+        file: ./lookups/warehouses.csv
+      key: warehouse_id
+      value: warehouse_name
+    
+    # Resolve style descriptions
+    - name: style-catalog
+      source:
+        adapter: csv
+        file: ./lookups/styles.csv
+      key: style_no
+      value: style_desc
+
+  fields:
+    # Key fields — composite key for identifying unique SKU at each location
+    - { from: WAREHOUSE_ID,  to: WAREHOUSE_ID,   type: string,  max: 3 }
+    - { from: STYLE_NO,      to: STYLE_NO,       type: string,  max: 10, cleanse: trim|uppercase }
+    - { from: COLOUR_CODE,   to: COLOUR_CODE,    type: string,  max: 10, cleanse: trim|uppercase }
+    - { from: SIZE_CODE,     to: SIZE_CODE,      type: string,  max: 5,  cleanse: trim|uppercase }
+    
+    # Inventory quantities
+    - { from: QTY_ON_HAND,        to: QTY_ON_HAND,        type: number }
+    - { from: QTY_RESERVED,       to: QTY_RESERVED,       type: number, default: 0 }
+    - { from: QTY_AVAILABLE,      to: QTY_AVAILABLE,      type: number, default: 0 }
+    - { from: QTY_ON_ORDER,       to: QTY_ON_ORDER,       type: number, default: 0 }
+    
+    # Enrichments
+    - { from: WAREHOUSE_ID,    to: WAREHOUSE_NAME,   type: lookup, lookup: warehouse-names, optional: true }
+    - { from: STYLE_NO,        to: STYLE_DESC,       type: lookup, lookup: style-catalog,   optional: true }
+    
+    # Derived/computed fields
+    - { to: total_inventory,      type: expression, value: "row.QTY_ON_HAND + row.QTY_ON_ORDER" }
+    - { to: sync_timestamp,       type: expression, value: "new Date().toISOString()" }
+    - { to: sync_source,          type: expression, value: "row.WAREHOUSE_ID" }
+
+target:
+  adapter: csv
+  output: ./output/inventory-unified.csv
+  includeHeader: true
+  delimiter: ","
+  encoding: utf-8
+  nullValue: ""
+
+run:
+  mode: full
+  batchSize: 1000
+  onError: continue
+  logLevel: info
+  dryRun: false
+  outputDir: ./output
+  stagingDb: ./output/inventory-sync.duckdb

@@ -12,13 +12,17 @@
 import * as path from 'node:path';
 
 import type { Pipeline } from '../config/types.js';
+import type { RuleRegistry } from '../plugins/registry.js';
 import { StagingStore, quoteIdent } from '../staging/index.js';
+import { ConfigError } from '../utils/errors.js';
 import { writeRejectionCsv, writeSummaryJson } from './reporter.js';
 import { BUILT_IN_RULES } from './rules/index.js';
-import type { RuleViolation } from './rules/types.js';
+import type { Rule, RuleViolation } from './rules/types.js';
 import type { DQSummary, ViolationCounts } from './types.js';
 
 export class DQEngine {
+  constructor(private readonly ruleRegistry?: RuleRegistry) {}
+
   async run(
     config: Pipeline,
     store: StagingStore,
@@ -74,7 +78,15 @@ export class DQEngine {
             }
             continue;
           }
-          const impl = BUILT_IN_RULES[check.type];
+          const impl: Rule | undefined =
+            (BUILT_IN_RULES as Record<string, Rule>)[check.type] ??
+            this.ruleRegistry?.get(check.type);
+          if (!impl) {
+            throw new ConfigError(
+              `Unknown DQ rule type "${String(check.type)}". ` +
+                `Built-in types: ${Object.keys(BUILT_IN_RULES).join(', ')}`,
+            );
+          }
           const violation = impl.validate(value, check, rowIndex, rule.field);
           if (violation) violations.push(violation);
         }

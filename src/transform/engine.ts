@@ -127,8 +127,29 @@ function applyFieldMapping(
     if (!plugin) {
       throw new TransformError(`No custom transform plugin registered for "${field.customOp}"`);
     }
-    const value = typeof field.from === 'string' ? row[field.from] : undefined;
-    return plugin.apply(value, row, field as unknown as CustomFieldMapping);
+    let value = typeof field.from === 'string' ? row[field.from] : undefined;
+
+    // Apply default/optional logic before calling plugin
+    if (value === null || value === undefined || value === '') {
+      if (field.default !== undefined && field.default !== null) {
+        return field.default;
+      } else if (field.optional) {
+        return null;
+      }
+    }
+
+    const result = plugin.apply(value, row, field as unknown as CustomFieldMapping);
+
+    // Apply default/optional logic after plugin returns
+    if (result === null || result === undefined) {
+      if (field.default !== undefined && field.default !== null) {
+        return field.default;
+      } else if (field.optional) {
+        return null;
+      }
+    }
+
+    return result;
   }
 
   // ── concat: join from[] with separator, then cleanse ────────────────────

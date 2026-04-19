@@ -103,7 +103,9 @@ run:    { dryRun: true, outputDir: ${yamlPath(workDir)} }
 
     const result = await new PipelineRunner().run(yaml);
     expect(result.load).toBeNull();
-    expect(result.transform).toBeNull();
+    expect(result.transform).not.toBeNull();
+    expect(result.transform?.rowsIn).toBe(1);
+    expect(result.transform?.rowsOut).toBe(1);
     // Output file must not exist
     expect(() => readFileSync(outputCsv, 'utf8')).toThrow();
   });
@@ -132,12 +134,15 @@ run:    { mode: validate-only, stagingDb: ":memory:", outputDir: ${yamlPath(work
 
     const result = await new PipelineRunner().run(yaml);
     expect(result.mode).toBe('validate-only');
+    expect(result.transform).not.toBeNull();
+    expect(result.transform?.rowsIn).toBe(1);
+    expect(result.transform?.rowsOut).toBe(1);
     expect(result.load).toBeNull();
   });
 
-  it('rejects incremental mode with ConfigError', async () => {
+  it('rejects incremental mode when incrementalField is missing', async () => {
     const inputCsv = join(workDir, 'input.csv');
-    writeFileSync(inputCsv, 'id,name\n1,a\n', 'utf8');
+    writeFileSync(inputCsv, 'id,updated_at,name\n1,2026-01-01T00:00:00.000Z,a\n', 'utf8');
     const outputCsv = join(workDir, 'output.csv');
     const pipelineYaml = `
 pipeline:
@@ -156,7 +161,51 @@ run:    { mode: incremental, stagingDb: ":memory:", outputDir: ${yamlPath(workDi
     const yaml = join(workDir, 'pipeline.yaml');
     writeFileSync(yaml, pipelineYaml, 'utf8');
 
-    await expect(new PipelineRunner().run(yaml)).rejects.toThrow(/incremental/i);
+    await expect(new PipelineRunner().run(yaml)).rejects.toThrow(/incrementalField/i);
+  });
+
+  it('runs incremental mode with incrementalField and incrementalSince', async () => {
+    const inputCsv = join(workDir, 'input.csv');
+    writeFileSync(
+      inputCsv,
+      [
+        'id,updated_at,name',
+        '1,2026-01-01T00:00:00.000Z,old-a',
+        '2,2026-03-01T00:00:00.000Z,new-b',
+      ].join('\n') + '\n',
+      'utf8',
+    );
+    const outputCsv = join(workDir, 'output.csv');
+    const pipelineYaml = `
+pipeline:
+  name: mvp-incr-ok
+  client: test
+  version: "1.0"
+  entity: Test
+source: { adapter: csv, file: ${yamlPath(inputCsv)} }
+dq:    { stopOnCritical: false, rules: [] }
+transform:
+  fields:
+    - { from: id, to: id, type: string }
+    - { from: name, to: name, type: string }
+target: { adapter: csv, output: ${yamlPath(outputCsv)}, includeHeader: true }
+run:
+  mode: incremental
+  incrementalField: updated_at
+  incrementalSince: "2026-02-01T00:00:00.000Z"
+  stagingDb: ":memory:"
+  outputDir: ${yamlPath(workDir)}
+`;
+    const yaml = join(workDir, 'pipeline.yaml');
+    writeFileSync(yaml, pipelineYaml, 'utf8');
+
+    const result = await new PipelineRunner().run(yaml);
+    expect(result.extract.rowsExtracted).toBe(1);
+    expect(result.load?.rowsLoaded).toBe(1);
+
+    const output = readFileSync(outputCsv, 'utf8');
+    expect(output).toContain('2,new-b');
+    expect(output).not.toContain('1,old-a');
   });
 
   it('uses custom delimiter end-to-end', async () => {
