@@ -39,11 +39,6 @@ export const intersectStrategy: MergeStrategyPlugin = {
     rawSources: MergeSourceMeta[],
     config: MergeConfig,
   ): Promise<MergeResult> {
-    // Ensure config has all required fields
-    if (!config.fieldStrategies) {
-      (config as any).fieldStrategies = [];
-    }
-
     if (rawSources.length < 2) {
       throw new ConfigError('merge requires at least 2 sources');
     }

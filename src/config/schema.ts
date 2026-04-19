@@ -74,7 +74,7 @@ const CheckSchema = z.object({
 
 const DqRuleSchema = z.object({
   field:    z.string(),
-  sourceId: z.string().optional(),   // Phase 3 prep Change 2: scopes rule to a named source; parsed & ignored in Phase 1
+  sourceId: z.string().optional(),   // scopes a rule to a named source in multi-source pipelines; ignored in single-source mode
   checks:   z.array(CheckSchema).min(1),
 });
 

@@ -27,31 +27,61 @@ Sluice lets you describe the entire migration as a **YAML pipeline config** — 
 The data flows through four stages — like water through a sluice gate:
 
 ```
-💾 Source                   🔍 Data Quality              ✨ Transform               🎯 Target
+💾 Source(s)                🔍 Data Quality              ✨ Transform               🎯 Target
 ─────────────────    →     ─────────────────    →     ─────────────────    →     ─────────────────
 MSSQL / CSV /              Validate rules              Map fields                 Business Central
 XLSX / REST /              Reject bad rows             Apply lookups              IFS ERP
 PostgreSQL                 Write DQ report             Cleanse values             BlueCherry ERP
                                                        Evaluate expressions       CSV / PostgreSQL
+  (1..N sources)
+        ↓
+  🔀 Optional Merge
+   coalesce, union,
+   intersect, priority
 ```
 
 Under the bonnet, all extracted data passes through a **local DuckDB staging store** before being transformed and loaded. Think of it as a staging area where data sits while it gets its act together before being presented to the target ERP. 🦆
+
+Pipelines can be **single-source** (one YAML per entity, one `source:` block) or **multi-source** — 2+ sources merged on a key column using one of four built-in strategies before DQ and transform run. See [Multi-Source Merge](#-multi-source-merge) below.
 
 ---
 
 ## 🏗️ Architecture
 
+### Single-source pipeline
+
 ```mermaid
 flowchart LR
-    A[📄 Pipeline YAML] --> B[⚙️ Config Loader\nZod validation\nENV var resolution]
+    A[📄 Pipeline YAML] --> B[⚙️ Config Loader\nZod validation\nENV var resolution\nComposite rule expansion]
     B --> C[🔌 Source Adapter\nmssql / pg / csv\nxlsx / rest]
     C --> D[(🦆 DuckDB\nstg_raw)]
     D --> E[🔍 DQ Engine\nRules validation\nRejection report]
-    E --> F[✨ Transform Engine\nField mapping\nLookup resolution\nCleanse ops]
+    E --> F[✨ Transform Engine\nField mapping\nLookup resolution\nCleanse ops\nCustom plugins]
     F --> G[(🦆 DuckDB\nstg_transformed)]
     G --> H[🎯 Target Adapter\nbc / ifs / bluecherry\ncsv / pg]
     H --> I[📦 Output\nCSV / REST / DB]
     E -->|❌ critical failures| J[🛑 Pipeline halted\ndq-summary.json\nrejected.csv]
+```
+
+### Multi-source pipeline
+
+```mermaid
+flowchart LR
+    A[📄 Pipeline YAML\nsources + merge] --> B[⚙️ Config Loader]
+    B --> C1[🔌 Source 1]
+    B --> C2[🔌 Source 2]
+    B --> C3[🔌 Source N]
+    C1 --> D1[(🦆 stg_raw_src1\n+ rename + per-source DQ)]
+    C2 --> D2[(🦆 stg_raw_src2\n+ rename + per-source DQ)]
+    C3 --> D3[(🦆 stg_raw_srcN\n+ rename + per-source DQ)]
+    D1 --> M[🔀 MergeEngine\ncoalesce / union\nintersect / priority-override]
+    D2 --> M
+    D3 --> M
+    M --> G[(🦆 stg_merged\n+ stg_merge_conflicts.csv)]
+    G --> E[🔍 Post-merge DQ]
+    E --> F[✨ Transform → stg_transformed]
+    F --> H[🎯 Target Adapter]
+    H --> I[📦 Output]
 ```
 
 ---
@@ -133,7 +163,7 @@ Each migration entity gets its own YAML file. One entity, one file. Nice and tid
    (customers, items, vendors, styles, purchase orders, etc.)
 ```
 
-A pipeline has five sections:
+A single-source pipeline has five sections:
 
 ```yaml
 pipeline:   { name, client, version, entity, description }
@@ -143,6 +173,20 @@ transform:  { lookups, fields }
 target:     { adapter, output/baseUrl, ... }
 run:        { mode, batchSize, logLevel, dryRun, ... }  # all optional
 ```
+
+A multi-source pipeline swaps `source:` for `sources:` + `merge:`:
+
+```yaml
+pipeline:   { ... }
+sources:    [ { id, priority, adapter, ..., rename? }, ... ]   # 2+ entries
+merge:      { key, strategy, onUnmatched, fieldStrategies, conflictLog, incrementalSource? }
+dq:         { ... }                 # rules can be scoped via sourceId
+transform:  { ... }
+target:     { ... }
+run:        { ... }
+```
+
+`PipelineSchema` requires *either* `source:` (single) *or* both `sources:` + `merge:` (multi) — never both. The CLI auto-routes based on which shape the YAML has, so there's no flag to remember.
 
 ### 📥 Source Adapters
 
@@ -213,7 +257,7 @@ Severity levels: `critical` (row rejected, pipeline can halt) · `warning` (flag
 | `concat` | Join multiple source fields with a separator |
 | `constant` | Emit a fixed value (e.g. `CustomerGroup: DOMESTIC`) |
 | `expression` | Evaluate an expression against the source row |
-| `custom` | Delegate to a plugin (Phase 2) |
+| `custom` | Delegate to a `TransformPlugin` via `customOp` (Phase 2) |
 
 ### 🧹 Cleanse Operations
 
@@ -239,23 +283,26 @@ Pipe-chain them: `cleanse: trim|titleCase|normaliseUnicode`
 ```
 sluice/
 ├── src/
-│   ├── cli.ts              ← CLI entry point (commander)
-│   ├── runner.ts           ← PipelineRunner — orchestrates all phases
-│   ├── config/             ← Zod schema, YAML loader, ENV var resolution
+│   ├── cli.ts                  ← CLI entry point (commander)
+│   ├── runner.ts               ← PipelineRunner — single-source orchestration
+│   ├── multi-source-runner.ts  ← MultiSourcePipelineRunner (Phase 3)
+│   ├── config/                 ← Zod schema, YAML loader, ENV var + composite expansion
 │   ├── adapters/
-│   │   ├── source/         ← mssql, pg, csv, xlsx, rest
-│   │   └── target/         ← bc, ifs, bluecherry, csv, pg
-│   ├── staging/            ← DuckDB wrapper (stg_raw → stg_transformed)
-│   ├── dq/                 ← DQ engine, rules, rejection reporter
-│   ├── transform/          ← Transform engine, lookup resolver, cleanse ops
-│   └── utils/              ← logger (pino), errors, env helpers
+│   │   ├── source/             ← mssql, pg, csv, xlsx, rest
+│   │   └── target/             ← bc, ifs, bluecherry, csv, pg
+│   ├── staging/                ← DuckDB wrapper (stg_raw → stg_merged → stg_transformed)
+│   ├── dq/                     ← DQ engine, rules, rejection reporter
+│   ├── transform/              ← Transform engine, lookup resolver, cleanse ops
+│   ├── merge/                  ← MergeEngine, SQL builder, 4 built-in strategies
+│   ├── plugins/                ← Rule/Transform/Merge registries + file & npm loaders
+│   └── utils/                  ← logger (pino), errors, env helpers
 ├── tests/
-│   ├── fixtures/           ← sample pipeline YAMLs and CSV data
-│   ├── unit/               ← unit tests (all I/O mocked)
-│   └── integration/        ← real DuckDB :memory: + CSV fixtures
-└── clients/                ← 🙈 gitignored — each client has their own repo
-    ├── acme-corp/            ← Acme Corp pipelines
-    └── style-co/              ← Style Co pipelines
+│   ├── fixtures/               ← sample pipeline YAMLs, CSV/rules data, plugin files
+│   ├── unit/                   ← unit tests (all I/O mocked)
+│   └── integration/            ← real DuckDB :memory: + CSV fixtures
+└── clients/                    ← 🙈 gitignored — each client has their own repo
+    ├── acme-corp/                ← Acme Corp pipelines
+    └── style-co/                  ← Style Co pipelines
 ```
 
 ---
@@ -271,7 +318,7 @@ BC_BASE_URL=https://api.businesscentral.dynamics.com/v2.0
 BC_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 BC_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 BC_CLIENT_SECRET=your-secret-here
-BC_COMPANY=Acme Corp Ltd
+BC_COMPANY=Example Company Ltd
 ```
 
 Reference them in YAML with `${ENV_VAR}` — resolved at runtime, never stored in config:
@@ -314,7 +361,7 @@ dq:
 
 ### Tier 2 — Plugin Files (TypeScript) 🔌
 
-Drop a `*.rule.ts` or `*.transform.ts` file into a `plugins/` folder next to your pipeline YAMLs. Auto-discovered at startup:
+Drop a `*.rule.ts`, `*.transform.ts`, or `*.merge.ts` file into a `plugins/` folder next to your pipeline YAMLs. Auto-discovered at startup:
 
 ```typescript
 // plugins/ukVatNumber.rule.ts
@@ -376,9 +423,98 @@ Detailed guide: **[PLUGINS.md](./PLUGINS.md)**
 
 - Create a custom DQ rule
 - Create a custom transform operation
+- Create a custom merge strategy
 - Package plugins as npm packages
 - Test and debug plugins
 - Real-world examples
+
+---
+
+## 🔀 Multi-Source Merge
+
+Phase 3 lets a single pipeline extract from **2+ sources** and merge them on a key column before DQ and transform. Useful when the master record for an entity is scattered across systems — master data in SQL Server, pricing enrichment in an Excel sheet, product descriptions in Odoo, and so on.
+
+### Built-in merge strategies
+
+| Strategy | Behaviour | When to use |
+|---|---|---|
+| `coalesce` | First non-null value wins (priority-ordered; whitespace treated as blank) | Enriching a primary source with fallback data from lower-priority sources |
+| `priority-override` | Highest-priority source wins, even if null or blank | Strict priority — the trusted source is the trusted source, full stop |
+| `union` | All rows from all sources, deduplicated by key | Combining independent datasets (e.g. multi-warehouse inventory) |
+| `intersect` | Only rows present in **all** sources | Reconciliation / "find the records that agree" |
+
+Custom strategies can be dropped in as `*.merge.ts` plugins or shipped as npm packages — same three-tier model as DQ rules and transforms.
+
+### A minimal multi-source pipeline
+
+```yaml
+pipeline:
+  name: style-co-products-merged
+  client: style-co
+  version: "1.0"
+  entity: Style
+
+sources:
+  - id: sql-server              # staging table: stg_raw_sql-server
+    priority: 1                 # lower = higher precedence
+    adapter: mssql
+    connection: ${SOURCE_2_MSSQL}
+    query: "SELECT STYLE_NO, STYLE_DESC, COST_PRICE FROM dbo.Styles WHERE Active = 1"
+
+  - id: excel
+    priority: 2
+    adapter: xlsx
+    file: ./data/product-data.xlsx
+    sheet: "Products"
+    rename:                     # applied in-place after extract, before DQ
+      Style Number: STYLE_NO
+      Description: STYLE_DESC
+      Fibre: FIBRE_CONTENT
+
+merge:
+  key: STYLE_NO                 # single column or array for composite keys
+  strategy: coalesce
+  onUnmatched: include          # include | exclude | warn | error
+  fieldStrategies:              # per-field overrides
+    - { field: FIBRE_CONTENT, source: excel }          # pin to one source
+    - { field: COST_PRICE,    strategy: priority-override }
+  conflictLog: ./output/style-co-products-conflicts.csv   # optional CSV of field disagreements
+
+dq:
+  stopOnCritical: true
+  rules:
+    - field: STYLE_NO           # 🎯 pre-merge: scoped to one source
+      sourceId: sql-server
+      checks: [ { type: notNull, severity: critical }, { type: unique, severity: critical } ]
+    - field: STYLE_DESC         # 🎯 post-merge: runs against stg_merged
+      checks: [ { type: notNull, severity: critical } ]
+
+transform: { ... }
+target:    { ... }
+```
+
+Pre-merge rules (`sourceId: …`) run against each source's staging table before merging and generate per-source rejection CSVs (suffixed `-{sourceId}`). Post-merge rules (no `sourceId`) run once against `stg_merged`.
+
+### Incremental multi-source
+
+```yaml
+merge:
+  incrementalSource: sql-server   # must match a source id; required in incremental mode
+run:
+  mode: incremental
+  incrementalField: UPDATED_AT
+```
+
+Only the named source is filtered by timestamp; other sources run full each time. The state file gains a per-source `sources` block tracking each source's last run time.
+
+### Inspect merge strategies
+
+```bash
+sluice merge list-strategies        # ids + descriptions for all registered strategies
+sluice merge info coalesce          # details for one strategy
+```
+
+A full working example lives at [tests/fixtures/style-co-products-merged.pipeline.yaml](tests/fixtures/style-co-products-merged.pipeline.yaml).
 
 ---
 

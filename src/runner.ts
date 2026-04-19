@@ -1,12 +1,10 @@
 /**
- * PipelineRunner — the single entry point for a Sluice pipeline.
+ * PipelineRunner — the single entry point for a single-source Sluice pipeline.
  *
- * Phase 3 prep Change 5 baked in:
- *   - Public `run()` is the only public method; behaviour unchanged for single-source.
- *   - Work decomposed into `protected` phase methods so Phase 3's
- *     MultiSourcePipelineRunner can override each phase cleanly.
- *   - `runDQ` carries an unused `sourceId?: string` parameter reserved for Phase 3.
- *   - `writeStateFile` is protected so the multi-source runner can override it.
+ * Public API: `run()` (and `profile()`). Everything else is decomposed into
+ * `protected` phase methods so `MultiSourcePipelineRunner` can override each
+ * phase cleanly. `runDQ` carries an unused `sourceId?: string` parameter used
+ * by the multi-source runner when it filters per-source DQ rules.
  */
 
 import * as fs from 'node:fs/promises';
@@ -28,7 +26,6 @@ import { StagingStore, quoteIdent } from './staging/index.js';
 import { TransformEngine, type TransformResult } from './transform/index.js';
 import { RuleRegistry, TransformRegistry } from './plugins/registry.js';
 import { loadPlugins, loadNpmPlugins } from './plugins/loader.js';
-import type { RulePlugin, TransformPlugin } from './plugins/types.js';
 import { ConfigError, PipelineDQError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
 
@@ -128,7 +125,7 @@ export class PipelineRunner {
     if (isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" declares multiple sources. ` +
-        'Use MultiSourcePipelineRunner (Phase 3) to run multi-source pipelines.',
+        'Use MultiSourcePipelineRunner to run multi-source pipelines.',
       );
     }
 
@@ -252,7 +249,7 @@ export class PipelineRunner {
     config: Pipeline,
     store: StagingStore,
     tableName = 'stg_raw',
-    _sourceId?: string, // Phase 3 prep Change 5 — filtering lands with multi-source.
+    _sourceId?: string, // Reserved for per-source filtering in MultiSourcePipelineRunner.
   ): Promise<DQSummary> {
     const summary = await this.dqEngine.run(config, store, tableName);
     logger.info(
@@ -348,7 +345,7 @@ export class PipelineRunner {
     if (isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" declares multiple sources. ` +
-        'Use MultiSourcePipelineRunner (Phase 3) to profile multi-source pipelines.',
+        'Use MultiSourcePipelineRunner to profile multi-source pipelines.',
       );
     }
     if (config.run.mode === 'incremental' && !config.run.incrementalField) {

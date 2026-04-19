@@ -10,8 +10,8 @@
  * - Rows are streamed through csv-parse and flushed to the staging store
  *   in batches of `runConfig.batchSize`.
  *
- * Phase 3 prep Change 1: `targetTable` defaults to 'stg_raw' here; the
- * interface declares it optional so callers may override.
+ * `targetTable` defaults to 'stg_raw' here so single-source callers don't
+ * have to pass it; `MultiSourcePipelineRunner` overrides per source.
  */
 
 import { createReadStream, readdirSync } from 'node:fs';

@@ -22,7 +22,6 @@ modules that can be imported by other tools (e.g. n8n custom nodes, GitHub Actio
 | Client | Source(s) | Target ERP | Adapter |
 |---|---|---|---|
 | Acme Corp | MSSQL legacy DB | IFS ERP | `ifs` |
-| Acme Corp | MSSQL legacy DB | Business Central | `bc` |
 | Style Co | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
 
 **Primary use cases:**
@@ -703,6 +702,146 @@ run:
 ---
 
 ## ═══════════════════════════════════════════════════════════
+## MULTI-SOURCE PIPELINES  (Phase 3)
+## ═══════════════════════════════════════════════════════════
+
+A multi-source pipeline replaces the single `source:` block with a top-level
+`sources:` array (min 2 entries) plus a `merge:` block. The rest of the YAML
+(`pipeline`, `dq`, `transform`, `target`, `run`) is unchanged. `PipelineSchema`
+requires *either* `source` (single) *or* both `sources` + `merge` (multi) —
+never both — and the CLI auto-routes multi-source configs to
+`MultiSourcePipelineRunner` (see `src/cli.ts:createRunnerForPipeline`).
+
+### Top-level layout
+
+```yaml
+pipeline:  { ... }
+sources:   [ { ... }, { ... } ]   # REQUIRED in multi-source mode; min 2 entries
+merge:     { ... }                # REQUIRED when `sources` is present
+dq:        { ... }
+transform: { ... }
+target:    { ... }
+run:       { ... }
+```
+
+### `sources` entries
+
+Each entry is a `SourceConfig` with three extra multi-source-only fields:
+
+```yaml
+sources:
+  - id: sql-server               # REQUIRED. Lowercase alphanumeric + hyphens only;
+                                 # must be unique across the array; used as the
+                                 # staging table suffix (stg_raw_sql-server).
+    priority: 1                  # REQUIRED. Positive integer. Lower priority =
+                                 # higher precedence in coalesce / priority-override.
+    adapter: mssql
+    connection: ${SOURCE_2_MSSQL}
+    query: |
+      SELECT STYLE_NO, STYLE_DESC, COST_PRICE FROM dbo.Styles WHERE Active = 1
+
+  - id: excel
+    priority: 2
+    adapter: xlsx
+    file: ./data/product-data.xlsx
+    sheet: "Products"
+    rename:                      # Optional. { 'old column': 'new column' }.
+      Style Number: STYLE_NO     # Applied in-place after extract, before DQ and
+      Description: STYLE_DESC    # merge. Intended for CSV/XLSX sources where
+      Fibre: FIBRE_CONTENT       # column headers are fixed; SQL/REST sources
+                                 # should rename in the query or field selection.
+                                 # Unknown keys are logged as warnings, not errors.
+```
+
+### `merge` block
+
+```yaml
+merge:
+  key: STYLE_NO                  # REQUIRED. Single column name or array of
+                                 # columns (composite key). Must exist in every
+                                 # source after `rename` is applied.
+
+  strategy: coalesce             # Default: coalesce. One of:
+                                 #   coalesce           first non-null value wins
+                                 #                      (priority-ordered; whitespace
+                                 #                      treated as blank)
+                                 #   priority-override  highest-priority source
+                                 #                      wins (even if null/blank)
+                                 #   union              all rows from all sources
+                                 #                      (dedupe by key)
+                                 #   intersect          only rows present in ALL
+                                 #                      sources
+
+  onUnmatched: include           # Default: include. One of:
+                                 #   include   (default) keep unmatched rows
+                                 #   exclude   drop them
+                                 #   warn      keep and log a warning
+                                 #   error     fail the pipeline
+                                 # Ignored by `intersect`, which always excludes.
+
+  fieldStrategies:               # Optional. Per-field overrides of the
+                                 # top-level strategy.
+    - field: FIBRE_CONTENT
+      source: excel              # Force this field to always come from the
+                                 # named source, ignoring priority.
+    - field: COST_PRICE
+      strategy: priority-override  # Override just this field's strategy.
+
+  conflictLog: ./output/style-co-products-conflicts.csv
+                                 # Optional. CSV of (key, field, winning_source,
+                                 # winning_value, source_values). Only written
+                                 # when at least one conflict is detected.
+
+  incrementalSource: sql-server  # REQUIRED when `run.mode: incremental`.
+                                 # Must match one of the source `id` values.
+                                 # The named source is filtered by
+                                 # `run.incrementalField` / state-file lastRunAt;
+                                 # other sources run full each time.
+```
+
+### Multi-source DQ rules
+
+`dq.rules[].sourceId` (optional) scopes a rule to a specific pre-merge source
+table. Rules without `sourceId` run post-merge against `stg_merged`:
+
+```yaml
+dq:
+  stopOnCritical: true
+  rules:
+    - field: STYLE_NO            # Pre-merge: runs against stg_raw_sql-server only.
+      sourceId: sql-server
+      checks:
+        - { type: notNull, severity: critical }
+        - { type: unique,  severity: critical }
+
+    - field: STYLE_DESC          # Post-merge: runs against stg_merged.
+      checks:
+        - { type: notNull,   severity: critical }
+        - { type: maxLength, value: 255, severity: warning }
+```
+
+Per-source rejection files are auto-named by appending `-{sourceId}` to the
+configured `rejectionFile` stem. Rows failing a critical pre-merge rule are
+filtered out of that source's staging table *before* the merge phase.
+
+### Full example
+
+See [tests/fixtures/style-co-products-merged.pipeline.yaml](tests/fixtures/style-co-products-merged.pipeline.yaml)
+for a complete, tested multi-source pipeline (MSSQL + REST + XLSX → BlueCherry
+with `coalesce` + `fieldStrategies` + `incrementalSource`).
+
+### Invocation
+
+```bash
+sluice check tests/fixtures/style-co-products-merged.pipeline.yaml
+sluice run   tests/fixtures/style-co-products-merged.pipeline.yaml
+sluice merge list-strategies
+sluice merge info coalesce
+```
+
+---
+
+## ═══════════════════════════════════════════════════════════
 ## ZOD SCHEMA  (src/config/schema.ts)
 ## ═══════════════════════════════════════════════════════════
 
@@ -876,6 +1015,26 @@ They are live in the codebase and tested. Do not remove them.
 - **`CompositeRuleSchema` / `CompositeRuleLibrarySchema`** — schemas for the
   shared rule library YAML files referenced by `dq.rulesFile`.
 
+### Phase 3 schema additions (multi-source merge)
+
+- **`DqRuleSchema.sourceId`** (`z.string().optional()`) — scopes a rule to a
+  named pre-merge source; omitted for post-merge rules.
+- **`PipelineSchema.source`** — now `optional()`; mutually exclusive with
+  `sources` (enforced by `.refine()`).
+- **`PipelineSchema.sources`** (`z.array(MultiSourceEntrySchema).min(2).optional()`)
+  — the multi-source array. Refinement also checks unique source ids and
+  (in incremental mode) that `merge.incrementalSource` matches a source id.
+- **`PipelineSchema.merge`** (`MergeSchema.optional()`) — per-pipeline merge
+  config. Defaults: `strategy: 'coalesce'`, `onUnmatched: 'include'`.
+- **`MergeSchema`** — `key`, `strategy`, `onUnmatched`, `fieldStrategies[]`,
+  `conflictLog`, `incrementalSource`.
+- **`MergeFieldStrategySchema`** — per-field override: `field`, optional
+  `strategy`, optional `source` (at least one required).
+- **`MultiSourceEntrySchema`** — extends `SourceBaseSchema` with `id`,
+  `priority`, and optional `rename`.
+- **`isSingleSource(p)` / `isMultiSource(p)`** — exported type guards that
+  narrow `Pipeline` to the single- or multi-source shape.
+
 ---
 
 ## ═══════════════════════════════════════════════════════════
@@ -892,14 +1051,18 @@ export interface SourceAdapter {
     config: SourceConfig,
     store: StagingStore,
     runConfig: RunConfig,
-    onProgress: (rows: number) => void
+    onProgress: (rows: number) => void,
+    targetTable?: string           // defaults to 'stg_raw'; set per-source in
+                                   // multi-source pipelines
   ): Promise<ExtractResult>;
   disconnect(): Promise<void>;
 }
 
 export interface ExtractResult {
   rowsExtracted: number;
-  tableName: string;        // always 'stg_raw'
+  tableName: string;        // caller-supplied; 'stg_raw' for single-source,
+                            // 'stg_raw_{sourceId}' for each source in a
+                            // multi-source pipeline
   columns: ColumnMeta[];
 }
 
@@ -953,6 +1116,39 @@ export interface RuleViolation {
   message: string;
 }
 ```
+
+### MergeStrategyPlugin  (src/merge/types.ts)
+
+```typescript
+export interface MergeSourceMeta {
+  id:        string;
+  priority:  number;
+  tableName: string;   // e.g. 'stg_raw_sql-server'
+}
+
+export interface MergeResult {
+  rowsMerged:  number;
+  conflicts:   number;     // fields where two non-null values disagreed
+  unmatched:   number;     // records present in only one source
+  tableName:   'stg_merged';
+}
+
+export interface MergeStrategyPlugin {
+  readonly id: string;              // matches MergeSchema.strategy value
+  readonly description?: string;    // shown by `sluice merge list-strategies`
+
+  merge(
+    store:   StagingStore,
+    sources: MergeSourceMeta[],     // priority-ordered (priority 1 first)
+    config:  MergeConfig,
+  ): Promise<MergeResult>;
+}
+```
+
+Built-in strategies: `coalesce`, `priority-override`, `union`, `intersect`
+(all pre-registered in `MergeStrategyRegistry`; live in
+`src/merge/strategies/*.ts`). Custom strategies can be dropped into a
+`plugins/` folder as `*.merge.ts` files exporting `const mergeStrategy`.
 
 ---
 
@@ -1108,6 +1304,59 @@ The CLI entry point must call `loadEnv()` before invoking the loader. This keeps
 
 Used by `mode: incremental` to auto-determine the `since` timestamp.
 
+### Multi-source execution order (`MultiSourcePipelineRunner`)
+
+For a pipeline with `sources` + `merge`, the CLI selects
+`MultiSourcePipelineRunner` (a subclass of `PipelineRunner` that overrides
+`run()`, `profile()`, and `writeStateFile()` and reuses the protected
+`runExtract`, `runDQ`, `runTransform`, `runLoad` phase methods).
+
+```
+1.  Load + validate config         ConfigLoader.load(yamlPath)
+2.  Load plugins                   files + sluice.config.yaml (Tier 2/3)
+3.  Resolve output dir, open DuckDB staging store
+4.  For each source (priority-ordered):
+    a. runExtract → 'stg_raw_{sourceId}'
+    b. If source.rename is set    StagingStore.renameColumns(...)
+    c. If mode: incremental AND source.id === merge.incrementalSource:
+       apply TRY_CAST(... AS TIMESTAMP) >= since filter
+    d. Filter dq.rules by sourceId; runDQ against 'stg_raw_{sourceId}'
+       (writes per-source rejection CSV, stops on critical)
+    e. Rewrite 'stg_raw_{sourceId}' to only the accepted rows
+5.  MergeEngine.run(store, sources, merge)
+    → creates 'stg_merge_joined', 'stg_merged', 'stg_merge_conflicts'
+    → writes conflictLog CSV if configured
+6.  runDQ on the post-merge rules (no sourceId) against 'stg_merged'
+7.  Filter rejected rows; runTransform against the filtered merge result
+8.  If dryRun OR validate-only → STOP
+9.  runLoad → target adapter reads 'stg_transformed'
+10. writeStateFile → per-source lastRunAt block + top-level summary
+11. Close DuckDB
+```
+
+**Multi-source state file** adds a `sources` block keyed by source id:
+
+```json
+{
+  "pipeline": "style-co-products-merged",
+  "lastRunAt": "2026-04-19T09:30:00.000Z",
+  "lastMode": "incremental",
+  "rowsMerged": 3201,
+  "rowsLoaded": 3188,
+  "criticalViolations": 0,
+  "warnings": 14,
+  "incrementalSince": "",
+  "sources": {
+    "sql-server": {
+      "lastRunAt": "2026-04-19T09:30:00.000Z",
+      "rowsExtracted": 2910,
+      "incrementalSince": "2026-04-18T22:00:00.000Z"
+    },
+    "excel": { "lastRunAt": "...", "rowsExtracted": 412, "incrementalSince": "" }
+  }
+}
+```
+
 ---
 
 ## ═══════════════════════════════════════════════════════════
@@ -1132,6 +1381,10 @@ class StagingStore {
     outputPath: string,
     options?: { delimiter?: string; header?: boolean; encoding?: string }
   ): Promise<void>
+  async renameColumns(                  // Phase 3: used by MultiSourcePipelineRunner
+    tableName: string,                  // after a per-source extract. Implemented as
+    renames: Record<string, string>     // CREATE OR REPLACE TABLE ... AS SELECT ...
+  ): Promise<void>                      // Unknown keys log a warning, not an error.
 }
 ```
 
@@ -1237,15 +1490,19 @@ frame from stack traces for cleaner output.
 ## ═══════════════════════════════════════════════════════════
 
 ```
-sluice run       <pipeline.yaml>   Full pipeline run
+sluice run       <pipeline.yaml>   Full pipeline run (auto-detects single vs multi-source)
 sluice validate  <pipeline.yaml>   DQ + transform only; no load
 sluice profile   <pipeline.yaml>   Extract + column profiling; no DQ
 sluice check     <pipeline.yaml>   Config validation only; no execution
+sluice plugins                     List all loaded rule/transform/merge plugins
+sluice merge list-strategies       List all registered merge strategies
+sluice merge info <strategy>       Show details about a specific merge strategy
 
 Global options:
   --log-level <level>   debug | info | warn | error
   --env <file>          Path to .env file  (default: ./.env)
   --output <dir>        Override outputDir
+  --plugins <dir...>    Additional plugin directory/directories to load
   --dry-run             Force dryRun: true
 ```
 
@@ -1281,12 +1538,12 @@ SOURCE_MSSQL=mssql://user:password@serverlegacy.example.local/LegacyDB
 # ── Acme Corp — IFS target ────────────────────────────────
 IFS_IMPORT_PATH=C:\IFS\Import
 
-# ── Acme Corp — Business Central ─────────────────────────
+# ── Business Central target (any client using the `bc` adapter) ──
 BC_BASE_URL=https://api.businesscentral.dynamics.com/v2.0
 BC_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 BC_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 BC_CLIENT_SECRET=your-client-secret
-BC_COMPANY=Acme Corp Ltd
+BC_COMPANY=Example Company Ltd
 
 # ── Style Co — source ───────────────────────────────────
 SOURCE_2_MSSQL=mssql://user:password@serverlegacy2.example.local/LegacyDB

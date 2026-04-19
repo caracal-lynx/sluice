@@ -15,8 +15,8 @@ export interface MergeResult {
 }
 
 export interface MergeStrategyPlugin {
-  readonly id: string;           // matches MergeSchema.strategy value
-  readonly description: string;  // human-readable strategy description
+  readonly id: string;            // matches MergeSchema.strategy value
+  readonly description?: string;  // human-readable strategy description (optional per phase3 prep spec)
 
   /**
    * Merges N source staging tables into stg_merged.

@@ -1,11 +1,9 @@
 /**
  * PostgreSQL source adapter.
  *
- * Executes `config.query` against `config.connection` via pg.Pool. For Phase 1
- * the entire result set is held in memory; streaming via cursors is a future
- * optimization for very large extracts.
- *
- * Phase 3 prep Change 1: `targetTable` defaults to 'stg_raw' at this layer.
+ * Executes `config.query` against `config.connection` via pg.Pool. The entire
+ * result set is held in memory; streaming via cursors is a future optimization
+ * for very large extracts. `targetTable` defaults to 'stg_raw'.
  */
 
 import pg from 'pg';

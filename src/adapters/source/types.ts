@@ -1,11 +1,9 @@
 /**
  * Source adapter interface.
  *
- * Phase 3 prep Change 1 baked in:
- *   - ExtractResult.tableName is `string` (was literal 'stg_raw')
- *   - extract() accepts an optional `targetTable` parameter
- * This keeps the interface stable when MultiSourcePipelineRunner (Phase 3)
- * extracts into `stg_raw_{sourceId}` tables.
+ * `ExtractResult.tableName` is caller-supplied; single-source pipelines use
+ * `'stg_raw'`, and `MultiSourcePipelineRunner` passes `'stg_raw_{sourceId}'`
+ * via the optional `targetTable` parameter on `extract()`.
  */
 
 import type { RunConfig, SourceConfig } from '../../config/types.js';

@@ -11,8 +11,8 @@
  * HTTP 409 with onConflict: upsert → individual PATCH. Other 4xx → increment
  * rowsFailed and continue iff runConfig.onError === 'continue'.
  *
- * Phase 1: implementation is intentionally minimal. Rigorous multipart
- * parsing is deferred; tests mock the token endpoint and response shape.
+ * Implementation is intentionally minimal. Rigorous multipart parsing is
+ * deferred; tests mock the token endpoint and response shape.
  */
 
 import { randomUUID } from 'node:crypto';
