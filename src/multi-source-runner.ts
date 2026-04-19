@@ -9,7 +9,6 @@ import { MergeEngine } from './merge/index.js';
 import { PipelineRunner, type RunOverrides, type RunResult } from './runner.js';
 import { type ColumnMeta, StagingStore, quoteIdent } from './staging/index.js';
 import { type LoadResult } from './adapters/target/index.js';
-import { type TransformResult } from './transform/index.js';
 import { ConfigError, PipelineDQError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
 
@@ -537,24 +536,18 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
   }
 
   private buildPostMergeConfig(config: Pipeline): Pipeline {
-    const rules = config.dq.rules.filter((r) => r.sourceId === undefined);
-    const next = {
-      ...config,
-      source: {
-        adapter: 'csv',
-        file: 'stg_merged',
-        delimiter: ',',
-        encoding: 'utf-8',
-      },
-      sources: undefined,
-      merge: undefined,
-      dq: {
-        ...config.dq,
-        rules,
-      },
-    };
-    delete (next as Record<string, unknown>)['sources'];
-    delete (next as Record<string, unknown>)['merge'];
-    return next as Pipeline;
+    // The merge phase has already produced stg_merged; downstream phases
+    // (runDQ, runTransform, runLoad) never read config.source, so we drop
+    // source/sources/merge to get a single-source-shaped config without
+    // revalidating. Post-merge DQ rules are the ones without a sourceId.
+    const postMergeRules = config.dq.rules.filter((r) => r.sourceId === undefined);
+    const { source: _src, sources: _srcs, merge: _merge, ...rest } = config;
+    void _src;
+    void _srcs;
+    void _merge;
+    return {
+      ...rest,
+      dq: { ...config.dq, rules: postMergeRules },
+    } as Pipeline;
   }
 }

@@ -26,7 +26,7 @@ import {
 import { buildConflictLog } from '../conflict-log.js';
 import type { MergeSourceMeta, MergeResult } from '../types.js';
 import type { MergeConfig } from '@/config/types.js';
-import { ConfigError, PipelineError } from '@/utils/errors.js';
+import { ConfigError } from '@/utils/errors.js';
 
 export const unionStrategy: MergeStrategyPlugin = {
   id: 'union',
@@ -37,11 +37,6 @@ export const unionStrategy: MergeStrategyPlugin = {
     rawSources: MergeSourceMeta[],
     config: MergeConfig,
   ): Promise<MergeResult> {
-    // Ensure config has all required fields
-    if (!config.fieldStrategies) {
-      (config as any).fieldStrategies = [];
-    }
-
     if (rawSources.length < 2) {
       throw new ConfigError('merge requires at least 2 sources');
     }

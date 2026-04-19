@@ -1,12 +1,12 @@
 /**
  * DQ engine.
  *
- * Phase 3 prep Change 3: `run()` accepts `tableName` (default 'stg_raw'), so
- * Phase 3's MultiSourcePipelineRunner can point the engine at `stg_merged`
- * or `stg_raw_{sourceId}` without modification.
+ * `run()` takes `tableName` so callers can point the engine at `stg_raw`,
+ * `stg_merged`, or `stg_raw_{sourceId}` — the engine itself is table-agnostic.
  *
- * Phase 1 note: DqRule.sourceId is parsed by the schema but ignored by this
- * engine. It will be consulted by Phase 3 to filter rules per source.
+ * `DqRule.sourceId` is parsed by the schema but not consulted here. The
+ * MultiSourcePipelineRunner filters rules by `sourceId` before invoking
+ * this engine.
  */
 
 import * as path from 'node:path';

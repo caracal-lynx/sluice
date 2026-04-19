@@ -7,7 +7,6 @@
  */
 
 import type { RulePlugin } from '../../../src/plugins/types.js';
-import type { CheckConfig } from '../../../src/config/types.js';
 
 export const rule: RulePlugin = {
   id: 'iso-8601-date',

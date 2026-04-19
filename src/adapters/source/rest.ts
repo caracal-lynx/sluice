@@ -4,8 +4,7 @@
  * - axios + axios-retry (3 retries, exponential backoff, 429 + 5xx)
  * - Flattens nested JSON objects using `__` separator (`a.b` → `a__b`)
  * - Three pagination styles supported: offset, page, cursor
- *
- * Phase 3 prep Change 1: `targetTable` defaults to 'stg_raw' at this layer.
+ * - `targetTable` defaults to 'stg_raw'.
  */
 
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';

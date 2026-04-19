@@ -150,7 +150,9 @@ export function buildMergedTableSql(
   config: MergeConfig,
   outputColumns: string[],
 ): string {
-  const fieldStrategyMap = new Map(config.fieldStrategies.map((f) => [f.field, f]));
+  const fieldStrategyMap = new Map(
+    (config.fieldStrategies ?? []).map((f) => [f.field, f]),
+  );
   const presentCountExpr = buildPresentCountExpr(context.sources, context.keyColumns);
 
   const selectList = outputColumns
@@ -179,7 +181,7 @@ export function buildConflictFieldSelectSql(
   field: string,
   config: MergeConfig,
 ): string | null {
-  const override = config.fieldStrategies.find((s) => s.field === field);
+  const override = (config.fieldStrategies ?? []).find((s) => s.field === field);
   const forcedSource = override?.source;
   const strategy = override?.strategy ?? config.strategy;
 

@@ -1,15 +1,13 @@
 /**
  * TransformEngine — reads rows from `sourceTable`, applies field mappings
  * (cleanse ops, type coercion, lookups, expressions, constants, concat, custom
- * plugins), and writes to `targetTable`.
+ * plugins), and writes to `targetTable`. Both tables default to
+ * `stg_raw` / `stg_transformed` so callers can reuse the engine for both the
+ * single-source path and the post-merge multi-source path.
  *
- * Phase 3 prep Change 4: both table names are parameters (defaulting to
- * `stg_raw` / `stg_transformed`) so Phase 3 can pipe merged data through
- * the same engine.
- *
- * Phase 1 note: every output column is stored as VARCHAR in the staging
- * store. Target adapters re-emit as needed; DuckDB serialises values
- * losslessly through the string representation.
+ * Every output column is stored as VARCHAR in the staging store. Target
+ * adapters re-emit as needed; DuckDB serialises values losslessly through
+ * the string representation.
  */
 
 import dayjs from 'dayjs';
@@ -127,7 +125,7 @@ function applyFieldMapping(
     if (!plugin) {
       throw new TransformError(`No custom transform plugin registered for "${field.customOp}"`);
     }
-    let value = typeof field.from === 'string' ? row[field.from] : undefined;
+    const value = typeof field.from === 'string' ? row[field.from] : undefined;
 
     // Apply default/optional logic before calling plugin
     if (value === null || value === undefined || value === '') {

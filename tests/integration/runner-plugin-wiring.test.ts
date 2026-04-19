@@ -8,7 +8,6 @@ import * as path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PipelineRunner } from '../../src/runner.js';
 import { RuleRegistry, TransformRegistry } from '../../src/plugins/registry.js';
-import { StagingStore } from '../../src/staging/store.js';
 
 const fixtureDir = path.join(import.meta.dirname ?? '', '../fixtures');
 const tmpDir = path.join(import.meta.dirname ?? '', '../../.tmp');
@@ -212,7 +211,8 @@ run:
       },
     });
 
-    const runner = new PipelineRunner(customRules, customTransforms);
+    // Constructing the runner with injected registries must not throw.
+    expect(() => new PipelineRunner(customRules, customTransforms)).not.toThrow();
 
     // Verify the plugin is accessible
     const plugin = customTransforms.get('mock-double');

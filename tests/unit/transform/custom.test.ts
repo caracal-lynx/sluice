@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { FieldMapping, Pipeline } from '../../../src/config/types.js';
 import type { CustomFieldMapping } from '../../../src/plugins/types.js';
-import { RuleRegistry, TransformRegistry } from '../../../src/plugins/registry.js';
+import { TransformRegistry } from '../../../src/plugins/registry.js';
 import { StagingStore } from '../../../src/staging/index.js';
 import { TransformEngine } from '../../../src/transform/engine.js';
 import { TransformError } from '../../../src/utils/errors.js';

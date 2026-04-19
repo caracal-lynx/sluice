@@ -1,8 +1,7 @@
 /**
  * Excel (XLSX) source adapter. Uses SheetJS to convert the selected sheet
  * to a CSV blob, then re-parses it with csv-parse — all columns VARCHAR.
- *
- * Phase 3 prep Change 1: `targetTable` defaults to 'stg_raw' at this layer.
+ * `targetTable` defaults to 'stg_raw'.
  */
 
 import { readFile as readFileAsync } from 'node:fs/promises';
