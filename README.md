@@ -12,6 +12,8 @@
 
 ## 🤔 What is this thing?
 
+![Gold Sluice](sluice-for-gold.jpg)
+
 Sluice takes the pain out of ERP data migrations. You know the drill — a client has 20 years of customer records in a legacy SQL database, and they need them in a shiny new ERP system by Monday. The data is a mess, the field names are cryptic, and someone has helpfully stored postcodes in a column called `ADDR5`.
 
 Sluice lets you describe the entire migration as a **YAML pipeline config** — where to get the data, what quality rules to enforce, how to transform the fields, and where to load the result. The engine is written once; every client engagement is just a folder of YAML files.
