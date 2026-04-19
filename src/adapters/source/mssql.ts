@@ -7,8 +7,7 @@
  *
  * Uses the streaming `request.stream = true` + `recordset` / `row` / `done`
  * event flow so extremely large result sets don't blow the heap.
- *
- * Phase 3 prep Change 1: `targetTable` defaults to 'stg_raw' at this layer.
+ * `targetTable` defaults to 'stg_raw'.
  */
 
 import sql, { type config as SqlConfig, type ConnectionPool, type Request } from 'mssql';

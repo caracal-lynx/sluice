@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { StagingStore } from '@/staging/index.js';
 import { MergeEngine, MergeStrategyRegistry } from '@/merge/index.js';
 import { MergeSchema } from '@/config/schema.js';
-import type { MergeSourceMeta, MergeResult } from '@/merge/index.js';
+import type { MergeSourceMeta } from '@/merge/index.js';
 import type { MergeConfig } from '@/config/types.js';
 
 describe('Merge Strategies', () => {
@@ -289,17 +289,8 @@ describe('Merge Strategies', () => {
   });
 
   describe('Strategy Error Handling', () => {
-    it('should throw ConfigError for unknown strategy', async () => {
-      await store.query('CREATE TABLE stg_src_a AS SELECT 1 as ID');
-      await store.query('CREATE TABLE stg_src_b AS SELECT 1 as ID');
-
-      const engine = new MergeEngine();
-      const sources: MergeSourceMeta[] = [
-        { id: 'a', tableName: 'stg_src_a', priority: 1 },
-        { id: 'b', tableName: 'stg_src_b', priority: 2 },
-      ];
-
-      // Try to parse invalid strategy - should fail at Zod level
+    it('should throw ConfigError for unknown strategy', () => {
+      // Zod rejects an unknown strategy at parse time.
       expect(() => {
         parseConfig({
           key: 'ID',
@@ -692,7 +683,10 @@ describe('Merge Strategies', () => {
         onUnmatched: 'ignore',
       };
 
-      await expect(engine.run(store, sources, config)).rejects.toThrow('unknown merge strategy');
+      // MergeStrategyRegistry.get throws ConfigError with the supported list.
+      await expect(engine.run(store, sources, config)).rejects.toThrow(
+        /No merge strategy registered.*unknown-strategy/,
+      );
     });
 
     it('should require at least 2 sources', async () => {

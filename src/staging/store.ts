@@ -151,8 +151,8 @@ export class StagingStore {
    * SELECT to sidestep DuckDB's column-rename limitations. Unknown keys are
    * warned and skipped (not an error). No-op when `renames` is empty.
    *
-   * Phase 1: not called from any Phase 1 code path. Built for the Phase 3
-   * multi-source runner which applies per-source rename maps before DQ.
+   * Used by `MultiSourcePipelineRunner` to apply per-source rename maps
+   * after extract and before merge.
    */
   async renameColumns(tableName: string, renames: Record<string, string>): Promise<void> {
     if (Object.keys(renames).length === 0) return;

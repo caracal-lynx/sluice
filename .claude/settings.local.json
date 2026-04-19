@@ -18,7 +18,11 @@
       "Bash(git commit:*)",
       "Bash(npm rebuild *)",
       "Bash(pkill -f \"npm rebuild\")",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(tee /tmp/tsc.log)",
+      "Bash(echo \"---exit=$?\")",
+      "Bash(echo \"---lint-exit=$?\")",
+      "Bash(echo \"---tsc-exit=$?\")"
     ]
   }
 }

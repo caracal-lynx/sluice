@@ -181,35 +181,12 @@ async function cmdPlugins(program: Command): Promise<never> {
 
     logger.info(
       {
-        ruleCount: ruleIds.length,
-        transformCount: transformIds.length,
-        mergeStrategyCount: mergeStrategyIds.length,
+        rules: ruleIds,
+        transforms: transformIds,
+        mergeStrategies: mergeStrategyIds,
       },
       'sluice plugins: loaded',
     );
-
-    // Format output
-    if (ruleIds.length === 0 && transformIds.length === 0 && mergeStrategyIds.length === 0) {
-      console.log('No plugins loaded.');
-      process.exit(0);
-    }
-
-    if (ruleIds.length > 0) {
-      console.log('\n📋 Data Quality Rules:');
-      ruleIds.forEach((id) => console.log(`  • ${id}`));
-    }
-
-    if (transformIds.length > 0) {
-      console.log('\n🔄 Transform Operations:');
-      transformIds.forEach((id) => console.log(`  • ${id}`));
-    }
-
-    if (mergeStrategyIds.length > 0) {
-      console.log('\n🔀 Merge Strategies:');
-      mergeStrategyIds.forEach((id) => console.log(`  • ${id}`));
-    }
-
-    console.log('');
     process.exit(0);
   } catch (err) {
     logger.error({ err }, 'sluice plugins: failed');
@@ -232,24 +209,15 @@ async function cmdMergeListStrategies(program: Command): Promise<never> {
     const configPath = path.join(cwd, 'sluice.config.yaml');
     await loadNpmPlugins(configPath, ruleRegistry, transformRegistry, MergeStrategyRegistry);
 
-    const strategies = MergeStrategyRegistry.list();
-    logger.info({ count: strategies.length }, 'sluice merge list-strategies: loaded');
-
-    if (strategies.length === 0) {
-      console.log('No merge strategies loaded.');
-      process.exit(0);
-    }
-
-    console.log('\n📚 Available Merge Strategies:\n');
-    strategies.forEach((strategyId) => {
-      try {
-        const strategy = MergeStrategyRegistry.get(strategyId);
-        console.log(`  ${strategy.id.padEnd(15)} ${strategy.description}`);
-      } catch (err) {
-        console.log(`  ${strategyId.padEnd(15)} (error loading strategy)`);
-      }
+    const strategyIds = MergeStrategyRegistry.list();
+    const strategies = strategyIds.map((id) => {
+      const strategy = MergeStrategyRegistry.get(id);
+      return { id: strategy.id, description: strategy.description ?? strategy.id };
     });
-    console.log('');
+    logger.info(
+      { count: strategies.length, strategies },
+      'sluice merge list-strategies: loaded',
+    );
     process.exit(0);
   } catch (err) {
     logger.error({ err }, 'sluice merge list-strategies: failed');
@@ -273,41 +241,14 @@ async function cmdMergeInfo(strategyId: string, program: Command): Promise<never
     await loadNpmPlugins(configPath, ruleRegistry, transformRegistry, MergeStrategyRegistry);
 
     const strategy = MergeStrategyRegistry.get(strategyId);
-    console.log(`\n📋 Merge Strategy: ${strategy.id}\n`);
-    console.log(`Description:\n  ${strategy.description}\n`);
-    
-    // Add strategy-specific help text
-    const helpText = {
-      coalesce:
-        `For each field, selects the first non-null value across sources,
-  respecting the priority order. Whitespace-only values are skipped.
-  
-  Use case: Enriching primary source with fallback data from other sources.
-  Example: IFS ERP data enriched with Excel lookup data.`,
-      'priority-override':
-        `For each field, uses the value from the highest-priority source
-  present for the key, including nulls and whitespace.
-  
-  Use case: Strict priority-based source selection without null-coalescing.
-  Example: Always trust primary system even if some fields are null.`,
-      union:
-        `Includes all rows from all sources, deduplicating by key.
-  
-  Use case: Combining independent data sources into a single entity.
-  Example: Customer data from multiple regional systems.`,
-      intersect:
-        `Includes only rows present in ALL sources.
-  
-  Use case: Reconciliation and validation of matching records across sources.
-  Example: Finding customers that exist in both legacy and new systems.`,
-    };
 
-    const text = helpText[strategyId as keyof typeof helpText];
-    if (text) {
-      console.log(`Usage:\n${text}\n`);
-    }
-
-    logger.info({ strategyId }, 'sluice merge info: complete');
+    logger.info(
+      {
+        strategy: strategy.id,
+        description: strategy.description ?? strategy.id,
+      },
+      'sluice merge info: complete',
+    );
     process.exit(0);
   } catch (err) {
     logger.error({ err, strategyId }, 'sluice merge info: failed');
