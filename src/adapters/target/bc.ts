@@ -20,7 +20,7 @@ import { randomUUID } from 'node:crypto';
 import axios, { type AxiosInstance } from 'axios';
 
 import type { RunConfig, TargetConfig } from '../../config/types.js';
-import type { StagingStore } from '../../staging/index.js';
+import { quoteIdent, type StagingStore } from '../../staging/index.js';
 import { requireEnv } from '../../utils/env.js';
 import { ConfigError, LoadError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
@@ -93,7 +93,9 @@ export class BcTargetAdapter implements TargetAdapter {
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
   ): Promise<LoadResult> {
-    const rows = await store.query<Record<string, unknown>>(`SELECT * FROM "${STAGING_TABLE}"`);
+    const rows = await store.query<Record<string, unknown>>(
+      `SELECT * FROM ${quoteIdent(STAGING_TABLE)}`,
+    );
     if (rows.length === 0) {
       return { rowsLoaded: 0, rowsFailed: 0 };
     }

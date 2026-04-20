@@ -136,6 +136,8 @@ function applyFieldMapping(
       }
     }
 
+    // FieldMapping is schema-validated but not modeled as a discriminated union,
+    // so we narrow to the custom mapping shape at this call site.
     const result = plugin.apply(value, row, field as unknown as CustomFieldMapping);
 
     // Apply default/optional logic after plugin returns
