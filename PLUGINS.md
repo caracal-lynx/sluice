@@ -33,6 +33,7 @@ All plugins must be **pure and synchronous**:
 - Plugins must not mutate the `row` object passed to `apply()` — treat it as read-only.
 - Plugin `id` must be unique across all loaded plugins; duplicates throw `ConfigError` at registration time. This includes built-in check types and built-in merge strategies — plugins cannot shadow them.
 - Data a plugin needs (e.g. a list of valid codes) should come through the pipeline config via `options`, loaded once by the runner rather than by the plugin on every call.
+- TypeScript note: `FieldMapping` is currently modeled as a schema-validated object rather than a discriminated union, so internal engine code may narrow custom mappings with a cast when invoking `TransformPlugin.apply()`.
 
 ---
 
