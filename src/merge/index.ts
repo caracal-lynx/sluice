@@ -1,5 +1,5 @@
 import type { MergeStrategyPlugin } from './types.js';
-import { ConfigError } from '@/utils/errors.js';
+import { ConfigError } from '../utils/errors.js';
 import { coalesceStrategy } from './strategies/coalesce.js';
 import { unionStrategy } from './strategies/union.js';
 import { intersectStrategy } from './strategies/intersect.js';
