@@ -15,7 +15,7 @@ pipeline:
   client: eribe 
   version: "1.0"
   entity: style
-  description: Style master migration — legacy TCMACS to BBlueCherry
+  description: Style master migration — legacy TCMACS to BlueCherry
 
 
 # ── EXTRACT ───────────────────────────────────────────────────────────────────
@@ -24,12 +24,9 @@ source:
   connection: ${TM2_MSSQL}     # resolved from .env at runtime
   query: |
     SELECT
-      c.CUST_CODE, c.CUST_NAME, c.ADDR1, c.ADDR2,
-      c.POST_CODE, c.COUNTRY, c.EMAIL, c.TEL,
-      c.CREDIT_LIMIT, c.CURRENCY, c.ACCT_MGR_ID
-    FROM dbo.Customers c
-    WHERE c.Active = 1
-      AND c.DELETED = 0
+      p.REFERENCE, p.NAME, p.SEASON, p.DETAIL
+    FROM dbo.ProHead p
+    
 
 
 # ── DATA QUALITY ──────────────────────────────────────────────────────────────
@@ -42,7 +39,7 @@ dq:
       checks:
         - { type: notNull,   severity: critical }
         - { type: unique,    severity: critical }
-        - { type: pattern,   value: "^[A-Z0-9]{3,10}$", severity: warning }
+        - { type: pattern, value: '^[A-Z0-9]{3,10}$', severity: warning }
 
     - field: CUST_NAME
       checks:
@@ -81,15 +78,15 @@ transform:
     - name: acctMgrMap
       source:
         adapter: mssql
-        connection: ${COCHRAN_MSSQL}
-        query: "SELECT STAFF_ID as key, IFS_USER_ID as value FROM dbo.Staff"
+        connection: ${TM2_MSSQL}
+        query: "SELECT REFERENCE as key, NAME, SEASON, DETAIL as value FROM dbo.ProHead"
       key: key
       value: value
 
   fields:
     - { from: CUST_CODE,      to: CustomerNo,   type: string,  max: 20 }
     - { from: CUST_NAME,      to: Name,         type: string,  max: 100, cleanse: trim|titleCase }
-    - { from: [ADDR1, ADDR2], to: Address1,     type: concat,  separator: ", ", cleanse: trim }
+    - { from: [ADDR1, ADDR2], to: Address1,     type: concat,  separator: ', ', cleanse: trim }
     - { from: POST_CODE,      to: ZipCode,      type: string,  cleanse: trim|uppercase }
     - { from: COUNTRY,        to: Country,      type: string,  default: GB }
     - { from: CURRENCY,       to: CurrencyCode, type: lookup,  lookup: currencyMap, default: GBP }
