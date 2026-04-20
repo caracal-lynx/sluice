@@ -1,5 +1,5 @@
-import type { StagingStore } from '@/staging/store.js';
-import type { MergeConfig } from '@/config/types.js';
+import type { StagingStore } from '../staging/store.js';
+import type { MergeConfig } from '../config/types.js';
 
 export interface MergeSourceMeta {
   id:        string;
