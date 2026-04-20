@@ -21,18 +21,30 @@ vi.mock('mssql', () => {
     request: () => request,
   };
 
+  const connectionPool = vi.fn(() => pool);
+
   return {
     default: {
-      ConnectionPool: vi.fn(() => pool),
+      ConnectionPool: connectionPool,
       __request: request,
       __pool: pool,
+      __connectionPool: connectionPool,
     },
   };
 });
 
 // Pull the mock + adapter after the mock is installed
 const mssqlModule = (await import('mssql')) as unknown as {
-  default: { __request: EventEmitter & { stream: boolean; query: (sql: string) => void; pause: () => void; resume: () => void }; __pool: { connect: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> } };
+  default: {
+    __request: EventEmitter & {
+      stream: boolean;
+      query: (sql: string) => void;
+      pause: () => void;
+      resume: () => void;
+    };
+    __pool: { connect: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> };
+    __connectionPool: ReturnType<typeof vi.fn>;
+  };
 };
 const { MssqlSourceAdapter } = await import('../../../../src/adapters/source/mssql.js');
 const { StagingStore } = await import('../../../../src/staging/index.js');
@@ -69,6 +81,7 @@ describe('MssqlSourceAdapter', () => {
     await store.open();
     mssqlModule.default.__pool.connect.mockClear();
     mssqlModule.default.__pool.close.mockClear();
+    mssqlModule.default.__connectionPool.mockClear();
   });
 
   afterEach(async () => {
@@ -85,6 +98,12 @@ describe('MssqlSourceAdapter', () => {
       encoding: 'utf-8',
     };
     await adapter.connect(config);
+    expect(mssqlModule.default.__connectionPool).toHaveBeenCalledWith({
+      server: 'host',
+      database: 'db',
+      user: 'u',
+      password: 'p',
+    });
 
     const promise = adapter.extract(config, store, BASE_RUN, () => {});
     trigger(
