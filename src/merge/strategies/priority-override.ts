@@ -13,9 +13,9 @@
  */
 
 import type { MergeStrategyPlugin } from '../types.js';
-import type { StagingStore } from '@/staging/index.js';
-import { quoteIdent } from '@/staging/index.js';
-import { logger } from '@/utils/logger.js';
+import type { StagingStore } from '../../staging/index.js';
+import { quoteIdent } from '../../staging/index.js';
+import { logger } from '../../utils/logger.js';
 
 import {
   buildJoinedTableSql,
@@ -26,8 +26,8 @@ import {
 } from '../sql-builder.js';
 import { buildConflictLog } from '../conflict-log.js';
 import type { MergeSourceMeta, MergeResult } from '../types.js';
-import type { MergeConfig } from '@/config/types.js';
-import { ConfigError, PipelineError } from '@/utils/errors.js';
+import type { MergeConfig } from '../../config/types.js';
+import { ConfigError, PipelineError } from '../../utils/errors.js';
 
 export const priorityOverrideStrategy: MergeStrategyPlugin = {
   id: 'priority-override',

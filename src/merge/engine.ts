@@ -1,6 +1,6 @@
-import type { MergeConfig } from '@/config/types.js';
-import type { StagingStore } from '@/staging/index.js';
-import { logger } from '@/utils/logger.js';
+import type { MergeConfig } from '../config/types.js';
+import type { StagingStore } from '../staging/index.js';
+import { logger } from '../utils/logger.js';
 
 import { MergeStrategyRegistry } from './index.js';
 import type { MergeResult, MergeSourceMeta } from './types.js';
