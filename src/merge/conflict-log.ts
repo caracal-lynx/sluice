@@ -1,6 +1,6 @@
-import type { MergeConfig } from '@/config/types.js';
-import type { StagingStore } from '@/staging/index.js';
-import { quoteIdent } from '@/staging/index.js';
+import type { MergeConfig } from '../config/types.js';
+import type { StagingStore } from '../staging/index.js';
+import { quoteIdent } from '../staging/index.js';
 
 import {
   type BuildMergeContext,

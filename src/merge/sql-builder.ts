@@ -1,5 +1,5 @@
-import type { MergeConfig } from '@/config/types.js';
-import { quoteIdent } from '@/staging/index.js';
+import type { MergeConfig } from '../config/types.js';
+import { quoteIdent } from '../staging/index.js';
 
 import type { MergeSourceMeta } from './types.js';
 
