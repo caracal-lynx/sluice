@@ -1,3 +1,6 @@
+import os from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { exitCodeFor, resolvePluginDirs } from '../../src/cli.js';
@@ -12,19 +15,19 @@ describe('CLI helpers', () => {
   });
 
   it('deduplicates default and extra plugin directories', () => {
-    const cwd = 'C:/repo/sluice';
-    const dirs = resolvePluginDirs(cwd, ['./plugins', 'C:/repo/sluice/plugins', './team/plugins']);
+    const cwd = path.join(os.tmpdir(), 'repo', 'sluice');
+    const dirs = resolvePluginDirs(cwd, ['./plugins', path.join(cwd, 'plugins'), './team/plugins']);
 
     expect(dirs).toEqual([
-      'C:\\repo\\sluice\\plugins',
-      'C:\\repo\\sluice\\team\\plugins',
+      path.resolve(cwd, 'plugins'),
+      path.resolve(cwd, 'team', 'plugins'),
     ]);
   });
 
   it('always includes the default plugins directory', () => {
-    const cwd = 'C:/repo/sluice';
+    const cwd = path.join(os.tmpdir(), 'repo', 'sluice');
     const dirs = resolvePluginDirs(cwd);
 
-    expect(dirs).toEqual(['C:\\repo\\sluice\\plugins']);
+    expect(dirs).toEqual([path.resolve(cwd, 'plugins')]);
   });
 });
