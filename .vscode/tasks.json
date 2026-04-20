@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sqlproj: Build TM2",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"c:/Dev/Projects/TypeScript/sluice/TM2/TM2.sqlproj"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"detail": "Builds the TM2 SQL project"
+		}
+	]
+}
