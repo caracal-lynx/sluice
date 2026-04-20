@@ -3,7 +3,7 @@
 # Sluice: config-driven ETL toolkit for ERP data migrations
 # npm package: @caracal-lynx/sluice
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
-# Last updated: 2026-04-15
+# Last updated: 2026-04-20
 
 ---
 
@@ -39,95 +39,155 @@ modules that can be imported by other tools (e.g. n8n custom nodes, GitHub Actio
 - No data warehouse or lake — DuckDB is used only as a local staging store
 - No multi-tenant SaaS — this is a consultant's toolkit, not a product
 
+**Related docs:**
+- [README.md](README.md) — install, quick-start, composite rules (Tier 1)
+- [PLUGINS.md](PLUGINS.md) — Tier 2 (file) and Tier 3 (npm) plugin author guide
+- [docs/architecture-diagrams.md](docs/architecture-diagrams.md) — Mermaid diagrams of
+  the single- and multi-source pipeline flow
+
 ---
 
 ## Repository structure
 
 ```
 sluice/
-├── CLAUDE.md                    ← you are here
+├── CLAUDE.md                        ← you are here
+├── PLUGINS.md                       ← Tier 2 / Tier 3 plugin author guide
+├── README.md
 ├── package.json
 ├── tsconfig.json
 ├── tsconfig.test.json
 ├── .env.example
 ├── .gitignore
+├── eslint.config.js
+├── .prettierrc
+├── .github/workflows/ci.yml
+├── docs/
+│   └── architecture-diagrams.md
+├── examples/                        ← sample pipelines (not run by tests)
 │
 ├── src/
-│   ├── index.ts                 ← public API (re-exports from all modules)
-│   ├── cli.ts                   ← commander CLI entry point
-│   ├── runner.ts                ← PipelineRunner orchestrates all phases
+│   ├── index.ts                     ← public API barrel (re-exports from all modules)
+│   ├── cli.ts                       ← commander CLI entry point
+│   ├── runner.ts                    ← PipelineRunner (single-source)
+│   ├── multi-source-runner.ts       ← MultiSourcePipelineRunner (extends PipelineRunner)
 │   │
 │   ├── config/
-│   │   ├── schema.ts            ← Zod schema (PipelineSchema + sub-schemas)
-│   │   ├── loader.ts            ← YAML load + ${ENV_VAR} interpolation + parse
-│   │   └── types.ts             ← re-exports of all inferred Zod types
+│   │   ├── index.ts                 ← re-exports schema + types
+│   │   ├── schema.ts                ← Zod schema (PipelineSchema + sub-schemas)
+│   │   ├── loader.ts                ← YAML load + ${ENV_VAR} interp + composite-rule expansion + parse
+│   │   └── types.ts                 ← re-exports of all inferred Zod types + guards
 │   │
 │   ├── adapters/
 │   │   ├── source/
-│   │   │   ├── index.ts         ← SourceAdapterRegistry
-│   │   │   ├── types.ts         ← SourceAdapter interface
+│   │   │   ├── index.ts             ← barrel (self-registers built-ins on import)
+│   │   │   ├── registry.ts          ← SourceAdapterRegistry
+│   │   │   ├── types.ts             ← SourceAdapter + ExtractResult
 │   │   │   ├── mssql.ts
 │   │   │   ├── pg.ts
 │   │   │   ├── csv.ts
 │   │   │   ├── xlsx.ts
 │   │   │   └── rest.ts
 │   │   └── target/
-│   │       ├── index.ts         ← TargetAdapterRegistry
-│   │       ├── types.ts         ← TargetAdapter interface
-│   │       ├── bc.ts            ← Business Central REST
-│   │       ├── ifs.ts           ← IFS ERP CSV import
-│   │       ├── bluecherry.ts    ← BlueCherry ERP CSV import
-│   │       ├── csv.ts           ← generic CSV
+│   │       ├── index.ts             ← barrel (self-registers built-ins on import)
+│   │       ├── registry.ts          ← TargetAdapterRegistry
+│   │       ├── types.ts             ← TargetAdapter + LoadResult
+│   │       ├── bc.ts                ← Business Central REST (+ BcTokenManager)
+│   │       ├── ifs.ts               ← IFS ERP CSV import
+│   │       ├── bluecherry.ts        ← BlueCherry ERP CSV import
+│   │       ├── csv.ts               ← generic CSV
 │   │       └── pg.ts
 │   │
 │   ├── staging/
-│   │   ├── store.ts             ← DuckDB wrapper
-│   │   └── schema.ts            ← staging table DDL helpers
+│   │   ├── index.ts                 ← barrel
+│   │   ├── store.ts                 ← DuckDB wrapper (the only file that imports `duckdb`)
+│   │   └── schema.ts                ← ColumnMeta, quoteIdent, buildCreateTableSql
 │   │
 │   ├── dq/
-│   │   ├── engine.ts            ← DQEngine
-│   │   ├── rules/
-│   │   │   ├── index.ts         ← RuleRegistry
-│   │   │   ├── types.ts         ← Rule interface + RuleResult
-│   │   │   ├── notNull.ts
-│   │   │   ├── unique.ts
-│   │   │   ├── pattern.ts
-│   │   │   ├── email.ts
-│   │   │   ├── ukPostcode.ts
-│   │   │   ├── maxLength.ts
-│   │   │   ├── minMax.ts
-│   │   │   └── allowedValues.ts
-│   │   └── reporter.ts
+│   │   ├── index.ts                 ← barrel
+│   │   ├── engine.ts                ← DQEngine
+│   │   ├── reporter.ts              ← writeRejectionCsv, writeSummaryJson
+│   │   ├── types.ts                 ← DQSummary, ViolationCounts
+│   │   └── rules/
+│   │       ├── index.ts             ← BUILT_IN_RULES map (id → Rule instance)
+│   │       ├── types.ts             ← Rule = RulePlugin, RuleViolation (re-exported from plugins)
+│   │       ├── notNull.ts
+│   │       ├── unique.ts
+│   │       ├── pattern.ts
+│   │       ├── email.ts
+│   │       ├── ukPostcode.ts
+│   │       ├── maxLength.ts
+│   │       ├── minMax.ts
+│   │       └── allowedValues.ts
 │   │
 │   ├── transform/
-│   │   ├── engine.ts
+│   │   ├── index.ts
+│   │   ├── engine.ts                ← TransformEngine (built-in types + custom plugins)
 │   │   ├── lookup.ts
 │   │   ├── cleanse.ts
-│   │   ├── expression.ts
-│   │   └── types.ts
+│   │   ├── expression.ts            ← expr-eval + `js:` vm sandbox
+│   │   └── types.ts                 ← TransformResult
+│   │
+│   ├── merge/                       ← multi-source merge engine + strategies
+│   │   ├── index.ts                 ← MergeStrategyRegistry (pre-registers all built-ins)
+│   │   ├── engine.ts                ← MergeEngine
+│   │   ├── sql-builder.ts           ← shared JOIN + coalesce SQL helpers
+│   │   ├── conflict-log.ts          ← conflict CSV writer
+│   │   ├── types.ts                 ← MergeStrategyPlugin, MergeSourceMeta, MergeResult
+│   │   └── strategies/
+│   │       ├── index.ts
+│   │       ├── coalesce.ts
+│   │       ├── priority-override.ts
+│   │       ├── union.ts
+│   │       └── intersect.ts
+│   │
+│   ├── plugins/                     ← Tier 2 / Tier 3 plugin system
+│   │   ├── index.ts                 ← barrel
+│   │   ├── types.ts                 ← RulePlugin, TransformPlugin, PluginPackage
+│   │   ├── registry.ts              ← RuleRegistry, TransformRegistry (custom plugin holders)
+│   │   └── loader.ts                ← loadPlugins (file-based), loadNpmPlugins (sluice.config.yaml)
 │   │
 │   └── utils/
-│       ├── logger.ts
-│       ├── env.ts
+│       ├── index.ts
+│       ├── logger.ts                ← pino singleton
+│       ├── env.ts                   ← loadEnv + requireEnv
 │       └── errors.ts
 │
 ├── tests/
 │   ├── fixtures/
 │   │   ├── acme-corp-customers.pipeline.yaml
 │   │   ├── style-co-styles.pipeline.yaml
-│   │   ├── sample-customers.csv
-│   │   └── sample-styles.csv
+│   │   ├── style-co-products-merged.pipeline.yaml    ← multi-source
+│   │   ├── multi-source-no-merge.pipeline.yaml    ← negative-path multi-source
+│   │   ├── shared-rules.yaml                      ← composite rule library
+│   │   └── plugins/                               ← test plugin fixtures (Tier 2 files)
+│   │
 │   ├── unit/
-│   │   ├── config/
-│   │   ├── dq/
-│   │   ├── transform/
-│   │   └── staging/
+│   │   ├── cli.test.ts
+│   │   ├── runner.test.ts
+│   │   ├── adapters/
+│   │   │   ├── source/               ← csv, mssql, pg, rest, xlsx
+│   │   │   └── target/               ← bc, bluecherry, ifs, pg
+│   │   ├── config/                   ← loader, schema, multi-source, composite-expansion
+│   │   ├── dq/                       ← engine, reporter, rules
+│   │   ├── merge/                    ← engine, registry, strategies
+│   │   ├── plugins/                  ← loader, registry, composite-expansion
+│   │   ├── staging/                  ← store
+│   │   └── transform/                ← cleanse, expression, engine, custom
+│   │
 │   └── integration/
-│       ├── csv-to-csv.test.ts
-│       └── pipeline-runner.test.ts
+│       ├── cli-check.test.ts
+│       ├── cli-commands.test.ts
+│       ├── cli-plugins.test.ts
+│       ├── csv-to-csv-mvp.test.ts
+│       ├── dq-integration.test.ts
+│       ├── style-co-styles-mini.test.ts
+│       ├── merge-strategies.test.ts
+│       ├── multi-source-runner.test.ts
+│       └── runner-plugin-wiring.test.ts
 │
-└── clients/                     ← gitignored in this repo; each client
-    ├── acme-corp/                     gets their own private repo
+└── clients/                         ← gitignored in this repo; each client
+    ├── acme-corp/                         gets their own private repo
     │   ├── .env
     │   ├── customers.pipeline.yaml
     │   ├── items.pipeline.yaml
@@ -181,7 +241,9 @@ sluice/
 - **Barrel exports:** each directory has an `index.ts`. Do not import from internal
   files across module boundaries.
 - **No circular imports.** Dependency direction:
-  `cli` → `runner` → `adapters`, `staging`, `dq`, `transform`, `config`
+  `cli` → `runner` / `multi-source-runner` → `adapters`, `staging`, `dq`,
+  `transform`, `merge`, `plugins`, `config`. `plugins/` is imported by
+  `runner`, `dq`, `transform`, and `merge`; it must not import any of them.
   Utils are imported by everyone.
 - **Path aliases:** `@/` → `src/` in tsconfig.
 
@@ -1010,8 +1072,14 @@ They are live in the codebase and tested. Do not remove them.
   `type: custom` fields.
 - **`FieldMappingSchema.options`** (`z.record(z.unknown()).optional()`) — arbitrary
   per-plugin config passed through to the transform plugin.
+- **`FieldMappingSchema` refinement** — field types in `TYPES_REQUIRING_FROM`
+  (`string`, `number`, `decimal`, `boolean`, `date`, `lookup`, `concat`) must
+  declare `from`. Only `constant`, `expression`, and `custom` may omit it.
+- **`TargetSchema` refinement** — when `onConflict: 'upsert'`, a non-empty
+  `upsertKey` is required (checked at config-parse time).
 - **`ToolkitConfigSchema`** — schema for `sluice.config.yaml` (toolkit-level
-  plugin loading). Not consumed by `PipelineRunner` yet.
+  plugin loading). Consumed by `PipelineRunner.loadAllPlugins()` via
+  `plugins/loader.ts → loadNpmPlugins()` at the start of every run.
 - **`CompositeRuleSchema` / `CompositeRuleLibrarySchema`** — schemas for the
   shared rule library YAML files referenced by `dq.rulesFile`.
 
