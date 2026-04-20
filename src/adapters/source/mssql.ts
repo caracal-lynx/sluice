@@ -59,6 +59,42 @@ function mapMssqlType(t: unknown): string {
   return MSSQL_TO_DUCKDB[name.toLowerCase()] ?? 'VARCHAR';
 }
 
+function parseBooleanParam(value: string | null): boolean | undefined {
+  if (value === null) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1') return true;
+  if (normalized === 'false' || normalized === '0') return false;
+  return undefined;
+}
+
+function parseMssqlUrl(connection: string): SqlConfig {
+  const parsed = new URL(connection);
+  const database = parsed.pathname.replace(/^\//, '');
+
+  const encrypt = parseBooleanParam(parsed.searchParams.get('encrypt'));
+  const trustServerCertificate = parseBooleanParam(
+    parsed.searchParams.get('trustServerCertificate'),
+  );
+
+  const config: SqlConfig = {
+    server: parsed.hostname,
+    ...(parsed.port ? { port: Number(parsed.port) } : {}),
+    ...(database ? { database } : {}),
+    ...(parsed.username ? { user: decodeURIComponent(parsed.username) } : {}),
+    ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
+    options: {
+      ...(encrypt !== undefined ? { encrypt } : {}),
+      ...(trustServerCertificate !== undefined ? { trustServerCertificate } : {}),
+    },
+  };
+
+  if (Object.keys(config.options ?? {}).length === 0) {
+    delete config.options;
+  }
+
+  return config;
+}
+
 function parseConnection(connection: string): string | SqlConfig {
   const trimmed = connection.trimStart();
   if (trimmed.startsWith('{')) {
@@ -66,6 +102,13 @@ function parseConnection(connection: string): string | SqlConfig {
       return JSON.parse(connection) as SqlConfig;
     } catch (err) {
       throw new SourceError(`mssql: invalid JSON in connection config: ${String(err)}`, err);
+    }
+  }
+  if (trimmed.startsWith('mssql://')) {
+    try {
+      return parseMssqlUrl(connection);
+    } catch (err) {
+      throw new SourceError(`mssql: invalid URL in connection config: ${String(err)}`, err);
     }
   }
   return connection;
