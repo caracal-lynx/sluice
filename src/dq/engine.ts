@@ -27,6 +27,7 @@ export class DQEngine {
     config: Pipeline,
     store: StagingStore,
     tableName = 'stg_raw',
+    onProgress?: (rows: number) => void,
   ): Promise<DQSummary> {
     const rules = config.dq.rules;
 
@@ -53,7 +54,11 @@ export class DQEngine {
 
     // ── Main pass: validate every (row, rule, check) combination ──
     const violations: RuleViolation[] = [];
+    const progressEvery = 500;
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      if (onProgress && rowIndex > 0 && rowIndex % progressEvery === 0) {
+        onProgress(rowIndex);
+      }
       const row = rows[rowIndex]!;
       for (const rule of rules) {
         const value = row[rule.field];
@@ -106,6 +111,7 @@ export class DQEngine {
     const rowsChecked = rows.length;
     const rowsRejected = criticalRows.size;
     const rowsPassed = rowsChecked - rowsRejected;
+    if (onProgress) onProgress(rowsChecked);
 
     // ── Write reports ──
     const outputDir = path.resolve(config.run.outputDir);
