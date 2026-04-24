@@ -19,7 +19,7 @@ import { Command } from 'commander';
 import * as path from 'node:path';
 
 import { ConfigLoader } from './config/loader.js';
-import { isMultiSource } from './config/types.js';
+import { isMultiSource, type Pipeline } from './config/types.js';
 import { MultiSourcePipelineRunner } from './multi-source-runner.js';
 import { PipelineRunner, type RunOverrides } from './runner.js';
 import { RuleRegistry, TransformRegistry, loadPlugins, loadNpmPlugins } from './plugins/index.js';
@@ -27,6 +27,7 @@ import { MergeStrategyRegistry } from './merge/index.js';
 import { loadEnv } from './utils/env.js';
 import { ConfigError, PipelineDQError, PipelineError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
+import { ProgressReporter, type ProgressLogLevel } from './utils/progress.js';
 
 interface GlobalOpts {
   env: string;
@@ -34,6 +35,7 @@ interface GlobalOpts {
   output?: string;
   dryRun?: boolean;
   plugins?: string[];
+  silent?: boolean;
 }
 
 export function resolvePluginDirs(cwd: string, pluginDirs: string[] = []): string[] {
@@ -53,11 +55,43 @@ export function exitCodeFor(err: unknown): number {
 function applyGlobals(opts: GlobalOpts): RunOverrides {
   loadEnv(opts.env);
   if (opts.logLevel) logger.level = opts.logLevel;
+  if (opts.silent) {
+    // Errors still reach stderr via the logger's multistream; info/warn are dropped.
+    logger.level = 'error';
+  }
   const overrides: RunOverrides = {};
   if (opts.output !== undefined) overrides.outputDir = opts.output;
   if (opts.dryRun) overrides.dryRun = true;
   if (opts.plugins?.length) overrides.pluginDirs = opts.plugins;
   return overrides;
+}
+
+function phaseCountForRun(config: Pipeline): number {
+  const willLoad = !(config.run.dryRun || config.run.mode === 'validate-only');
+  if (isMultiSource(config)) {
+    const sourcesWithPreMergeRules = new Set(
+      config.dq.rules.filter((r) => r.sourceId).map((r) => r.sourceId as string),
+    );
+    // Extract per source + DQ per source with rules + Merge + post-merge DQ + Transform [+ Load]
+    return (
+      config.sources.length +
+      sourcesWithPreMergeRules.size +
+      1 + // merge
+      1 + // post-merge DQ
+      1 + // transform
+      (willLoad ? 1 : 0)
+    );
+  }
+  // Single source: Extract + DQ + Transform [+ Load]
+  return 3 + (willLoad ? 1 : 0);
+}
+
+function buildProgressReporter(opts: GlobalOpts, config: Pipeline): ProgressReporter {
+  return new ProgressReporter({
+    silent: opts.silent ?? false,
+    totalPhases: phaseCountForRun(config),
+    logLevel: (opts.logLevel ?? 'info') as ProgressLogLevel,
+  });
 }
 
 export async function createRunnerForPipeline(
@@ -70,9 +104,14 @@ export async function createRunnerForPipeline(
 }
 
 async function cmdRun(yaml: string, program: Command): Promise<never> {
-  const overrides = applyGlobals(program.opts<GlobalOpts>());
+  const opts = program.opts<GlobalOpts>();
+  const overrides = applyGlobals(opts);
+  let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
+    const config = await ConfigLoader.load(yaml);
+    progress = buildProgressReporter(opts, config);
+    overrides.progress = progress;
     const result = await runner.run(yaml, overrides);
     logger.info(
       {
@@ -89,16 +128,22 @@ async function cmdRun(yaml: string, program: Command): Promise<never> {
     );
     process.exit(0);
   } catch (err) {
+    progress?.stop();
     logger.error({ err }, 'sluice run: failed');
     process.exit(exitCodeFor(err));
   }
 }
 
 async function cmdValidate(yaml: string, program: Command): Promise<never> {
-  const overrides = applyGlobals(program.opts<GlobalOpts>());
+  const opts = program.opts<GlobalOpts>();
+  const overrides = applyGlobals(opts);
   overrides.mode = 'validate-only';
+  let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
+    const config = await ConfigLoader.load(yaml);
+    progress = buildProgressReporter(opts, { ...config, run: { ...config.run, mode: 'validate-only' } });
+    overrides.progress = progress;
     const result = await runner.run(yaml, overrides);
     logger.info(
       {
@@ -112,15 +157,26 @@ async function cmdValidate(yaml: string, program: Command): Promise<never> {
     );
     process.exit(0);
   } catch (err) {
+    progress?.stop();
     logger.error({ err }, 'sluice validate: failed');
     process.exit(exitCodeFor(err));
   }
 }
 
 async function cmdProfile(yaml: string, program: Command): Promise<never> {
-  const overrides = applyGlobals(program.opts<GlobalOpts>());
+  const opts = program.opts<GlobalOpts>();
+  const overrides = applyGlobals(opts);
+  let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
+    const config = await ConfigLoader.load(yaml);
+    // profile = extract-only for single-source; extract+merge for multi-source.
+    progress = new ProgressReporter({
+      silent: opts.silent ?? false,
+      totalPhases: isMultiSource(config) ? config.sources.length + 1 : 1,
+      logLevel: (opts.logLevel ?? 'info') as ProgressLogLevel,
+    });
+    overrides.progress = progress;
     const result = await runner.profile(yaml, overrides);
     logger.info(
       { pipeline: result.pipeline, rowsExtracted: result.extract.rowsExtracted, profilePath: result.profilePath },
@@ -128,6 +184,7 @@ async function cmdProfile(yaml: string, program: Command): Promise<never> {
     );
     process.exit(0);
   } catch (err) {
+    progress?.stop();
     logger.error({ err }, 'sluice profile: failed');
     process.exit(exitCodeFor(err));
   }
@@ -266,7 +323,8 @@ export function buildProgram(): Command {
     .option('--env <file>', 'Path to .env file', './.env')
     .option('--output <dir>', 'Override run.outputDir')
     .option('--plugins <dir...>', 'Additional plugin directory/directories to load')
-    .option('--dry-run', 'Force run.dryRun = true');
+    .option('--dry-run', 'Force run.dryRun = true')
+    .option('--silent', 'Suppress the progress bar on stdout (logs still go to stderr)');
 
   program
     .command('run <pipeline>')
