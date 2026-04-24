@@ -79,6 +79,7 @@ run:
     expect(output).toContain('3,Charlie');
   });
 
+
   it('dryRun stops before load and writes no output', async () => {
     const inputCsv = join(workDir, 'input.csv');
     writeFileSync(inputCsv, 'id,name\n1,a\n', 'utf8');

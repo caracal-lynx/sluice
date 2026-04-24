@@ -32,7 +32,7 @@ source:
 # ── DATA QUALITY ──────────────────────────────────────────────────────────────
 dq:
   stopOnCritical: true
-  rejectionFile: ./output/cochran-customers-rejected.csv
+  rejectionFile: ./output/eribe-style-master-rejected.csv
 
   rules:
     - field: REFERENCE
