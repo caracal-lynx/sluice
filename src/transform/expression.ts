@@ -18,10 +18,15 @@ import { logger } from '../utils/logger.js';
 const parser = new Parser();
 
 export class ExpressionEvaluator {
+  private readonly warnedExpressions = new Set<string>();
+
   evaluate(expression: string, row: Record<string, unknown>): unknown {
     if (expression.startsWith('js:')) {
       const code = expression.slice(3).trim();
-      logger.warn({ expression: code }, 'expression: using js: path (vm.runInNewContext)');
+      if (!this.warnedExpressions.has(code)) {
+        this.warnedExpressions.add(code);
+        logger.warn({ expression: code }, 'expression: using js: path (vm.runInNewContext)');
+      }
       try {
         return runInNewContext(
           code,
