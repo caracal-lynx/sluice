@@ -370,7 +370,7 @@ flowchart TB
     Date[dayjs parse with format,<br/>format as dateFormat]:::op
     Lookup[LookupResolver.resolve<br/>named map]:::op
     Lookup2{hit?}:::branch
-    Concat[Join from[] with<br/>separator, then cleanse]:::op
+    Concat["Join from s1 with<br/>separator, then cleanse"]:::op
     Const[Emit value verbatim]:::op
     Expr[ExpressionEvaluator]:::op
     ExprPrefix{starts with<br/>js:?}:::branch
@@ -436,7 +436,7 @@ flowchart LR
     end
 
     subgraph T3[Tier 3 — npm packages]
-      NP[sluice.config.yaml<br/>plugins: [@org/pkg]]:::t3
+      NP["sluice.config.yaml<br/>plugins: [@org/pkg]"]:::t3
     end
 
     Loader[Plugin Loader<br/>--plugins dir... CLI flag]:::loader
