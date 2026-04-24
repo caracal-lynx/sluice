@@ -28,6 +28,7 @@ import { RuleRegistry, TransformRegistry } from './plugins/registry.js';
 import { loadPlugins, loadNpmPlugins } from './plugins/loader.js';
 import { ConfigError, PipelineDQError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
+import { ProgressReporter, createSilentProgress } from './utils/progress.js';
 
 export interface RunResult {
   pipeline: string;
@@ -49,6 +50,11 @@ export interface RunOverrides {
   dryRun?: boolean;
   mode?: Pipeline['run']['mode'];
   pluginDirs?: string[];
+  /**
+   * Optional progress reporter. CLI callers pass a live reporter; library
+   * callers (and tests) can omit it to get a silent no-op.
+   */
+  progress?: ProgressReporter;
 }
 
 export class PipelineRunner {
@@ -56,6 +62,7 @@ export class PipelineRunner {
   protected readonly transformRegistry: TransformRegistry;
   protected readonly dqEngine: DQEngine;
   protected readonly transformEngine: TransformEngine;
+  protected progress: ProgressReporter = createSilentProgress();
   private pluginsLoaded = false;
   private incrementalSinceUsed = '';
 
@@ -110,6 +117,9 @@ export class PipelineRunner {
 
   async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
     this.incrementalSinceUsed = '';
+    if (overrides.progress) this.progress = overrides.progress;
+
+    const runStartMs = Date.now();
 
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
@@ -189,6 +199,13 @@ export class PipelineRunner {
           { dryRun: config.run.dryRun, mode: config.run.mode },
           'pipeline: stopping before load',
         );
+        this.progress.summary({
+          pipeline: config.pipeline.name,
+          elapsedMs: Date.now() - runStartMs,
+          rowsExtracted: extractResult.rowsExtracted,
+          warnings: dqSummary.violations.warning,
+          state: dqSummary.violations.warning > 0 ? 'warn' : 'success',
+        });
         return this.buildRunResult(config, extractResult, dqSummary, transformResult, null);
       }
 
@@ -203,6 +220,15 @@ export class PipelineRunner {
         },
         'pipeline: done',
       );
+
+      this.progress.summary({
+        pipeline: config.pipeline.name,
+        elapsedMs: Date.now() - runStartMs,
+        rowsExtracted: extractResult.rowsExtracted,
+        rowsLoaded: loadResult.rowsLoaded,
+        warnings: dqSummary.violations.warning,
+        state: dqSummary.violations.warning > 0 ? 'warn' : 'success',
+      });
 
       return {
         ...this.buildRunResult(config, extractResult, dqSummary, transformResult, loadResult),
@@ -219,6 +245,7 @@ export class PipelineRunner {
     config: Pipeline,
     store: StagingStore,
     tableName = 'stg_raw',
+    phaseLabel = 'Extract',
   ): Promise<ExtractResult> {
     if (!config.source) {
       throw new ConfigError(
@@ -226,20 +253,34 @@ export class PipelineRunner {
       );
     }
     const adapter = SourceAdapterRegistry.get(config.source.adapter);
+    this.progress.startPhase('extract', phaseLabel);
+    // Staging DB files persist across runs. `CREATE TABLE IF NOT EXISTS`
+    // (from buildCreateTableSql) would silently reuse an old table and cause
+    // each run to append a fresh copy of the source data. Drop up-front so
+    // every extract starts from an empty table.
+    await store.dropTable(tableName);
     await adapter.connect(config.source);
     try {
       const result = await adapter.extract(
         config.source,
         store,
         config.run,
-        (rows) => logger.debug({ rows }, 'extracting'),
+        (rows) => {
+          logger.debug({ rows }, 'extracting');
+          this.progress.update(rows);
+        },
         tableName,
       );
       logger.info(
         { rowsExtracted: result.rowsExtracted, table: result.tableName },
         'pipeline: extract complete',
       );
+      this.progress.update(result.rowsExtracted);
+      this.progress.endPhase({ state: 'success' });
       return result;
+    } catch (err) {
+      this.progress.endPhase({ state: 'fail' });
+      throw err;
     } finally {
       await adapter.disconnect();
     }
@@ -250,19 +291,35 @@ export class PipelineRunner {
     store: StagingStore,
     tableName = 'stg_raw',
     _sourceId?: string, // Reserved for per-source filtering in MultiSourcePipelineRunner.
+    phaseLabel = 'Data quality',
   ): Promise<DQSummary> {
-    const summary = await this.dqEngine.run(config, store, tableName);
-    logger.info(
-      {
-        rowsChecked: summary.rowsChecked,
-        rowsRejected: summary.rowsRejected,
-        critical: summary.violations.critical,
-        warning: summary.violations.warning,
-        info: summary.violations.info,
-      },
-      'pipeline: dq complete',
-    );
-    return summary;
+    const total = (await store.tableExists(tableName))
+      ? await store.rowCount(tableName)
+      : undefined;
+    this.progress.startPhase('dq', phaseLabel, total !== undefined ? { total } : {});
+    try {
+      const summary = await this.dqEngine.run(config, store, tableName, (rows) => {
+        this.progress.update(rows);
+      });
+      logger.info(
+        {
+          rowsChecked: summary.rowsChecked,
+          rowsRejected: summary.rowsRejected,
+          critical: summary.violations.critical,
+          warning: summary.violations.warning,
+          info: summary.violations.info,
+        },
+        'pipeline: dq complete',
+      );
+      const state = summary.violations.critical > 0
+        ? 'fail'
+        : summary.violations.warning > 0 ? 'warn' : 'success';
+      this.progress.endPhase({ state });
+      return summary;
+    } catch (err) {
+      this.progress.endPhase({ state: 'fail' });
+      throw err;
+    }
   }
 
   protected async runTransform(
@@ -271,35 +328,67 @@ export class PipelineRunner {
     sourceTable = 'stg_raw',
     targetTable = 'stg_transformed',
   ): Promise<TransformResult> {
-    const result = await this.transformEngine.run(config, store, sourceTable, targetTable);
-    logger.info(
-      {
-        rowsIn: result.rowsIn,
-        rowsOut: result.rowsOut,
-        rowsFailed: result.rowsFailed,
+    const total = (await store.tableExists(sourceTable))
+      ? await store.rowCount(sourceTable)
+      : undefined;
+    this.progress.startPhase('transform', 'Transform', total !== undefined ? { total } : {});
+    try {
+      const result = await this.transformEngine.run(
+        config,
+        store,
         sourceTable,
         targetTable,
-      },
-      'pipeline: transform complete',
-    );
-    return result;
+        (rows) => this.progress.update(rows),
+      );
+      logger.info(
+        {
+          rowsIn: result.rowsIn,
+          rowsOut: result.rowsOut,
+          rowsFailed: result.rowsFailed,
+          sourceTable,
+          targetTable,
+        },
+        'pipeline: transform complete',
+      );
+      this.progress.endPhase({
+        state: result.rowsFailed > 0 ? 'warn' : 'success',
+      });
+      return result;
+    } catch (err) {
+      this.progress.endPhase({ state: 'fail' });
+      throw err;
+    }
   }
 
   protected async runLoad(config: Pipeline, store: StagingStore): Promise<LoadResult> {
     const adapter = TargetAdapterRegistry.get(config.target.adapter);
+    const total = (await store.tableExists('stg_transformed'))
+      ? await store.rowCount('stg_transformed')
+      : undefined;
+    this.progress.startPhase('load', 'Load', total !== undefined ? { total } : {});
     await adapter.connect(config.target);
     try {
       const result = await adapter.load(
         config.target,
         store,
         config.run,
-        (rows) => logger.debug({ rows }, 'loading'),
+        (rows) => {
+          logger.debug({ rows }, 'loading');
+          this.progress.update(rows);
+        },
       );
       logger.info(
         { rowsLoaded: result.rowsLoaded, outputPath: result.outputPath },
         'pipeline: load complete',
       );
+      this.progress.update(result.rowsLoaded);
+      this.progress.endPhase({
+        state: result.rowsFailed > 0 ? 'warn' : 'success',
+      });
       return result;
+    } catch (err) {
+      this.progress.endPhase({ state: 'fail' });
+      throw err;
     } finally {
       await adapter.disconnect();
     }
@@ -336,6 +425,7 @@ export class PipelineRunner {
    * Never writes an output CSV, never runs DQ or transforms.
    */
   async profile(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    if (overrides.progress) this.progress = overrides.progress;
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
     await this.loadAllPlugins(
