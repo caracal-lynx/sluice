@@ -47,6 +47,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
   }
 
   override async profile(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    if (overrides.progress) this.progress = overrides.progress;
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
     await this.loadAllPlugins(
@@ -122,6 +123,9 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
   }
 
   override async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    if (overrides.progress) this.progress = overrides.progress;
+    const runStartMs = Date.now();
+
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
     await this.loadAllPlugins(
@@ -171,18 +175,35 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         );
       }
 
-      const mergeResult = await this.mergeEngine.run(
-        store,
-        sortedSources.map((s) => ({
-          id: s.id,
-          priority: s.priority,
-          tableName: `stg_raw_${s.id}`,
-        })),
-        config.merge,
-      );
+      this.progress.startPhase('merge', `Merge (${config.merge.strategy ?? 'coalesce'})`);
+      let mergeResult;
+      try {
+        mergeResult = await this.mergeEngine.run(
+          store,
+          sortedSources.map((s) => ({
+            id: s.id,
+            priority: s.priority,
+            tableName: `stg_raw_${s.id}`,
+          })),
+          config.merge,
+        );
+        this.progress.update(mergeResult.rowsMerged);
+        this.progress.endPhase({
+          state: mergeResult.conflicts > 0 ? 'warn' : 'success',
+        });
+      } catch (err) {
+        this.progress.endPhase({ state: 'fail' });
+        throw err;
+      }
 
       const postMergeConfig = this.buildPostMergeConfig(config);
-      const dqSummary = await this.runDQ(postMergeConfig, store, 'stg_merged');
+      const dqSummary = await this.runDQ(
+        postMergeConfig,
+        store,
+        'stg_merged',
+        undefined,
+        'Data quality (post-merge)',
+      );
 
       if (postMergeConfig.dq.stopOnCritical && dqSummary.violations.critical > 0) {
         throw new PipelineDQError(dqSummary.violations.critical, dqSummary.reportPath);
@@ -226,6 +247,13 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           { dryRun: postMergeConfig.run.dryRun, mode: postMergeConfig.run.mode },
           'pipeline: stopping before load',
         );
+        this.progress.summary({
+          pipeline: postMergeConfig.pipeline.name,
+          elapsedMs: Date.now() - runStartMs,
+          rowsExtracted: extractResult.rowsExtracted,
+          warnings: dqSummary.violations.warning,
+          state: dqSummary.violations.warning > 0 || mergeResult.conflicts > 0 ? 'warn' : 'success',
+        });
         return {
           ...baseRunResult,
           merge: mergeSummary,
@@ -243,6 +271,15 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         },
         'pipeline: done (multi-source)',
       );
+
+      this.progress.summary({
+        pipeline: postMergeConfig.pipeline.name,
+        elapsedMs: Date.now() - runStartMs,
+        rowsExtracted: extractResult.rowsExtracted,
+        rowsLoaded: loadResult.rowsLoaded,
+        warnings: dqSummary.violations.warning,
+        state: dqSummary.violations.warning > 0 || mergeResult.conflicts > 0 ? 'warn' : 'success',
+      });
 
       return {
         ...this.buildRunResult(postMergeConfig, extractResult, dqSummary, transformResult, loadResult),
@@ -302,7 +339,12 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     const tableName = `stg_raw_${sourceEntry.id}`;
     const sourceScopedConfig = this.buildSingleSourceConfig(config, sourceEntry);
 
-    const extractResult = await this.runExtract(sourceScopedConfig, store, tableName);
+    const extractResult = await this.runExtract(
+      sourceScopedConfig,
+      store,
+      tableName,
+      `Extract (${sourceEntry.id})`,
+    );
     this.sourceExtracts.push({
       sourceId: sourceEntry.id,
       rowsExtracted: extractResult.rowsExtracted,
@@ -348,7 +390,13 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         rules: sourceRules,
       },
     };
-    const sourceSummary = await this.runDQ(perSourceDqConfig, store, tableName, sourceEntry.id);
+    const sourceSummary = await this.runDQ(
+      perSourceDqConfig,
+      store,
+      tableName,
+      sourceEntry.id,
+      `Data quality (${sourceEntry.id})`,
+    );
 
     if (config.dq.stopOnCritical && sourceSummary.violations.critical > 0) {
       throw new PipelineDQError(sourceSummary.violations.critical, sourceSummary.reportPath);

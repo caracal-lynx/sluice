@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { exitCodeFor, resolvePluginDirs } from '../../src/cli.js';
+import { buildProgram, exitCodeFor, resolvePluginDirs } from '../../src/cli.js';
 import { ConfigError, PipelineDQError, PipelineError } from '../../src/utils/errors.js';
 
 describe('CLI helpers', () => {
@@ -29,5 +29,21 @@ describe('CLI helpers', () => {
     const dirs = resolvePluginDirs(cwd);
 
     expect(dirs).toEqual([path.resolve(cwd, 'plugins')]);
+  });
+
+  it('parses --silent as a global option', () => {
+    const program = buildProgram();
+    // parseOptions applies option values without dispatching the subcommand
+    // action (which would call process.exit via cmdCheck).
+    program.parseOptions(['--silent']);
+    const opts = program.opts<{ silent?: boolean }>();
+    expect(opts.silent).toBe(true);
+  });
+
+  it('--silent is not set by default', () => {
+    const program = buildProgram();
+    program.parseOptions([]);
+    const opts = program.opts<{ silent?: boolean }>();
+    expect(opts.silent).toBeUndefined();
   });
 });
