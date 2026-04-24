@@ -254,6 +254,11 @@ export class PipelineRunner {
     }
     const adapter = SourceAdapterRegistry.get(config.source.adapter);
     this.progress.startPhase('extract', phaseLabel);
+    // Staging DB files persist across runs. `CREATE TABLE IF NOT EXISTS`
+    // (from buildCreateTableSql) would silently reuse an old table and cause
+    // each run to append a fresh copy of the source data. Drop up-front so
+    // every extract starts from an empty table.
+    await store.dropTable(tableName);
     await adapter.connect(config.source);
     try {
       const result = await adapter.extract(
