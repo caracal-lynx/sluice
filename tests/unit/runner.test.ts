@@ -240,7 +240,7 @@ describe('PipelineRunner protected phase methods', () => {
 
     const result = await runner.callRunDQ(config, store, 'stg_merged');
 
-    expect(dqSpy).toHaveBeenCalledWith(config, store, 'stg_merged');
+    expect(dqSpy).toHaveBeenCalledWith(config, store, 'stg_merged', expect.any(Function));
     expect(result).toBe(summary);
   });
 
@@ -255,7 +255,7 @@ describe('PipelineRunner protected phase methods', () => {
 
     const result = await runner.callRunTransform(config, store, 'stg_merged', 'stg_final');
 
-    expect(transformSpy).toHaveBeenCalledWith(config, store, 'stg_merged', 'stg_final');
+    expect(transformSpy).toHaveBeenCalledWith(config, store, 'stg_merged', 'stg_final', expect.any(Function));
     expect(result).toBe(transformResult);
   });
 
