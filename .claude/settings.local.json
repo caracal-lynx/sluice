@@ -29,8 +29,7 @@
       "Bash(python)",
       "Read(//tmp/**)",
       "Bash(nvm --version)",
-      "Bash(nvm list *)",
-      "Bash(nvm install *)"
+      "Bash(nvm list *)"
     ]
   }
 }
