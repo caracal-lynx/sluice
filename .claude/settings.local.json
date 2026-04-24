@@ -23,7 +23,11 @@
       "Bash(echo \"---exit=$?\")",
       "Bash(echo \"---lint-exit=$?\")",
       "Bash(echo \"---tsc-exit=$?\")",
-      "mcp__a70d33ad-9ebd-428a-9233-265f9b8c52f2__validate_and_render_mermaid_diagram"
+      "mcp__a70d33ad-9ebd-428a-9233-265f9b8c52f2__validate_and_render_mermaid_diagram",
+      "Bash(python -c ' *)",
+      "Bash(pip install *)",
+      "Bash(python)",
+      "Read(//tmp/**)"
     ]
   }
 }

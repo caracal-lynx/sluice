@@ -26,5 +26,5 @@ export function buildCreateTableSql(tableName: string, columns: ColumnMeta[]): s
     throw new Error(`cannot create table ${tableName} with no columns`);
   }
   const colsSql = columns.map((c) => `${quoteIdent(c.name)} ${c.duckDbType}`).join(', ');
-  return `CREATE TABLE ${quoteIdent(tableName)} (${colsSql})`;
+  return `CREATE TABLE IF NOT EXISTS ${quoteIdent(tableName)} (${colsSql})`;
 }
