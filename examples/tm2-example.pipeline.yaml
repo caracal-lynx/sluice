@@ -1,17 +1,17 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Sluice pipeline config — Cochran Group customer migration
+# Sluice pipeline config — Eribe customer migration
 # @caracal-lynx/sluice
 #
 # Usage:
-#   sluice check    customers.pipeline.yaml   validate config only
-#   sluice validate customers.pipeline.yaml   DQ + transform, no load
-#   sluice run      customers.pipeline.yaml   full migration
+#   sluice check    tm2-example.pipeline.yaml   validate config only
+#   sluice validate tm2-example.pipeline.yaml   DQ + transform, no load
+#   sluice run      tm2-example.pipeline.yaml   full migration
 #
 # Connection strings live in .env (never commit this file with real credentials).
 # ─────────────────────────────────────────────────────────────────────────────
 
 pipeline:
-  name: eribe-style
+  name: eribe-style-master
   client: eribe 
   version: "1.0"
   entity: style
@@ -21,7 +21,7 @@ pipeline:
 # ── EXTRACT ───────────────────────────────────────────────────────────────────
 source:
   adapter: mssql                   # mssql | pg | csv | xlsx | rest
-  connection: ${TM2_MSSQL}     # resolved from .env at runtime
+  connection: ${TM2_MSSQL}         # resolved from .env at runtime
   query: |
     SELECT
       p.REFERENCE, p.NAME, p.SEASON, p.DETAIL
@@ -35,86 +35,50 @@ dq:
   rejectionFile: ./output/cochran-customers-rejected.csv
 
   rules:
-    - field: CUST_CODE
+    - field: REFERENCE
       checks:
-        - { type: notNull,   severity: critical }
-        - { type: unique,    severity: critical }
-        - { type: pattern, value: '^[A-Z0-9]{3,10}$', severity: warning }
+        - { type: notNull,   severity: warning }
 
-    - field: CUST_NAME
+    - field: NAME
       checks:
-        - { type: notNull,   severity: critical }
-        - { type: maxLength, value: 100, severity: warning }
+        - { type: notNull,   severity: warning }
 
-    - field: POST_CODE
+    - field: SEASON
       checks:
-        - { type: ukPostcode, severity: warning }
+        - { type: notNull,   severity: warning }
 
-    - field: EMAIL
+    - field: DETAIL
       checks:
-        - { type: email,     severity: warning }
-
-    - field: CREDIT_LIMIT
-      checks:
-        - { type: min,       value: 0,      severity: critical }
-        - { type: max,       value: 500000, severity: warning }
-
-    - field: COUNTRY
-      checks:
-        - { type: allowedValues, value: [GB, IE, US, DE, FR], severity: warning }
+        - { type: notNull,   severity: warning }
 
 
 # ── TRANSFORM ─────────────────────────────────────────────────────────────────
 transform:
-
-  lookups:
-    - name: currencyMap
-      source:
-        adapter: csv
-        file: ./lookups/currency-codes.csv
-      key: legacyCode
-      value: isoCode
-
-    - name: acctMgrMap
-      source:
-        adapter: mssql
-        connection: ${TM2_MSSQL}
-        query: "SELECT REFERENCE as key, NAME, SEASON, DETAIL as value FROM dbo.ProHead"
-      key: key
-      value: value
-
+  
   fields:
-    - { from: CUST_CODE,      to: CustomerNo,   type: string,  max: 20 }
-    - { from: CUST_NAME,      to: Name,         type: string,  max: 100, cleanse: trim|titleCase }
-    - { from: [ADDR1, ADDR2], to: Address1,     type: concat,  separator: ', ', cleanse: trim }
-    - { from: POST_CODE,      to: ZipCode,      type: string,  cleanse: trim|uppercase }
-    - { from: COUNTRY,        to: Country,      type: string,  default: GB }
-    - { from: CURRENCY,       to: CurrencyCode, type: lookup,  lookup: currencyMap, default: GBP }
-    - { from: ACCT_MGR_ID,    to: SalesmanCode, type: lookup,  lookup: acctMgrMap,  optional: true }
-    - { from: CREDIT_LIMIT,   to: CreditLimit,  type: decimal, precision: 2 }
-    - { from: EMAIL,          to: Email,        type: string,  cleanse: trim|lowercase }
-    - { to: CustomerGroup,    type: constant,   value: DOMESTIC }
-    - { to: SearchName,       type: expression, value: "row.CUST_NAME.toUpperCase().substring(0, 20)" }
+    - { to:   Division,                         type: constant,        value: 'FG' }
+    - { from: REFERENCE,      to: Style,        type: string,          max: 12 }
+    - { to:   Colour Code,                      type: constant,        value: 'Test Colour Code' }
+    - { to:   Label,                            type: constant,        value: 'Test Label' }
+    - { to:   Dimen/Pack,                       type: constant,        value: 'Test Dimen/Pack' }   
+    - { from: SEASON,         to: Season,       type: string,          max: 5 }
+    - { from: NAME,           to: Style Name,   type: expression,      value: "js: String(row.NAME ?? '').replace(/\\s+/g, ' ').trim().substring(0, 60)" }
 
 
 # ── LOAD ──────────────────────────────────────────────────────────────────────
 target:
-  adapter: ifs
-  entity: CustomerInfo
-  output: ./output/cochran-customers-ifs.csv
-  includeHeader: false
+  adapter: csv
+  entity: style-master
+  output: ./output/eribe-style-master.csv
+  includeHeader: true
   columnOrder:
-    - CustomerNo
-    - Name
-    - Address1
-    - ZipCode
-    - Country
-    - CurrencyCode
-    - SalesmanCode
-    - CreditLimit
-    - Email
-    - CustomerGroup
-    - SearchName
+    - Division
+    - Style
+    - Colour Code
+    - Label
+    - Dimen/Pack
+    - Season
+    - Style Name
 
 
 # ── EXECUTION ─────────────────────────────────────────────────────────────────
