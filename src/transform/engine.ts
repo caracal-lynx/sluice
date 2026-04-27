@@ -35,6 +35,7 @@ export class TransformEngine {
     store: StagingStore,
     sourceTable = 'stg_raw',
     targetTable = 'stg_transformed',
+    onProgress?: (rows: number) => void,
   ): Promise<TransformResult> {
     const lookups = new LookupResolver();
     await lookups.loadAll(config, config.run);
@@ -76,6 +77,7 @@ export class TransformEngine {
         if (outputBatch.length >= config.run.batchSize) {
           await store.insertBatch(targetTable, outputBatch);
           outputBatch.length = 0;
+          if (onProgress) onProgress(i + 1);
         }
       } catch (err) {
         rowsFailed++;
@@ -93,6 +95,7 @@ export class TransformEngine {
     if (outputBatch.length > 0) {
       await store.insertBatch(targetTable, outputBatch);
     }
+    if (onProgress) onProgress(rows.length);
 
     const rowsOut = await store.rowCount(targetTable);
     return { rowsIn: rows.length, rowsOut, rowsFailed };

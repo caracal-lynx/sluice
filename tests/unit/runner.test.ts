@@ -231,6 +231,42 @@ describe('PipelineRunner protected phase methods', () => {
     expect(result.tableName).toBe('stg_custom');
   });
 
+  it('runExtract drops the staging table before extracting (regression: persistent DB appending)', async () => {
+    // buildCreateTableSql emits `CREATE TABLE IF NOT EXISTS`. If runExtract
+    // did not drop the table first, a re-run against a persistent staging
+    // DuckDB file would keep the prior rows and the adapter would insert
+    // another batch on top, inflating DQ/transform/load row counts.
+    const runner = new TestableRunner();
+    const config = makePipeline(workDir);
+    const calls: string[] = [];
+
+    const dropSpy = vi.spyOn(store, 'dropTable').mockImplementation(async () => {
+      calls.push('dropTable');
+    });
+    const extract = vi.fn().mockImplementation(async () => {
+      calls.push('extract');
+      return {
+        rowsExtracted: 0,
+        tableName: 'stg_raw',
+        columns: [{ name: 'id', duckDbType: 'VARCHAR' }],
+      };
+    });
+
+    vi.spyOn(SourceAdapterRegistry, 'get').mockReturnValue({
+      id: 'csv',
+      connect: vi.fn().mockResolvedValue(undefined),
+      extract,
+      disconnect: vi.fn().mockResolvedValue(undefined),
+    });
+
+    await runner.callRunExtract(config, store, 'stg_raw');
+
+    expect(dropSpy).toHaveBeenCalledWith('stg_raw');
+    // The drop must come before the extract so the table is empty when the
+    // adapter's insertBatch calls start firing.
+    expect(calls).toEqual(['dropTable', 'extract']);
+  });
+
   it('runDQ delegates to the DQ engine with the provided table name', async () => {
     const runner = new TestableRunner();
     const config = makePipeline(workDir);
@@ -240,7 +276,7 @@ describe('PipelineRunner protected phase methods', () => {
 
     const result = await runner.callRunDQ(config, store, 'stg_merged');
 
-    expect(dqSpy).toHaveBeenCalledWith(config, store, 'stg_merged');
+    expect(dqSpy).toHaveBeenCalledWith(config, store, 'stg_merged', expect.any(Function));
     expect(result).toBe(summary);
   });
 
@@ -255,7 +291,7 @@ describe('PipelineRunner protected phase methods', () => {
 
     const result = await runner.callRunTransform(config, store, 'stg_merged', 'stg_final');
 
-    expect(transformSpy).toHaveBeenCalledWith(config, store, 'stg_merged', 'stg_final');
+    expect(transformSpy).toHaveBeenCalledWith(config, store, 'stg_merged', 'stg_final', expect.any(Function));
     expect(result).toBe(transformResult);
   });
 
