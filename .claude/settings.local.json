@@ -27,7 +27,12 @@
       "Bash(python -c ' *)",
       "Bash(pip install *)",
       "Bash(python)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(nvm --version)",
+      "Bash(nvm list *)",
+      "Bash(nvm install *)",
+      "Bash(npm link *)",
+      "Bash(sluice --version)"
     ]
   }
 }
