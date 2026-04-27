@@ -12,7 +12,7 @@
 
 ## 🤔 What is this thing?
 
-![Gold Sluice](sluice-for-gold.jpg)
+![Gold Sluice](./images/sluice-for-gold.jpg)
 
 Sluice takes the pain out of ERP data migrations. You know the drill — a client has 20 years of customer records in a legacy SQL database, and they need them in a shiny new ERP system by Monday. The data is a mess, the field names are cryptic, and someone has helpfully stored postcodes in a column called `ADDR5`.
 
