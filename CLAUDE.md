@@ -1572,7 +1572,20 @@ Global options:
   --output <dir>        Override outputDir
   --plugins <dir...>    Additional plugin directory/directories to load
   --dry-run             Force dryRun: true
+  --silent              Suppress the progress bar on stdout (logs still go to stderr)
 ```
+
+**Progress feedback:** `sluice run`, `sluice validate`, and `sluice profile`
+render a phase-by-phase progress bar to stdout via
+`src/utils/progress.ts → ProgressReporter`, with per-phase emoji icons
+(🔎 extract · 🛡️ DQ · 🔀 merge · 🔧 transform · 📤 load), an ETA for
+determinate phases, and a coloured ✅/⚠️/❌ run-summary line. The bar
+degrades gracefully:
+  - `--silent`                → no stdout output at all
+  - `--log-level debug`       → bar disabled; per-row debug lines are used instead
+  - `process.stdout.isTTY`    → false: plain-ASCII lines (one per phase),
+                                no emojis, no ANSI escapes — log-file friendly
+  - `NO_COLOR` env var        → ANSI colour dropped (handled by `picocolors`)
 
 **Exit codes:** `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error
 
@@ -1582,7 +1595,14 @@ Global options:
 ## LOGGING  (src/utils/logger.ts)
 ## ═══════════════════════════════════════════════════════════
 
-Single `pino` instance. No `console.log` in `src/`.
+Single `pino` instance. All log records (every level) go to **stderr**; stdout
+is reserved exclusively for the progress bar and final summary rendered by
+`ProgressReporter`. This mirrors how git, cargo, and npm split streams.
+
+No `console.log` in `src/`. Operators who want logs in a file can run
+`sluice run p.yaml 2>run.log` — the bar stays visible on the terminal while
+every pino record is captured to the file. Use `--log-level error` to narrow
+the file to errors only.
 
 | Level | Used for |
 |---|---|
