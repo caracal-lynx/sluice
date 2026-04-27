@@ -1,4 +1,4 @@
-![Sluice](./sluice-logo.png)
+![Sluice](./images/sluice-logo.png)
 
 > *"A sluice is a channel that controls the flow of water. Sluice is a toolkit that controls the flow of data. Except data doesn't flood your basement. Usually."*
 
