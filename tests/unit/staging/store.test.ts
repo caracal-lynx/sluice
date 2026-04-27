@@ -268,6 +268,6 @@ describe('schema helpers', () => {
       { name: 'a', duckDbType: 'VARCHAR' },
       { name: 'b', duckDbType: 'BIGINT' },
     ]);
-    expect(sql).toBe('CREATE TABLE "t" ("a" VARCHAR, "b" BIGINT)');
+    expect(sql).toBe('CREATE TABLE IF NOT EXISTS "t" ("a" VARCHAR, "b" BIGINT)');
   });
 });
