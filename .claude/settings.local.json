@@ -52,7 +52,10 @@
       "Bash(git branch *)",
       "Bash(git ls-remote *)",
       "Bash(git mv *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Read(//c/Users/MichaelScott/**)",
+      "Bash(sluice --help)",
+      "Bash(sluice check *)"
     ]
   }
 }
