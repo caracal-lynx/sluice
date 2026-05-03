@@ -208,7 +208,7 @@ sluice/
 | Concern | Package | Notes |
 |---|---|---|
 | Language | TypeScript 5.x | `strict: true`, `exactOptionalPropertyTypes: true` |
-| Runtime | Node.js 20 LTS | No Bun, no Deno — must run in GitHub Actions |
+| Runtime | Node.js 24 LTS | No Bun, no Deno — must run in GitHub Actions |
 | Config parsing | `js-yaml` | YAML 1.2 only |
 | Config validation | `zod` v3 | All config types inferred from Zod |
 | SQL Server | `mssql` | Trusted + SQL auth both supported |
@@ -217,7 +217,7 @@ sluice/
 | Excel | `xlsx` (SheetJS) | Read-only |
 | HTTP | `axios` + `axios-retry` | 3 retries, exponential backoff |
 | Dates | `dayjs` | All date parsing and formatting |
-| Staging | `duckdb` (Node binding) | Embedded; no server |
+| Staging | `@duckdb/node-api` | Embedded; no server. Replaces deprecated `duckdb` package — ABI-stable (no `npm rebuild` after Node ABI bumps). |
 | CLI | `commander` v12 | |
 | Logging | `pino` | JSON; `pino-pretty` in dev |
 | Testing | `vitest` | No Jest |
@@ -1749,7 +1749,7 @@ jobs:
 - Do not write manual TypeScript interfaces for config types — use `z.infer<>`.
 - Do not use `eval()` or `new Function()` — use `expr-eval` or `vm.runInNewContext`.
 - Do not hard-code connection strings, credentials, or client-specific values.
-- Do not import from `duckdb` directly outside `src/staging/store.ts`.
+- Do not import from `@duckdb/node-api` directly outside `src/staging/store.ts`.
 - Do not create `StagingStore` instances outside `PipelineRunner`.
 - Do not add UI, REST server, or dashboard code.
 - Do not add adapter-specific logic to `PipelineRunner`.
