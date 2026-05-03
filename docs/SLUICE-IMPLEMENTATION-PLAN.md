@@ -295,7 +295,7 @@ Confirm `@caracal-lynx` is registered in your npm account and the Pro plan is ac
 
 **Status:** ✅ **COMPLETE** — merged to `master` on 3 May 2026 ([PR #8](https://github.com/BCGubbins/sluice/pull/8), squash commit `e1be8c4`).
 
-**Reference:** `docs/node24-upgrade-plan.md` — full Claude Code-ready plan
+**Reference:** `docs/archive/node24-upgrade-plan.md` — implementation reference (executed; see PR #8)
 
 ### Summary
 
@@ -362,7 +362,7 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 ### Steps (hand to Claude Code)
 
 1. **Pre-flight:** Run TLS connectivity test against Cochran SQL Server before any code changes. If TLS 1.2 handshake fails, investigate `--openssl-legacy-provider` or update SQL Server TLS config before proceeding.
-2. **DuckDB:** Migrate `src/staging/store.ts` to `@duckdb/node-api`. See `docs/node24-upgrade-plan.md` for full API diff and StagingStore skeleton.
+2. **DuckDB:** Migrate `src/staging/store.ts` to `@duckdb/node-api`. See `docs/archive/node24-upgrade-plan.md` for full API diff and StagingStore skeleton.
 3. **Phase 4a stubs:** Add the three stub methods above to `StagingStore`.
 4. **vm hardening:** Add `{ timeout: 1000 }` to `vm.runInNewContext()` calls.
 5. **CI workflow:** Bump `node-version` to `'24'` in `.github/workflows/ci.yml`.
@@ -387,7 +387,7 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 
 **Status:** 🟢 Ready — TypeScript 6.0 released March 2026
 
-**Reference:** `docs/typescript-upgrade-plan.md` — full Claude Code-ready plan
+**Reference:** `docs/typescript6-upgrade-plan.md` — full Claude Code-ready plan
 
 **Prerequisite:** Phase 1 (Node 24 + DuckDB Neo) complete and all tests passing
 
@@ -428,7 +428,7 @@ TypeScript 7 uses a native Go compiler (`tsgo`) — 10× faster type-checking. T
 
 **Status:** ✅ COMPLETE — implemented on Node 20 / TypeScript 5
 
-**Reference:** `docs/PHASE2-EXTENSIONS.md` — full specification (implemented)
+**Reference:** `docs/archive/PHASE2-EXTENSIONS.md` — full specification (implemented)
 
 ### Summary
 
@@ -856,7 +856,7 @@ WITH MCP server:
 
 **Status:** 🔵 Deferred — do when Node 26 LTS cut (October 2026)
 
-**Reference:** `docs/node26-upgrade-plan.md` — plan on file, ready when needed
+**Reference:** `docs/archive/node26-upgrade-plan.md` (strategy doc — superseded by Phase 1; retained as historical) and `docs/node26-upgrade-execution-plan.md` (paused execution plan, awaiting Node 26 LTS)
 
 ### Why Deferred
 
@@ -883,7 +883,7 @@ Node 26 is currently "Current" (non-LTS). It becomes LTS in October 2026. There 
 
 **Status:** 🟡 Phase 11A can start immediately after Phase 2. Full switch when tsgo emit is stable (estimated mid/late 2026).
 
-**Reference:** `docs/typescript-upgrade-plan.md` (Phases 4–5 of that document)
+**Reference:** `docs/typescript6-upgrade-plan.md` (Phases 4–5 of that document — tsgo coverage)
 
 ### Phase 11A — Parallel type-check in CI (After Phase 2, ~1 hour)
 
@@ -920,14 +920,16 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `open-sourcing-sluice.md` | ✅ Good | Decision confirmed (ELv2). |
 | `licensing-strategy.md` | ✅ Good | ELv2 confirmed as decision. |
 | `LICENCE-FAQ.md` | ✅ Good | Minor clarification on what's in the open-source core. |
-| `DEVELOPMENT-WORKFLOW.md` | ⚠️ Needs update | Add `sluice-enrich` to strategic split, repo map, package catalogue (Phase 5 of updates). |
+| `docs/archive/DEVELOPMENT-WORKFLOW.md` | 📦 Archived | Old version (Node 20 / pre-Phase-1 / monorepo layout). The "see root-level instead" banner is itself stale — no root-level copy currently exists. Will be reauthored fresh during Phase 5. |
 | `github-pages-plan.md` | ✅ Good | Enrich Service mention to add when updating. |
 | `docs/SLUICE-MCP-SPEC.md` | ✅ Good | Private paid service note added prominently. |
 | `docs/Context.md` | ✅ Good | Open-source decision, Node 24, TS upgrade path, MCP plans. |
-| `docs/node24-upgrade-plan.md` | ✅ **NEW** | Node 20→24 + DuckDB Neo plan — ready to execute. |
-| `docs/node26-upgrade-plan.md` | ✅ Good | Plan on file, execution deferred to Phase 10 (Oct 2026). |
-| `docs/typescript-upgrade-plan.md` | ✅ Good | Comprehensive. Ready to execute after Phase 1. |
-| `docs/PHASE2-EXTENSIONS.md` | ✅ COMPLETE | Full plugin system spec — implemented. |
+| `docs/archive/node24-upgrade-plan.md` | ✅ EXECUTED | Node 20→24 + DuckDB Neo plan — shipped in PR #8 (3 May 2026). Retained as implementation reference. |
+| `docs/archive/node26-upgrade-plan.md` | 📦 Archived | Original Node 20→26 single-step strategy. Superseded — when Phase 10 runs, baseline is Node 24 and DuckDB migration is already done. |
+| `docs/archive/typescript-upgrade-plan.md` | 📦 Archived | Exact duplicate of `typescript6-upgrade-plan.md`. |
+| `docs/archive/PHASE2-EXTENSIONS.md` | 📦 Archived | Full plugin system spec — implemented in Phase 3. `PLUGINS.md` is the canonical author guide. |
+| `docs/archive/phase1-3-release-packaging.md`, `docs/archive/phase3-multi-source-merge.md`, `docs/archive/phase3-prep-phase{1,2}.md` | 📦 Archived | Old phase-numbering design notes; technical content retained for reference. Multi-source merge has shipped. |
+| `docs/typescript6-upgrade-plan.md` | ✅ Good | Comprehensive. Ready to execute as Phase 2 — baselined on Node 24. |
 | `docs/PHASE2.5-ENRICH.md` | ⚠️ Needs update | Update to reflect fully private architecture (Task 4). |
 | `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated May 2026. |
 
@@ -948,9 +950,9 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| Cochran SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x) | Medium | High | Pre-flight TLS check is Phase 1 step 1. Node 20 as fallback if needed. |
+| Cochran SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x) | ✅ **MITIGATED** | High | Pre-flight TLS check passed cleanly under Node 24 / OpenSSL 3.5; no `cryptoCredentialsDetails` workaround required. |
 | Client contract blocks open-sourcing | Low | High | Phase 0 legal audit before any public action. |
-| DuckDB `@duckdb/node-api` API differences larger than expected | Low | Medium | Full rewrite planned. `docs/node24-upgrade-plan.md` has detailed API diff and skeleton. |
+| DuckDB `@duckdb/node-api` API differences larger than expected | ✅ **MITIGATED** | Medium | Phase 1 shipped successfully; full rewrite landed in PR #8. `docs/archive/node24-upgrade-plan.md` retained as the implementation reference. |
 | TypeScript 7 tsgo emit not stable before target date | Medium | Low | Phase 11A (type-check only) has zero risk. Full switch deferred. |
 | Community engagement lower than expected post-launch | Low | Low | Docs quality (Quickstart) is the primary driver of adoption. |
 | Enrich API rate limits causing pipeline slowdowns | Medium | Medium | EnrichCache backed by DuckDB; batch lookups; configurable concurrency. |

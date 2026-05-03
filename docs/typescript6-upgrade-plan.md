@@ -4,7 +4,7 @@
 
 **Prepared for:** Caracal Lynx Limited / Michael Scott  
 **Date:** 2026-04-22  
-**Prerequisite:** Node.js 24 upgrade complete (see `docs/node24-upgrade-plan.md`)  
+**Prerequisite:** Node.js 24 upgrade complete — Phase 1 shipped (see `docs/archive/node24-upgrade-plan.md`)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  
 
 ---

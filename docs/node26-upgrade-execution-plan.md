@@ -2,7 +2,7 @@
 
 > ⏸️ **STATUS: PAUSED — AWAITING NODE 26 LTS (October 2026)** — This plan covers the Node 24 → 26 upgrade (Phase 10). The starting point is Node 24 LTS (already current — Phase 1 complete). When Node 26 becomes LTS in October 2026, remove the DuckDB migration phase below (it was completed in Phase 1) and resume from the remaining steps.
 
-*Complements [node26-upgrade-plan.md](node26-upgrade-plan.md) — the strategy doc
+*Complements [node26-upgrade-plan.md](archive/node26-upgrade-plan.md) — the strategy doc (archived as of Phase 1 ship)
 — with concrete, file-level changes adjusted for what the codebase actually
 looks like today.*
 
@@ -18,7 +18,7 @@ Resume when Node 26 is installable.
 ## Context
 
 Node.js 20 enters EOL April 2026. The branch `features/node26-upgrade` already
-exists; `docs/node26-upgrade-plan.md` outlines the strategy in detail. This plan
+exists; `docs/archive/node26-upgrade-plan.md` outlines the strategy in detail. This plan
 translates that doc into concrete, file-level changes, adjusted for what the
 codebase actually looks like today.
 
@@ -53,7 +53,7 @@ lockfiles" concern is moot. Current Node is v24.15.0 LTS.
 
 1. **Verify SQL Server TLS at Cochran Group** (blocking for production cut-over,
    but not for the code work itself). The doc's SQL snippets in
-   `docs/node26-upgrade-plan.md` §4 Phase 0 stand as-is.
+   `docs/archive/node26-upgrade-plan.md` §4 Phase 0 stand as-is.
    - SQL Server 2016+ with KB4019088 patch → TLS 1.2 → safe.
    - SQL Server 2012/2014 unpatched → TLS 1.0 → will fail under OpenSSL SL2
      unless mitigated in-code (Phase 3).
