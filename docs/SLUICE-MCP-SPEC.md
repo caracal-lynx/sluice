@@ -2,7 +2,7 @@
 # `@caracal-lynx/sluice-mcp`
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
 # Status: Specification — not yet implemented
-# Depends on: CLAUDE.md (Phase 1 complete), PHASE2-EXTENSIONS.md (Phase 3 complete)
+# Depends on: CLAUDE.md (Phase 1 complete), archive/PHASE2-EXTENSIONS.md (Phase 3 complete)
 # Last updated: 2026-04-28
 
 # ⚠️  COMMERCIAL STATUS: PRIVATE PAID SERVICE
@@ -1175,7 +1175,7 @@ All `${ENV_VAR}` tokens in pipeline YAML connection strings are resolved by `res
 
 3. **mssql column metadata shape.** The `result.recordset.columns` object in the `mssql` package is a `Record<string, IColumn>` where `IColumn` has `type.declaration` (the SQL type name) and `nullable` (boolean). Always check the mssql package version — the shape changed between v9 and v10.
 
-4. **Phase 2 plugin interfaces.** The scaffold templates import `RulePlugin` and `TransformPlugin` from `@caracal-lynx/sluice`. These types must be exported from the main package before Phase 2 of the MCP build begins. They are defined in the Phase 2 plugin system spec (`PHASE2-EXTENSIONS.md`).
+4. **Phase 2 plugin interfaces.** The scaffold templates import `RulePlugin` and `TransformPlugin` from `@caracal-lynx/sluice`. These types must be exported from the main package before Phase 2 of the MCP build begins. They are defined in the Phase 2 plugin system spec (`archive/PHASE2-EXTENSIONS.md`).
 
 5. **`exactOptionalPropertyTypes`** is enabled. This means optional properties must be typed as `T | undefined`, not just `T`. Take care with handler return types — use `?: T` not `: T | undefined` where the property may be absent.
 
