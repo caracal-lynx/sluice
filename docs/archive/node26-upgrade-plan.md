@@ -1,4 +1,4 @@
-> ⚠️ **SUPERSEDED** — this document was written to upgrade from Node 20 → Node 26 in a single step. The master plan instead upgraded Node 20 → 24 first (Phase 1, complete). The premise (starting from Node 20, needing DuckDB migration) is no longer correct. When the Node 26 upgrade runs (Phase 10, October 2026), it starts from Node 24 and the DuckDB migration is already done. See `docs/node24-upgrade-plan.md` and `SLUICE-IMPLEMENTATION-PLAN.md §14`.
+> ⚠️ **SUPERSEDED** — this document was written to upgrade from Node 20 → Node 26 in a single step. The master plan instead upgraded Node 20 → 24 first (Phase 1, complete). The premise (starting from Node 20, needing DuckDB migration) is no longer correct. When the Node 26 upgrade runs (Phase 10, October 2026), it starts from Node 24 and the DuckDB migration is already done. See `node24-upgrade-plan.md` (also archived, executed) and `../SLUICE-IMPLEMENTATION-PLAN.md` §14.
 >
 > *The content below is retained for historical reference.*
 

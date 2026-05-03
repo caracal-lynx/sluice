@@ -84,7 +84,7 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- ✅ **Phase 2:** TypeScript v6 upgrade — complete.
 
-\- ✅ **Phase 3:** Plugin system (three-tier extension model) — complete. See `PHASE2-EXTENSIONS.md`.
+\- ✅ **Phase 3:** Plugin system (three-tier extension model) — complete. See `archive/PHASE2-EXTENSIONS.md`.
 
 \- 🔵 **Phase 4a (NOW):** Enrich Framework — private `caracal-lynx/sluice-enrich` repo; current active work.
 
@@ -110,7 +110,7 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 | `CLAUDE.md` | Authoritative Phase 1 spec for Claude Code — architecture, YAML spec, Zod schema, adapter notes, build order | Complete |
 
-| `PHASE2-EXTENSIONS.md` | Full spec for three-tier plugin/extension system | Complete |
+| `archive/PHASE2-EXTENSIONS.md` | Full spec for three-tier plugin/extension system | Complete |
 
 | `customers.pipeline.yaml` | Cochran Group customer migration example (MSSQL → IFS) | Complete |
 
