@@ -1,5 +1,7 @@
 # Sluice — Node.js 20 → 26 Upgrade: Execution Plan
 
+> ⏸️ **STATUS: PAUSED — AWAITING NODE 26 LTS (October 2026)** — This plan covers the Node 24 → 26 upgrade (Phase 10). The starting point is Node 24 LTS (already current — Phase 1 complete). When Node 26 becomes LTS in October 2026, remove the DuckDB migration phase below (it was completed in Phase 1) and resume from the remaining steps.
+
 *Complements [node26-upgrade-plan.md](node26-upgrade-plan.md) — the strategy doc
 — with concrete, file-level changes adjusted for what the codebase actually
 looks like today.*
@@ -20,7 +22,7 @@ exists; `docs/node26-upgrade-plan.md` outlines the strategy in detail. This plan
 translates that doc into concrete, file-level changes, adjusted for what the
 codebase actually looks like today.
 
-**Goal:** Move Sluice to Node 26 (LTS October 2026, EOL April 2029) so we have
+**Goal:** Move Sluice from Node 24 to Node 26 (LTS October 2026, EOL April 2029) so we have
 three years of runway, without changing `StagingStore`'s public API or any
 YAML-facing behaviour.
 
@@ -80,6 +82,8 @@ lockfiles" concern is moot. Current Node is v24.15.0 LTS.
 ---
 
 ## Phase 2 — DuckDB migration (the big one)
+
+> ✅ **ALREADY COMPLETE** — The DuckDB migration from duckdb to @duckdb/node-api was completed during the Node 24 upgrade (Phase 1). This phase does not need to be run again when upgrading from Node 24 to Node 26.
 
 **Goal:** Replace deprecated `duckdb` with `@duckdb/node-api` (Node Neo).
 
