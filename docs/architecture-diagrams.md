@@ -106,6 +106,8 @@ flowchart TB
       BC[bc]:::adapter
       IFS[ifs]:::adapter
       BlueCherry[bluecherry]:::adapter
+      CsvTgt[csv]:::adapter
+      PgTgt[pg]:::adapter
     end
 
     subgraph Engines[engines]
@@ -145,6 +147,8 @@ flowchart TB
     TgtReg --> BC
     TgtReg --> IFS
     TgtReg --> BlueCherry
+    TgtReg --> CsvTgt
+    TgtReg --> PgTgt
 
     DQ --> Store
     Transform --> Store
@@ -157,6 +161,8 @@ flowchart TB
     BC -.-> Store
     IFS -.-> Store
     BlueCherry -.-> Store
+    CsvTgt -.-> Store
+    PgTgt -.-> Store
 
     Runner --> Errors
     Runner --> Logger
@@ -376,6 +382,7 @@ flowchart TB
     ExprPrefix{starts with<br/>js:?}:::branch
     SafeEval[expr-eval Parser<br/>row context]:::op
     VmEval[vm.runInNewContext<br/>warn logged]:::op
+    Custom["Plugin.apply row, options<br/>via customOp + options"]:::op
 
     Default[use default]:::op
     NullOut[emit null]:::op
@@ -398,6 +405,7 @@ flowchart TB
     Type -- expression --> Expr --> ExprPrefix
     ExprPrefix -- no --> SafeEval --> Out
     ExprPrefix -- yes --> VmEval --> Out
+    Type -- custom --> Custom --> Out
 ```
 
 **Cleanse pipe chain** (left-to-right):
