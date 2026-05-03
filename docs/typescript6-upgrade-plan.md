@@ -214,7 +214,7 @@ In TS 7, `stableTypeOrdering` is no longer a flag — it's the permanent behavio
 | `tsx` | 🟢 None | 🟡 Update | Update to latest before TS 7 |
 | `vitest` | 🟢 None | 🟡 Update | Update to latest |
 | `pino` | 🟢 None | 🟢 None | No change |
-| `@duckdb/node-api` | 🟢 None | 🟢 None | Already migrated in Node 26 upgrade |
+| `@duckdb/node-api` | 🟢 None | 🟢 None | Already migrated in Node 24 upgrade (Phase 1, complete) |
 | `mssql` | 🟢 None | 🟢 None | No change |
 | `axios` | 🟢 None | 🟢 None | No change |
 | `dayjs` | 🟢 None | 🟢 None | No change (Temporal is additive, not replacement) |
@@ -227,7 +227,7 @@ In TS 7, `stableTypeOrdering` is no longer a flag — it's the permanent behavio
 
 ## 6. tsconfig.json Diff — Before and After
 
-### Current (TypeScript 5 / Node 20)
+### Current (TypeScript 5 / Node 24)
 ```jsonc
 {
   "compilerOptions": {
@@ -598,4 +598,4 @@ Phase 5:         tsgo takes over full build → tsc retired
 
 ---
 
-*This document assumes the Node.js 26 upgrade (including the `@duckdb/node-api` migration) is complete before Phase 1 begins. The DuckDB store rewrite should be done under TypeScript 5 first, then the TypeScript 6 migration applied on top of clean code.*
+*This document assumes the Node.js 24 upgrade (including the `@duckdb/node-api` migration) is complete — Phase 1 of the [master implementation plan](SLUICE-IMPLEMENTATION-PLAN.md) shipped on 3 May 2026 (PR #8). The DuckDB store rewrite was done under TypeScript 5; the TypeScript 6 migration is applied on top of that clean baseline.*
