@@ -1,6 +1,8 @@
 # Sluice — GitHub Pages Strategy
 
-> **Context:** When `sluice-core` goes public, GitHub Pages becomes the product's front door. This document covers what to include and a full site structure with page-by-page content outlines.
+> **Context:** When `sluice-core` goes public (Phase 5 of the implementation plan), GitHub Pages becomes the product's front door. This document covers what to include and a full site structure with page-by-page content outlines.
+>
+> **Status:** Planned for Phase 7. See `SLUICE-IMPLEMENTATION-PLAN.md` for sequencing.
 
 ---
 
@@ -24,7 +26,7 @@ The schema doc is your biggest asset because it's what developers will be search
 
 ### For a Consultancy Specifically
 
-- A *Use Cases* page talking about ERP data migrations generically (no client names)
+- A *Use Cases* page covering the range of data migration scenarios Sluice supports — not limited to ERP (no client names)
 - A *Commercial Support* page making it clear Caracal Lynx builds and supports this — GitHub Pages is a quiet but effective lead-generation channel
 
 ### Tooling Recommendation
@@ -55,7 +57,7 @@ sluice docs/
 │   ├── Data Quality Rules
 │   └── Transform Types
 ├── Guides
-│   ├── ERP Migration Patterns
+│   ├── Data Migration Patterns
 │   ├── Writing a Pipeline YAML
 │   ├── Using the Plugin System (Phase 2)
 │   └── CI/CD Integration
@@ -79,11 +81,12 @@ sluice docs/
 **Goal:** Grab attention, explain the value proposition, and funnel visitors to the Quickstart.
 
 **Content:**
-- Hero: tagline — *"Clean data flows through."* — with a one-paragraph description
+- Hero: **elevator pitch** — lead with the problem (data quality is the hidden blocker for both migrations and AI adoption), the solution ("Sluice is a data migration and data quality tool that validates your data before it reaches its destination — not after"), and the value proposition ("Clean data flows through."). Use the full 30-second pitch: you tell it where the data comes from, the quality rules it has to pass, and how each field maps to the destination; Sluice validates before the load, handles all the reformatting and field mapping along the way, and loads the clean records to your destination. Also surface the AI readiness angle: AI tools amplify your data quality — for better or worse. Incorporate the full elevator pitch text here — see Phase 7 of `SLUICE-IMPLEMENTATION-PLAN.md` and `elevator-pitch.md`.
 - Three-column value props:
   - **Config-driven** — pipelines defined in YAML, no code required for standard migrations
-  - **ERP-ready** — built-in adapters for IFS, BlueCherry, Business Central, PostgreSQL, CSV, XLSX
+  - **Source & target agnostic** — built-in adapters for MSSQL, PostgreSQL, CSV, XLSX, REST; ERP connectors (IFS, BlueCherry, Business Central) available as paid add-ons
   - **Data quality first** — validate before you load; rejection CSVs and DQ summary reports built in
+  - **AI data readiness** — use `sluice validate` as a pre-AI quality gate; know your data is fit for Copilot, Power BI, or any LLM tool before it causes damage
 - A short YAML snippet showing a minimal pipeline config (something that fits in ~20 lines and looks approachable)
 - Two CTAs: **Get Started** (→ Quickstart) and **View on GitHub**
 - A "Built by Caracal Lynx" footer note with a link to the Commercial Support page
@@ -95,7 +98,7 @@ sluice docs/
 **Goal:** Zero-to-installed in under two minutes.
 
 **Content:**
-- Prerequisites: Node.js 20 LTS
+- Prerequisites: Node.js 24 LTS
 - Install via npm: `npm install -g @caracal-lynx/sluice`
 - Verify: `sluice --version`
 - Note on running locally in a project vs globally
@@ -241,15 +244,17 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 
 ---
 
-### Guides — ERP Migration Patterns
+### Guides — Data Migration Patterns
 
-**Goal:** Demonstrate Sluice's value in the context of real-world ERP migrations without exposing client detail.
+**Goal:** Demonstrate Sluice's value across a range of real-world data migration scenarios without exposing client detail.
 
 **Content:**
-- Common migration challenges: data quality in legacy MSSQL, date format mismatches, lookup/enum mapping, encoding issues in older systems
+- Common migration challenges: data quality in legacy systems, date format mismatches, lookup/enum mapping, encoding issues, duplicate records, broken referential integrity
 - How Sluice's pipeline phases address each challenge
 - Pattern: extract → profile (`sluice profile`) → iterate DQ rules → transform → load
 - Pattern: incremental migration using the run state file
+- Pattern: multi-source merge (consolidating data from several sources into one target)
+- Scenario examples: legacy database to modern SaaS, ERP-to-ERP platform switch, SQL Server to PostgreSQL, CSV/XLSX bulk imports with validation, data warehouse loading
 
 ---
 
@@ -324,11 +329,14 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 **Goal:** Help prospective clients and users self-identify. No client names — keep it generic.
 
 **Content:**
-- **Legacy ERP migration** — moving data from an ageing MSSQL system into a modern ERP
-- **ERP-to-ERP migration** — switching platforms; field mapping and format translation
+- **Legacy system migration** — moving data from an ageing SQL Server or flat-file system into a modern platform
+- **Platform-to-platform migration** — switching systems; field mapping, format translation, and data quality enforcement
+- **ERP data migration** — structured migration into ERP systems such as IFS, Business Central, or BlueCherry (ERP-specific adapters available as paid add-ons from Caracal Lynx)
+- **Data warehouse loading** — extract, validate, and load from operational databases into analytical stores
 - **Ongoing data sync** — scheduled pipeline runs for keeping systems in sync
-- **Data quality auditing** — run `sluice validate` against existing data without loading it anywhere
-- **CSV/XLSX bulk import** — structured imports from spreadsheet exports with validation
+- **Data quality auditing** — run `sluice validate` against existing data without loading it anywhere; get a rejection CSV and DQ summary report
+- **AI data readiness** — validate your data against a quality ruleset before feeding it to Copilot, Power BI, or any LLM pipeline. AI amplifies your data quality — for better or worse. Sluice tells you which, before your AI tools do.
+- **CSV/XLSX bulk import** — structured imports from spreadsheet exports with full validation before load
 
 Each use case: 2–3 sentences describing the problem, and which Sluice features address it.
 
@@ -362,8 +370,15 @@ Each use case: 2–3 sentences describing the problem, and which Sluice features
 **Goal:** Quiet but effective lead generation for Caracal Lynx.
 
 **Content:**
-- One paragraph: Sluice is built and maintained by Caracal Lynx Limited, an IT and data consultancy specialising in ERP migrations
-- What Caracal Lynx offers: bespoke pipeline development, ERP migration delivery, custom adapter development, ongoing support contracts
+- One paragraph: Sluice is built and maintained by Caracal Lynx Limited, an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools
+- What Caracal Lynx offers (table format):
+  - **AI Data Readiness Audit** — Caracal Lynx connects Sluice to your data sources, builds the quality ruleset, runs it, and delivers a clear report on what's AI-ready and what needs fixing first
+  - **Enrich Service** — Async API lookups (EU VAT validation via VIES, UK VAT via HMRC, UK Trade Tariff) — fills gaps in source data before migration
+  - **Application Adapters** — pre-built connectors for IFS, Business Central, BlueCherry
+  - **Domain Rule Packages** — UK compliance and fashion/retail data standards
+  - **Sluice MCP Server** — AI-assisted migration using Claude: agentic pipeline authoring, live schema inspection, automatic DQ iteration (premium paid service)
+  - **Migration Delivery** — full end-to-end data migration delivered by Caracal Lynx, including ERP implementations
+  - **Custom Plugin Development** — bespoke rules and adapters for your source system
 - Contact: michael.scott@caracallynx.com
 - No hard sell — let the quality of the docs do the work
 

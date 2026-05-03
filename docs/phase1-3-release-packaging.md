@@ -1,3 +1,9 @@
+> ⚠️ **OLD PHASE NUMBERING** — This document uses the old phase numbering scheme (Phase 1 = plugin system foundation, Phase 2 = plugins, Phase 3 = multi-source merge). The current master plan uses different phase numbers: Phase 3 = Plugin System (complete), and multi-source merge has no assigned phase number yet. See `SLUICE-IMPLEMENTATION-PLAN.md` for the current sequence.
+>
+> *The technical content below remains valid as a design reference.*
+
+---
+
 # Sluice Release Packaging Draft
 
 Date: 2026-04-19
