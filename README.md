@@ -4,7 +4,7 @@
 
 **`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Limited](https://caracallynx.com).
 
-[![Node 20](https://img.shields.io/badge/Node-20_LTS-green)](https://nodejs.org)
+[![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/license-private-red)](.)
 
@@ -91,10 +91,10 @@ flowchart LR
 | What | Package | Why |
 |------|---------|-----|
 | 🔤 Language | TypeScript 5.x `strict` | Because `any` is a cry for help |
-| 🟢 Runtime | Node.js 20 LTS | Works in GitHub Actions without drama |
+| 🟢 Runtime | Node.js 24 LTS | Active LTS until April 2028; OpenSSL 3.5; ESM-stable |
 | 📋 Config | `js-yaml` + `zod` | YAML in, typed objects out |
 | 🗄️ SQL Server | `mssql` | Because the legacy DB is always SQL Server |
-| 📊 Staging | `duckdb` (embedded) | No server needed, surprisingly powerful |
+| 📊 Staging | `@duckdb/node-api` (embedded) | Promise-native, ABI-stable — no server, no `npm rebuild` after Node version bumps |
 | 📁 CSV | `csv-parse` + `csv-stringify` | Streaming, handles BOM, the works |
 | 📈 Excel | `xlsx` (SheetJS) | Read-only — we're migrating away from it, after all |
 | 🌐 HTTP | `axios` + `axios-retry` | 3 retries, exponential backoff, rate limit respect |
