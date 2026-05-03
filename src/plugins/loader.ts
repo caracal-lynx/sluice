@@ -14,6 +14,7 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { load as yamlLoad } from 'js-yaml';
 
@@ -68,7 +69,7 @@ export async function loadPlugins(
   const ruleFiles = await findFiles(pluginDir, ['.rule.ts', '.rule.js']);
   for (const file of ruleFiles) {
     try {
-      const mod = (await import(file)) as Record<string, unknown>;
+      const mod = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
       const plugin = mod['rule'] as RulePlugin | undefined;
       if (typeof plugin?.id !== 'string' || typeof plugin.validate !== 'function') {
         throw new Error(
@@ -89,7 +90,7 @@ export async function loadPlugins(
   const transformFiles = await findFiles(pluginDir, ['.transform.ts', '.transform.js']);
   for (const file of transformFiles) {
     try {
-      const mod = (await import(file)) as Record<string, unknown>;
+      const mod = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
       const plugin = mod['transform'] as TransformPlugin | undefined;
       if (typeof plugin?.id !== 'string' || typeof plugin.apply !== 'function') {
         throw new Error(
@@ -112,7 +113,7 @@ export async function loadPlugins(
   const mergeFiles = await findFiles(pluginDir, ['.merge.ts', '.merge.js']);
   for (const file of mergeFiles) {
     try {
-      const mod = (await import(file)) as Record<string, unknown>;
+      const mod = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
       const plugin = mod['mergeStrategy'] as MergeStrategyPlugin | undefined;
       if (typeof plugin?.id !== 'string' || typeof plugin.merge !== 'function') {
         throw new Error(
