@@ -1,4 +1,4 @@
-# Sluice — Phase 2 Extensions
+# Sluice — Phase 3 Extensions
 # Custom validation and transformation rules
 # npm package: @caracal-lynx/sluice
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
@@ -7,9 +7,13 @@
 
 ---
 
+> ✅ **STATUS: COMPLETE** — The three-tier plugin/extension system described in this document has been fully implemented. This document is now a specification reference for the completed Phase 3 plugin system.
+
+---
+
 ## Overview
 
-Phase 2 adds a three-tier extension system that allows custom DQ rules and
+Phase 3 adds a three-tier extension system that allows custom DQ rules and
 transformation operations to be introduced without modifying the core engine.
 
 | Tier | Mechanism | Skill level | Reuse scope |
@@ -709,6 +713,8 @@ Once plugins prove useful across multiple clients, promote them to scoped npm
 packages under `@caracal-lynx/`. Each package exports a `register()` function.
 Packages are declared in `sluice.config.yaml` at the project root.
 
+> **Note:** `@caracal-lynx/etl-rules-uk` and `@caracal-lynx/etl-rules-fashion` are private paid packages published from the separate `caracal-lynx/sluice-rules` monorepo — they are **not** part of the public `caracal-lynx/sluice` repository. The public repo contains only `packages/core`.
+
 ### Project-level config  (sluice.config.yaml)
 
 ```yaml
@@ -906,7 +912,7 @@ Loaded transform plugins (8):
 ## UPDATED YAML SPEC ADDITIONS
 ## ═══════════════════════════════════════════════════════════
 
-The following keys are new in Phase 2. Add them to the CLAUDE.md YAML spec.
+The following keys are new in Phase 3. Add them to the CLAUDE.md YAML spec.
 
 ### `dq` section — new keys
 
@@ -1041,7 +1047,7 @@ tests/
 ## BUILD ORDER FOR CLAUDE CODE
 ## ═══════════════════════════════════════════════════════════
 
-Phase 2 requires Phase 1 to be complete and all Phase 1 tests passing.
+Phase 3 requires Phases 1 and 2 to be complete and all prior tests passing.
 Work sub-phase by sub-phase; do not proceed until tests pass.
 
 1. **Registry classes** — `src/plugins/registry.ts` + `src/plugins/types.ts`.
@@ -1079,11 +1085,12 @@ Work sub-phase by sub-phase; do not proceed until tests pass.
 10. **Package scaffolding** — create `packages/etl-rules-uk/` monorepo member with
     `ukVatNumber`, `ukNiNumber`, and `ukSortCode`. Wire into workspace with
     `npm workspaces`. Do not publish to npm yet.
+    > **Note:** This step applies to the **private** `caracal-lynx/sluice-rules` monorepo, not the public `caracal-lynx/sluice` monorepo. The public repo contains only `packages/core`.
 
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## WHAT NOT TO DO (Phase 2 additions)
+## WHAT NOT TO DO (Phase 3 additions)
 ## ═══════════════════════════════════════════════════════════
 
 - Do not allow plugins to perform I/O (file reads, HTTP calls, DB queries).
@@ -1105,5 +1112,5 @@ Work sub-phase by sub-phase; do not proceed until tests pass.
 
 ---
 
-*This file specifies Sluice Phase 2 only. Read CLAUDE.md for the Phase 1 baseline.
-Both files must be in the project root when working on Phase 2.*
+*This file specifies Sluice Phase 3 (Plugin System) only. Read CLAUDE.md for the Phase 1 baseline.
+Both files must be in the project root when working on Phase 3.*

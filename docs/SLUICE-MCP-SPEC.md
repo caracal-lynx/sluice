@@ -2,8 +2,24 @@
 # `@caracal-lynx/sluice-mcp`
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
 # Status: Specification — not yet implemented
-# Depends on: CLAUDE.md (Phase 1 complete), PHASE2-EXTENSIONS.md (Phase 2 specced)
-# Last updated: 2026-04-27
+# Depends on: CLAUDE.md (Phase 1 complete), PHASE2-EXTENSIONS.md (Phase 3 complete)
+# Last updated: 2026-04-28
+
+# ⚠️  COMMERCIAL STATUS: PRIVATE PAID SERVICE
+# ─────────────────────────────────────────────────────────────────────────────
+# @caracal-lynx/sluice-mcp is NOT part of the open-source Sluice CLI.
+# It is a PRIVATE commercial offering from Caracal Lynx Limited.
+#
+# - GitHub repository: caracal-lynx/sluice-mcp (PRIVATE)
+# - npm package: @caracal-lynx/sluice-mcp (PRIVATE — Pro plan)
+# - Not published to the public npm registry
+# - Provided to clients under a paid engagement with Caracal Lynx
+# - Clients receive a read-only NPM_TOKEN to install the package
+#
+# The open-source @caracal-lynx/sluice core package does NOT include
+# the MCP server. The MCP server depends on the core (peer dep) but
+# is developed, versioned, and distributed separately.
+# ─────────────────────────────────────────────────────────────────────────────
 
 ---
 
@@ -59,7 +75,7 @@ Skills tell the AI what to do. The MCP server lets it actually do it. Both are r
 Before implementing this package, ensure the following are true:
 
 1. **Phase 1 is complete and all tests passing** — confirmed as of 2026-04-15.
-2. **Phase 2 plugin system is underway** — the `RulePlugin` and `TransformPlugin` interfaces must exist in `src/plugins/types.ts` before the scaffold handlers can reference them in generated code.
+2. **Phase 2 plugin system is complete** — the `RulePlugin` and `TransformPlugin` interfaces must exist in `src/plugins/types.ts` before the scaffold handlers can reference them in generated code.
 3. **`PipelineRunner.fromFile()` is exposed** — the pipeline handlers require a static factory method that loads a pipeline from a YAML file path and accepts an `overrides` object for `run.*` config. If this doesn't exist yet, add it before implementing Phase 3 of the MCP build.
 4. **Monorepo workspace configured** — `packages/sluice-mcp` must be listed as a workspace member in the root `package.json` (pnpm/npm workspaces).
 
@@ -71,8 +87,8 @@ This package follows the same conventions as `@caracal-lynx/sluice`. **Do not de
 
 | Rule | Detail |
 |------|--------|
-| Language | TypeScript 5.x strict mode |
-| Runtime | Node.js 20 LTS (`engines.node >= 20`) |
+| Language | TypeScript 6 strict mode |
+| Runtime | Node.js 24 LTS (`engines.node >= 24`) |
 | Module system | ESM (`"type": "module"`, `"module": "NodeNext"`) — all imports use `.js` extension |
 | Strict flags | `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride` |
 | Logging | `pino` only — **no `console.log` or `console.error` anywhere in `src/`** |
@@ -172,10 +188,10 @@ packages/sluice-mcp/
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `@types/js-yaml` | `^4.0.9` | Types for js-yaml |
-| `@types/node` | `^20.17.0` | Node.js types |
+| `@types/node` | `^24.0.0` | Node.js types |
 | `pino-pretty` | `^11.3.0` | Human-readable logs in dev |
 | `tsx` | `^4.19.0` | Run TypeScript directly in dev |
-| `typescript` | `^5.7.0` | Compiler |
+| `typescript` | `^6.0.0` | Compiler |
 | `vitest` | `^2.1.0` | Test runner |
 
 ### 5.3 Peer / conditional dependencies
@@ -1155,7 +1171,7 @@ All `${ENV_VAR}` tokens in pipeline YAML connection strings are resolved by `res
 
 1. **`PipelineRunner.fromFile()` may not exist yet.** Check `src/runner.ts` in the main package before implementing Phase 3. Add the static factory method if missing.
 
-2. **`fs.glob` is Node 22+.** The `glob` method on the `fs/promises` module was added in Node 22. Since we target Node 20 LTS, use the `glob` npm package or `fast-glob` instead for `list_pipelines`.
+2. **`fs.glob` is Node 22+.** The `glob` method on the `fs/promises` module was added in Node 22. Since we target Node 24 LTS, `fs.glob` is available natively — no need for `glob` or `fast-glob` for `list_pipelines`.
 
 3. **mssql column metadata shape.** The `result.recordset.columns` object in the `mssql` package is a `Record<string, IColumn>` where `IColumn` has `type.declaration` (the SQL type name) and `nullable` (boolean). Always check the mssql package version — the shape changed between v9 and v10.
 
