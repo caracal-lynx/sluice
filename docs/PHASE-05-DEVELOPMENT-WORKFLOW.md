@@ -1,6 +1,6 @@
-> ⚠️ **SUPERSEDED** — this is the old version (uses Node 20, old phase numbering, rule packages incorrectly placed in public monorepo). See the root-level `DEVELOPMENT-WORKFLOW.md` instead.
+> ⚠️ **STALE — pending Phase 5 rewrite.** This file (`docs/PHASE-05-DEVELOPMENT-WORKFLOW.md`) is the placeholder for the canonical workflow doc. The content below is the pre-Phase-1 version (Node 20, old phase numbering, rule packages incorrectly placed in public monorepo) and must be reauthored during Phase 5 — see [SLUICE-IMPLEMENTATION-PLAN.md §9](SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch).
 >
-> *The content below is retained for historical reference.*
+> *The content below is retained for reference until Phase 5 supersedes it.*
 
 ---
 
