@@ -100,7 +100,7 @@ sluice/
 │   │
 │   ├── staging/
 │   │   ├── index.ts                 ← barrel
-│   │   ├── store.ts                 ← DuckDB wrapper (the only file that imports `duckdb`)
+│   │   ├── store.ts                 ← DuckDB wrapper (the only file that imports `@duckdb/node-api`)
 │   │   └── schema.ts                ← ColumnMeta, quoteIdent, buildCreateTableSql
 │   │
 │   ├── dq/
@@ -1716,7 +1716,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
+        with: { node-version: '24', cache: 'npm' }
       - run: npm ci
       - run: npm run lint
       - run: npm run build

@@ -1,4 +1,11 @@
 # Sluice — Node.js 20 → 24 + DuckDB Neo Upgrade Plan
+
+> ✅ **STATUS: EXECUTED** — merged to `master` on 3 May 2026 ([PR #8](https://github.com/BCGubbins/sluice/pull/8), squash commit `e1be8c4`). Acme Corp TLS pre-flight passed cleanly under Node 24 / OpenSSL 3.5; no `cryptoCredentialsDetails` workaround applied. The `Phase 4a` `StagingStore` stubs (`selectDistinct`, `addColumnIfNotExists`, `batchUpdateColumns`) were **deferred** — they will land with `@caracal-lynx/sluice-enrich` per the approved scope decision. A bonus fix in `src/plugins/loader.ts` (`pathToFileURL()` for Windows absolute paths) was included in the same PR.
+>
+> *This document is retained as the implementation reference. The body below is the original plan as approved and executed.*
+
+---
+
 **Prepared for:** Caracal Lynx Limited / Michael Scott  
 **Date:** 2026-05-01  
 **Starting point:** Node.js 20 LTS (EOL April 2026)  
