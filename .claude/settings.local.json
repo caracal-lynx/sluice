@@ -32,7 +32,26 @@
       "Bash(nvm list *)",
       "Bash(nvm install *)",
       "Bash(npm link *)",
-      "Bash(sluice --version)"
+      "Bash(sluice --version)",
+      "Bash(printenv)",
+      "Bash(npm show *)",
+      "Bash(npm uninstall *)",
+      "Bash(git worktree *)",
+      "Bash(grep -n \"Node.js 20 LTS\\\\|duckdb\\\\` \\(Node binding\\\\|Do not import from\" CLAUDE.md)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(echo \"rc=$?\")",
+      "Bash(echo \"lint_rc=$?\")",
+      "Bash(git push *)",
+      "Bash(gh --version)",
+      "Bash(gh repo *)",
+      "Bash(gh pr create --base master --head feature/upgrade-node-v24 --title 'Upgrade Node.js 20 → 24 LTS and migrate DuckDB to @duckdb/node-api' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git branch *)",
+      "Bash(git ls-remote *)",
+      "Bash(git mv *)"
     ]
   }
 }
