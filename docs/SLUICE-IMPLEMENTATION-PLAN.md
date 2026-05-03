@@ -12,7 +12,7 @@
 2. [Strategic Architecture](#2-strategic-architecture)
 3. [Phase Overview & Dependencies](#3-phase-overview--dependencies)
 4. [Phase 0 — Governance & Prerequisites ✅ COMPLETE](#4-phase-0--governance--prerequisites)
-5. [Phase 1 — Node v24 + DuckDB Neo Upgrade](#5-phase-1--node-v24--duckdb-neo-upgrade)
+5. [Phase 1 — Node v24 + DuckDB Neo Upgrade ✅ COMPLETE](#5-phase-1--node-v24--duckdb-neo-upgrade)
 6. [Phase 2 — TypeScript v6 Upgrade](#6-phase-2--typescript-v6-upgrade)
 7. [Phase 3 — Plugin System ✅ COMPLETE](#7-phase-3--plugin-system--complete)
 8. [Phase 4 — Enrich Phase (Private)](#8-phase-4--enrich-phase-private)
@@ -137,7 +137,7 @@ The open-source core does **not** include: the `EnrichRegistry`, `EnrichmentRunn
 ```mermaid
 flowchart TD
     P0["✅ Phase 0\nGovernance\nCOMPLETE"]
-    P1["⚡ Phase 1\nNode v24 + DuckDB Neo\n(Start now!)"]
+    P1["✅ Phase 1\nNode v24 + DuckDB Neo\nCOMPLETE"]
     P2["🔷 Phase 2\nTypeScript v6 Upgrade\n(~3–5 hours after Phase 1)"]
     P3["✅ Phase 3\nPlugin System\nCOMPLETE"]
     P4A["🔒 Phase 4a\nEnrich Framework\n(private sluice-enrich)"]
@@ -185,7 +185,7 @@ flowchart TD
 | Phase | What | Duration | Can start |
 |-------|------|----------|-----------|
 | **Phase 0** | Governance & legal | ✅ **COMPLETE** | — |
-| **Phase 1** | Node v24 + DuckDB Neo | 1–2 days | **Now** |
+| **Phase 1** | Node v24 + DuckDB Neo | ✅ **COMPLETE** (3 May 2026, PR #8) | — |
 | **Phase 2** | TypeScript v6 | 3–5 hours | After Phase 1 |
 | **Phase 11A** | tsgo CI type-check | 1 hour | After Phase 2 |
 | **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
@@ -211,7 +211,7 @@ gantt
     Phase 3 — Plugin System                :done, p3, 2026-03-23, 2026-05-04
 
     section Now — Runtime Upgrades
-    Phase 1 — Node v24 + DuckDB Neo        :active, p1, 2026-05-04, 2d
+    Phase 1 — Node v24 + DuckDB Neo        :done, p1, 2026-05-03, 1d
     Phase 2 — TypeScript v6                :p2, after p1, 1d
     Phase 11A — tsgo Parallel Type-check   :p11a, after p2, 1d
 
@@ -291,9 +291,9 @@ Confirm `@caracal-lynx` is registered in your npm account and the Pro plan is ac
 
 ---
 
-## 5. Phase 1 — Node v24 + DuckDB Neo Upgrade
+## 5. Phase 1 — Node v24 + DuckDB Neo Upgrade ✅ COMPLETE
 
-**Status:** 🟢 Start now
+**Status:** ✅ **COMPLETE** — merged to `master` on 3 May 2026 ([PR #8](https://github.com/BCGubbins/sluice/pull/8), squash commit `e1be8c4`).
 
 **Reference:** `docs/node24-upgrade-plan.md` — full Claude Code-ready plan
 
@@ -373,11 +373,13 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 
 ### Success Criteria
 
-- [ ] All Vitest suites passing on Node 24
-- [ ] `@duckdb/node-api` fully replaces `duckdb`
-- [ ] Three Phase 4a stub methods present in `StagingStore`
-- [ ] CI workflow runs on `node-version: '24'`
-- [ ] Real pipeline run (`sluice run`) completes end-to-end
+- [x] All Vitest suites passing on Node 24 — 415 / 415 green
+- [x] `@duckdb/node-api` fully replaces `duckdb` — confirmed by codebase grep
+- [ ] Three Phase 4a stub methods present in `StagingStore` — **deferred to Phase 4a** (out of scope for this PR; will be added when `@caracal-lynx/sluice-enrich` development starts)
+- [x] CI workflow runs on `node-version: '24'` — `.github/workflows/ci.yml` updated; PR #8 CI passed in 55 s
+- [x] Real pipeline run (`sluice run`) completes end-to-end — live `sluice validate` against Cochran SQL Server round-tripped a query under Node 24 + OpenSSL 3.5; TLS pre-flight passed cleanly with no `cryptoCredentialsDetails` workaround required
+
+**Bonus fix landed in the same PR:** `src/plugins/loader.ts` now wraps absolute paths in `pathToFileURL()` before dynamic import — Node 24's stricter ESM loader rejects raw `C:\…` paths. Caught when running a fixture pipeline end-to-end on Windows; would have surfaced on first real Node 24 run.
 
 ---
 
