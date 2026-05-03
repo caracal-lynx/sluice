@@ -1,6 +1,10 @@
-# Open-Sourcing Sluice — Analysis & Action Plan
+# Open-Sourcing Sluice — Decision & Action Plan
 
-> **Context:** Sluice (`@caracal-lynx/sluice`) is a YAML-controlled ETL pipeline CLI owned by Caracal Lynx Limited (SC826823). This document analyses the pros, cons, required steps, and legal considerations for making the core repository public and open-source.
+> **Context:** Sluice (`@caracal-lynx/sluice`) is a YAML-controlled ETL pipeline CLI owned by Caracal Lynx Limited (SC826823). **Decision made (April 2026):** The core Sluice CLI will be open-sourced under the Elastic Licence 2.0. Country/region rule packages, application adapters, client-specific plugins, and the Sluice MCP Server remain private commercial offerings from Caracal Lynx.
+>
+> **Sequencing:** Technical upgrades (Node v24, TypeScript v6) and Phase 3 plugin system are complete. Phase 4a (Enrich framework) is in progress. The open-source restructure and public launch follow as Phase 5.
+>
+> See `SLUICE-IMPLEMENTATION-PLAN.md` for the full phased plan.
 
 ---
 
@@ -8,13 +12,13 @@
 
 **Community leverage.** An open-source core attracts contributors who'll add source/target adapters, DQ rules, and transform types you haven't needed yet — free R&D from the data engineering community.
 
-**Credibility and marketing.** For a consultancy, a public GitHub repo with real clients (anonymised configs) is a stronger portfolio than a PDF. It signals technical depth to prospective clients evaluating you for ERP migration work.
+**Credibility and marketing.** For a consultancy, a public GitHub repo with real clients (anonymised configs) is a stronger portfolio than a PDF. It signals technical depth to prospective clients evaluating you for data migration work or AI data readiness projects.
 
 **Ecosystem fit.** Your stack (TypeScript, Node, DuckDB, Zod, YAML-driven) is the sweet spot of the current data tooling community. You'd land on people's radars who are already using similar tech.
 
 **Plugin/extension pull.** With Phase 2's three-tier plugin system, open-sourcing the core creates a genuine extension marketplace — others write and publish `sluice-adapter-*` npm packages, which makes Sluice more valuable without you writing the code.
 
-**Commoditise the generic, sell the specialist.** The core engine (ETL orchestration, DQ, transforms) can be free. The *Cochran IFS adapter*, the *BlueCherry adapter*, and your domain expertise in ERP migrations? Those remain proprietary — or become the basis of paid consulting engagements.
+**Commoditise the generic, sell the specialist.** The core engine (ETL orchestration, DQ, transforms) can be free. The *Cochran IFS adapter*, the *BlueCherry adapter*, your domain expertise in data migrations, and your AI Data Readiness Audit service? Those remain proprietary — or become the basis of paid consulting engagements. Organisations adopting AI tools are a new and distinct audience who need exactly what Sluice's DQ engine does, but have never heard of ETL. The open-source core gets them in the door; the audit service is what Caracal Lynx sells them.
 
 ---
 
@@ -127,13 +131,46 @@ Confirm that `@caracal-lynx` is registered to you on [npmjs.com](https://www.npm
 
 ---
 
-## Recommended Path for Caracal Lynx
+## Confirmed Decision for Caracal Lynx
 
-1. **Complete Phase 2** (plugin/extension system) before going public — the extension story is the key differentiator
-2. **Restructure** the repo into `packages/core` (public) and private client adapters
-3. **Legal audit** — review client contracts and run a dependency licence check
-4. **Board minute** — document the decision with all directors
-5. **Open-source under Apache 2.0** — permissive enough for adoption, professional enough for enterprise clients
-6. **Publish** `@caracal-lynx/sluice` to npm and announce via GitHub
+### Licence: Elastic Licence 2.0 (ELv2) ✅ Decided
 
-The "work" is mostly repo restructuring and a legal audit of client contracts — not a huge lift, but worth doing properly rather than rushing.
+ELv2 is one page, plain English, and its core restriction maps exactly to the intent: businesses can use Sluice freely for their own migrations; other consultancies cannot resell it as a service without a commercial licence from Caracal Lynx. See `licensing-strategy.md` and `LICENCE-FAQ.md` for full detail.
+
+### What is open-source vs private
+
+| Component | Status | Rationale |
+|-----------|--------|-----------|
+| Core CLI engine | 🌍 **Public (ELv2)** | Community credibility, ecosystem growth |
+| Country/region rule packages (etl-rules-uk, etl-rules-fashion) | 🔒 **Private (paid)** | Domain expertise — Caracal Lynx service value |
+| Application adapters (IFS, BC, BlueCherry) | 🔒 **Private (paid)** | ERP-specific knowledge |
+| Client-specific plugins | 🔒 **Private (paid)** | Bespoke per-engagement deliverables |
+| Sluice MCP Server | 🔒 **Private (paid)** | Premium AI-assisted migration service |
+| AI Data Readiness Audit | 🔒 **Private (paid service)** | Caracal Lynx-delivered audit: connect, profile, report, recommend |
+
+### Repository restructure
+
+The current monorepo must be split before the public launch:
+
+```
+PUBLIC: caracal-lynx/sluice (GitHub public)
+  packages/core/              ← open-source CLI engine only
+
+PRIVATE: caracal-lynx/sluice-rules (GitHub private)
+  packages/etl-rules-uk/      ← private paid service
+  packages/etl-rules-fashion/ ← private paid service
+```
+
+Application adapter repos and client repos remain as private standalone repos.
+
+### Agreed implementation sequence
+
+1. **Phase 0** (now): Board resolution, legal audit of client contracts, GDPR audit, dependency licence check
+2. ✅ **Phase 1 (COMPLETE)**: Node v24 + DuckDB Neo upgrade
+3. ✅ **Phase 2 (COMPLETE)**: TypeScript v6 upgrade
+4. ✅ **Phase 3 (COMPLETE)**: Plugin system (three-tier extension model)
+5. 🔵 **Phase 4a (IN PROGRESS)**: Enrich framework — private `caracal-lynx/sluice-enrich`
+6. 🔴 **Phase 5 (blocked by Phase 4a)**: Repo restructure and open-source launch — make `caracal-lynx/sluice` public, split `etl-rules-*` to private `sluice-rules` repo
+7. See `SLUICE-IMPLEMENTATION-PLAN.md` for the full sequence (Phases 0–11)
+
+See `SLUICE-IMPLEMENTATION-PLAN.md` for full detail on every phase.

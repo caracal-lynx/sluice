@@ -96,7 +96,7 @@ Businesses using Sluice internally likely won't trigger AGPL (internal use doesn
 
 Whatever licence you choose, enforcement is hard for a small company. The real deterrents are:
 
-**Reputational** — A consultant using Sluice to compete with Caracal Lynx would have to admit they're using your tool. That's awkward in a small industry like ERP migration consulting.
+**Reputational** — A consultant using Sluice to compete with Caracal Lynx would have to admit they're using your tool. That's awkward in the data migration consulting industry.
 
 **Legal standing** — A clear licence gives you grounds to send a cease-and-desist letter. Most violations stop there without going to court.
 
@@ -106,21 +106,31 @@ No licence is a guarantee. The goal is to make violation clearly wrong in writin
 
 ---
 
-## Recommendation for Caracal Lynx
+## Decision for Caracal Lynx
 
-**Use Elastic Licence 2.0 (ELv2).**
+**✅ CONFIRMED (April 2026): Elastic Licence 2.0 (ELv2)**
 
-It is one page, plain English, widely understood, and its restriction maps almost exactly to the stated intent. Pair it with a plain-English `LICENCE-FAQ.md` in the repository root that spells out permitted and prohibited use in plain language — most people will read that and self-select appropriately, without ever needing to parse the licence itself.
+ELv2 is one page, plain English, widely understood, and its restriction maps almost exactly to the stated intent. The decision has been made — this is no longer a recommendation, it is the chosen licence for the Sluice open-source core.
+
+Companion document `LICENCE-FAQ.md` is already written and ready for the repo root. It provides the plain-English explanation that most users will read instead of the licence itself.
 
 If Sluice grows a meaningful contributor community and a commercial licence revenue stream becomes attractive, revisit dual licensing at that point. For now, ELv2 is the right balance of clarity, simplicity, and protection.
 
 ---
 
-## Next Steps
+## Implementation Steps (Phase 5)
+
+These steps are completed during Phase 5 (repo restructure and open-source launch). See `SLUICE-IMPLEMENTATION-PLAN.md` for full context.
 
 1. Download the [ELv2 licence text](https://www.elastic.co/licensing/elastic-license) and save as `LICENSE` in the repo root
-2. Add `LICENCE-FAQ.md` to the repo root (see companion document)
-3. Add licence header to all source files: `// SPDX-License-Identifier: Elastic-2.0`
+2. Add `LICENCE-FAQ.md` to the repo root (already written — see companion document)
+3. Add licence header to all source files in `packages/core/src/`:
+   ```typescript
+   // SPDX-License-Identifier: Elastic-2.0
+   // Copyright (c) 2026 Caracal Lynx Limited
+   ```
 4. Update `package.json`: `"license": "Elastic-2.0"`
-5. Minute the licensing decision as a Caracal Lynx board resolution
+5. Minute the licensing decision as a Caracal Lynx board resolution (Phase 0)
 6. Take legal advice before the first public release — this document is analysis, not legal advice
+
+**Note on private packages:** The country/region rule packages (`etl-rules-uk`, `etl-rules-fashion`), `@caracal-lynx/sluice-enrich` (the private paid enrichment service), application adapter packages, and the Sluice MCP Server are **not** covered by ELv2. They are proprietary commercial packages published as private npm packages under `@caracal-lynx`. Clients access them under a separate commercial arrangement with Caracal Lynx.
