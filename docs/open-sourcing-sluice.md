@@ -2,7 +2,7 @@
 
 > **Context:** Sluice (`@caracal-lynx/sluice`) is a YAML-controlled ETL pipeline CLI owned by Caracal Lynx Limited (SC826823). **Decision made (April 2026):** The core Sluice CLI will be open-sourced under the Elastic Licence 2.0. Country/region rule packages, application adapters, client-specific plugins, and the Sluice MCP Server remain private commercial offerings from Caracal Lynx.
 >
-> **Sequencing:** Technical upgrades (Node v24, TypeScript v6) and Phase 3 plugin system are complete. Phase 4a (Enrich framework) is in progress. The open-source restructure and public launch follow as Phase 5.
+> **Sequencing:** Node v24 upgrade (Phase 1) and the Phase 3 plugin system are complete. TypeScript v6 (Phase 2) is ready to run (3–5 hours). Phase 4a (Enrich framework) follows Phase 2. The open-source restructure and public launch follow as Phase 5.
 >
 > See `SLUICE-IMPLEMENTATION-PLAN.md` for the full phased plan.
 
@@ -165,11 +165,11 @@ Application adapter repos and client repos remain as private standalone repos.
 
 ### Agreed implementation sequence
 
-1. **Phase 0** (now): Board resolution, legal audit of client contracts, GDPR audit, dependency licence check
-2. ✅ **Phase 1 (COMPLETE)**: Node v24 + DuckDB Neo upgrade
-3. ✅ **Phase 2 (COMPLETE)**: TypeScript v6 upgrade
+1. ✅ **Phase 0 (COMPLETE)**: Board resolution, legal audit of client contracts, GDPR audit, dependency licence check
+2. ✅ **Phase 1 (COMPLETE)**: Node v24 + DuckDB Neo upgrade — PR #8, merged 3 May 2026
+3. 🟢 **Phase 2 (READY)**: TypeScript v6 upgrade — 3–5 hours, blocked only on starting
 4. ✅ **Phase 3 (COMPLETE)**: Plugin system (three-tier extension model)
-5. 🔵 **Phase 4a (IN PROGRESS)**: Enrich framework — private `caracal-lynx/sluice-enrich`
+5. 🔵 **Phase 4a (after Phase 2)**: Enrich framework — private `caracal-lynx/sluice-enrich`
 6. 🔴 **Phase 5 (blocked by Phase 4a)**: Repo restructure and open-source launch — make `caracal-lynx/sluice` public, split `etl-rules-*` to private `sluice-rules` repo
 7. See `SLUICE-IMPLEMENTATION-PLAN.md` for the full sequence (Phases 0–11)
 
