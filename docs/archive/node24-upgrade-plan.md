@@ -11,7 +11,7 @@
 **Starting point:** Node.js 20 LTS (EOL April 2026)  
 **Target:** Node.js 24 LTS (released April 2025; LTS since October 2025; EOL April 2028)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  
-**Related:** `docs/typescript6-upgrade-plan.md` (run after this), `docs/node26-upgrade-plan.md` (deferred to Phase 10)
+**Related:** `../typescript6-upgrade-plan.md` (run after this), `node26-upgrade-plan.md` (also archived; deferred to Phase 10)
 
 ---
 

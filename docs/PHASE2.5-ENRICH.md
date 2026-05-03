@@ -1,7 +1,7 @@
 # Sluice — Phase 4: External Validation / Enrich Phase
 # npm package: @caracal-lynx/sluice-enrich  ⚠️ PRIVATE — NOT OPEN SOURCE
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
-# Depends on: CLAUDE.md (Phase 1 complete), PHASE2-EXTENSIONS.md (Phase 3 complete)
+# Depends on: CLAUDE.md (Phase 1 complete), archive/PHASE2-EXTENSIONS.md (Phase 3 complete)
 # Last updated: 2026-05-01
 
 ---
@@ -1842,6 +1842,6 @@ flowchart TD
 ---
 
 *This file specifies Sluice Phase 4 (Enrich Phase) only.*
-*Read CLAUDE.md for Phase 1 baseline and PHASE2-EXTENSIONS.md for Phase 3 (plugin system, COMPLETE).*
+*Read CLAUDE.md for Phase 1 baseline and archive/PHASE2-EXTENSIONS.md for Phase 3 (plugin system, COMPLETE).*
 *The enrich subsystem is a private commercial service — see SLUICE-IMPLEMENTATION-PLAN.md §8 for phase overview.*
 *All three files must be present when working on Phase 4.*
