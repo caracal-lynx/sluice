@@ -1,16 +1,19 @@
 /**
  * StagingStore — thin promisified wrapper around DuckDB.
  *
- * The only place in `src/` that imports `duckdb` directly.
+ * The only place in `src/` that imports `@duckdb/node-api` directly.
  * PipelineRunner owns the single instance.
+ *
+ * Public API is preserved verbatim across the Node 20→24 / `duckdb` →
+ * `@duckdb/node-api` migration: callers still do `new StagingStore(path)`
+ * followed by `await store.open()`.
  */
 
-import duckdbPkg from 'duckdb';
-import type { Connection, Database as DatabaseType, TableData } from 'duckdb';
-
-// duckdb is a CommonJS module — named imports don't work under Node ESM, so
-// we default-import the whole module and destructure the constructor.
-const { Database } = duckdbPkg;
+import {
+  DuckDBInstance,
+  type DuckDBConnection,
+  type DuckDBPreparedStatement,
+} from '@duckdb/node-api';
 
 import { StagingError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
@@ -25,46 +28,94 @@ export interface ExportToCsvOptions {
   encoding?: string;
 }
 
+/**
+ * Translate `?` positional placeholders (the convention inherited from the
+ * old `duckdb` driver) into the `$N` form that `@duckdb/node-api` expects.
+ * Quoted identifiers and string literals containing `?` are not corrupted
+ * because internal callers in this file never put `?` inside a quoted
+ * literal — only as a positional bind marker.
+ */
+function translatePlaceholders(sql: string): string {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
+
+/**
+ * Bind a single positional parameter, sniffing the JS type and routing to the
+ * appropriate typed bind method. DuckDB coerces between numeric column types
+ * (e.g. INTEGER value into BIGINT column) so we don't need to know the column
+ * type up-front — only enough about the JS value to pick a sensible bind.
+ *
+ * `null` and `undefined` both map to bindNull (matches the old driver, where
+ * `insertBatch` rewrote `undefined → null` before binding).
+ */
+function bindParam(prep: DuckDBPreparedStatement, pos: number, value: unknown): void {
+  if (value === null || value === undefined) {
+    prep.bindNull(pos);
+    return;
+  }
+  if (typeof value === 'boolean') {
+    prep.bindBoolean(pos, value);
+    return;
+  }
+  if (typeof value === 'bigint') {
+    prep.bindBigInt(pos, value);
+    return;
+  }
+  if (typeof value === 'number') {
+    if (Number.isInteger(value) && value >= -2_147_483_648 && value <= 2_147_483_647) {
+      prep.bindInteger(pos, value);
+    } else {
+      prep.bindDouble(pos, value);
+    }
+    return;
+  }
+  // Strings, Dates (ISO-stringified), and everything else go through varchar.
+  // DuckDB coerces e.g. '2026-04-19 12:00:00' into a TIMESTAMP column.
+  if (value instanceof Date) {
+    prep.bindVarchar(pos, value.toISOString());
+    return;
+  }
+  prep.bindVarchar(pos, String(value));
+}
+
 export class StagingStore {
-  private db: DatabaseType | null = null;
-  private conn: Connection | null = null;
+  private instance: DuckDBInstance | null = null;
+  private conn: DuckDBConnection | null = null;
 
   /** `:memory:` for dryRun/tests, else a filesystem path. */
   constructor(private readonly dbPath: string) {}
 
   async open(): Promise<void> {
-    if (this.db) return;
-    await new Promise<void>((resolve, reject) => {
-      try {
-        this.db = new Database(this.dbPath, (err) => {
-          if (err) {
-            reject(new StagingError(`failed to open DuckDB at ${this.dbPath}: ${err.message}`, err));
-            return;
-          }
-          try {
-            this.conn = this.db!.connect();
-            resolve();
-          } catch (connErr) {
-            reject(new StagingError(`failed to connect to DuckDB: ${String(connErr)}`, connErr));
-          }
-        });
-      } catch (ctorErr) {
-        reject(new StagingError(`failed to construct DuckDB: ${String(ctorErr)}`, ctorErr));
-      }
-    });
+    if (this.instance) return;
+    try {
+      this.instance = await DuckDBInstance.create(this.dbPath);
+      this.conn = await this.instance.connect();
+    } catch (err) {
+      this.instance = null;
+      this.conn = null;
+      throw new StagingError(
+        `failed to open DuckDB at ${this.dbPath}: ${err instanceof Error ? err.message : String(err)}`,
+        err,
+      );
+    }
   }
 
   async close(): Promise<void> {
-    if (!this.db) return;
-    const db = this.db;
-    this.db = null;
+    if (!this.instance) return;
+    const conn = this.conn;
+    const instance = this.instance;
     this.conn = null;
-    await new Promise<void>((resolve, reject) => {
-      db.close((err) => {
-        if (err) reject(new StagingError(`failed to close DuckDB: ${err.message}`, err));
-        else resolve();
-      });
-    });
+    this.instance = null;
+    try {
+      conn?.disconnectSync();
+      instance.closeSync();
+    } catch (err) {
+      throw new StagingError(
+        `failed to close DuckDB: ${err instanceof Error ? err.message : String(err)}`,
+        err,
+      );
+    }
   }
 
   async createTable(name: string, columns: ColumnMeta[]): Promise<void> {
@@ -74,6 +125,10 @@ export class StagingStore {
   /**
    * Bulk-insert rows. Column schema is taken from the first row; rows missing
    * a column get `null`. All rows must share the first row's column set.
+   *
+   * Builds a single multi-row prepared INSERT for efficiency:
+   *   `INSERT INTO "t" ("a","b") VALUES ($1,$2), ($3,$4), ($5,$6)`
+   * and binds all params positionally.
    */
   async insertBatch(table: string, rows: Record<string, unknown>[]): Promise<void> {
     if (rows.length === 0) return;
@@ -83,13 +138,15 @@ export class StagingStore {
       throw new StagingError('insertBatch: rows have no columns');
     }
     const colList = cols.map(quoteIdent).join(', ');
-    const placeholdersPerRow = `(${cols.map(() => '?').join(', ')})`;
-    const rowPlaceholders = rows.map(() => placeholdersPerRow).join(', ');
-    const flatParams = rows.flatMap((r) => cols.map((c) => (r[c] === undefined ? null : r[c])));
-    await this.exec(
-      `INSERT INTO ${quoteIdent(table)} (${colList}) VALUES ${rowPlaceholders}`,
-      flatParams,
+    let n = 0;
+    const rowPlaceholders = rows
+      .map(() => `(${cols.map(() => `$${++n}`).join(', ')})`)
+      .join(', ');
+    const flatParams = rows.flatMap((r) =>
+      cols.map((c) => (r[c] === undefined ? null : r[c])),
     );
+    const sql = `INSERT INTO ${quoteIdent(table)} (${colList}) VALUES ${rowPlaceholders}`;
+    await this.execPrepared(sql, flatParams);
   }
 
   async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -179,21 +236,60 @@ export class StagingStore {
 
   // ── internal ───────────────────────────────────────────────────────────
 
-  private exec(sql: string, params: unknown[] = []): Promise<TableData> {
+  /**
+   * Run any SQL statement. Returns native-JS row objects (Date for TIMESTAMP,
+   * bigint for BIGINT, null for NULL) for SELECTs; for DDL/DML the returned
+   * array is empty or a `[{ Count: <n>n }]` summary that callers ignore.
+   */
+  private async exec(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
     if (!this.conn) {
-      return Promise.reject(new StagingError('StagingStore is not open'));
+      throw new StagingError('StagingStore is not open');
     }
-    const conn = this.conn;
-    return new Promise<TableData>((resolve, reject) => {
-      const cb = (err: Error | null, rows: TableData): void => {
-        if (err) reject(new StagingError(`DuckDB query failed: ${err.message}`, err));
-        else resolve(rows ?? []);
-      };
-      if (params.length === 0) {
-        conn.all(sql, cb);
-      } else {
-        conn.all(sql, ...params, cb);
+    if (params.length === 0) {
+      try {
+        const reader = await this.conn.runAndReadAll(sql);
+        return reader.getRowObjectsJS() as Record<string, unknown>[];
+      } catch (err) {
+        throw new StagingError(
+          `DuckDB query failed: ${err instanceof Error ? err.message : String(err)}`,
+          err,
+        );
       }
-    });
+    }
+    return this.execPrepared(sql, params);
+  }
+
+  /**
+   * Run a parameterised statement via a prepared statement. Translates `?`
+   * placeholders to `$N` and binds positional params with type sniffing.
+   */
+  private async execPrepared(
+    sql: string,
+    params: unknown[],
+  ): Promise<Record<string, unknown>[]> {
+    if (!this.conn) {
+      throw new StagingError('StagingStore is not open');
+    }
+    const translated = translatePlaceholders(sql);
+    let prep: DuckDBPreparedStatement | null = null;
+    try {
+      prep = await this.conn.prepare(translated);
+      params.forEach((value, i) => {
+        bindParam(prep!, i + 1, value);
+      });
+      const reader = await prep.runAndReadAll();
+      return reader.getRowObjectsJS() as Record<string, unknown>[];
+    } catch (err) {
+      throw new StagingError(
+        `DuckDB query failed: ${err instanceof Error ? err.message : String(err)}`,
+        err,
+      );
+    } finally {
+      try {
+        prep?.destroySync();
+      } catch {
+        /* noop — destroy errors swallowed; the connection is already done with it */
+      }
+    }
   }
 }

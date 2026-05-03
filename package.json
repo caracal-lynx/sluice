@@ -8,6 +8,9 @@
   "bin": {
     "sluice": "dist/cli.js"
   },
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/cli.ts",
@@ -19,6 +22,7 @@
     "sluice": "tsx src/cli.ts"
   },
   "dependencies": {
+    "@duckdb/node-api": "^1.5.0-r.1",
     "axios": "^1.7.0",
     "axios-retry": "^4.5.0",
     "cli-progress": "^3.12.0",
@@ -27,7 +31,6 @@
     "csv-stringify": "^6.5.1",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
-    "duckdb": "^1.1.0",
     "expr-eval": "^2.0.2",
     "js-yaml": "^4.1.0",
     "mssql": "^11.0.1",
@@ -41,7 +44,7 @@
     "@types/cli-progress": "^3.11.6",
     "@types/js-yaml": "^4.0.9",
     "@types/mssql": "^9.1.5",
-    "@types/node": "^20.17.0",
+    "@types/node": "^24.12.2",
     "@types/pg": "^8.11.10",
     "@vitest/coverage-v8": "^2.1.0",
     "eslint": "^9.17.0",
