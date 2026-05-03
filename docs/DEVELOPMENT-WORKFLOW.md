@@ -1,3 +1,9 @@
+> ⚠️ **SUPERSEDED** — this is the old version (uses Node 20, old phase numbering, rule packages incorrectly placed in public monorepo). See the root-level `DEVELOPMENT-WORKFLOW.md` instead.
+>
+> *The content below is retained for historical reference.*
+
+---
+
 # Sluice — Development Workflow & Implementation Guide
 
 > **Caracal Lynx Limited** | Maintained by Michael Scott  
