@@ -1,10 +1,13 @@
+> ⚠️ **SUPERSEDED** — exact duplicate of `docs/typescript6-upgrade-plan.md`. Delete this file or use the docs/ copy.
+>
+> *The content below is retained for historical reference.*
+
+---
+
 # Sluice — TypeScript 5 → 6 → 7 Upgrade Plan
-
-> ✅ **STATUS: COMPLETE** — TypeScript 6 upgrade (Phase 2 of the master implementation plan) is done. This document is retained as a historical reference. For TypeScript 7 (Phase 11), see the tsgo sections below.
-
 **Prepared for:** Caracal Lynx Limited / Michael Scott  
 **Date:** 2026-04-22  
-**Prerequisite:** Node.js 24 upgrade complete (see `docs/node24-upgrade-plan.md`)  
+**Prerequisite:** Node.js 26 upgrade complete (see `node26-upgrade-plan.md`)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  
 
 ---
@@ -13,8 +16,8 @@
 
 | Version | Released | Status | Key Significance |
 |---|---|---|---|
-| TypeScript 5.x | 2023–2025 | ~~Current in Sluice~~ **Superseded** | Last era of incremental strict additions |
-| **TypeScript 6.0** | **March 23, 2026** | ✅ **Current in Sluice** | Last JS-based compiler; defaults tightened; bridge to TS 7 |
+| TypeScript 5.x | 2023–2025 | Current in Sluice | Last era of incremental strict additions |
+| **TypeScript 6.0** | **March 23, 2026** | **Stable** | Last JS-based compiler; defaults tightened; bridge to TS 7 |
 | **TypeScript 7.0** | **January 15, 2026** | **Stable** | Native Go compiler (tsgo); 10× faster; 98% API-compatible |
 
 Both target versions are already released. TS 7 actually pre-dates TS 6 in release order, but the intended migration path is **5 → 6 → 7**, with TS 6 acting as the compatibility bridge.

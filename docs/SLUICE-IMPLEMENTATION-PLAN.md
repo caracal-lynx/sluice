@@ -1,0 +1,960 @@
+# Sluice — Vision Implementation Plan
+
+> **Caracal Lynx Limited** | Owner: Michael Scott | Last updated: May 2026
+>
+> This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
+
+---
+
+## Contents
+
+1. [The Vision](#1-the-vision)
+2. [Strategic Architecture](#2-strategic-architecture)
+3. [Phase Overview & Dependencies](#3-phase-overview--dependencies)
+4. [Phase 0 — Governance & Prerequisites ✅ COMPLETE](#4-phase-0--governance--prerequisites)
+5. [Phase 1 — Node v24 + DuckDB Neo Upgrade](#5-phase-1--node-v24--duckdb-neo-upgrade)
+6. [Phase 2 — TypeScript v6 Upgrade](#6-phase-2--typescript-v6-upgrade)
+7. [Phase 3 — Plugin System ✅ COMPLETE](#7-phase-3--plugin-system--complete)
+8. [Phase 4 — Enrich Phase (Private)](#8-phase-4--enrich-phase-private)
+9. [Phase 5 — Repo Restructure & Open-Source Launch](#9-phase-5--repo-restructure--open-source-launch)
+10. [Phase 6 — git/npm Workflow](#10-phase-6--gitnpm-workflow)
+11. [Phase 7 — GitHub Pages Documentation Site](#11-phase-7--github-pages-documentation-site)
+12. [Phase 8 — README & Marketing](#12-phase-8--readme--marketing)
+13. [Phase 9 — Sluice MCP Server (Private Paid Service)](#13-phase-9--sluice-mcp-server-private-paid-service)
+14. [Phase 10 — Node v26 Upgrade](#14-phase-10--node-v26-upgrade)
+15. [Phase 11 — TypeScript v7](#15-phase-11--typescript-v7)
+16. [Document Inventory](#16-document-inventory)
+17. [Key Risks](#17-key-risks)
+
+---
+
+## 1. The Vision
+
+Sluice will be open-sourced as a best-in-class, YAML-driven ETL pipeline CLI for data migrations of any kind — freely available to businesses running their own migrations, and the foundation of Caracal Lynx's specialist consultancy practice.
+
+The strategic split is deliberate:
+
+| Layer | Visibility | Rationale |
+|-------|-----------|-----------|
+| **Core CLI engine** | 🌍 Public (ELv2) | Community credibility, ecosystem growth, marketing asset |
+| **Enrichment service** | 🔒 Private (paid) | Premium async API lookups — not a commodity |
+| **Country/region rule packages** | 🔒 Private (paid) | Domain expertise — part of Caracal Lynx's service value |
+| **Application adapter packages** | 🔒 Private (paid) | ERP-specific knowledge — not a commodity |
+| **Client-specific plugins** | 🔒 Private (paid) | Bespoke per-engagement deliverables |
+| **Sluice MCP Server** | 🔒 Private (paid) | AI-assisted migration — premium agentic service |
+
+This is the "commoditise the platform, sell the expertise" model: the engine is open, the knowledge is not.
+
+---
+
+## 2. Strategic Architecture
+
+### 2.1 Repository & Package Map
+
+```mermaid
+graph TB
+    subgraph PUBLIC["🌍 Public — Open Source (ELv2 Licence)"]
+        direction LR
+        CORE_REPO["GitHub: caracal-lynx/sluice\n(PUBLIC repository)\n\npackages/core\n────────────────\n@caracal-lynx/sluice\nCLI · engine · built-in source adapters\nDQ engine · transform engine\nDuckDB · Zod · pino\nEnrich types + registration hook only"]
+        NPM_PUB["npm: @caracal-lynx/sluice\n(PUBLIC package)"]
+        PAGES["GitHub Pages\nDocumentation Site\nVitePress / Astro"]
+    end
+
+    subgraph PRIVATE_ENRICH["🔒 Private Paid — Enrichment Service"]
+        ENRICH_REPO["GitHub: caracal-lynx/sluice-enrich\n(PRIVATE)\n\n@caracal-lynx/sluice-enrich\nEnrichRegistry · EnrichmentRunner\nEnrichCache · CLI extensions\nBuilt-in providers (Phase 4b):\nvies · hmrc-vat · uk-trade-tariff"]
+    end
+
+    subgraph PRIVATE_RULES["🔒 Private Paid — Rule Packages"]
+        direction LR
+        RULES_REPO["GitHub: caracal-lynx/sluice-rules\n(PRIVATE monorepo)\n\netl-rules-uk · etl-rules-fashion"]
+        NPM_RULES["npm (private scope):\n@caracal-lynx/etl-rules-uk\n@caracal-lynx/etl-rules-fashion"]
+    end
+
+    subgraph PRIVATE_ADAPTERS["🔒 Private Paid — Application Adapters"]
+        direction LR
+        IFS["caracal-lynx/sluice-adapter-ifs\n→ @caracal-lynx/sluice-adapter-ifs"]
+        BC["caracal-lynx/sluice-adapter-bc\n→ @caracal-lynx/sluice-adapter-bc"]
+        BLUE["caracal-lynx/sluice-adapter-bluecherry\n→ @caracal-lynx/sluice-adapter-bluecherry"]
+    end
+
+    subgraph PRIVATE_MCP["🔒 Private Paid — MCP Server"]
+        MCP_REPO["GitHub: caracal-lynx/sluice-mcp\n(PRIVATE)\n→ @caracal-lynx/sluice-mcp\nAI-assisted migration service"]
+    end
+
+    subgraph PRIVATE_CLIENTS["🔒 Private — Client Engagements"]
+        direction LR
+        COCHRAN["caracal-lynx/sluice-client-cochran\nCochran Group · IFS ERP"]
+        ERIBE["caracal-lynx/sluice-client-eribe\nEribé Knitwear · BlueCherry ERP"]
+    end
+
+    CORE_REPO -->|publish| NPM_PUB
+    CORE_REPO --> PAGES
+
+    NPM_PUB -->|peer dep| ENRICH_REPO
+    NPM_PUB -->|peer dep| IFS
+    NPM_PUB -->|peer dep| BC
+    NPM_PUB -->|peer dep| BLUE
+    NPM_PUB -->|peer dep| MCP_REPO
+    NPM_PUB -->|peer dep| RULES_REPO
+
+    RULES_REPO -->|publish| NPM_RULES
+    IFS -->|publish| PRIVATE_ADAPTERS
+    BC -->|publish| PRIVATE_ADAPTERS
+    BLUE -->|publish| PRIVATE_ADAPTERS
+
+    NPM_PUB -->|npm install| COCHRAN
+    NPM_PUB -->|npm install| ERIBE
+    ENRICH_REPO -->|npm install| COCHRAN
+    ENRICH_REPO -->|npm install| ERIBE
+    NPM_RULES -->|npm install| COCHRAN
+    NPM_RULES -->|npm install| ERIBE
+    PRIVATE_ADAPTERS -->|npm install| COCHRAN
+    PRIVATE_ADAPTERS -->|npm install| ERIBE
+```
+
+### 2.2 What's in the Open-Source Core
+
+The public `@caracal-lynx/sluice` package includes:
+
+- The complete CLI (`sluice run`, `sluice check`, `sluice validate`, `sluice profile`)
+- The pipeline runner and orchestration engine (with `registerEnrichPhase()` hook only — no enrich implementation)
+- Built-in **generic** source adapters: `csv`, `xlsx`, `pg`, `mssql`, `rest`
+- Built-in **generic** target adapters: `csv`, `pg`
+- The DQ rule engine (with built-in primitive rules: `notNull`, `unique`, `pattern`, etc.)
+- The transform engine (with all built-in transform types)
+- The Phase 3 plugin/extension system (discovery, registry, interfaces)
+- DuckDB staging layer (`@duckdb/node-api`)
+- Enrich interface types (`EnrichPlugin`, `EnrichResult`) and Zod schema stubs — for third-party plugin authors only
+
+The open-source core does **not** include: the `EnrichRegistry`, `EnrichmentRunner`, `EnrichCache`, any built-in enrich providers, ERP-specific adapters (IFS, BlueCherry, Business Central), UK/fashion-specific rule packages, or the MCP server.
+
+---
+
+## 3. Phase Overview & Dependencies
+
+### 3.1 Phase Dependency Flow
+
+```mermaid
+flowchart TD
+    P0["✅ Phase 0\nGovernance\nCOMPLETE"]
+    P1["⚡ Phase 1\nNode v24 + DuckDB Neo\n(Start now!)"]
+    P2["🔷 Phase 2\nTypeScript v6 Upgrade\n(~3–5 hours after Phase 1)"]
+    P3["✅ Phase 3\nPlugin System\nCOMPLETE"]
+    P4A["🔒 Phase 4a\nEnrich Framework\n(private sluice-enrich)"]
+    P4B["🔒 Phase 4b\nBuilt-in Providers\nvies · hmrc-vat · uk-trade-tariff"]
+    P5["🚀 Phase 5\nRepo Restructure &\nOpen-Source Launch\n(2–3 weeks)"]
+    P6["⚙️ Phase 6\ngit/npm Workflow\n(1–2 weeks)"]
+    P7["📖 Phase 7\nGitHub Pages Docs\n(6–8 weeks)"]
+    P8["📣 Phase 8\nREADME & Marketing\n(1 week)"]
+    P9["🤖 Phase 9\nSluice MCP Server\n(8–12 weeks, private paid)\nNOW UNBLOCKED ✅"]
+    P10["⚡ Phase 10\nNode v26 Upgrade\n(Oct 2026 LTS)"]
+    P11["🔶 Phase 11\nTypeScript v7\n(When stable — mid/late 2026)"]
+
+    P0 -.->|legal audit informs| P5
+    P1 --> P2
+    P2 -->|tsgo type-check only| P11A["Phase 11A\ntsgo parallel\ntype-check in CI"]
+    P2 --> P4A
+    P3 -->|already complete| P4A
+    P3 -->|already complete| P9
+    P4A --> P4B
+    P4A --> P5
+    P5 --> P6
+    P5 --> P7
+    P5 --> P8
+    P2 --> P10
+    P2 -->|when tsgo emit stable| P11
+
+    style P0 fill:#d4edda,stroke:#28a745
+    style P1 fill:#d4edda,stroke:#28a745
+    style P2 fill:#d4edda,stroke:#28a745
+    style P3 fill:#d4edda,stroke:#28a745
+    style P4A fill:#d6d8f7,stroke:#6610f2
+    style P4B fill:#d6d8f7,stroke:#6610f2
+    style P5 fill:#f8d7da,stroke:#dc3545
+    style P6 fill:#e2e3e5,stroke:#6c757d
+    style P7 fill:#e2e3e5,stroke:#6c757d
+    style P8 fill:#e2e3e5,stroke:#6c757d
+    style P9 fill:#d6d8f7,stroke:#6610f2
+    style P10 fill:#cce5ff,stroke:#0d6efd
+    style P11 fill:#fff3cd,stroke:#f0ad4e
+    style P11A fill:#fff3cd,stroke:#f0ad4e
+```
+
+### 3.2 Estimated Timeline
+
+| Phase | What | Duration | Can start |
+|-------|------|----------|-----------|
+| **Phase 0** | Governance & legal | ✅ **COMPLETE** | — |
+| **Phase 1** | Node v24 + DuckDB Neo | 1–2 days | **Now** |
+| **Phase 2** | TypeScript v6 | 3–5 hours | After Phase 1 |
+| **Phase 11A** | tsgo CI type-check | 1 hour | After Phase 2 |
+| **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
+| **Phase 4a** | Enrich framework (private) | 3–4 weeks | After Phase 2 + Phase 3 |
+| **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
+| **Phase 5** | Restructure & launch | 2–3 weeks | After Phase 4a + Phase 0 |
+| **Phase 6** | git/npm workflow | 1–2 weeks | After Phase 5 |
+| **Phase 7** | GitHub Pages | 6–8 weeks | After Phase 5 |
+| **Phase 8** | README & marketing | 1 week | After Phase 5 |
+| **Phase 9** | MCP Server | 8–12 weeks | **Now unblocked** (Phase 3 complete) |
+| **Phase 10** | Node v26 | 1–2 days | Oct 2026 (LTS cut) |
+| **Phase 11** | TypeScript v7 | 1–2 hours | When tsgo emit stable (mid/late 2026) |
+
+### 3.3 Gantt Chart
+
+```mermaid
+gantt
+    title Sluice — Implementation Timeline (from 4 May 2026)
+    dateFormat YYYY-MM-DD
+
+    section Already Complete
+    Phase 0 — Governance & Prerequisites   :done, p0, 2026-04-13, 2026-05-04
+    Phase 3 — Plugin System                :done, p3, 2026-03-23, 2026-05-04
+
+    section Now — Runtime Upgrades
+    Phase 1 — Node v24 + DuckDB Neo        :active, p1, 2026-05-04, 2d
+    Phase 2 — TypeScript v6                :p2, after p1, 1d
+    Phase 11A — tsgo Parallel Type-check   :p11a, after p2, 1d
+
+    section Enrich Service (Private)
+    Phase 4a — Enrich Framework            :p4a, after p2, 28d
+    Phase 4b — Built-in Providers          :p4b, after p4a, 28d
+
+    section Open-Source Launch
+    Phase 5 — Repo Restructure and Launch  :p5, after p4a, 21d
+    Phase 6 — git/npm Workflow             :p6, after p5, 14d
+    Phase 8 — README and Marketing         :p8, after p5, 7d
+    Phase 7 — GitHub Pages Docs            :p7, after p5, 56d
+
+    section MCP Server (Private)
+    Phase 9 — Sluice MCP Server            :p9, 2026-05-04, 84d
+
+    section Future Upgrades
+    Phase 10 — Node v26 (Oct LTS)          :p10, 2026-10-01, 2d
+    Phase 11 — TypeScript v7               :p11, 2026-10-15, 7d
+```
+
+---
+
+## 4. Phase 0 — Governance & Prerequisites ✅ COMPLETE
+
+**Status:** ✅ COMPLETE
+
+These are non-technical prerequisites that need to be in place before the public launch. They do not block Phases 1–4 but **must be complete before Phase 5**.
+
+### 4.1 Board Resolution
+
+As a Scottish company (SC826823) with multiple directors (Michael, Carolyn, Andrew, Duncan), the decision to open-source company IP should be minuted as a board resolution. Document:
+
+- The decision to publish `@caracal-lynx/sluice` under the Elastic Licence 2.0
+- The decision to keep rule packages, adapters, the enrich service, and the MCP server private and commercially licenced
+- The decision to restructure the monorepo to support the public/private split
+
+### 4.2 Client Contract Audit
+
+Review engagement agreements with **Cochran Group** and **Eribé Knitwear** for:
+
+- IP ownership clauses (does any Sluice code built using their requirements belong to them?)
+- Confidentiality obligations covering schema names, field names, or business logic
+- Any restrictions on publishing tools developed during their engagement
+
+If in doubt, take legal advice before Phase 5.
+
+### 4.3 UK GDPR Audit
+
+Scan the codebase, test fixtures, and sample YAML files for:
+
+- Real customer names or records (even anonymised)
+- Actual connection strings or credentials committed to Git history
+- Client-identifiable schema details in examples or docs
+
+Use `git log -S "cochran"` / `git log -S "eribe"` etc. to check history, not just HEAD.
+
+### 4.4 Dependency Licence Audit
+
+```bash
+npx license-checker --summary --excludePrivatePackages
+```
+
+Confirm all runtime dependencies are MIT, Apache 2.0, BSD, or ISC. Flag any GPL-licensed packages that might create obligations.
+
+### 4.5 npm Namespace Confirmation
+
+Confirm `@caracal-lynx` is registered in your npm account and the Pro plan is active for private packages. Verify `npm whoami` and org membership.
+
+### Success Criteria
+
+- [x] Board resolution minuted
+- [x] Client contracts reviewed (no blocking clauses found)
+- [x] GDPR audit clean (no real data in codebase or history)
+- [x] Dependency licences audited
+- [x] npm `@caracal-lynx` org confirmed and active
+
+---
+
+## 5. Phase 1 — Node v24 + DuckDB Neo Upgrade
+
+**Status:** 🟢 Start now
+
+**Reference:** `docs/node24-upgrade-plan.md` — full Claude Code-ready plan
+
+### Summary
+
+Two changes done together in a single PR:
+
+1. **Node 20 → 24 LTS** — Node 24 is LTS from October 2025, EOL April 2028. The right target now that Node 26 is delayed. Node 25.x is a non-LTS Current release (EOL June 2026) — skip it entirely.
+2. **`duckdb` → `@duckdb/node-api`** — the old package is already dead (frozen at DuckDB 1.4.x). The new package is Promise-native, TypeScript-first, and ABI-stable (no `npm rebuild` after Node version changes ever again). The `StagingStore` rewrite is the only significant work.
+
+### Why Node 24 Not 26?
+
+| | Node 24 LTS | Node 26 LTS |
+|-|-------------|-------------|
+| Released | April 2025 | April 2026 |
+| LTS start | October 2025 | October 2026 |
+| EOL | April 2028 | April 2030 |
+| Status now | ✅ Active LTS | 🔵 Current (not yet LTS) |
+
+Node 26 is "Current" until October 2026 — not recommended for production. Node 24 is the correct LTS target today.
+
+### DuckDB API Migration Summary
+
+```
+duckdb (deprecated)              │  @duckdb/node-api (DuckDB Neo)
+─────────────────────────────────┼──────────────────────────────────────────
+new duckdb.Database(path)        │  await DuckDBInstance.create(path)
+db.connect(callback)             │  await instance.connect()
+conn.all(sql, [], callback)      │  const r = await conn.runAndReadAll(sql)
+                                 │  r.getRowObjects()
+conn.run(sql, [], callback)      │  await conn.run(sql)
+Prepared: conn.prepare(sql, cb)  │  const p = await conn.prepare(sql)
+                                 │  await p.bindVarchar(1, val); await p.run()
+Rebuilds on every Node ABI bump  │  ABI-stable — pre-built binaries, no rebuild
+Frozen at DuckDB 1.4.x           │  1.5.x onwards, actively maintained
+```
+
+### Key Changes
+
+```mermaid
+flowchart LR
+    A["Pre-flight check\nOpenSSL / TLS test\nagainst Cochran SQL Server\n⚠️ Critical — do first!"] --> B
+    B["DuckDB migration\nduckdb → @duckdb/node-api\nsrc/staging/store.ts rewrite\n~4–6 hours"] --> C
+    C["Add Phase 4a stubs\nselectDistinct()\naddColumnIfNotExists()\nbatchUpdateColumns()\n~30 min"] --> D
+    D["Minor updates\nvm hardening\nnpm lockfile regen\nCI workflow bump\n~1 hour"] --> E
+    E["Validate\nAll tests passing\nAll pipelines\nrunning on Node 24"]
+```
+
+### Phase 4a StagingStore Stubs
+
+During the Node 24 upgrade, add the following stub methods to `StagingStore`. These are required by the Phase 4a enrich engine but implemented during Phase 4a development. Adding them now locks the interface before enrich begins.
+
+```typescript
+// Phase 4a stubs — throw until sluice-enrich implements them
+async selectDistinct(_field: string): Promise<string[]> {
+  throw new Error('not yet implemented — install @caracal-lynx/sluice-enrich');
+}
+async addColumnIfNotExists(_column: string, _type: 'BOOLEAN' | 'VARCHAR'): Promise<void> {
+  throw new Error('not yet implemented — install @caracal-lynx/sluice-enrich');
+}
+async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promise<void> {
+  throw new Error('not yet implemented — install @caracal-lynx/sluice-enrich');
+}
+```
+
+### Steps (hand to Claude Code)
+
+1. **Pre-flight:** Run TLS connectivity test against Cochran SQL Server before any code changes. If TLS 1.2 handshake fails, investigate `--openssl-legacy-provider` or update SQL Server TLS config before proceeding.
+2. **DuckDB:** Migrate `src/staging/store.ts` to `@duckdb/node-api`. See `docs/node24-upgrade-plan.md` for full API diff and StagingStore skeleton.
+3. **Phase 4a stubs:** Add the three stub methods above to `StagingStore`.
+4. **vm hardening:** Add `{ timeout: 1000 }` to `vm.runInNewContext()` calls.
+5. **CI workflow:** Bump `node-version` to `'24'` in `.github/workflows/ci.yml`.
+6. **Lock file:** Delete `package-lock.json`, run `npm install`.
+7. **Test:** `npm test` — all suites green.
+
+### Estimated effort: 1–2 days
+
+### Success Criteria
+
+- [ ] All Vitest suites passing on Node 24
+- [ ] `@duckdb/node-api` fully replaces `duckdb`
+- [ ] Three Phase 4a stub methods present in `StagingStore`
+- [ ] CI workflow runs on `node-version: '24'`
+- [ ] Real pipeline run (`sluice run`) completes end-to-end
+
+---
+
+## 6. Phase 2 — TypeScript v6 Upgrade
+
+**Status:** 🟢 Ready — TypeScript 6.0 released March 2026
+
+**Reference:** `docs/typescript-upgrade-plan.md` — full Claude Code-ready plan
+
+**Prerequisite:** Phase 1 (Node 24 + DuckDB Neo) complete and all tests passing
+
+### Summary
+
+Sluice is already in the best possible position for this upgrade. Using `module: "nodenext"` / `moduleResolution: "nodenext"` means the biggest TS 6 breaking change (removal of old `node` resolution) is a non-event. With `strict: true` already set and no decorators in the codebase, the migration is mostly mechanical.
+
+### Phase 2A — TypeScript 5 → 6 (3–5 hours)
+
+```mermaid
+flowchart LR
+    A["Run automated\nmigration tool\nnpx @andrewbranch/ts5to6\n~30 min"] --> B
+    B["Fix new type errors\nsurfaced by improved\nTS6 inference\n~1–3 hrs"] --> C
+    C["Add stableTypeOrdering\nflag to tsconfig\n(pre-adopt TS7 ordering)\n~30 min"] --> D
+    D["Update target to ES2025\nbump lib to ES2025\n~15 min"] --> E
+    E["CI update\nmerge to master\n~30 min"]
+```
+
+### Phase 2B — TypeScript 7 (two-stage, from Phase 11 onwards)
+
+TypeScript 7 uses a native Go compiler (`tsgo`) — 10× faster type-checking. The migration is two-phased to avoid disruption:
+
+| Stage | When | What | Impact |
+|-------|------|------|--------|
+| **11A — Parallel type-check** | After Phase 2 | Add `tsgo --noEmit` to CI alongside `tsc` | Zero disruption. Free speed benefit on CI. |
+| **11 — Full switch** | When tsgo emit stable (mid/late 2026) | Retire `tsc`, use `tsgo` for both type-check and build | Under-second type-check for ~50 source files |
+
+### Success Criteria
+
+- [ ] `tsc --noEmit` passes with zero errors on TS6
+- [ ] All Vitest suites passing
+- [ ] `tsgo --noEmit` added to CI (Phase 11A done)
+- [ ] No `console.log` introduced (pino only)
+
+---
+
+## 7. Phase 3 — Plugin System ✅ COMPLETE
+
+**Status:** ✅ COMPLETE — implemented on Node 20 / TypeScript 5
+
+**Reference:** `docs/PHASE2-EXTENSIONS.md` — full specification (implemented)
+
+### Summary
+
+The three-tier plugin/extension system is fully implemented. All three tiers are working end-to-end:
+
+### Three-Tier Extension Model
+
+```mermaid
+flowchart TB
+    subgraph T1["Tier 1 — YAML Composite Rules (No code)"]
+        Y["my-rule.rule.yaml\ncomposed from built-in rules"]
+    end
+    subgraph T2["Tier 2 — TypeScript Plugin Files (Local code)"]
+        TS["plugins/my-rule.rule.ts\nauto-discovered from plugins/"]
+    end
+    subgraph T3["Tier 3 — npm Packages (Distributed)"]
+        NPM["@caracal-lynx/etl-rules-uk\n@caracal-lynx/etl-rules-fashion\nthird-party packages"]
+    end
+
+    T1 -->|"expanded by"| REGISTRY["Plugin Registry\nsrc/plugins/registry.ts"]
+    T2 -->|"registered in"| REGISTRY
+    T3 -->|"imported by"| REGISTRY
+    REGISTRY --> ENGINE["DQ Engine +\nTransform Engine"]
+```
+
+### What This Enables
+
+- Phase 9 (MCP Server) is now **unblocked** — no longer waiting on Phase 3
+- The open-source launch (Phase 5) has the full extension story to tell
+- Caracal Lynx's private rule packages (`etl-rules-uk`, `etl-rules-fashion`) plug in via Tier 3
+- The enrich system (Phase 4) integrates via the same registry interfaces
+
+---
+
+## 8. Phase 4 — Enrich Phase (Private)
+
+**Status:** 🔵 Specced — starts after Phase 2 + Phase 3
+
+**Reference:** `docs/PHASE2.5-ENRICH.md` — full specification (updated: private architecture)
+
+> ⚠️ **The entire enrich subsystem is a private, commercial offering from Caracal Lynx Limited.** It is not part of the open-source core and is not published to the public npm registry. The open-source `@caracal-lynx/sluice` core includes only the `EnrichPlugin` interface type, Zod schema stubs, and the `registerEnrichPhase()` injection hook — no implementation.
+
+### 8.1 Package Architecture
+
+| Component | Location | Visibility |
+|-----------|----------|-----------|
+| `EnrichPlugin` interface | `@caracal-lynx/sluice` core | 🌍 Public (types only) |
+| `EnrichResult` / `EnrichConfig` Zod schemas | `@caracal-lynx/sluice` core | 🌍 Public (schema stubs) |
+| `registerEnrichPhase()` hook | `@caracal-lynx/sluice` core runner | 🌍 Public (hook only) |
+| `EnrichRegistry` | `@caracal-lynx/sluice-enrich` | 🔒 Private |
+| `EnrichmentRunner` | `@caracal-lynx/sluice-enrich` | 🔒 Private |
+| `EnrichCache` | `@caracal-lynx/sluice-enrich` | 🔒 Private |
+| CLI extensions (`sluice enrich *`) | `@caracal-lynx/sluice-enrich` | 🔒 Private |
+| Built-in providers (Phase 4b) | `@caracal-lynx/sluice-enrich` | 🔒 Private |
+
+The `registerEnrichPhase()` pattern keeps the runner clean:
+
+```typescript
+// In open-source PipelineRunner (src/runner/runner.ts)
+import type { EnrichPhaseFactory } from './types.js';
+let enrichPhaseFactory: EnrichPhaseFactory | undefined;
+
+export function registerEnrichPhase(factory: EnrichPhaseFactory): void {
+  enrichPhaseFactory = factory;
+}
+
+// Phase 2.5 runs only if registered (i.e. sluice-enrich is installed)
+if (enrichPhaseFactory && config.enrich) {
+  await enrichPhaseFactory(config.enrich, stagingStore, logger).run();
+}
+```
+
+### 8.2 Phase 4a — Enrich Framework (3–4 weeks)
+
+Builds the complete enrich infrastructure in the private `caracal-lynx/sluice-enrich` repository:
+
+```mermaid
+flowchart LR
+    A["EnrichRegistry\nregister / resolve\nplugin discovery"] --> B
+    B["EnrichmentRunner\norchestrates batch\nasync lookups"] --> C
+    C["EnrichCache\nresult caching\nDuckDB-backed"] --> D
+    D["CLI extensions\nsluice enrich list\nsluice enrich run\nsluice enrich cache"] --> E
+    E["StagingStore impl\nimplement the 3\nPhase 1 stubs\n(selectDistinct etc)"]
+```
+
+**Key constraints:**
+- `EnrichPlugin.enrich()` is **async** (unlike DQ/Transform plugins which are sync) — network I/O is the whole point
+- Cache backed by DuckDB (same instance as staging) — no external cache service
+- Batch lookups: group rows by lookup key to minimise API calls
+- Rate limiting: configurable concurrency + `axios-retry` with exponential backoff
+
+### 8.3 Phase 4b — Built-in Providers (3–4 weeks, separate development)
+
+The three built-in providers are a **separate development phase** within the private `sluice-enrich` package. They are not part of Phase 4a and may be released independently:
+
+| Provider | API | What it enriches |
+|----------|-----|-----------------|
+| `vies` | EU VIES SOAP API | VAT registration validation + company name |
+| `hmrc-vat` | HMRC VAT Number API | UK VAT registration validation |
+| `uk-trade-tariff` | UK Global Tariff API | Commodity code descriptions + duty rates |
+
+All three providers are behind the `@caracal-lynx/sluice-enrich` paywall. They are not open-source.
+
+### Success Criteria (Phase 4a)
+
+- [ ] `EnrichRegistry`, `EnrichmentRunner`, `EnrichCache` implemented and tested
+- [ ] `registerEnrichPhase()` hook wiring verified end-to-end
+- [ ] Three `StagingStore` stubs from Phase 1 implemented
+- [ ] CLI enrich commands working
+- [ ] Private npm package published to `@caracal-lynx/sluice-enrich`
+
+### Success Criteria (Phase 4b)
+
+- [ ] All three built-in providers implemented and tested
+- [ ] Integration tests against VIES sandbox, HMRC sandbox, UK Tariff staging
+- [ ] Published as part of `@caracal-lynx/sluice-enrich`
+
+---
+
+## 9. Phase 5 — Repo Restructure & Open-Source Launch
+
+**Status:** 🔴 Blocked by Phase 4a + Phase 0
+
+**Reference:** `DEVELOPMENT-WORKFLOW.md`
+
+### 5.1 Repository Restructure
+
+The current repository must be split into public and private parts:
+
+```
+BEFORE (single private monorepo):
+  sluice/
+    packages/core/
+    packages/etl-rules-uk/
+    packages/etl-rules-fashion/
+
+AFTER (separate repos):
+  PUBLIC: caracal-lynx/sluice
+    packages/core/                  ← open-source CLI engine
+
+  PRIVATE: caracal-lynx/sluice-rules
+    packages/etl-rules-uk/          ← private paid service
+    packages/etl-rules-fashion/     ← private paid service
+
+  PRIVATE: caracal-lynx/sluice-enrich  ← already created in Phase 4
+    (already separate)
+```
+
+### 5.2 Open-Source Hygiene Files for `caracal-lynx/sluice`
+
+| File | Purpose |
+|------|---------|
+| `LICENSE` | Elastic Licence 2.0 text |
+| `LICENCE-FAQ.md` | Plain-English licence explainer (already written) |
+| `CONTRIBUTING.md` | How to submit PRs and issues |
+| `CODE_OF_CONDUCT.md` | Community standards (Contributor Covenant v2.1) |
+| `SECURITY.md` | Vulnerability disclosure process |
+| `README.md` | Elevator pitch + quick start + paid services signpost |
+| `.github/ISSUE_TEMPLATE/` | Bug report + feature request templates |
+| `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist |
+
+### 5.3 Apply ELv2 Licence to Source Files
+
+```typescript
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Limited
+```
+
+Add to the top of every `.ts` file in `packages/core/src/`.
+
+Update `package.json`:
+```json
+{
+  "license": "Elastic-2.0"
+}
+```
+
+### 5.4 npm Publishing
+
+| Package | Visibility | Registry |
+|---------|-----------|----------|
+| `@caracal-lynx/sluice` | **Public** | npmjs.com (public) |
+| `@caracal-lynx/sluice-enrich` | Private | npmjs.com (Pro plan, private) |
+| `@caracal-lynx/etl-rules-uk` | Private | npmjs.com (Pro plan, private) |
+| `@caracal-lynx/etl-rules-fashion` | Private | npmjs.com (Pro plan, private) |
+| All adapter packages | Private | npmjs.com (Pro plan, private) |
+| `@caracal-lynx/sluice-mcp` | Private | npmjs.com (Pro plan, private) |
+
+### 5.5 Make the GitHub Repository Public
+
+1. Confirm the GDPR audit (Phase 0) is complete
+2. Confirm the Git history is clean (no credentials, no client data)
+3. Settings → General → Change repository visibility → Public
+4. Enable GitHub Pages on the `master` branch (or `gh-pages` branch)
+5. Enable GitHub Discussions for community Q&A
+6. Add repository topics: `etl`, `data-migration`, `erp`, `typescript`, `yaml`, `duckdb`, `cli`
+
+### Success Criteria
+
+- [ ] `caracal-lynx/sluice` is public on GitHub
+- [ ] `@caracal-lynx/sluice` is published as public on npm
+- [ ] `caracal-lynx/sluice-rules` is private on GitHub
+- [ ] All hygiene files present and correct
+- [ ] ELv2 licence applied to all source files
+- [ ] Git history verified clean
+
+---
+
+## 10. Phase 6 — git/npm Workflow
+
+**Status:** 🔴 Blocked by Phase 5
+
+**Reference:** `DEVELOPMENT-WORKFLOW.md` (full detail)
+
+### Summary
+
+This phase implements the automated dependency cascade that keeps all repos in sync after the open-source split.
+
+### Key Components
+
+```mermaid
+flowchart LR
+    CS["Changesets\n@changesets/cli\nVersioning + changelogs\nin monorepos"] --> NR
+    NR["npm Release\nAutomated via\nGitHub Actions\non master merge"] --> REN
+    REN["Renovate\nMonitors npm registry\nAuto-opens version-bump PRs\nin downstream repos"]
+
+    subgraph CASCADE["Dependency Cascade"]
+        CORE["@caracal-lynx/sluice"] --> ENRICH["@caracal-lynx/sluice-enrich"]
+        CORE --> RULES["@caracal-lynx/etl-rules-*"]
+        CORE --> ADAPTERS["adapter packages"]
+        ENRICH --> CLIENTS["client repos"]
+        RULES --> CLIENTS
+        ADAPTERS --> CLIENTS
+    end
+```
+
+### Implementation Steps
+
+1. **Public sluice repo:** Install and configure `@changesets/cli`. Set `baseBranch: "master"`.
+2. **CI pipeline:** Add publish workflow (`npm publish --access public`) triggered on Changesets bot PRs merged to master.
+3. **Private sluice-enrich repo:** Configure Renovate to watch `@caracal-lynx/sluice`.
+4. **Private sluice-rules repo:** Configure Renovate to watch `@caracal-lynx/sluice`.
+5. **Adapter repos:** Configure Renovate to watch `@caracal-lynx/sluice` (peer dep updates).
+6. **Client repos:** Configure Renovate to watch all `@caracal-lynx/*` packages.
+7. **Breaking change policy:** Major version bumps require manual review at every downstream boundary. Renovate set to `automerge: false` for major bumps.
+
+### Success Criteria
+
+- [ ] Changesets configured in `caracal-lynx/sluice`
+- [ ] CI publish workflow working (test with a patch release)
+- [ ] Renovate running on `sluice-enrich`, `sluice-rules`, adapter repos, and client repos
+- [ ] Test cascade: patch bump to core → Renovate PR appears in sluice-enrich within 24h
+
+---
+
+## 11. Phase 7 — GitHub Pages Documentation Site
+
+**Status:** 🔴 Blocked by Phase 5
+
+**Reference:** `github-pages-plan.md` (full site structure and content outline)
+
+### Summary
+
+GitHub Pages becomes Sluice's front door to the world. Built with Astro (already in your stack — zero learning curve) or VitePress.
+
+### Recommended Build: Astro
+
+Given your existing Astro knowledge, use:
+
+```bash
+npm create astro@latest sluice-docs
+# Use Starlight template — perfect for docs sites
+npm install @astrojs/starlight
+```
+
+Starlight deploys to GitHub Pages with a one-line GitHub Actions workflow, generates a sidebar from your Markdown structure, and supports auto-generated API docs via TypeDoc integration.
+
+### Site Structure
+
+```
+docs.sluice.dev (or sluice.caracallynx.com)
+├── / (Home — elevator pitch + quickstart CTA)
+├── /getting-started/
+│   ├── installation
+│   ├── quickstart        ← most important page; write first
+│   └── core-concepts
+├── /reference/
+│   ├── pipeline-yaml     ← auto-generated from Zod schemas
+│   ├── source-adapters
+│   ├── target-adapters
+│   ├── dq-rules
+│   └── transforms
+├── /guides/
+│   ├── data-migration-patterns
+│   ├── writing-pipelines
+│   ├── plugin-system
+│   └── ci-cd
+├── /architecture/
+├── /changelog/           ← rendered from CHANGELOG.md
+└── /commercial-support   ← lead generation: enrich, adapters, MCP, migration delivery
+```
+
+### Content Priority Order
+
+1. Quickstart (highest value — write this first)
+2. DQ Rules reference
+3. Pipeline YAML Schema (auto-generate from Zod)
+4. Source/Target Adapters reference
+5. Architecture page (Mermaid diagram included)
+6. Commercial Support page (Enrich Service, MCP Server, adapters, migration delivery)
+7. Everything else
+
+### Success Criteria
+
+- [ ] Docs site live on GitHub Pages
+- [ ] Quickstart works end-to-end (verified on a clean machine)
+- [ ] Schema reference auto-generated from Zod schemas
+- [ ] Commercial Support page live with Enrich Service and MCP Server mentions
+- [ ] Changelog rendering from `CHANGELOG.md`
+
+---
+
+## 12. Phase 8 — README & Marketing
+
+**Status:** 🔴 Blocked by Phase 5
+
+### README Structure for the Public Repo
+
+The `README.md` in `caracal-lynx/sluice` is the first thing anyone sees. It must:
+
+1. **Lead with the elevator pitch** — problem → solution → value proposition
+2. **Show a quick YAML example** — something that fits in ~20 lines and looks approachable
+3. **Highlight the extension model** — community can write adapters and plugins
+4. **Signpost paid Caracal Lynx services** — prominently but not intrusively
+
+### Paid Services Section in README
+
+```markdown
+## 🏢 Sluice + Caracal Lynx Professional Services
+
+The Sluice core CLI is open-source and free to use.
+Caracal Lynx offers additional paid services built on top of it:
+
+| Service | What it is |
+|---------|-----------|
+| **Enrichment Service** | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data |
+| **Application Adapters** | Pre-built ERP adapters (IFS, Business Central, BlueCherry) |
+| **Domain Rule Packages** | UK compliance rules, fashion/retail data standards |
+| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model |
+| **Sluice MCP Server** | AI-assisted migration using Claude — agentic pipeline authoring, |
+|                         | live schema inspection, automatic DQ iteration |
+| **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
+
+📧 michael.scott@caracallynx.com
+🌐 caracallynx.com
+```
+
+### Incorporate Elevator Pitch
+
+> ⚠️ **Action required:** Paste the elevator pitch from your previous chat into the README hero section.
+
+### Success Criteria
+
+- [ ] README live in the public repo with elevator pitch
+- [ ] Paid services section clearly signposted
+- [ ] Logo image rendering correctly
+- [ ] Quickstart badge linking to docs site
+
+---
+
+## 13. Phase 9 — Sluice MCP Server (Private Paid Service)
+
+**Status:** ✅ NOW UNBLOCKED — Phase 3 (plugin system) is complete
+
+**Reference:** `docs/SLUICE-MCP-SPEC.md` — full Claude Code-ready specification (1,168 lines)
+
+> ⚠️ The Sluice MCP Server is a **private, commercial offering from Caracal Lynx Limited**. It is not part of the open-source core and is not published to the public npm registry. It is provided to clients as part of a paid Sluice-assisted migration engagement.
+
+### What it delivers
+
+The MCP server turns Claude (or Claude Code) into an active participant in a migration engagement rather than a passive advisor:
+
+```
+WITHOUT MCP server:
+  Claude generates YAML → human runs it → human pastes results back → Claude advises
+
+WITH MCP server:
+  Claude generates YAML → executes it → inspects results → self-corrects
+  Human approval only required before live run
+```
+
+### 16 MCP Tools (from the spec)
+
+| Category | Tools |
+|----------|-------|
+| **Pipeline** | `validate_pipeline`, `dry_run_pipeline`, `run_pipeline`, `get_run_logs` |
+| **Schema Inspection** | `inspect_source_schema`, `list_tables`, `get_sample_rows`, `diff_schemas` |
+| **Config** | `read_pipeline_yaml`, `write_pipeline_yaml`, `list_pipelines`, `get_run_state` |
+| **Scaffolding** | `scaffold_rule`, `scaffold_plugin`, `scaffold_adapter`, `list_plugins` |
+
+### Implementation Phases (from spec)
+
+| Phase | What | Effort |
+|-------|------|--------|
+| **MCP Phase 1** | Config tools + scaffold tools — no DB deps, immediately useful | ~2 days |
+| **MCP Phase 2** | Live schema inspection tools (mssql/pg) | ~2 days |
+| **MCP Phase 3** | Pipeline execution tools (validate, dry-run, run, logs) | ~3 days |
+
+### Repository
+
+- GitHub: `caracal-lynx/sluice-mcp` (private)
+- npm: `@caracal-lynx/sluice-mcp` (private — Pro plan)
+- Delivered to clients as a `claude_desktop_config.json` entry
+
+### Success Criteria
+
+- [ ] All 16 MCP tools implemented and tested
+- [ ] `run_pipeline` defaults to `dryRun: true` — live run requires explicit flag
+- [ ] Working end-to-end with Claude Code on the Cochran pipeline
+- [ ] Client installation documented (see `DEVELOPMENT-WORKFLOW.md §11`)
+
+---
+
+## 14. Phase 10 — Node v26 Upgrade
+
+**Status:** 🔵 Deferred — do when Node 26 LTS cut (October 2026)
+
+**Reference:** `docs/node26-upgrade-plan.md` — plan on file, ready when needed
+
+### Why Deferred
+
+Node 26 is currently "Current" (non-LTS). It becomes LTS in October 2026. There is no reason to run Current in production when Node 24 LTS is fully supported until April 2028. Phase 1 (Node 24) delivers all the benefits we need now.
+
+### When to Start
+
+- Node 26 LTS cut: **October 2026**
+- Recommended start: November 2026 (after one month of LTS stabilisation)
+- This phase is deliberately lightweight — Node 24 → 26 is a much smaller jump than 20 → 24
+
+### Key Changes (preview)
+
+- `node-version: '26'` in CI
+- Lockfile regen
+- Any new OpenSSL 3.x deprecations (unlikely after Node 24 already adopted OpenSSL 3.x)
+- npm 12 (ships with Node 26) — check for any CLI behaviour changes
+
+### Estimated effort: 0.5–1 day
+
+---
+
+## 15. Phase 11 — TypeScript v7
+
+**Status:** 🟡 Phase 11A can start immediately after Phase 2. Full switch when tsgo emit is stable (estimated mid/late 2026).
+
+**Reference:** `docs/typescript-upgrade-plan.md` (Phases 4–5 of that document)
+
+### Phase 11A — Parallel type-check in CI (After Phase 2, ~1 hour)
+
+```bash
+npm install -D @typescript/native-preview
+```
+
+Add to CI workflow:
+```yaml
+- name: Type-check (tsgo)
+  run: npx tsgo --noEmit
+  continue-on-error: true  # Remove once clean
+```
+
+This gives you 10× faster type-checking feedback with zero risk to the build pipeline.
+
+### Phase 11 — Full switch (when tsgo emit is stable)
+
+1. Replace `tsc` with `tsgo` in `package.json` build scripts
+2. Validate that `dist/` output is byte-for-byte equivalent
+3. Remove `typescript` package; `@typescript/native-preview` is the only compiler
+4. Remove `continue-on-error` from CI type-check step
+
+Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators, no Language Service plugins, targets ES2025. Type-check will complete in under a second.
+
+---
+
+## 16. Document Inventory
+
+### Existing Documents (Sluice project folder)
+
+| Document | Status | Notes |
+|----------|--------|-------|
+| `open-sourcing-sluice.md` | ✅ Good | Decision confirmed (ELv2). |
+| `licensing-strategy.md` | ✅ Good | ELv2 confirmed as decision. |
+| `LICENCE-FAQ.md` | ✅ Good | Minor clarification on what's in the open-source core. |
+| `DEVELOPMENT-WORKFLOW.md` | ⚠️ Needs update | Add `sluice-enrich` to strategic split, repo map, package catalogue (Phase 5 of updates). |
+| `github-pages-plan.md` | ✅ Good | Enrich Service mention to add when updating. |
+| `docs/SLUICE-MCP-SPEC.md` | ✅ Good | Private paid service note added prominently. |
+| `docs/Context.md` | ✅ Good | Open-source decision, Node 24, TS upgrade path, MCP plans. |
+| `docs/node24-upgrade-plan.md` | ✅ **NEW** | Node 20→24 + DuckDB Neo plan — ready to execute. |
+| `docs/node26-upgrade-plan.md` | ✅ Good | Plan on file, execution deferred to Phase 10 (Oct 2026). |
+| `docs/typescript-upgrade-plan.md` | ✅ Good | Comprehensive. Ready to execute after Phase 1. |
+| `docs/PHASE2-EXTENSIONS.md` | ✅ COMPLETE | Full plugin system spec — implemented. |
+| `docs/PHASE2.5-ENRICH.md` | ⚠️ Needs update | Update to reflect fully private architecture (Task 4). |
+| `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated May 2026. |
+
+### Documents to Create
+
+| Document | When | Notes |
+|----------|------|-------|
+| `README.md` (public repo) | Phase 8 | Incorporate elevator pitch + paid services section |
+| `LICENSE` | Phase 5 | ELv2 text |
+| `CONTRIBUTING.md` | Phase 5 | PR/issue process |
+| `CODE_OF_CONDUCT.md` | Phase 5 | Contributor Covenant v2.1 |
+| `SECURITY.md` | Phase 5 | Vulnerability disclosure |
+| GitHub Pages site | Phase 7 | Astro + Starlight |
+
+---
+
+## 17. Key Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| Cochran SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x) | Medium | High | Pre-flight TLS check is Phase 1 step 1. Node 20 as fallback if needed. |
+| Client contract blocks open-sourcing | Low | High | Phase 0 legal audit before any public action. |
+| DuckDB `@duckdb/node-api` API differences larger than expected | Low | Medium | Full rewrite planned. `docs/node24-upgrade-plan.md` has detailed API diff and skeleton. |
+| TypeScript 7 tsgo emit not stable before target date | Medium | Low | Phase 11A (type-check only) has zero risk. Full switch deferred. |
+| Community engagement lower than expected post-launch | Low | Low | Docs quality (Quickstart) is the primary driver of adoption. |
+| Enrich API rate limits causing pipeline slowdowns | Medium | Medium | EnrichCache backed by DuckDB; batch lookups; configurable concurrency. |
+| `sluice-enrich` scope creep during Phase 4a | Medium | Medium | Phase 4a = framework only. Providers are Phase 4b — separate, not blocking launch. |
+
+---
+
+*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
+*"Clean data flows through."*
