@@ -388,7 +388,7 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 
 **Status:** 🟢 Ready — TypeScript 6.0 released March 2026
 
-**Reference:** `docs/PHASE-2-typescript-v6-upgrade.md` — full Claude Code-ready plan
+**Reference:** `docs/PHASE-02-typescript-v6-upgrade.md` — full Claude Code-ready plan
 
 **Prerequisite:** Phase 1 (Node 24 + DuckDB Neo) complete and all tests passing
 
@@ -468,7 +468,7 @@ flowchart TB
 
 **Status:** 🔵 Specced — starts after Phase 2 + Phase 3
 
-**Reference:** `docs/PHASE-4-enrich-phase.md` — full specification (updated: private architecture)
+**Reference:** `docs/PHASE-04-enrich-phase.md` — full specification (updated: private architecture)
 
 > ⚠️ **The entire enrich subsystem is a private, commercial offering from Caracal Lynx Limited.** It is not part of the open-source core and is not published to the public npm registry. The open-source `@caracal-lynx/sluice` core includes only the `EnrichPlugin` interface type, Zod schema stubs, and the `registerEnrichPhase()` injection hook — no implementation.
 
@@ -553,7 +553,7 @@ All three providers are behind the `@caracal-lynx/sluice-enrich` paywall. They a
 
 **Status:** 🔴 Blocked by Phase 4a + Phase 0
 
-**Reference:** `DEVELOPMENT-WORKFLOW.md`
+**Reference:** `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md`
 
 ### 5.1 Repository Restructure
 
@@ -642,6 +642,8 @@ Update `package.json`:
 
 **Status:** 🔴 Blocked by Phase 5
 
+**Reference:** `docs/PHASE-06-readme-and-marketing-spec.md` — full Claude Code-ready execution plan (README delta, paid-services copy, marketing checklist, step-by-step to-do list)
+
 ### README Structure for the Public Repo
 
 The `README.md` in `caracal-lynx/sluice` is the first thing anyone sees. It must:
@@ -690,7 +692,7 @@ Caracal Lynx offers additional paid services built on top of it:
 
 **Status:** 🔴 Blocked by Phase 5
 
-**Reference:** `DEVELOPMENT-WORKFLOW.md` (full detail)
+**Reference:** `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` (full detail)
 
 ### Summary
 
@@ -737,7 +739,7 @@ flowchart LR
 
 **Status:** 🔴 Blocked by Phase 5
 
-**Reference:** `docs/PHASE-8-github-pages-plan.md` (full site structure and content outline)
+**Reference:** `docs/PHASE-08-github-pages-plan.md` (full site structure and content outline)
 
 ### Summary
 
@@ -804,7 +806,7 @@ docs.sluice.dev (or sluice.caracallynx.com)
 
 **Status:** ✅ NOW UNBLOCKED — Phase 3 (plugin system) is complete
 
-**Reference:** `docs/PHASE-9-sluice-mcp-spec.md` — full Claude Code-ready specification (1,168 lines)
+**Reference:** `docs/PHASE-09-sluice-mcp-spec.md` — full Claude Code-ready specification (1,168 lines)
 
 > ⚠️ The Sluice MCP Server is a **private, commercial offering from Caracal Lynx Limited**. It is not part of the open-source core and is not published to the public npm registry. It is provided to clients as part of a paid Sluice-assisted migration engagement.
 
@@ -849,7 +851,7 @@ WITH MCP server:
 - [ ] All 16 MCP tools implemented and tested
 - [ ] `run_pipeline` defaults to `dryRun: true` — live run requires explicit flag
 - [ ] Working end-to-end with Claude Code on the Cochran pipeline
-- [ ] Client installation documented (see `DEVELOPMENT-WORKFLOW.md §11`)
+- [ ] Client installation documented (see `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md §11`)
 
 ---
 
@@ -884,7 +886,7 @@ Node 26 is currently "Current" (non-LTS). It becomes LTS in October 2026. There 
 
 **Status:** 🟡 Phase 11a can start immediately after Phase 2. Phase 11b runs when `tsgo` emit is stable (estimated mid/late 2026).
 
-**Reference:** `docs/PHASE-2-typescript-v6-upgrade.md` (Phases 4–5 of that document — `tsgo` coverage)
+**Reference:** `docs/PHASE-02-typescript-v6-upgrade.md` (Phases 4–5 of that document — `tsgo` coverage)
 
 This phase is delivered in two stages, mirroring the `4a/4b` pattern: a zero-risk CI-only parallel run first, then a full compiler switch once `tsgo` emit output is byte-stable.
 
@@ -923,17 +925,18 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `open-sourcing-sluice.md` | ✅ Good | Decision confirmed (ELv2). |
 | `licensing-strategy.md` | ✅ Good | ELv2 confirmed as decision. |
 | `LICENCE-FAQ.md` | ✅ Good | Minor clarification on what's in the open-source core. |
-| `docs/archive/DEVELOPMENT-WORKFLOW.md` | 📦 Archived | Old version (Node 20 / pre-Phase-1 / monorepo layout). The "see root-level instead" banner is itself stale — no root-level copy currently exists. Will be reauthored fresh during Phase 5. |
-| `docs/PHASE-8-github-pages-plan.md` | ✅ Good | Enrich Service mention to add when updating. (Renamed from `github-pages-plan.md`.) |
-| `docs/PHASE-9-sluice-mcp-spec.md` | ✅ Good | Private paid service note added prominently. (Renamed from `SLUICE-MCP-SPEC.md`.) |
+| `docs/PHASE-08-github-pages-plan.md` | ✅ Good | Enrich Service mention to add when updating. (Renamed from `github-pages-plan.md`.) |
+| `docs/PHASE-09-sluice-mcp-spec.md` | ✅ Good | Private paid service note added prominently. (Renamed from `SLUICE-MCP-SPEC.md`.) |
 | `docs/Context.md` | ✅ Good | Open-source decision, Node 24, TS upgrade path, MCP plans. |
 | `docs/archive/node24-upgrade-plan.md` | ✅ EXECUTED | Node 20→24 + DuckDB Neo plan — shipped in PR #8 (3 May 2026). Retained as implementation reference. References to `typescript6-upgrade-plan.md` and `PHASE2.5-ENRICH.md` inside this archived doc point to the pre-rename filenames; that is intentional. |
 | `docs/archive/node26-upgrade-plan.md` | 📦 Archived | Original Node 20→26 single-step strategy. Superseded — when Phase 10 runs, baseline is Node 24 and DuckDB migration is already done. |
-| `docs/archive/typescript-upgrade-plan.md` | 📦 Archived | Exact duplicate of the active `docs/PHASE-2-typescript-v6-upgrade.md`. |
+| `docs/archive/typescript-upgrade-plan.md` | 📦 Archived | Exact duplicate of the active `docs/PHASE-02-typescript-v6-upgrade.md`. |
 | `docs/archive/PHASE2-EXTENSIONS.md` | 📦 Archived | Full plugin system spec — implemented in Phase 3. `PLUGINS.md` is the canonical author guide. |
 | `docs/archive/phase1-3-release-packaging.md`, `docs/archive/phase3-multi-source-merge.md`, `docs/archive/phase3-prep-phase{1,2}.md` | 📦 Archived | Old phase-numbering design notes; technical content retained for reference. Multi-source merge has shipped. |
-| `docs/PHASE-2-typescript-v6-upgrade.md` | ✅ Good | Comprehensive. Ready to execute as Phase 2 — baselined on Node 24. (Renamed from `typescript6-upgrade-plan.md`.) |
-| `docs/PHASE-4-enrich-phase.md` | ⚠️ Needs update | Update to reflect fully private architecture (Task 4). (Renamed from `PHASE2.5-ENRICH.md`.) |
+| `docs/PHASE-02-typescript-v6-upgrade.md` | ✅ Good | Comprehensive. Ready to execute as Phase 2 — baselined on Node 24. (Renamed from `typescript6-upgrade-plan.md`.) |
+| `docs/PHASE-04-enrich-phase.md` | ⚠️ Needs update | Update to reflect fully private architecture (Task 4). (Renamed from `PHASE2.5-ENRICH.md`.) |
+| `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ⚠️ Stale — pending Phase 5 rewrite | Pre-Phase-1 placeholder content (Node 20, old phase numbering, rule packages incorrectly placed in public monorepo). Banner updated 2026-05-03; this file is the canonical location for the workflow doc and must be reauthored during Phase 5. (Renamed from `docs/DEVELOPMENT-WORKFLOW.md`.) |
+| `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ Good | Detailed execution plan for Phase 6 — README delta, paid-services copy, marketing artefacts checklist, numbered to-do list. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
 | `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated May 2026. |
 
