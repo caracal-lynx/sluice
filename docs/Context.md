@@ -44,9 +44,9 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- \*\*Open-source decision (April 2026):\*\* Core CLI engine (`@caracal-lynx/sluice`) will be open-sourced under the **Elastic Licence 2.0 (ELv2)**. Country/region rule packages (`etl-rules-uk`, `etl-rules-fashion`), application adapters (IFS, BC, BlueCherry), and the Sluice MCP Server remain **private paid services** from Caracal Lynx. See `SLUICE-IMPLEMENTATION-PLAN.md` for the full phased plan.
 
-\- \*\*Sluice MCP Server:\*\* `@caracal-lynx/sluice-mcp` — a private, paid commercial offering. Provides 16 MCP tools enabling AI-assisted migration (agentic pipeline authoring, live schema inspection, automatic DQ iteration). See `docs/SLUICE-MCP-SPEC.md`.
+\- \*\*Sluice MCP Server:\*\* `@caracal-lynx/sluice-mcp` — a private, paid commercial offering. Provides 16 MCP tools enabling AI-assisted migration (agentic pipeline authoring, live schema inspection, automatic DQ iteration). See `docs/PHASE-9-sluice-mcp-spec.md`.
 
-\- \*\*Implementation sequencing:\*\* ✅ Phase 0 — Governance & Prerequisites: COMPLETE | ✅ Phase 1 — Node v24 + DuckDB Neo upgrade: COMPLETE | ✅ Phase 2 — TypeScript v6 upgrade: COMPLETE | ✅ Phase 3 — Plugin System (three-tier extension model): COMPLETE | 🔵 Phase 4a — Enrich Framework (private `sluice-enrich` repo): IN PROGRESS | 🔵 Phase 4b — Built-in Enrich Providers (VIES, HMRC VAT, UK Trade Tariff): After Phase 4a | 🔴 Phase 5 — Repo Restructure & Open-Source Launch: Blocked by Phase 4a | 🔴 Phase 6 — git/npm Workflow: Blocked by Phase 5 | Full sequence in `SLUICE-IMPLEMENTATION-PLAN.md`
+\- \*\*Implementation sequencing:\*\* ✅ Phase 0 — Governance & Prerequisites: COMPLETE | ✅ Phase 1 — Node v24 + DuckDB Neo upgrade: COMPLETE | ✅ Phase 2 — TypeScript v6 upgrade: COMPLETE | ✅ Phase 3 — Plugin System (three-tier extension model): COMPLETE | 🔵 Phase 4a — Enrich Framework (private `sluice-enrich` repo): IN PROGRESS | 🔵 Phase 4b — Built-in Enrich Providers (VIES, HMRC VAT, UK Trade Tariff): After Phase 4a | 🔴 Phase 5 — Repo Restructure & Open-Source Launch: Blocked by Phase 4a | 🔴 Phase 6 — README & Marketing: Blocked by Phase 5 | 🔴 Phase 7 — git/npm Workflow: Blocked by Phase 5 | 🔴 Phase 8 — GitHub Pages Documentation Site: Blocked by Phase 5 | Full sequence in `SLUICE-IMPLEMENTATION-PLAN.md`
 
 
 
