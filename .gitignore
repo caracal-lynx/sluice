@@ -7,4 +7,4 @@ output/
 .tmp/
 coverage/
 *.tsbuildinfo
-./claude/settings.local.json
+claude/settings.local.json
