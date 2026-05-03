@@ -692,7 +692,7 @@ Caracal Lynx offers additional paid services built on top of it:
 
 **Status:** 🔴 Blocked by Phase 5
 
-**Reference:** `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` (full detail)
+**Reference:** `docs/PHASE-07-git-npm-workflow-spec.md` — full Claude Code-ready execution plan (Changesets setup, publish workflow, Renovate config templates for every downstream repo, end-to-end cascade verification). Background detail also lives in `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` until that doc is reauthored during Phase 5.
 
 ### Summary
 
@@ -886,7 +886,7 @@ Node 26 is currently "Current" (non-LTS). It becomes LTS in October 2026. There 
 
 **Status:** 🟡 Phase 11a can start immediately after Phase 2. Phase 11b runs when `tsgo` emit is stable (estimated mid/late 2026).
 
-**Reference:** `docs/PHASE-02-typescript-v6-upgrade.md` (Phases 4–5 of that document — `tsgo` coverage)
+**Reference:** `docs/PHASE-11-typescript-v7-spec.md` — full Claude Code-ready execution plan, split into Phase 11a (parallel CI type-check, ~1 hour, after Phase 2) and Phase 11b (full compiler switch, deferred until `tsgo` emit is stable).
 
 This phase is delivered in two stages, mirroring the `4a/4b` pattern: a zero-risk CI-only parallel run first, then a full compiler switch once `tsgo` emit output is byte-stable.
 
@@ -938,7 +938,9 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/elevator-pitch.md` | ✅ Good | Canonical home for the elevator pitch and positioning copy (one-liner, 30-second pitch, hero block, value props, AI angle, audience-specific framings). Sourced from previously-scattered fragments in Context.md, open-sourcing-sluice.md, PHASE-08, and README.md. Referenced by Phase 6 and Phase 8. |
 | `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ⚠️ Stale — pending Phase 5 rewrite | Pre-Phase-1 placeholder content (Node 20, old phase numbering, rule packages incorrectly placed in public monorepo). Banner updated 2026-05-03; this file is the canonical location for the workflow doc and must be reauthored during Phase 5. (Renamed from `docs/DEVELOPMENT-WORKFLOW.md`.) |
 | `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ Good | Detailed execution plan for Phase 6 — README delta, paid-services copy, marketing artefacts checklist, numbered to-do list. Forward-looking; blocked by Phase 5. |
+| `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ Good | Detailed execution plan for Phase 7 — Changesets in public sluice, publish workflow with npm provenance, Renovate config templates for all downstream repos, end-to-end cascade verification. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
+| `docs/PHASE-11-typescript-v7-spec.md` | ✅ Good | Detailed execution plan for Phase 11 — `tsgo` parallel CI type-check (11a, after Phase 2) and full compiler switch (11b, deferred until emit stable). Self-contained; replaces the previous footnote inside `PHASE-02-typescript-v6-upgrade.md`. |
 | `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated May 2026. |
 
 ### Documents to Create
