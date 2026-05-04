@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 4a OSC scaffolding)
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 5 — open-source launch)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -142,7 +142,7 @@ flowchart TD
     P3["✅ Phase 3<br/>Plugin System<br/>COMPLETE"]
     P4A["🟦 Phase 4a<br/>Enrich Framework<br/>OSC scaffolding shipped<br/>(private sluice-enrich next)"]
     P4B["🔒 Phase 4b<br/>Built-in Providers<br/>vies · hmrc-vat · uk-trade-tariff"]
-    P5["🚀 Phase 5<br/>Repo Restructure &<br/>Open-Source Launch<br/>(2–3 weeks)"]
+    P5["✅ Phase 5<br/>Repo Restructure &<br/>Open-Source Launch<br/>COMPLETE 4 May 2026"]
     P6["📣 Phase 6<br/>README & Marketing<br/>(1 week)"]
     P7["⚙️ Phase 7<br/>git/npm Workflow<br/>(1–2 weeks)"]
     P8["📖 Phase 8<br/>GitHub Pages Docs<br/>(6–8 weeks)"]
@@ -171,7 +171,7 @@ flowchart TD
     style P3 fill:#d4edda,stroke:#28a745
     style P4A fill:#d6d8f7,stroke:#6610f2
     style P4B fill:#d6d8f7,stroke:#6610f2
-    style P5 fill:#f8d7da,stroke:#dc3545
+    style P5 fill:#d4edda,stroke:#28a745
     style P6 fill:#e2e3e5,stroke:#6c757d
     style P7 fill:#e2e3e5,stroke:#6c757d
     style P8 fill:#e2e3e5,stroke:#6c757d
@@ -191,10 +191,10 @@ flowchart TD
 | **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
 | **Phase 4a** | Enrich framework — OSC scaffolding | 🟦 **OSC done** (this commit); private repo work next | — |
 | **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
-| **Phase 5** | Restructure & launch | 2–3 weeks | After Phase 4a + Phase 0 |
-| **Phase 6** | README & marketing | 1 week | After Phase 5 |
-| **Phase 7** | git/npm workflow | 1–2 weeks | After Phase 5 |
-| **Phase 8** | GitHub Pages | 6–8 weeks | After Phase 5 |
+| **Phase 5** | Restructure & launch | ✅ **COMPLETE** (4 May 2026, PRs [#18–#22](https://github.com/caracal-lynx/sluice/pulls?q=is%3Apr+is%3Amerged+phase-5)) | — |
+| **Phase 6** | README & marketing | 1 week | 🟢 **Unblocked** |
+| **Phase 7** | git/npm workflow | 1–2 weeks | 🟢 **Unblocked** |
+| **Phase 8** | GitHub Pages | 6–8 weeks | 🟢 **Unblocked** |
 | **Phase 9** | MCP Server | 8–12 weeks | **Now unblocked** (Phase 3 complete) |
 | **Phase 10** | Node v26 | 1–2 days | Oct 2026 (LTS cut) |
 | **Phase 11a** | tsgo CI type-check | ✅ **MERGED — IN SOAK** (4 May 2026, PR #15) | — |
@@ -551,9 +551,15 @@ All three providers are behind the `@caracal-lynx/sluice-enrich` paywall. They a
 
 ---
 
-## 9. Phase 5 — Repo Restructure & Open-Source Launch
+## 9. Phase 5 — Repo Restructure & Open-Source Launch ✅ COMPLETE
 
-**Status:** 🔴 Blocked by Phase 4a + Phase 0
+**Status:** ✅ **COMPLETE** — flipped public on 4 May 2026.
+
+- **Public repo:** [caracal-lynx/sluice](https://github.com/caracal-lynx/sluice) (transferred from `BCGubbins/sluice`; redirect retained)
+- **First public npm release:** [`@caracal-lynx/sluice@0.1.0`](https://www.npmjs.com/package/@caracal-lynx/sluice) under Elastic Licence 2.0
+- **GitHub Pages:** [caracal-lynx.github.io/sluice](https://caracal-lynx.github.io/sluice/) — placeholder serving `docs/` until Phase 8 fills it
+- **PRs landed:** [#18 SPDX + LICENSE](https://github.com/caracal-lynx/sluice/pull/18) · [#19 hygiene files](https://github.com/caracal-lynx/sluice/pull/19) · [#20 fixture renames](https://github.com/caracal-lynx/sluice/pull/20) · [#21 package.json metadata](https://github.com/caracal-lynx/sluice/pull/21) · [#22 client example removal](https://github.com/caracal-lynx/sluice/pull/22)
+- **History rewrites:** three `git filter-repo` passes purged a 1.9 MB client dataset, two client-specific example pipelines, and a stray SSMS-default-named SQL file from full git history before the visibility flip.
 
 **Reference:** `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md`
 
@@ -631,18 +637,18 @@ Update `package.json`:
 
 ### Success Criteria
 
-- [ ] `caracal-lynx/sluice` is public on GitHub
-- [ ] `@caracal-lynx/sluice` is published as public on npm
-- [ ] `caracal-lynx/sluice-rules` is private on GitHub
-- [ ] All hygiene files present and correct
-- [ ] ELv2 licence applied to all source files
-- [ ] Git history verified clean
+- [x] `caracal-lynx/sluice` is public on GitHub — flipped 4 May 2026
+- [x] `@caracal-lynx/sluice` is published as public on npm — `0.1.0` shipped 4 May 2026
+- [ ] `caracal-lynx/sluice-rules` is private on GitHub — **deferred**, created lazily when the rule packages are ported (per the resolved scope decision: only the public repo flipped during Phase 5; sibling private repos created on demand)
+- [x] All hygiene files present and correct — `LICENSE`, `LICENCE-FAQ.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md`, three issue-template forms, PR template
+- [x] ELv2 licence applied to all source files — SPDX header on all 67 `src/**/*.ts` files; `"license": "Elastic-2.0"` in `package.json`
+- [x] Git history verified clean — three `filter-repo` rewrites; final §2.1 audit shows zero hits for the audited terms
 
 ---
 
 ## 10. Phase 6 — README & Marketing
 
-**Status:** 🔴 Blocked by Phase 5
+**Status:** 🟢 **Unblocked** — Phase 5 shipped 4 May 2026
 
 **Reference:** `docs/PHASE-06-readme-and-marketing-spec.md` — full Claude Code-ready execution plan (README delta, paid-services copy, marketing checklist, step-by-step to-do list)
 
@@ -692,7 +698,7 @@ Caracal Lynx offers additional paid services built on top of it:
 
 ## 11. Phase 7 — git/npm Workflow
 
-**Status:** 🔴 Blocked by Phase 5
+**Status:** 🟢 **Unblocked** — Phase 5 shipped 4 May 2026
 
 **Reference:** `docs/PHASE-07-git-npm-workflow-spec.md` — full Claude Code-ready execution plan (Changesets setup, publish workflow, Renovate config templates for every downstream repo, end-to-end cascade verification). Background detail also lives in `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` until that doc is reauthored during Phase 5.
 
@@ -739,7 +745,7 @@ flowchart LR
 
 ## 12. Phase 8 — GitHub Pages Documentation Site
 
-**Status:** 🔴 Blocked by Phase 5
+**Status:** 🟢 **Unblocked** — Phase 5 shipped 4 May 2026
 
 **Reference:** `docs/PHASE-08-github-pages-plan.md` (full site structure and content outline)
 
@@ -939,18 +945,21 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ Good | Detailed execution plan for Phase 7 — Changesets in public sluice, publish workflow with npm provenance, Renovate config templates for all downstream repos, end-to-end cascade verification. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
 | `docs/PHASE-11-typescript-v7-spec.md` | ✅ 11a EXECUTED | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable. |
-| `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated 4 May 2026 (post Phase 11a). |
+| `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated 4 May 2026 (post Phase 5 — open-source launch). |
+| `LICENSE` | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)) | ELv2 text verbatim from elastic.co |
+| `LICENCE-FAQ.md` (root) | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)) | Lifted from `docs/` for github.com visibility |
+| `CONTRIBUTING.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | PR process + branching ref + sign-off |
+| `CODE_OF_CONDUCT.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | Contributor Covenant v2.1 verbatim; reporting → conduct@caracallynx.com |
+| `SECURITY.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | security@caracallynx.com; 48 hr ack / 90-day SLA |
+| `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}.yml` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | GitHub form schemas |
+| `.github/PULL_REQUEST_TEMPLATE.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | PR checklist (type, public-API impact, tests, sign-off) |
 
 ### Documents to Create
 
 | Document | When | Notes |
 |----------|------|-------|
-| `README.md` (public repo) | Phase 6 | Incorporate elevator pitch + paid services section |
-| `LICENSE` | Phase 5 | ELv2 text |
-| `CONTRIBUTING.md` | Phase 5 | PR/issue process |
-| `CODE_OF_CONDUCT.md` | Phase 5 | Contributor Covenant v2.1 |
-| `SECURITY.md` | Phase 5 | Vulnerability disclosure |
-| GitHub Pages site | Phase 8 | Astro + Starlight |
+| `README.md` rewrite | Phase 6 | Existing 21 KB README kept as placeholder; Phase 6 supplies elevator pitch + paid-services section |
+| GitHub Pages site | Phase 8 | Astro + Starlight (Pages currently serves `/docs` markdown as placeholder at https://caracal-lynx.github.io/sluice/) |
 
 ---
 
