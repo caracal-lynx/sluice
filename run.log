@@ -1,9 +1,0 @@
-{"level":30,"time":1777830972081,"pid":12256,"hostname":"MU-TH-UR-9000","rules":0,"transforms":0,"pluginDirs":["C:\\Dev\\Projects\\TypeScript\\sluice\\examples\\plugins"],"msg":"plugins: all loaded"}
-{"level":30,"time":1777830972082,"pid":12256,"hostname":"MU-TH-UR-9000","pipeline":"style-co-style-master","yaml":"examples/tm2-example.pipeline.yaml","mode":"full","msg":"pipeline: start"}
-{"level":30,"time":1777830972572,"pid":12256,"hostname":"MU-TH-UR-9000","rowsExtracted":1261,"table":"stg_raw","msg":"pipeline: extract complete"}
-{"level":30,"time":1777830972593,"pid":12256,"hostname":"MU-TH-UR-9000","rowsChecked":1261,"rowsRejected":0,"critical":0,"warning":373,"info":0,"msg":"pipeline: dq complete"}
-{"level":40,"time":1777830972604,"pid":12256,"hostname":"MU-TH-UR-9000","expression":"String(row.NAME ?? '').replace(/\\s+/g, ' ').trim().substring(0, 60)","msg":"expression: using js: path (vm.runInNewContext)"}
-{"level":30,"time":1777830973347,"pid":12256,"hostname":"MU-TH-UR-9000","rowsIn":1261,"rowsOut":1261,"rowsFailed":0,"sourceTable":"stg_raw","targetTable":"stg_transformed","msg":"pipeline: transform complete"}
-{"level":30,"time":1777830973355,"pid":12256,"hostname":"MU-TH-UR-9000","rowsLoaded":1261,"outputPath":"C:\\Dev\\Projects\\TypeScript\\sluice\\output\\style-co-style-master.csv","msg":"pipeline: load complete"}
-{"level":30,"time":1777830973357,"pid":12256,"hostname":"MU-TH-UR-9000","pipeline":"style-co-style-master","rowsExtracted":1261,"rowsLoaded":1261,"msg":"pipeline: done"}
-{"level":30,"time":1777830973386,"pid":12256,"hostname":"MU-TH-UR-9000","pipeline":"style-co-style-master","mode":"full","rowsExtracted":1261,"rowsLoaded":1261,"stateFile":"C:\\Dev\\Projects\\TypeScript\\sluice\\output\\style-co-style-master-state.json","msg":"sluice run: complete"}

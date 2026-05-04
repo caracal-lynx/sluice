@@ -7,4 +7,10 @@ output/
 .tmp/
 coverage/
 *.tsbuildinfo
-claude/settings.local.json
+
+# IDE / agent / local-only
+.claude/settings.local.json
+
+# Stray developer artefacts (not tracked)
+npm-audit.txt
+run.log

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 export { logger } from './logger.js';
 export { loadEnv, requireEnv } from './env.js';
 export {

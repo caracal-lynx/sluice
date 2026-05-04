@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 export { DQEngine } from './engine.js';
 export { writeRejectionCsv, writeSummaryJson } from './reporter.js';
 export { BUILT_IN_RULES } from './rules/index.js';
