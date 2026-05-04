@@ -1,6 +1,6 @@
 # Sluice — TypeScript 5 → 6 → 7 Upgrade Plan
 
-> 🟢 **STATUS: READY** — Phase 1 (Node 24 + DuckDB Neo) shipped 3 May 2026 in PR #8, so this upgrade is unblocked. This document is the Claude Code-ready execution plan for Phase 2. For TypeScript 7 (Phase 11), see [PHASE-11-typescript-v7-spec.md](PHASE-11-typescript-v7-spec.md) and the tsgo sections below.
+> ✅ **STATUS: EXECUTED** — Phase 2 (TypeScript 5.7 → 6.0) shipped on 4 May 2026 in [PR #13](https://github.com/BCGubbins/sluice/pull/13). Retained as the implementation reference; the TypeScript 6 portion of this document has been delivered. For TypeScript 7 (Phase 11), see [PHASE-11-typescript-v7-spec.md](PHASE-11-typescript-v7-spec.md) and the tsgo sections below — Phase 11a is now unblocked and can start immediately.
 
 **Prepared for:** Caracal Lynx Ltd. / Michael Scott  
 **Date:** 2026-04-22  
