@@ -1,6 +1,6 @@
 pipeline:
-  name: eribe-styles
-  client: eribe-knitwear
+  name: style-co-styles
+  client: style-co
   version: "1.0"
   entity: Style
   description: Style master migration from legacy CSV exports to BlueCherry ERP
@@ -12,7 +12,7 @@ source:
 
 dq:
   stopOnCritical: true
-  rejectionFile: ./output/eribe-styles-rejected.csv
+  rejectionFile: ./output/style-co-styles-rejected.csv
   rules:
     - field: STYLE_NO
       checks:
@@ -66,7 +66,7 @@ transform:
 target:
   adapter: bluecherry
   entity: Style
-  output: ./output/eribe-styles-bc.csv
+  output: ./output/style-co-styles-bc.csv
   includeHeader: true
   dateFormat: MM/DD/YYYY
   nullValue: ""

@@ -177,32 +177,32 @@ target:
   });
 
   describe('integration: real fixture content', () => {
-    it('processes cochran-customers.pipeline.yaml content correctly', async () => {
+    it('processes acme-corp-customers.pipeline.yaml content correctly', async () => {
       const content = readFileSync(
-        path.join(fixturesDir, 'cochran-customers.pipeline.yaml'),
+        path.join(fixturesDir, 'acme-corp-customers.pipeline.yaml'),
         'utf-8',
       );
-      vi.stubEnv('COCHRAN_MSSQL', 'mssql://user:pass@server.cochran.local/LegacyDB');
+      vi.stubEnv('COCHRAN_MSSQL', 'mssql://user:pass@legacy.example.local/LegacyDB');
       mockReadFile.mockResolvedValueOnce(content as unknown as Buffer);
 
-      const result = await ConfigLoader.load('/fake/cochran-customers.pipeline.yaml');
-      expect(result.pipeline.name).toBe('cochran-customers');
+      const result = await ConfigLoader.load('/fake/acme-corp-customers.pipeline.yaml');
+      expect(result.pipeline.name).toBe('acme-corp-customers');
       expect(result.source.adapter).toBe('mssql');
-      expect(result.source.connection).toBe('mssql://user:pass@server.cochran.local/LegacyDB');
+      expect(result.source.connection).toBe('mssql://user:pass@legacy.example.local/LegacyDB');
       expect(result.dq.rules).toHaveLength(6);
       expect(result.transform.fields).toHaveLength(11);
       expect(result.target.adapter).toBe('ifs');
     });
 
-    it('processes eribe-styles.pipeline.yaml content correctly', async () => {
+    it('processes style-co-styles.pipeline.yaml content correctly', async () => {
       const content = readFileSync(
-        path.join(fixturesDir, 'eribe-styles.pipeline.yaml'),
+        path.join(fixturesDir, 'style-co-styles.pipeline.yaml'),
         'utf-8',
       );
       mockReadFile.mockResolvedValueOnce(content as unknown as Buffer);
 
-      const result = await ConfigLoader.load('/fake/eribe-styles.pipeline.yaml');
-      expect(result.pipeline.name).toBe('eribe-styles');
+      const result = await ConfigLoader.load('/fake/style-co-styles.pipeline.yaml');
+      expect(result.pipeline.name).toBe('style-co-styles');
       expect(result.source.adapter).toBe('csv');
       expect(result.dq.rules).toHaveLength(6);
       expect(result.transform.fields).toHaveLength(12);
