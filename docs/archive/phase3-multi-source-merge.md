@@ -6,7 +6,7 @@
 
 # Sluice Phase 3 — Multi-Source Entity Merge
 # Ideas and design notes
-# Author: Michael Scott, Caracal Lynx Limited
+# Author: Michael Scott, Caracal Lynx Ltd.
 # Status: Draft / pre-implementation thinking
 # Date: 2026-04-17
 

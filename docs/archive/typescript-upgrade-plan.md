@@ -5,7 +5,7 @@
 ---
 
 # Sluice — TypeScript 5 → 6 → 7 Upgrade Plan
-**Prepared for:** Caracal Lynx Limited / Michael Scott  
+**Prepared for:** Caracal Lynx Ltd. / Michael Scott  
 **Date:** 2026-04-22  
 **Prerequisite:** Node.js 26 upgrade complete (see `node26-upgrade-plan.md`)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  
