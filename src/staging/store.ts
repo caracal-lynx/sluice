@@ -234,6 +234,44 @@ export class StagingStore {
     );
   }
 
+  // ── Phase 4a stubs (implemented by @caracal-lynx/sluice-enrich) ────────
+  //
+  // The private `@caracal-lynx/sluice-enrich` package overwrites these three
+  // methods on `StagingStore.prototype` at import time via a `patchStagingStore()`
+  // helper. Until that package is installed and imported, the methods throw.
+
+  /**
+   * Returns distinct non-null, non-empty values for a column in stg_raw.
+   * Used by the Phase 4a enrich runner to deduplicate API calls.
+   */
+  async selectDistinct(_field: string): Promise<string[]> {
+    throw new StagingError(
+      'StagingStore.selectDistinct: not yet implemented — install @caracal-lynx/sluice-enrich',
+    );
+  }
+
+  /** Adds a column to stg_raw if it does not already exist. */
+  async addColumnIfNotExists(
+    _column: string,
+    _type: 'BOOLEAN' | 'VARCHAR',
+  ): Promise<void> {
+    throw new StagingError(
+      'StagingStore.addColumnIfNotExists: not yet implemented — install @caracal-lynx/sluice-enrich',
+    );
+  }
+
+  /**
+   * Batch-updates stg_raw. `updates` is keyed by rowid and maps each row to a
+   * partial column-value record to UPDATE.
+   */
+  async batchUpdateColumns(
+    _updates: Map<number, Record<string, unknown>>,
+  ): Promise<void> {
+    throw new StagingError(
+      'StagingStore.batchUpdateColumns: not yet implemented — install @caracal-lynx/sluice-enrich',
+    );
+  }
+
   // ── internal ───────────────────────────────────────────────────────────
 
   /**
