@@ -1,8 +1,8 @@
 # Sluice — TypeScript 5 → 6 → 7 Upgrade Plan
 
-> ✅ **STATUS: COMPLETE** — TypeScript 6 upgrade (Phase 2 of the master implementation plan) is done. This document is retained as a historical reference. For TypeScript 7 (Phase 11), see the tsgo sections below.
+> 🟢 **STATUS: READY** — Phase 1 (Node 24 + DuckDB Neo) shipped 3 May 2026 in PR #8, so this upgrade is unblocked. This document is the Claude Code-ready execution plan for Phase 2. For TypeScript 7 (Phase 11), see [PHASE-11-typescript-v7-spec.md](PHASE-11-typescript-v7-spec.md) and the tsgo sections below.
 
-**Prepared for:** Caracal Lynx Limited / Michael Scott  
+**Prepared for:** Caracal Lynx Ltd. / Michael Scott  
 **Date:** 2026-04-22  
 **Prerequisite:** Node.js 24 upgrade complete — Phase 1 shipped (see `docs/archive/node24-upgrade-plan.md`)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  

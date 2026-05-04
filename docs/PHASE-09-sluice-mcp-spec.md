@@ -1,6 +1,6 @@
 # Sluice MCP Server — Specification
 # `@caracal-lynx/sluice-mcp`
-# Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+# Owner: Michael Scott, Caracal Lynx Ltd. (SC826823)
 # Status: Specification — not yet implemented
 # Depends on: CLAUDE.md (Phase 1 complete), archive/PHASE2-EXTENSIONS.md (Phase 3 complete)
 # Last updated: 2026-04-28
@@ -8,7 +8,7 @@
 # ⚠️  COMMERCIAL STATUS: PRIVATE PAID SERVICE
 # ─────────────────────────────────────────────────────────────────────────────
 # @caracal-lynx/sluice-mcp is NOT part of the open-source Sluice CLI.
-# It is a PRIVATE commercial offering from Caracal Lynx Limited.
+# It is a PRIVATE commercial offering from Caracal Lynx Ltd.
 #
 # - GitHub repository: caracal-lynx/sluice-mcp (PRIVATE)
 # - npm package: @caracal-lynx/sluice-mcp (PRIVATE — Pro plan)

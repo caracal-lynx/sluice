@@ -1,6 +1,6 @@
 # Sluice — Elevator Pitch
 
-> **Caracal Lynx Limited** | Owner: Michael Scott | Last updated: 2026-05-03
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 2026-05-03
 >
 > Canonical home for the elevator pitch and supporting positioning copy. Referenced by [Phase 6 (README & Marketing)](PHASE-06-readme-and-marketing-spec.md) and [Phase 8 (GitHub Pages)](PHASE-08-github-pages-plan.md). Do not invent variant pitches in those docs — pull from here.
 
@@ -102,4 +102,4 @@ When refining the pitch, keep this file the source of truth. Update it here, and
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
+*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
