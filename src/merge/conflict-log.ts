@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 import type { MergeConfig } from '../config/types.js';
 import type { StagingStore } from '../staging/index.js';
 import { quoteIdent } from '../staging/index.js';
