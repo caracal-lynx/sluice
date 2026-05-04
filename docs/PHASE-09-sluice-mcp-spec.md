@@ -233,7 +233,7 @@ Parse and Zod-validate a pipeline YAML file. Safe — does not connect to any da
 ```json
 {
   "valid": true,
-  "pipeline": { "name": "customers", "client": "Cochran Group", "entity": "Customer", "version": "1.0.0" }
+  "pipeline": { "name": "customers", "client": "Acme Corp", "entity": "Customer", "version": "1.0.0" }
 }
 ```
 
@@ -574,7 +574,7 @@ List all pipeline YAML files in a client folder, with last run state if availabl
   "properties": {
     "clientDir": {
       "type": "string",
-      "description": "Path to the client directory (e.g. clients/cochran-group/)."
+      "description": "Path to the client directory (e.g. clients/acme-corp/)."
     }
   },
   "required": ["clientDir"],
@@ -587,9 +587,9 @@ List all pipeline YAML files in a client folder, with last run state if availabl
 {
   "pipelines": [
     {
-      "file": "/path/to/clients/cochran-group/customers.pipeline.yaml",
+      "file": "/path/to/clients/acme-corp/customers.pipeline.yaml",
       "name": "customers",
-      "client": "Cochran Group",
+      "client": "Acme Corp",
       "entity": "Customer",
       "version": "1.0.0",
       "lastRun": {

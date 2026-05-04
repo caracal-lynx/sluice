@@ -21,7 +21,7 @@ pipeline:
 # ── EXTRACT ───────────────────────────────────────────────────────────────────
 source:
   adapter: mssql                   # mssql | pg | csv | xlsx | rest
-  connection: ${COCHRAN_MSSQL}     # resolved from .env at runtime
+  connection: ${SOURCE_MSSQL}     # resolved from .env at runtime
   query: |
     SELECT
       c.CUST_CODE, c.CUST_NAME, c.ADDR1, c.ADDR2,
@@ -81,7 +81,7 @@ transform:
     - name: acctMgrMap
       source:
         adapter: mssql
-        connection: ${COCHRAN_MSSQL}
+        connection: ${SOURCE_MSSQL}
         query: "SELECT STAFF_ID as key, IFS_USER_ID as value FROM dbo.Staff"
       key: key
       value: value

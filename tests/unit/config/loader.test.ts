@@ -182,7 +182,7 @@ target:
         path.join(fixturesDir, 'acme-corp-customers.pipeline.yaml'),
         'utf-8',
       );
-      vi.stubEnv('COCHRAN_MSSQL', 'mssql://user:pass@legacy.example.local/LegacyDB');
+      vi.stubEnv('SOURCE_MSSQL', 'mssql://user:pass@legacy.example.local/LegacyDB');
       mockReadFile.mockResolvedValueOnce(content as unknown as Buffer);
 
       const result = await ConfigLoader.load('/fake/acme-corp-customers.pipeline.yaml');

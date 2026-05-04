@@ -83,8 +83,8 @@ graph TB
 
     subgraph PRIVATE_CLIENTS["🔒 Private — Client Engagements"]
         direction LR
-        COCHRAN["caracal-lynx/sluice-client-cochran<br/>Cochran Group · IFS ERP"]
-        ERIBE["caracal-lynx/sluice-client-eribe<br/>Eribé Knitwear · BlueCherry ERP"]
+        ACME_CORP["caracal-lynx/sluice-client-acme-corp<br/>Acme Corp · IFS ERP"]
+        STYLE_CO["caracal-lynx/sluice-client-style-co<br/>Style Co · BlueCherry ERP"]
     end
 
     CORE_REPO -->|publish| NPM_PUB
@@ -102,14 +102,14 @@ graph TB
     BC -->|publish| PRIVATE_ADAPTERS
     BLUE -->|publish| PRIVATE_ADAPTERS
 
-    NPM_PUB -->|npm install| COCHRAN
-    NPM_PUB -->|npm install| ERIBE
-    ENRICH_REPO -->|npm install| COCHRAN
-    ENRICH_REPO -->|npm install| ERIBE
-    NPM_RULES -->|npm install| COCHRAN
-    NPM_RULES -->|npm install| ERIBE
-    PRIVATE_ADAPTERS -->|npm install| COCHRAN
-    PRIVATE_ADAPTERS -->|npm install| ERIBE
+    NPM_PUB -->|npm install| ACME_CORP
+    NPM_PUB -->|npm install| STYLE_CO
+    ENRICH_REPO -->|npm install| ACME_CORP
+    ENRICH_REPO -->|npm install| STYLE_CO
+    NPM_RULES -->|npm install| ACME_CORP
+    NPM_RULES -->|npm install| STYLE_CO
+    PRIVATE_ADAPTERS -->|npm install| ACME_CORP
+    PRIVATE_ADAPTERS -->|npm install| STYLE_CO
 ```
 
 ### 2.2 What's in the Open-Source Core
@@ -252,7 +252,7 @@ As a Scottish company (SC826823) with multiple directors (Michael, Carolyn, Andr
 
 ### 4.2 Client Contract Audit
 
-Review engagement agreements with **Cochran Group** and **Eribé Knitwear** for:
+Review engagement agreements with **Acme Corp** and **Style Co** for:
 
 - IP ownership clauses (does any Sluice code built using their requirements belong to them?)
 - Confidentiality obligations covering schema names, field names, or business logic
@@ -268,7 +268,7 @@ Scan the codebase, test fixtures, and sample YAML files for:
 - Actual connection strings or credentials committed to Git history
 - Client-identifiable schema details in examples or docs
 
-Use `git log -S "cochran"` / `git log -S "eribe"` etc. to check history, not just HEAD.
+Use `git log -S "acme-corp"` / `git log -S "style-co"` etc. to check history, not just HEAD.
 
 ### 4.4 Dependency Licence Audit
 
@@ -336,7 +336,7 @@ Frozen at DuckDB 1.4.x           │  1.5.x onwards, actively maintained
 
 ```mermaid
 flowchart LR
-    A["Pre-flight check<br/>OpenSSL / TLS test<br/>against Cochran SQL Server<br/>⚠️ Critical — do first!"] --> B
+    A["Pre-flight check<br/>OpenSSL / TLS test<br/>against Acme Corp SQL Server<br/>⚠️ Critical — do first!"] --> B
     B["DuckDB migration<br/>duckdb → @duckdb/node-api<br/>src/staging/store.ts rewrite<br/>~4–6 hours"] --> C
     C["Add Phase 4a stubs<br/>selectDistinct()<br/>addColumnIfNotExists()<br/>batchUpdateColumns()<br/>~30 min"] --> D
     D["Minor updates<br/>vm hardening<br/>npm lockfile regen<br/>CI workflow bump<br/>~1 hour"] --> E
@@ -362,7 +362,7 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 
 ### Steps (hand to Claude Code)
 
-1. **Pre-flight:** Run TLS connectivity test against Cochran SQL Server before any code changes. If TLS 1.2 handshake fails, investigate `--openssl-legacy-provider` or update SQL Server TLS config before proceeding.
+1. **Pre-flight:** Run TLS connectivity test against Acme Corp SQL Server before any code changes. If TLS 1.2 handshake fails, investigate `--openssl-legacy-provider` or update SQL Server TLS config before proceeding.
 2. **DuckDB:** Migrate `src/staging/store.ts` to `@duckdb/node-api`. See `docs/archive/node24-upgrade-plan.md` for full API diff and StagingStore skeleton.
 3. **Phase 4a stubs:** Add the three stub methods above to `StagingStore`.
 4. **vm hardening:** Add `{ timeout: 1000 }` to `vm.runInNewContext()` calls.
@@ -378,7 +378,7 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 - [x] `@duckdb/node-api` fully replaces `duckdb` — confirmed by codebase grep
 - [x] Three Phase 4a stub methods present in `StagingStore` — landed alongside the rest of the Phase 4a OSC scaffolding (this commit). The private `@caracal-lynx/sluice-enrich` package overwrites them on the prototype at import time.
 - [x] CI workflow runs on `node-version: '24'` — `.github/workflows/ci.yml` updated; PR #8 CI passed in 55 s
-- [x] Real pipeline run (`sluice run`) completes end-to-end — live `sluice validate` against Cochran SQL Server round-tripped a query under Node 24 + OpenSSL 3.5; TLS pre-flight passed cleanly with no `cryptoCredentialsDetails` workaround required
+- [x] Real pipeline run (`sluice run`) completes end-to-end — live `sluice validate` against Acme Corp SQL Server round-tripped a query under Node 24 + OpenSSL 3.5; TLS pre-flight passed cleanly with no `cryptoCredentialsDetails` workaround required
 
 **Bonus fix landed in the same PR:** `src/plugins/loader.ts` now wraps absolute paths in `pathToFileURL()` before dynamic import — Node 24's stricter ESM loader rejects raw `C:\…` paths. Caught when running a fixture pipeline end-to-end on Windows; would have surfaced on first real Node 24 run.
 
@@ -858,7 +858,7 @@ WITH MCP server:
 
 - [ ] All 16 MCP tools implemented and tested
 - [ ] `run_pipeline` defaults to `dryRun: true` — live run requires explicit flag
-- [ ] Working end-to-end with Claude Code on the Cochran pipeline
+- [ ] Working end-to-end with Claude Code on the Acme Corp pipeline
 - [ ] Client installation documented (see `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md §11`)
 
 ---
@@ -967,7 +967,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| Cochran SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x) | ✅ **MITIGATED** | High | Pre-flight TLS check passed cleanly under Node 24 / OpenSSL 3.5; no `cryptoCredentialsDetails` workaround required. |
+| Acme Corp SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x) | ✅ **MITIGATED** | High | Pre-flight TLS check passed cleanly under Node 24 / OpenSSL 3.5; no `cryptoCredentialsDetails` workaround required. |
 | Client contract blocks open-sourcing | Low | High | Phase 0 legal audit before any public action. |
 | DuckDB `@duckdb/node-api` API differences larger than expected | ✅ **MITIGATED** | Medium | Phase 1 shipped successfully; full rewrite landed in PR #8. `docs/archive/node24-upgrade-plan.md` retained as the implementation reference. |
 | TypeScript 7 tsgo emit not stable before target date | Medium | Low | Phase 11a (type-check only) has zero risk. Phase 11b (full switch) deferred. |

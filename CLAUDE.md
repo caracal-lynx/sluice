@@ -21,8 +21,8 @@ modules that can be imported by other tools (e.g. n8n custom nodes, GitHub Actio
 
 | Client | Source(s) | Target ERP | Adapter |
 |---|---|---|---|
-| Cochran Group (Annan) | MSSQL legacy DB | IFS ERP | `ifs` |
-| Eribé Knitwear | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
+| Acme Corp | MSSQL legacy DB | IFS ERP | `ifs` |
+| Style Co | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
 
 **Primary use cases:**
 - Extract data from legacy SQL databases, CSV/Excel exports, and REST APIs
@@ -160,9 +160,9 @@ sluice/
 │
 ├── tests/
 │   ├── fixtures/
-│   │   ├── cochran-customers.pipeline.yaml
-│   │   ├── eribe-styles.pipeline.yaml
-│   │   ├── eribe-products-merged.pipeline.yaml    ← multi-source
+│   │   ├── acme-corp-customers.pipeline.yaml
+│   │   ├── style-co-styles.pipeline.yaml
+│   │   ├── style-co-products-merged.pipeline.yaml    ← multi-source
 │   │   ├── multi-source-no-merge.pipeline.yaml    ← negative-path multi-source
 │   │   ├── shared-rules.yaml                      ← composite rule library
 │   │   └── plugins/                               ← test plugin fixtures (Tier 2 files)
@@ -186,19 +186,19 @@ sluice/
 │       ├── cli-plugins.test.ts
 │       ├── csv-to-csv-mvp.test.ts
 │       ├── dq-integration.test.ts
-│       ├── eribe-styles-mini.test.ts
+│       ├── style-co-styles-mini.test.ts
 │       ├── merge-strategies.test.ts
 │       ├── multi-source-runner.test.ts
 │       └── runner-plugin-wiring.test.ts
 │
 └── clients/                         ← gitignored in this repo; each client
-    ├── cochran/                         gets their own private repo
+    ├── acme-corp/                         gets their own private repo
     │   ├── .env
     │   ├── customers.pipeline.yaml
     │   ├── items.pipeline.yaml
     │   ├── vendors.pipeline.yaml
     │   └── lookups/
-    └── eribe/
+    └── style-co/
         ├── .env
         ├── styles.pipeline.yaml
         ├── vendors.pipeline.yaml
@@ -283,9 +283,9 @@ run:        { ... }   # execution options (all fields optional; all have default
 
 ```yaml
 pipeline:
-  name: cochran-customers          # REQUIRED. Slug: lowercase, hyphens only.
+  name: acme-corp-customers          # REQUIRED. Slug: lowercase, hyphens only.
                                    # Used in output filenames and log messages.
-  client: cochran-group            # REQUIRED. Client identifier.
+  client: acme-corp            # REQUIRED. Client identifier.
   version: "1.0"                   # REQUIRED. Quote to ensure string type.
   entity: CustomerInfo             # REQUIRED. Logical entity name (used in
                                    # load reports and target adapter metadata).
@@ -305,7 +305,7 @@ source:
   adapter: mssql                   # REQUIRED. One of: mssql | pg | csv | xlsx | rest
 
   # ── SQL adapters (mssql, pg) ──────────────────────────────
-  connection: ${COCHRAN_MSSQL}     # Connection string from .env.
+  connection: ${SOURCE_MSSQL}     # Connection string from .env.
                                    # mssql: mssql://user:pass@host/database
                                    # Or a JSON string for trusted/advanced config.
   query: |
@@ -344,7 +344,7 @@ source:
 ```yaml
 dq:
   stopOnCritical: true             # Default: true. Halt pipeline if any critical rule fails.
-  rejectionFile: ./output/cochran-customers-rejected.csv
+  rejectionFile: ./output/acme-corp-customers-rejected.csv
                                    # Default: ./output/{pipeline.name}-rejected.csv
 
   rules:
@@ -418,7 +418,7 @@ transform:
     - name: acctMgrMap
       source:
         adapter: mssql
-        connection: ${COCHRAN_MSSQL}
+        connection: ${SOURCE_MSSQL}
         query: "SELECT STAFF_ID as key, IFS_USER_ID as value FROM dbo.Staff"
       key: key
       value: value
@@ -524,7 +524,7 @@ target:
 
   # ── IFS adapter ───────────────────────────────────────────
   adapter: ifs
-  output: ./output/cochran-customers-ifs.csv
+  output: ./output/acme-corp-customers-ifs.csv
   entity: CustomerInfo             # IFS entity name (used in import log).
   includeHeader: false             # Default: false (standard IFS import format).
   columnOrder:                     # Optional. Forces specific column ordering.
@@ -539,7 +539,7 @@ target:
   adapter: bluecherry
   entity: Style                    # REQUIRED. One of: Style | Vendor |
                                    # PurchaseOrder | PODetail | Season | ColourSize
-  output: ./output/eribe-styles-bc.csv
+  output: ./output/style-co-styles-bc.csv
   template: default                # Optional. 'default' uses built-in required
                                    # columns. Or path to a header-only template CSV
                                    # whose first row defines column order.
@@ -597,19 +597,19 @@ run:
 
 ---
 
-### Full example — Cochran customers (MSSQL → IFS)
+### Full example — Acme Corp customers (MSSQL → IFS)
 
 ```yaml
 pipeline:
-  name: cochran-customers
-  client: cochran-group
+  name: acme-corp-customers
+  client: acme-corp
   version: "1.0"
   entity: CustomerInfo
   description: Customer master — legacy Sage SQL to IFS ERP
 
 source:
   adapter: mssql
-  connection: ${COCHRAN_MSSQL}
+  connection: ${SOURCE_MSSQL}
   query: |
     SELECT
       c.CUST_CODE, c.CUST_NAME, c.ADDR1, c.ADDR2,
@@ -620,7 +620,7 @@ source:
 
 dq:
   stopOnCritical: true
-  rejectionFile: ./output/cochran-customers-rejected.csv
+  rejectionFile: ./output/acme-corp-customers-rejected.csv
   rules:
     - field: CUST_CODE
       checks:
@@ -654,7 +654,7 @@ transform:
     - name: acctMgrMap
       source:
         adapter: mssql
-        connection: ${COCHRAN_MSSQL}
+        connection: ${SOURCE_MSSQL}
         query: "SELECT STAFF_ID as key, IFS_USER_ID as value FROM dbo.Staff"
       key: key
       value: value
@@ -674,7 +674,7 @@ transform:
 target:
   adapter: ifs
   entity: CustomerInfo
-  output: ./output/cochran-customers-ifs.csv
+  output: ./output/acme-corp-customers-ifs.csv
   includeHeader: false
   columnOrder: [CustomerNo, Name, Address1, ZipCode, Country, CurrencyCode,
                 SalesmanCode, CreditLimit, Email, CustomerGroup, SearchName]
@@ -688,12 +688,12 @@ run:
 
 ---
 
-### Full example — Eribé styles (CSV → BlueCherry)
+### Full example — Style Co styles (CSV → BlueCherry)
 
 ```yaml
 pipeline:
-  name: eribe-styles
-  client: eribe-knitwear
+  name: style-co-styles
+  client: style-co
   version: "1.0"
   entity: Style
   description: Style master migration from legacy CSV exports to BlueCherry ERP
@@ -705,7 +705,7 @@ source:
 
 dq:
   stopOnCritical: true
-  rejectionFile: ./output/eribe-styles-rejected.csv
+  rejectionFile: ./output/style-co-styles-rejected.csv
   rules:
     - field: STYLE_NO
       checks:
@@ -759,7 +759,7 @@ transform:
 target:
   adapter: bluecherry
   entity: Style
-  output: ./output/eribe-styles-bc.csv
+  output: ./output/style-co-styles-bc.csv
   includeHeader: true
   dateFormat: MM/DD/YYYY
   nullValue: ""
@@ -808,7 +808,7 @@ sources:
     priority: 1                  # REQUIRED. Positive integer. Lower priority =
                                  # higher precedence in coalesce / priority-override.
     adapter: mssql
-    connection: ${ERIBE_MSSQL}
+    connection: ${SOURCE_2_MSSQL}
     query: |
       SELECT STYLE_NO, STYLE_DESC, COST_PRICE FROM dbo.Styles WHERE Active = 1
 
@@ -859,7 +859,7 @@ merge:
     - field: COST_PRICE
       strategy: priority-override  # Override just this field's strategy.
 
-  conflictLog: ./output/eribe-products-conflicts.csv
+  conflictLog: ./output/style-co-products-conflicts.csv
                                  # Optional. CSV of (key, field, winning_source,
                                  # winning_value, source_values). Only written
                                  # when at least one conflict is detected.
@@ -898,15 +898,15 @@ filtered out of that source's staging table *before* the merge phase.
 
 ### Full example
 
-See [tests/fixtures/eribe-products-merged.pipeline.yaml](tests/fixtures/eribe-products-merged.pipeline.yaml)
+See [tests/fixtures/style-co-products-merged.pipeline.yaml](tests/fixtures/style-co-products-merged.pipeline.yaml)
 for a complete, tested multi-source pipeline (MSSQL + REST + XLSX → BlueCherry
 with `coalesce` + `fieldStrategies` + `incrementalSource`).
 
 ### Invocation
 
 ```bash
-sluice check tests/fixtures/eribe-products-merged.pipeline.yaml
-sluice run   tests/fixtures/eribe-products-merged.pipeline.yaml
+sluice check tests/fixtures/style-co-products-merged.pipeline.yaml
+sluice run   tests/fixtures/style-co-products-merged.pipeline.yaml
 sluice merge list-strategies
 sluice merge info coalesce
 ```
@@ -1382,7 +1382,7 @@ The CLI entry point must call `loadEnv()` before invoking the loader. This keeps
 **Run state file** `{outputDir}/{name}-state.json`:
 ```json
 {
-  "pipeline": "cochran-customers",
+  "pipeline": "acme-corp-customers",
   "lastRunAt": "2026-04-15T09:30:00.000Z",
   "lastMode": "full",
   "rowsExtracted": 1842,
@@ -1434,7 +1434,7 @@ For a pipeline with `sources` + `merge`, the CLI selects
 
 ```json
 {
-  "pipeline": "eribe-products-merged",
+  "pipeline": "style-co-products-merged",
   "lastRunAt": "2026-04-19T09:30:00.000Z",
   "lastMode": "incremental",
   "rowsMerged": 3201,
@@ -1528,7 +1528,7 @@ Use `':memory:'` when `dryRun: true` or `stagingDb: ':memory:'`.
 **Summary JSON** (`{outputDir}/{name}-dq-summary.json`):
 ```json
 {
-  "pipeline": "cochran-customers",
+  "pipeline": "acme-corp-customers",
   "runAt": "2026-04-15T09:30:00Z",
   "rowsChecked": 1842,
   "rowsPassed": 1801,
@@ -1653,10 +1653,10 @@ Dev: `npx sluice run pipeline.yaml | npx pino-pretty`
 ## ═══════════════════════════════════════════════════════════
 
 ```bash
-# ── Cochran Group — source ────────────────────────────────────
-COCHRAN_MSSQL=mssql://user:password@server.cochran.local/LegacyDB
+# ── Acme Corp — source ────────────────────────────────────
+SOURCE_MSSQL=mssql://user:password@serverlegacy.example.local/LegacyDB
 
-# ── Cochran Group — IFS target ────────────────────────────────
+# ── Acme Corp — IFS target ────────────────────────────────
 IFS_IMPORT_PATH=C:\IFS\Import
 
 # ── Business Central target (any client using the `bc` adapter) ──
@@ -1666,11 +1666,11 @@ BC_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 BC_CLIENT_SECRET=your-client-secret
 BC_COMPANY=Example Company Ltd
 
-# ── Eribé Knitwear — source ───────────────────────────────────
-ERIBE_MSSQL=mssql://user:password@server.eribe.local/LegacyDB
+# ── Style Co — source ───────────────────────────────────
+SOURCE_2_MSSQL=mssql://user:password@serverlegacy2.example.local/LegacyDB
 
-# ── Eribé Knitwear — BlueCherry (file-based; no API creds) ───
-ERIBE_BC_IMPORT_PATH=C:\BlueCherry\Import
+# ── Style Co — BlueCherry (file-based; no API creds) ───
+BC_IMPORT_PATH=C:\BlueCherry\Import
 
 # ── Runtime ───────────────────────────────────────────────────
 NODE_ENV=development

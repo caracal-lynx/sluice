@@ -51,7 +51,7 @@ lockfiles" concern is moot. Current Node is v24.15.0 LTS.
 
 **Goal:** Validate environmental assumptions before touching any code.
 
-1. **Verify SQL Server TLS at Cochran Group** (blocking for production cut-over,
+1. **Verify SQL Server TLS at Acme Corp** (blocking for production cut-over,
    but not for the code work itself). The doc's SQL snippets in
    `docs/archive/node26-upgrade-plan.md` §4 Phase 0 stand as-is.
    - SQL Server 2016+ with KB4019088 patch → TLS 1.2 → safe.
@@ -146,7 +146,7 @@ connections that Node 20 accepted.
 
 **Change:** in the connection config builder (lines ~70-96 per exploration),
 add an explicit minimum TLS version so behaviour is predictable whether or
-not Cochran's SQL Server is patched:
+not Acme Corp's SQL Server is patched:
 
 ```typescript
 options: {
@@ -158,7 +158,7 @@ options: {
 
 This is defensive: on a patched server (TLS 1.2 or 1.3) it's a no-op; on an
 unpatched server it fails fast with a clear error instead of a confusing
-OpenSSL handshake failure. Add a short inline comment pointing at the Cochran
+OpenSSL handshake failure. Add a short inline comment pointing at the Acme Corp
 SQL Server verification TODO (Phase 0 action).
 
 **Verification:** existing unit tests in `tests/unit/adapters/source/mssql*`
@@ -252,9 +252,9 @@ npx vitest run tests/integration/
 
 **Manual CLI:**
 ```
-npx tsx src/cli.ts run tests/fixtures/cochran-customers.pipeline.yaml --dry-run
-npx tsx src/cli.ts run tests/fixtures/eribe-styles.pipeline.yaml --dry-run
-npx tsx src/cli.ts check tests/fixtures/cochran-customers.pipeline.yaml
+npx tsx src/cli.ts run tests/fixtures/acme-corp-customers.pipeline.yaml --dry-run
+npx tsx src/cli.ts run tests/fixtures/style-co-styles.pipeline.yaml --dry-run
+npx tsx src/cli.ts check tests/fixtures/acme-corp-customers.pipeline.yaml
 ```
 Exit codes: 0 success · 1 pipeline error · 2 DQ critical · 3 config error.
 

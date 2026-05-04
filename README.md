@@ -301,8 +301,8 @@ sluice/
 │   ├── unit/                   ← unit tests (all I/O mocked)
 │   └── integration/            ← real DuckDB :memory: + CSV fixtures
 └── clients/                    ← 🙈 gitignored — each client has their own repo
-    ├── cochran/                ← Cochran Group (Annan) pipelines
-    └── eribe/                  ← Eribé Knitwear pipelines
+    ├── acme-corp/                ← Acme Corp pipelines
+    └── style-co/                  ← Style Co pipelines
 ```
 
 ---
@@ -313,7 +313,7 @@ Connection strings and credentials live in `.env` (never in YAML files, never in
 
 ```bash
 # .env
-COCHRAN_MSSQL=mssql://user:password@server.cochran.local/LegacyDB
+SOURCE_MSSQL=mssql://user:password@serverlegacy.example.local/LegacyDB
 BC_BASE_URL=https://api.businesscentral.dynamics.com/v2.0
 BC_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 BC_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -326,7 +326,7 @@ Reference them in YAML with `${ENV_VAR}` — resolved at runtime, never stored i
 ```yaml
 source:
   adapter: mssql
-  connection: ${COCHRAN_MSSQL}
+  connection: ${SOURCE_MSSQL}
 ```
 
 ---
@@ -342,7 +342,7 @@ Name a bundle of checks in a shared rules file and reference them like built-ins
 ```yaml
 # shared/rules.yaml
 rules:
-  - id: eribeStyleNo
+  - id: style-coStyleNo
     checks:
       - { type: notNull,   severity: critical }
       - { type: pattern,   value: "^[A-Z]{2}[0-9]{4}$", severity: critical }
@@ -356,7 +356,7 @@ dq:
   rules:
     - field: STYLE_NO
       checks:
-        - { type: eribeStyleNo }   # expands to the three checks above ✨
+        - { type: style-coStyleNo }   # expands to the three checks above ✨
 ```
 
 ### Tier 2 — Plugin Files (TypeScript) 🔌
@@ -449,8 +449,8 @@ Custom strategies can be dropped in as `*.merge.ts` plugins or shipped as npm pa
 
 ```yaml
 pipeline:
-  name: eribe-products-merged
-  client: eribe-knitwear
+  name: style-co-products-merged
+  client: style-co
   version: "1.0"
   entity: Style
 
@@ -458,7 +458,7 @@ sources:
   - id: sql-server              # staging table: stg_raw_sql-server
     priority: 1                 # lower = higher precedence
     adapter: mssql
-    connection: ${ERIBE_MSSQL}
+    connection: ${SOURCE_2_MSSQL}
     query: "SELECT STYLE_NO, STYLE_DESC, COST_PRICE FROM dbo.Styles WHERE Active = 1"
 
   - id: excel
@@ -478,7 +478,7 @@ merge:
   fieldStrategies:              # per-field overrides
     - { field: FIBRE_CONTENT, source: excel }          # pin to one source
     - { field: COST_PRICE,    strategy: priority-override }
-  conflictLog: ./output/eribe-products-conflicts.csv   # optional CSV of field disagreements
+  conflictLog: ./output/style-co-products-conflicts.csv   # optional CSV of field disagreements
 
 dq:
   stopOnCritical: true
@@ -514,16 +514,7 @@ sluice merge list-strategies        # ids + descriptions for all registered stra
 sluice merge info coalesce          # details for one strategy
 ```
 
-A full working example lives at [tests/fixtures/eribe-products-merged.pipeline.yaml](tests/fixtures/eribe-products-merged.pipeline.yaml).
-
----
-
-## 🤝 Known Clients
-
-| Client | Source | Target | Adapter |
-|--------|--------|--------|---------|
-| Cochran Group (Annan) | MSSQL legacy DB | IFS ERP | `ifs` |
-| Eribé Knitwear | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
+A full working example lives at [tests/fixtures/style-co-products-merged.pipeline.yaml](tests/fixtures/style-co-products-merged.pipeline.yaml).
 
 ---
 

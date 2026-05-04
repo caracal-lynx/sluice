@@ -5,7 +5,7 @@
 
 pipeline:
   name: erp-reconciliation
-  client: cochran-group
+  client: acme-corp
   version: "1.0"
   entity: CustomerReconciliation
   description: |

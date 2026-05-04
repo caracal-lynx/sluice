@@ -1,4 +1,4 @@
-# Example: Multi-source merge — Eribe Knitwear style master data
+# Example: Multi-source merge — Style Co style master data
 #
 # This pipeline demonstrates merging style master data from two sources:
 # 1. IFS ERP (priority 1) — authoritative master data
@@ -10,15 +10,15 @@
 #   - Respects field-level overrides (e.g., cost always from IFS)
 #
 # Usage:
-#   sluice run eribe-style-merge.pipeline.yaml
+#   sluice run style-co-style-merge.pipeline.yaml
 
 pipeline:
-  name: eribe-style-merge
-  client: eribe-knitwear
+  name: style-co-style-merge
+  client: style-co
   version: "1.0.0"
   entity: style
   description: |
-    Merge Eribe internal style master (IFS) with Excel enrichment,
+    Merge Style Co internal style master (IFS) with Excel enrichment,
     coalesce by priority, validate, then prepare for sync.
 
 # ───── Multi-source block ─────────────────────────────────────────
@@ -48,7 +48,7 @@ sources:
   - id: excel-enrichment
     priority: 2
     adapter: xlsx
-    file: ./data/eribe-style-enrichment.xlsx
+    file: ./data/style-co-style-enrichment.xlsx
     sheet: "Style Enrichment"
     rename:
       "STYLE_NO": "style_no"
@@ -213,7 +213,7 @@ transform:
 target:
   adapter: pg
   connection: ${PG_CONNECTION}   # env var: postgresql://user:pass@host/sluice
-  table: stg_eribe_style_merged
+  table: stg_style-co_style_merged
   mode: replace                  # Drop and recreate each run
 
 # ───── Runtime options ────────────────────────────────────────────

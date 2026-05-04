@@ -5,7 +5,7 @@
 
 pipeline:
   name: inventory-sync
-  client: eribe-knitwear
+  client: style-co
   version: "1.0"
   entity: InventoryBalance
   description: |

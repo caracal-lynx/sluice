@@ -18,7 +18,7 @@ After Phase 5, the Sluice ecosystem is split across at least seven npm packages 
 | Private services | `@caracal-lynx/sluice-enrich`, `@caracal-lynx/sluice-mcp` |
 | Private rules | `@caracal-lynx/etl-rules-uk`, `@caracal-lynx/etl-rules-fashion` |
 | Private adapters | `@caracal-lynx/sluice-adapter-ifs`, `-bc`, `-bluecherry` |
-| Private client repos | `sluice-client-cochran`, `sluice-client-eribe` |
+| Private client repos | `sluice-client-acme-corp`, `sluice-client-style-co` |
 
 Without automation, a patch to the core (e.g. a security fix in `axios`) requires manual version bumps in every downstream package and every client repo. That is unsustainable for a two-person consultancy.
 
@@ -253,7 +253,7 @@ Identical to `sluice-enrich/renovate.json` — same policy.
 
 Same template. The `@caracal-lynx/sluice` dependency is a peer dep for adapters; Renovate handles peer deps the same as regular deps.
 
-### Client repos (`sluice-client-{cochran,eribe}/renovate.json`)
+### Client repos (`sluice-client-{acme-corp,style-co}/renovate.json`)
 
 Same template, but client repos consume *all* `@caracal-lynx/*` packages, so the cascade is wider:
 
@@ -317,7 +317,7 @@ Same template, but client repos consume *all* `@caracal-lynx/*` packages, so the
 
 ### Stage D — Renovate in private repos (~3–5 days, parallelisable)
 
-For each of: `sluice-enrich`, `sluice-rules`, `sluice-adapter-ifs`, `sluice-adapter-bc`, `sluice-adapter-bluecherry`, `sluice-client-cochran`, `sluice-client-eribe`:
+For each of: `sluice-enrich`, `sluice-rules`, `sluice-adapter-ifs`, `sluice-adapter-bc`, `sluice-adapter-bluecherry`, `sluice-client-acme-corp`, `sluice-client-style-co`:
 
 14. Add `renovate.json` per the appropriate template above.
 15. Commit to master.

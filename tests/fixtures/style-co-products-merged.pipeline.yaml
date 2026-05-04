@@ -9,7 +9,7 @@ sources:
   - id: sql-server
     priority: 1
     adapter: mssql
-    connection: ${ERIBE_MSSQL}
+    connection: ${SOURCE_2_MSSQL}
     query: |
       SELECT STYLE_NO, STYLE_DESC, COST_PRICE, RETAIL_PRICE
       FROM dbo.Styles WHERE Active = 1

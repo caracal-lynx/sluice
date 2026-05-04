@@ -1205,7 +1205,7 @@ export async function loadEnrichPlugins(
 ### Example client plugin file
 
 ```typescript
-// clients/cochran/plugins/dnb-duns.enrich.ts
+// clients/acme-corp/plugins/dnb-duns.enrich.ts
 // D&B DUNS number validation via the D&B Direct+ API.
 // Requires options.apiKey set via pipeline YAML or sluice.config.yaml.
 
@@ -1358,7 +1358,7 @@ for a pipeline using `hmrc-vat` with `consultation_ref`:
 
 ```json
 {
-  "pipeline":   "cochran-customers",
+  "pipeline":   "acme-corp-customers",
   "runAt":      "2026-04-29T10:00:00Z",
   "status":     "ok",
   "dqSummary":  { "...": "unchanged" },
@@ -1466,7 +1466,7 @@ New command:
 `sluice enrich --dry-run` output:
 
 ```
-Enrich dry run — cochran-customers.pipeline.yaml
+Enrich dry run — acme-corp-customers.pipeline.yaml
 ──────────────────────────────────────────────────
 Provider : vies
 Field    : VAT_NUMBER
@@ -1716,7 +1716,7 @@ Work in the new private repository after open-source core changes are merged.
     Integration test: flush then reload produces identical cache state.
 
 14. **Example pipeline** — Add `enrich:` section to
-    `clients/cochran/customers.pipeline.yaml` with a mock provider on
+    `clients/acme-corp/customers.pipeline.yaml` with a mock provider on
     `VAT_NUMBER` field and matching DQ rules on `vat_valid` column.
     (Built-in providers not yet available — use a custom `*.enrich.ts` plugin.)
 
@@ -1740,7 +1740,7 @@ Built-in providers are developed AFTER Phase 4a framework is complete and in use
 18. **Provider registration** — Create `src/providers/index.ts`.
     Update `src/index.ts` to call `registerBuiltInProviders()` before self-registering.
 
-19. **Example pipeline update** — Update `clients/cochran/customers.pipeline.yaml`
+19. **Example pipeline update** — Update `clients/acme-corp/customers.pipeline.yaml`
     to use `hmrc-vat` (Phase 4b) in place of the Phase 4a mock provider.
     Verify `sluice check` passes. Verify `sluice enrich --dry-run` runs cleanly.
     Verify `sluice check` passes. Verify `sluice enrich --dry-run` runs cleanly.

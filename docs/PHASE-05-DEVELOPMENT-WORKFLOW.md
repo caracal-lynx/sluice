@@ -26,7 +26,7 @@ Phase 5 is **not** a monorepo-split. The current repo is already a flat single-p
 - Every source file in the public repo carries an SPDX `Elastic-2.0` header.
 - All open-source hygiene files (`LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `LICENCE-FAQ.md`, issue/PR templates) are committed at the repo root.
 - The `@caracal-lynx/sluice` package is published as a public npm package; the npm scope is configured for further private packages.
-- Seven sibling private repos exist in their post-launch shape: `sluice-enrich` (already created in Phase 4a), `sluice-rules`, `sluice-adapter-{ifs,bc,bluecherry}`, `sluice-mcp`, and per-client repos for Cochran and Eribé.
+- Seven sibling private repos exist in their post-launch shape: `sluice-enrich` (already created in Phase 4a), `sluice-rules`, `sluice-adapter-{ifs,bc,bluecherry}`, `sluice-mcp`, and per-client repos for Acme Corp and Style Co.
 - `clients/` is no longer present in the public repo's working tree or any reachable git history.
 
 ### Non-goals (explicitly deferred)
@@ -46,7 +46,7 @@ Phase 5 is **not** a monorepo-split. The current repo is already a flat single-p
 |---|---|---|---|
 | 1 | Phase 0 board resolution minuted; ELv2 decision recorded | Phase 0 | Caracal Lynx board minutes |
 | 2 | Phase 0 client contract audit clean (no IP / confidentiality blockers) | Phase 0 | Legal review record |
-| 3 | Phase 0 GDPR audit clean across HEAD **and history** | Phase 0 | `git log -S "cochran"` etc. — see §2.1 below |
+| 3 | Phase 0 GDPR audit clean across HEAD **and history** | Phase 0 | `git log -S "acme-corp"` etc. — see §2.1 below |
 | 4 | Phase 0 dependency licence audit clean (MIT / Apache 2.0 / BSD / ISC only) | Phase 0 | `npx license-checker --summary --excludePrivatePackages` |
 | 5 | npm `@caracal-lynx` org confirmed, Pro plan active | Phase 0 | `npm whoami && npm access list packages @caracal-lynx` |
 | 6 | Phase 4a complete — `caracal-lynx/sluice-enrich` exists as a private repo | Phase 4a | `gh repo view caracal-lynx/sluice-enrich --json visibility` |
@@ -62,7 +62,7 @@ If any row is not green, do not start Phase 5.
 ```mermaid
 graph LR
     subgraph BEFORE["TODAY · single private repo"]
-        SLUICE_OLD["caracal-lynx/sluice (private)<br/>src/ · tests/ · docs/<br/>clients/cochran · clients/eribe"]
+        SLUICE_OLD["caracal-lynx/sluice (private)<br/>src/ · tests/ · docs/<br/>clients/acme-corp · clients/style-co"]
     end
 
     subgraph AFTER["AFTER PHASE 5"]
@@ -77,14 +77,14 @@ graph LR
             BC["sluice-adapter-bc"]
             BLUE["sluice-adapter-bluecherry"]
             MCP["sluice-mcp<br/>(empty skeleton; impl is Phase 9)"]
-            COCHRAN["sluice-client-cochran"]
-            ERIBE["sluice-client-eribe"]
+            ACME_CORP["sluice-client-acme-corp"]
+            STYLE_CO["sluice-client-style-co"]
         end
     end
 
     SLUICE_OLD -->|in-place flip| SLUICE_NEW
-    SLUICE_OLD -.->|extract clients/| COCHRAN
-    SLUICE_OLD -.->|extract clients/| ERIBE
+    SLUICE_OLD -.->|extract clients/| ACME_CORP
+    SLUICE_OLD -.->|extract clients/| STYLE_CO
 
     style SLUICE_OLD fill:#e2e3e5,stroke:#6c757d
     style SLUICE_NEW fill:#d4edda,stroke:#28a745
@@ -94,8 +94,8 @@ graph LR
     style BC fill:#f8d7da,stroke:#dc3545
     style BLUE fill:#f8d7da,stroke:#dc3545
     style MCP fill:#f8d7da,stroke:#dc3545
-    style COCHRAN fill:#f8d7da,stroke:#dc3545
-    style ERIBE fill:#f8d7da,stroke:#dc3545
+    style ACME_CORP fill:#f8d7da,stroke:#dc3545
+    style STYLE_CO fill:#f8d7da,stroke:#dc3545
 ```
 
 Two things are worth calling out about this diagram:
@@ -115,9 +115,9 @@ Run the audit listed in [SLUICE-IMPLEMENTATION-PLAN.md §4.3](./SLUICE-IMPLEMENT
 
 ```bash
 # Client identifiers (real client names should not appear anywhere in the public repo)
-git log --all -S "cochran" --pretty=oneline
-git log --all -S "eribe"   --pretty=oneline
-git log --all -S "Eribé"   --pretty=oneline
+git log --all -S "acme-corp" --pretty=oneline
+git log --all -S "style-co"   --pretty=oneline
+git log --all -S "Style Co"   --pretty=oneline
 
 # Credential patterns
 git log --all -S "password=" --pretty=oneline
@@ -130,28 +130,28 @@ git log --all -S "mssql://" --pretty=oneline
 git log --all -S "postgres://" --pretty=oneline
 
 # Internal hostnames (substitute for the actual ones the consultancy uses)
-git log --all -S ".cochran.local"  --pretty=oneline
-git log --all -S ".eribe.local"    --pretty=oneline
+git log --all -S "legacy.example.local"  --pretty=oneline
+git log --all -S "legacy2.example.local"    --pretty=oneline
 ```
 
 Expected: every command returns no rows. If any row appears, **do not flip public** — investigate, decide whether to rewrite history (BFG / `git filter-repo`) or to leave as private and re-evaluate. A single overlooked credential is a flip-blocker.
 
 ### 2.2 — Move client folders out
 
-Before the flip, the existing `clients/cochran/` and `clients/eribe/` folders need to be in their new private repos (`sluice-client-cochran`, `sluice-client-eribe`). The clean way is to extract with history preserved:
+Before the flip, the existing `clients/acme-corp/` and `clients/style-co/` folders need to be in their new private repos (`sluice-client-acme-corp`, `sluice-client-style-co`). The clean way is to extract with history preserved:
 
 ```bash
 # From a fresh clone of the current repo
-git clone https://github.com/caracal-lynx/sluice.git sluice-client-cochran
-cd sluice-client-cochran
-git filter-repo --path clients/cochran --path-rename clients/cochran/:
+git clone https://github.com/caracal-lynx/sluice.git sluice-client-acme-corp
+cd sluice-client-acme-corp
+git filter-repo --path clients/acme-corp --path-rename clients/acme-corp/:
 # Push to the new private repo
 git remote remove origin
-git remote add origin https://github.com/caracal-lynx/sluice-client-cochran.git
+git remote add origin https://github.com/caracal-lynx/sluice-client-acme-corp.git
 git push -u origin master
 ```
 
-Repeat for Eribé. Then in the original repo, delete the `clients/` directory and commit:
+Repeat for Style Co. Then in the original repo, delete the `clients/` directory and commit:
 
 ```bash
 git rm -r clients/
@@ -167,7 +167,7 @@ With `clients/` gone, do one more pass over HEAD for stale identifiers:
 ```bash
 # In the working tree, not history
 grep -ri --include="*.ts" --include="*.md" --include="*.yaml" --include="*.yml" \
-  -e "cochran" -e "eribe" -e "Eribé" \
+  -e "acme-corp" -e "style-co" -e "Style Co" \
   src/ tests/ docs/ examples/ README.md
 ```
 
@@ -429,13 +429,13 @@ The current `src/adapters/target/{bc,ifs,bluecherry}.ts` files **stay in the pub
 
 Created empty in Phase 5; populated by [Phase 9](./PHASE-09-sluice-mcp-spec.md). Skeleton: `package.json`, `tsconfig.json`, `README.md` pointing at the spec doc, that's it.
 
-### 7.4 — Client repos (`sluice-client-{cochran,eribe}`)
+### 7.4 — Client repos (`sluice-client-{acme-corp,style-co}`)
 
 Already populated by §2.2's `git filter-repo` extraction. Phase 5 just adds the standard skeleton on top:
 
 ```
-sluice-client-cochran/
-├── pipelines/               # the YAML configs from clients/cochran/
+sluice-client-acme-corp/
+├── pipelines/               # the YAML configs from clients/acme-corp/
 ├── lookups/                 # CSV lookup tables
 ├── plugins/                 # any client-bespoke plugins (Tier-2)
 ├── .env.example             # template — real .env is gitignored
@@ -503,8 +503,8 @@ gh repo list caracal-lynx --json name,visibility \
 # PRIVATE  sluice-adapter-bc
 # PRIVATE  sluice-adapter-bluecherry
 # PRIVATE  sluice-mcp
-# PRIVATE  sluice-client-cochran
-# PRIVATE  sluice-client-eribe
+# PRIVATE  sluice-client-acme-corp
+# PRIVATE  sluice-client-style-co
 ```
 
 ### 8.3 — Manual / human checks
@@ -624,8 +624,8 @@ The actual token never appears in the repo.
 
 ```bash
 # 1. Clone the client engagement repo (substitute for the right name)
-git clone https://github.com/caracal-lynx/sluice-client-cochran.git
-cd sluice-client-cochran
+git clone https://github.com/caracal-lynx/sluice-client-acme-corp.git
+cd sluice-client-acme-corp
 
 # 2. Install all dependencies — pulls @caracal-lynx/* from npm
 npm install
@@ -634,7 +634,7 @@ npm install
 npx sluice --version
 ```
 
-`npm install` resolves the public `@caracal-lynx/sluice` plus whichever paid packages this engagement requires. Cochran's `package.json` declares `@caracal-lynx/sluice`, `@caracal-lynx/etl-rules-uk`, and `@caracal-lynx/sluice-adapter-ifs`. Eribé's adds `@caracal-lynx/etl-rules-fashion` and `@caracal-lynx/sluice-adapter-bluecherry` instead.
+`npm install` resolves the public `@caracal-lynx/sluice` plus whichever paid packages this engagement requires. Acme Corp's `package.json` declares `@caracal-lynx/sluice`, `@caracal-lynx/etl-rules-uk`, and `@caracal-lynx/sluice-adapter-ifs`. Style Co's adds `@caracal-lynx/etl-rules-fashion` and `@caracal-lynx/sluice-adapter-bluecherry` instead.
 
 ### 11.4 — Environment configuration
 
@@ -650,8 +650,8 @@ A typical `.env.example` for an MSSQL-source / IFS-target engagement:
 ```ini
 # .env.example — copy to .env (which is gitignored) and fill in real values
 
-# Source — Cochran legacy SQL Server
-COCHRAN_MSSQL=mssql://user:password@server.cochran.local/LegacyDB
+# Source — Acme Corp legacy SQL Server
+SOURCE_MSSQL=mssql://user:password@serverlegacy.example.local/LegacyDB
 
 # Target — IFS bulk-import location (file-based, not REST)
 IFS_IMPORT_PATH=C:\IFS\Import

@@ -641,26 +641,26 @@ flowchart LR
 
     Pkg[@caracal-lynx/sluice<br/>npm package]:::pkg
 
-    subgraph CochranEnv[Cochran Group - Annan]
+    subgraph Acme CorpEnv[Acme Corp]
       direction TB
-      CochRepo[clients/cochran<br/>private repo<br/>.env + *.pipeline.yaml]:::repo
+      CochRepo[clients/acme-corp<br/>private repo<br/>.env + *.pipeline.yaml]:::repo
       CochSrc[(MSSQL LegacyDB)]:::client
       IFS[IFS ERP<br/>CSV import dir]:::erp
       CochRepo -->|sluice run| CochSrc
       CochRepo --> IFS
     end
 
-    subgraph EribeEnv[Eribé Knitwear]
+    subgraph Style CoEnv[Style Co]
       direction TB
-      EribeRepo[clients/eribe<br/>private repo<br/>.env + *.pipeline.yaml]:::repo
-      EribeSrc[(MSSQL / CSV exports)]:::client
+      Style CoRepo[clients/style-co<br/>private repo<br/>.env + *.pipeline.yaml]:::repo
+      Style CoSrc[(MSSQL / CSV exports)]:::client
       BC[BlueCherry ERP<br/>CSV import dir]:::erp
-      EribeRepo -->|sluice run| EribeSrc
-      EribeRepo --> BC
+      Style CoRepo -->|sluice run| Style CoSrc
+      Style CoRepo --> BC
     end
 
     Pkg -.installed via npm.-> CochRepo
-    Pkg -.installed via npm.-> EribeRepo
+    Pkg -.installed via npm.-> Style CoRepo
 ```
 
 ---

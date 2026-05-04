@@ -54,7 +54,7 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- \*\*Owner:\*\* Michael Scott, Caracal Lynx Ltd. (SC826823), Gretna, Scotland
 
-\- \*\*Known clients:\*\* Cochran Group (Annan) — IFS ERP (note: Cochran does NOT use Business Central and has no plans to); Eribé Knitwear — BlueCherry ERP
+\- \*\*Known clients:\*\* Acme Corp — IFS ERP (note: Acme Corp does NOT use Business Central and has no plans to); Style Co — BlueCherry ERP
 
 \- \*\*Target platforms:\*\* Windows (PowerShell 7 + Windows Terminal) for dev; `ubuntu-latest` GitHub Actions for CI
 
@@ -110,7 +110,7 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- npm package roadmap (`@caracal-lynx/etl-rules-uk`, `@caracal-lynx/etl-rules-fashion`, etc.) not yet scaffolded — deferred until plugin file tier is proven. Note: these will be in a separate **private** `sluice-rules` repo, not the public monorepo.
 
-\- Cochran and Eribé client pipeline configs exist as examples; real `.env` files and lookups not yet in place.
+\- Acme Corp and Style Co client pipeline configs exist as examples; real `.env` files and lookups not yet in place.
 
 
 
@@ -124,7 +124,7 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 | `archive/PHASE2-EXTENSIONS.md` | Full spec for three-tier plugin/extension system | Complete |
 
-| `customers.pipeline.yaml` | Cochran Group customer migration example (MSSQL → IFS) | Complete |
+| `customers.pipeline.yaml` | Acme Corp customer migration example (MSSQL → IFS) | Complete |
 
 | `pipeline.schema.ts` | Canonical Zod schema — seeds `src/config/schema.ts` | Complete |
 
@@ -158,9 +158,9 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 | BC | Business Central (Microsoft ERP) |
 
-| IFS | IFS ERP (target for Cochran Group) |
+| IFS | IFS ERP (target for Acme Corp) |
 
-| BlueCherry | BlueCherry ERP by CGS (target for Eribé Knitwear) |
+| BlueCherry | BlueCherry ERP by CGS (target for Style Co) |
 
 | Caracal Lynx | Michael's consultancy company — owner of the Sluice toolkit |
 

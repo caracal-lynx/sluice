@@ -18,13 +18,13 @@
 
 **Plugin/extension pull.** With Phase 2's three-tier plugin system, open-sourcing the core creates a genuine extension marketplace — others write and publish `sluice-adapter-*` npm packages, which makes Sluice more valuable without you writing the code.
 
-**Commoditise the generic, sell the specialist.** The core engine (ETL orchestration, DQ, transforms) can be free. The *Cochran IFS adapter*, the *BlueCherry adapter*, your domain expertise in data migrations, and your AI Data Readiness Audit service? Those remain proprietary — or become the basis of paid consulting engagements. Organisations adopting AI tools are a new and distinct audience who need exactly what Sluice's DQ engine does, but have never heard of ETL. The open-source core gets them in the door; the audit service is what Caracal Lynx sells them.
+**Commoditise the generic, sell the specialist.** The core engine (ETL orchestration, DQ, transforms) can be free. The *Acme Corp IFS adapter*, the *BlueCherry adapter*, your domain expertise in data migrations, and your AI Data Readiness Audit service? Those remain proprietary — or become the basis of paid consulting engagements. Organisations adopting AI tools are a new and distinct audience who need exactly what Sluice's DQ engine does, but have never heard of ETL. The open-source core gets them in the door; the audit service is what Caracal Lynx sells them.
 
 ---
 
 ## Disadvantages
 
-**Competitive exposure.** Your competitors (or a Cochran/Eribé's internal teams) could read exactly how your pipeline works and replicate it. The moat isn't deep if the code is the whole product.
+**Competitive exposure.** Your competitors (or a Acme Corp/Style Co's internal teams) could read exactly how your pipeline works and replicate it. The moat isn't deep if the code is the whole product.
 
 **Client data risk.** Right now your YAML pipeline configs probably contain schema details, field names, and possibly connection strings that are commercially sensitive. You'd need to rigorously separate the engine from client configs before publishing.
 
@@ -58,7 +58,7 @@ Scrub the following before any public commit:
 - Hardcoded connection strings or credentials
 - Client-identifiable schema names or field names
 - Real company names in comments or test fixtures
-- Anything covered by client confidentiality agreements (review Cochran Group and Eribé Knitwear contracts specifically)
+- Anything covered by client confidentiality agreements (review Acme Corp and Style Co contracts specifically)
 
 ### 3. Restructure the Repository
 
@@ -68,14 +68,14 @@ Separate the public engine from private client configs and adapters. A monorepo 
 packages/
   core/          ← public (open-source engine)
   adapters/
-    ifs/         ← private (Cochran Group)
-    bluecherry/  ← private (Eribé Knitwear)
+    ifs/         ← private (Acme Corp)
+    bluecherry/  ← private (Style Co)
     bc/          ← publishable (Business Central OData)
     csv/         ← publishable (generic)
     pg/          ← publishable (generic)
 clients/
-  cochran/       ← private (YAML configs, never published)
-  eribe/         ← private (YAML configs, never published)
+  acme-corp/       ← private (YAML configs, never published)
+  style-co/         ← private (YAML configs, never published)
 ```
 
 > The Phase 2 plugin architecture is already designed for exactly this separation — good timing.
@@ -102,7 +102,7 @@ As a Scottish company (Companies House SC826823), any decision to assign or lice
 
 ### Client Contracts
 
-Read your engagement agreements with **Cochran Group** and **Eribé Knitwear** carefully. Many consulting contracts include:
+Read your engagement agreements with **Acme Corp** and **Style Co** carefully. Many consulting contracts include:
 
 - Clauses asserting that IP *created for the client* belongs to the client
 - Confidentiality obligations covering data, schema details, and business logic
