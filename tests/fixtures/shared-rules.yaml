@@ -1,8 +1,8 @@
 version: "1.0"
 
 rules:
-  - id: style-coStyleNo
-    description: Style Co internal style number — two uppercase letters + four digits
+  - id: styleCoStyleNo
+    description: Internal style number — two uppercase letters + four digits
     checks:
       - { type: notNull,   severity: critical }
       - { type: pattern,   value: "^[A-Z]{2}[0-9]{4}$", severity: critical }

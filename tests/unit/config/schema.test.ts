@@ -206,7 +206,7 @@ describe('PipelineSchema', () => {
 describe('CompositeRuleSchema', () => {
   it('accepts a valid composite rule', () => {
     const raw = {
-      id: 'style-coStyleNo',
+      id: 'styleCoStyleNo',
       checks: [{ type: 'pattern', value: '^[A-Z]{2}$', severity: 'critical' }],
     };
     expect(() => CompositeRuleSchema.parse(raw)).not.toThrow();

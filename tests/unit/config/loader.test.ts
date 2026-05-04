@@ -182,13 +182,13 @@ target:
         path.join(fixturesDir, 'acme-corp-customers.pipeline.yaml'),
         'utf-8',
       );
-      vi.stubEnv('SOURCE_MSSQL', 'mssql://user:pass@serverlegacy.example.local/LegacyDB');
+      vi.stubEnv('SOURCE_MSSQL', 'mssql://user:pass@legacy.example.local/LegacyDB');
       mockReadFile.mockResolvedValueOnce(content as unknown as Buffer);
 
       const result = await ConfigLoader.load('/fake/acme-corp-customers.pipeline.yaml');
       expect(result.pipeline.name).toBe('acme-corp-customers');
       expect(result.source.adapter).toBe('mssql');
-      expect(result.source.connection).toBe('mssql://user:pass@serverlegacy.example.local/LegacyDB');
+      expect(result.source.connection).toBe('mssql://user:pass@legacy.example.local/LegacyDB');
       expect(result.dq.rules).toHaveLength(6);
       expect(result.transform.fields).toHaveLength(11);
       expect(result.target.adapter).toBe('ifs');
