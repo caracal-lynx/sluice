@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * DQ reporter — writes rejection CSV + summary JSON.
  * Pure file I/O; no DuckDB access.

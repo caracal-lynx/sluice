@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * Cleanse operations — pure string functions applied left-to-right through
  * the pipe-separated `cleanse:` value on a field mapping.

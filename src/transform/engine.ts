@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * TransformEngine — reads rows from `sourceTable`, applies field mappings
  * (cleanse ops, type coercion, lookups, expressions, constants, concat, custom

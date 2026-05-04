@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * Excel (XLSX) source adapter. Uses SheetJS to convert the selected sheet
  * to a CSV blob, then re-parses it with csv-parse — all columns VARCHAR.
