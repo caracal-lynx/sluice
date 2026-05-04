@@ -66,7 +66,12 @@
       "Bash(echo \"Remaining \\\\\\\\n in file \\(any context\\):\")",
       "Bash(grep -c '\\\\\\\\n' docs/SLUICE-IMPLEMENTATION-PLAN.md)",
       "Bash(grep -nE '\\\\\\\\n' docs/SLUICE-IMPLEMENTATION-PLAN.md)",
-      "Bash(echo \"=== Remaining literal \\\\\\\\n in any docs file ===\")"
+      "Bash(echo \"=== Remaining literal \\\\\\\\n in any docs file ===\")",
+      "Bash(mkdir -p /tmp/sluice-smoke)",
+      "Bash(cp tests/fixtures/style-co-styles.pipeline.yaml /tmp/sluice-smoke/)",
+      "Bash(printf 'id,name\\\\n1,Alice\\\\n2,Bob\\\\n3,Carol\\\\n')",
+      "Read(//c/tmp/sluice-smoke/**)",
+      "Bash(echo \"---exit $?\")"
     ]
   }
 }
