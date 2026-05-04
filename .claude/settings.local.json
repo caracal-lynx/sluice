@@ -60,8 +60,7 @@
       "Bash(npx -y @andrewbranch/ts5to6)",
       "Bash(npx -y @andrewbranch/ts5to6 --fixRootDir .)",
       "Bash(npx -y @andrewbranch/ts5to6 --fixBaseUrl .)",
-      "Bash(tee /tmp/tsc-ts6-pre-tsconfig.log)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(tee /tmp/tsc-ts6-pre-tsconfig.log)"
     ]
   }
 }
