@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 11a)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -148,7 +148,7 @@ flowchart TD
     P8["📖 Phase 8\nGitHub Pages Docs\n(6–8 weeks)"]
     P9["🤖 Phase 9\nSluice MCP Server\n(8–12 weeks, private paid)\nNOW UNBLOCKED ✅"]
     P10["⚡ Phase 10\nNode v26 Upgrade\n(Oct 2026 LTS)"]
-    P11A["🔶 Phase 11a\ntsgo parallel\ntype-check in CI\n(~1 hour, low risk)"]
+    P11A["✅ Phase 11a\ntsgo parallel\ntype-check in CI\nIN SOAK"]
     P11B["🔶 Phase 11b\nFull switch tsc → tsgo\n(when emit stable, mid/late 2026)"]
 
     P0 -.->|legal audit informs| P5
@@ -177,7 +177,7 @@ flowchart TD
     style P8 fill:#e2e3e5,stroke:#6c757d
     style P9 fill:#d6d8f7,stroke:#6610f2
     style P10 fill:#cce5ff,stroke:#0d6efd
-    style P11A fill:#fff3cd,stroke:#f0ad4e
+    style P11A fill:#d4edda,stroke:#28a745
     style P11B fill:#fff3cd,stroke:#f0ad4e
 ```
 
@@ -197,7 +197,7 @@ flowchart TD
 | **Phase 8** | GitHub Pages | 6–8 weeks | After Phase 5 |
 | **Phase 9** | MCP Server | 8–12 weeks | **Now unblocked** (Phase 3 complete) |
 | **Phase 10** | Node v26 | 1–2 days | Oct 2026 (LTS cut) |
-| **Phase 11a** | tsgo CI type-check | 1 hour | After Phase 2 |
+| **Phase 11a** | tsgo CI type-check | ✅ **MERGED — IN SOAK** (4 May 2026, PR #15) | — |
 | **Phase 11b** | TypeScript v7 (full switch) | 1–2 hours | When tsgo emit stable (mid/late 2026) |
 
 ### 3.3 Gantt Chart
@@ -214,7 +214,7 @@ gantt
     section Now — Runtime Upgrades
     Phase 1 — Node v24 + DuckDB Neo        :done, p1, 2026-05-03, 1d
     Phase 2 — TypeScript v6                :done, p2, 2026-05-04, 1d
-    Phase 11a — tsgo Parallel Type-check   :p11a, after p2, 1d
+    Phase 11a — tsgo Parallel Type-check   :done, p11a, 2026-05-04, 1d
 
     section Enrich Service (Private)
     Phase 4a — Enrich Framework            :p4a, after p2, 28d
@@ -420,7 +420,7 @@ TypeScript 7 uses a native Go compiler (`tsgo`) — 10× faster type-checking. T
 
 - [x] `tsc --noEmit` passes with zero errors on TS6 — confirmed clean on both `tsconfig.json` and `tsconfig.test.json`; type-check time dropped from ~14.4 s on TS 5.7 to ~3.4 s on TS 6 + ES2025
 - [x] All Vitest suites passing — 415 / 415 green, matching the Phase 1 baseline
-- [ ] `tsgo --noEmit` added to CI (Phase 11A done) — **deferred to Phase 11a** (separate branch per master plan §15)
+- [x] `tsgo --noEmit` added to CI (Phase 11A done) — shipped in [PR #15](https://github.com/BCGubbins/sluice/pull/15) on 4 May 2026; running with `continue-on-error: true` during the soak period
 - [x] No `console.log` introduced (pino only) — no source-file changes were needed; the codebase had no latent type issues that TS 6 surfaced
 
 **Bonus:** the `typescript-eslint` peer-dep at `^8.18.0` capped TypeScript at `<5.8.0`; bumped to `^8.59.1` (still v8) which supports `<6.1.0`. `vitest@^2.1.0` has no `typescript` peer dep and stayed put. `.github/workflows/ci.yml` gained an explicit `npx tsc --noEmit` step before `build` for clearer failure attribution.
@@ -886,26 +886,21 @@ Node 26 is currently "Current" (non-LTS). It becomes LTS in October 2026. There 
 
 ## 15. Phase 11 — TypeScript v7
 
-**Status:** 🟢 Phase 11a now unblocked (Phase 2 complete) — ~1 hour, low risk. Phase 11b runs when `tsgo` emit is stable (estimated mid/late 2026).
+**Status:** ✅ Phase 11a **MERGED — IN SOAK** ([PR #15](https://github.com/BCGubbins/sluice/pull/15), 4 May 2026). Phase 11b runs when `tsgo` emit is stable (estimated mid/late 2026).
 
-**Reference:** `docs/PHASE-11-typescript-v7-spec.md` — full Claude Code-ready execution plan, split into Phase 11a (parallel CI type-check, ~1 hour, after Phase 2) and Phase 11b (full compiler switch, deferred until `tsgo` emit is stable).
+**Reference:** `docs/PHASE-11-typescript-v7-spec.md` — execution plan (Phase 11a executed; see PR #15). Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable.
 
 This phase is delivered in two stages, mirroring the `4a/4b` pattern: a zero-risk CI-only parallel run first, then a full compiler switch once `tsgo` emit output is byte-stable.
 
-### Phase 11a — Parallel type-check in CI (After Phase 2, ~1 hour)
+### Phase 11a — Parallel type-check in CI ✅ MERGED — IN SOAK
 
-```bash
-npm install -D @typescript/native-preview
-```
+Shipped on 4 May 2026 in [PR #15](https://github.com/BCGubbins/sluice/pull/15). What landed:
 
-Add to CI workflow:
-```yaml
-- name: Type-check (tsgo)
-  run: npx tsgo --noEmit
-  continue-on-error: true  # Remove once clean
-```
+- Devdep `@typescript/native-preview@^7.0.0-dev.20260504.1`.
+- `npm run typecheck` (tsc) and `npm run typecheck:tsgo` scripts.
+- New CI step `Type-check (tsgo, parallel)` running `npm run typecheck:tsgo` with `continue-on-error: true` after the test step.
 
-This gives you 10× faster type-checking feedback with zero risk to the build pipeline.
+Local timing on Sluice's ~50-file surface: tsc 2.1 s → tsgo 1.2 s (~1.7× faster). Both compilers reported zero errors and zero divergences, so the soak period is mostly a confidence exercise. A follow-up PR will remove `continue-on-error: true` once the parallel step has run cleanly across ~10 PRs / ~2 weeks of normal traffic.
 
 ### Phase 11b — Full switch (when `tsgo` emit is stable)
 
@@ -943,8 +938,8 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ Good | Detailed execution plan for Phase 6 — README delta, paid-services copy, marketing artefacts checklist, numbered to-do list. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ Good | Detailed execution plan for Phase 7 — Changesets in public sluice, publish workflow with npm provenance, Renovate config templates for all downstream repos, end-to-end cascade verification. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
-| `docs/PHASE-11-typescript-v7-spec.md` | ✅ Good | Detailed execution plan for Phase 11 — `tsgo` parallel CI type-check (11a, after Phase 2) and full compiler switch (11b, deferred until emit stable). Self-contained; replaces the previous footnote inside `PHASE-02-typescript-v6-upgrade.md`. |
-| `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated May 2026. |
+| `docs/PHASE-11-typescript-v7-spec.md` | ✅ 11a EXECUTED | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable. |
+| `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated 4 May 2026 (post Phase 11a). |
 
 ### Documents to Create
 
