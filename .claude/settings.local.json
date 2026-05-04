@@ -55,7 +55,12 @@
       "Bash(git rm *)",
       "Read(//c/Users/MichaelScott/**)",
       "Bash(sluice --help)",
-      "Bash(sluice check *)"
+      "Bash(sluice check *)",
+      "Bash(npm view *)",
+      "Bash(npx -y @andrewbranch/ts5to6)",
+      "Bash(npx -y @andrewbranch/ts5to6 --fixRootDir .)",
+      "Bash(npx -y @andrewbranch/ts5to6 --fixBaseUrl .)",
+      "Bash(tee /tmp/tsc-ts6-pre-tsconfig.log)"
     ]
   }
 }
