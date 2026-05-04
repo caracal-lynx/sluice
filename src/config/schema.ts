@@ -85,6 +85,34 @@ export const DqSchema = z.object({
   rules:          z.array(DqRuleSchema).default([]),
 });
 
+// ── Enrich (Phase 4a) ─────────────────────────────────────────────────────────
+//
+// The framework that consumes these schemas — EnrichRegistry, EnrichmentRunner,
+// EnrichCache, plugin loader, and built-in providers — lives in the private
+// `@caracal-lynx/sluice-enrich` package and is not part of the open-source core.
+// What ships here is the schema, the public `EnrichPlugin` interface
+// (in src/enrich/types.ts), and the `registerEnrichPhase()` injection hook.
+
+const EnrichWriteColumnsSchema = z
+  .object({ valid: z.string() })   // 'valid' key is required
+  .catchall(z.string());           // additional data-field mappings are optional
+
+const EnrichLookupSchema = z.object({
+  field:        z.string(),
+  provider:     z.string(),
+  writeColumns: EnrichWriteColumnsSchema,
+  preValidate:  z.string().optional(),
+  onError:      z.enum(['flag', 'skip', 'fail']).optional(),
+  cache:        z.boolean().optional(),
+  options:      z.record(z.unknown()).optional(),
+});
+
+export const EnrichSchema = z.object({
+  cache:   z.union([z.boolean(), z.literal('persist')]).default(true),
+  onError: z.enum(['flag', 'skip', 'fail']).default('flag'),
+  lookups: z.array(EnrichLookupSchema).min(1),
+});
+
 // ── Transform ─────────────────────────────────────────────────────────────────
 
 const LookupSchema = z.object({
@@ -168,15 +196,19 @@ export const TargetSchema = z.object({
 // ── Run ───────────────────────────────────────────────────────────────────────
 
 export const RunSchema = z.object({
-  mode:             z.enum(['full', 'incremental', 'validate-only']).default('full'),
-  batchSize:        z.number().int().positive().default(500),
-  onError:          z.enum(['continue', 'stop']).default('continue'),
-  logLevel:         z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  dryRun:           z.boolean().default(false),
-  outputDir:        z.string().default('./output'),
-  stagingDb:        z.string().default(''),
-  incrementalField: z.string().optional(),
-  incrementalSince: z.string().optional(),
+  mode:              z.enum(['full', 'incremental', 'validate-only']).default('full'),
+  batchSize:         z.number().int().positive().default(500),
+  onError:           z.enum(['continue', 'stop']).default('continue'),
+  logLevel:          z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  dryRun:            z.boolean().default(false),
+  outputDir:         z.string().default('./output'),
+  stagingDb:         z.string().default(''),
+  // Phase 4a — per-run enrich tuning (consumed by @caracal-lynx/sluice-enrich)
+  enrichConcurrency: z.number().int().positive().default(5),
+  enrichTimeoutMs:   z.number().int().positive().default(5000),
+  enrichMaxRetries:  z.number().int().min(0).max(5).default(3),
+  incrementalField:  z.string().optional(),
+  incrementalSince:  z.string().optional(),
 });
 
 // ── Multi-source merge ────────────────────────────────────────────────────────
@@ -226,6 +258,7 @@ export const PipelineSchema = z.object({
   source:    SourceSchema.optional(),
   sources:   z.array(MultiSourceEntrySchema).min(2).optional(),
   merge:     MergeSchema.optional(),
+  enrich:    EnrichSchema.optional(),   // Phase 4a — runs between Extract/Merge and DQ
   dq:        DqSchema,
   transform: TransformSchema,
   target:    TargetSchema,
@@ -300,6 +333,9 @@ export type CompositeRule        = z.infer<typeof CompositeRuleSchema>;
 export type CompositeRuleLibrary = z.infer<typeof CompositeRuleLibrarySchema>;
 export type MergeConfig          = z.infer<typeof MergeSchema>;
 export type MultiSourceEntry     = z.infer<typeof MultiSourceEntrySchema>;
+export type EnrichConfig         = z.infer<typeof EnrichSchema>;
+export type EnrichLookupConfig   = z.infer<typeof EnrichLookupSchema>;
+export type EnrichWriteColumns   = z.infer<typeof EnrichWriteColumnsSchema>;
 
 // ── Type guards ───────────────────────────────────────────────────────────────
 

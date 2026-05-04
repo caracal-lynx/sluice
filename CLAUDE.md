@@ -147,6 +147,11 @@ sluice/
 │   │   ├── registry.ts              ← RuleRegistry, TransformRegistry (custom plugin holders)
 │   │   └── loader.ts                ← loadPlugins (file-based), loadNpmPlugins (sluice.config.yaml)
 │   │
+│   ├── enrich/                      ← Phase 4a public surface (types only)
+│   │   └── types.ts                 ← EnrichPlugin, EnrichResult, EnrichOptions, EnrichSummary,
+│   │                                  EnrichPhaseFactory (implementation lives in private
+│   │                                  @caracal-lynx/sluice-enrich package)
+│   │
 │   └── utils/
 │       ├── index.ts
 │       ├── logger.ts                ← pino singleton
@@ -242,8 +247,10 @@ sluice/
   files across module boundaries.
 - **No circular imports.** Dependency direction:
   `cli` → `runner` / `multi-source-runner` → `adapters`, `staging`, `dq`,
-  `transform`, `merge`, `plugins`, `config`. `plugins/` is imported by
+  `transform`, `merge`, `plugins`, `config`, `enrich`. `plugins/` is imported by
   `runner`, `dq`, `transform`, and `merge`; it must not import any of them.
+  `enrich/` is type-only (no runtime imports of other modules in this repo —
+  the implementation lives in the private `@caracal-lynx/sluice-enrich`).
   Utils are imported by everyone.
 - **Path aliases:** `@/` → `src/` in tsconfig.
 
@@ -261,11 +268,14 @@ Every pipeline is a single YAML file. One file = one migrated entity
 ```yaml
 pipeline:   { ... }   # identity and metadata
 source:     { ... }   # where to read from
+enrich:     { ... }   # OPTIONAL — Phase 4a; external API lookups (private)
 dq:         { ... }   # data quality rules
 transform:  { ... }   # field mappings and lookups
 target:     { ... }   # where to write to
 run:        { ... }   # execution options (all fields optional; all have defaults)
 ```
+
+> **Phase 4a — Enrich Phase (private):** the `enrich:` block, when present, runs after Extract (and after Merge for multi-source pipelines) and before DQ. The framework that drives it lives in the **private** `@caracal-lynx/sluice-enrich` package — the open-source core only ships the Zod schema, the public `EnrichPlugin` interface (`src/enrich/types.ts`), and the `registerEnrichPhase()` injection hook on `PipelineRunner`. With `sluice-enrich` not installed, an `enrich:` block is parsed and validated but the phase is skipped with a `WARN` log. See [docs/PHASE-04-enrich-phase.md](docs/PHASE-04-enrich-phase.md) for the full spec.
 
 ---
 
@@ -1021,15 +1031,19 @@ export const TargetSchema = z.object({
 });
 
 export const RunSchema = z.object({
-  mode:             z.enum(['full', 'incremental', 'validate-only']).default('full'),
-  batchSize:        z.number().int().positive().default(500),
-  onError:          z.enum(['continue', 'stop']).default('continue'),
-  logLevel:         z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  dryRun:           z.boolean().default(false),
-  outputDir:        z.string().default('./output'),
-  stagingDb:        z.string().default(''),
-  incrementalField: z.string().optional(),
-  incrementalSince: z.string().optional(),
+  mode:              z.enum(['full', 'incremental', 'validate-only']).default('full'),
+  batchSize:         z.number().int().positive().default(500),
+  onError:           z.enum(['continue', 'stop']).default('continue'),
+  logLevel:          z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  dryRun:            z.boolean().default(false),
+  outputDir:         z.string().default('./output'),
+  stagingDb:         z.string().default(''),
+  // Phase 4a — enrich tuning (consumed by @caracal-lynx/sluice-enrich)
+  enrichConcurrency: z.number().int().positive().default(5),
+  enrichTimeoutMs:   z.number().int().positive().default(5000),
+  enrichMaxRetries:  z.number().int().min(0).max(5).default(3),
+  incrementalField:  z.string().optional(),
+  incrementalSince:  z.string().optional(),
 });
 
 export const PipelineSchema = z.object({
@@ -1041,6 +1055,7 @@ export const PipelineSchema = z.object({
     description: z.string().optional(),
   }),
   source:    SourceSchema,
+  enrich:    EnrichSchema.optional(),    // Phase 4a — runs between Extract/Merge and DQ
   dq:        DqSchema,
   transform: TransformSchema,
   target:    TargetSchema,
@@ -1338,6 +1353,14 @@ The CLI entry point must call `loadEnv()` before invoking the loader. This keeps
 4.  Connect source adapter
 5.  Extract → 'stg_raw'            log: rows extracted
 5a. Disconnect source adapter      always in finally
+5b. Phase 4a Enrich (optional)     runs only when:
+                                     - `enrich:` block configured
+                                     - --no-enrich NOT set
+                                     - mode != validate-only and not dryRun
+                                     - @caracal-lynx/sluice-enrich is installed
+                                     and has called registerEnrichPhase()
+                                   Otherwise skipped (WARN log if last bullet
+                                   fails). Writes new columns to 'stg_raw'.
 6.  Run DQ rules against 'stg_raw'
     a. Collect all RuleViolations
     b. Write rejection CSV
@@ -1394,6 +1417,11 @@ For a pipeline with `sources` + `merge`, the CLI selects
 5.  MergeEngine.run(store, sources, merge)
     → creates 'stg_merge_joined', 'stg_merged', 'stg_merge_conflicts'
     → writes conflictLog CSV if configured
+5a. Phase 4a Enrich (optional)     runs once against 'stg_merged' if
+                                   `enrich:` block is present and the four
+                                   gating conditions hold (see single-source
+                                   step 5b above). Single post-merge pass —
+                                   never per-source.
 6.  runDQ on the post-merge rules (no sourceId) against 'stg_merged'
 7.  Filter rejected rows; runTransform against the filtered merge result
 8.  If dryRun OR validate-only → STOP
@@ -1544,6 +1572,7 @@ export class PipelineDQError extends DQError {
 export class TransformError  extends PipelineError {}
 export class ExpressionError extends TransformError {}
 export class LoadError       extends PipelineError {}
+export class EnrichError     extends PipelineError {}   // Phase 4a — exit code 4
 ```
 
 All error subclasses inherit `this.name = this.constructor.name` from
@@ -1573,12 +1602,16 @@ Global options:
   --plugins <dir...>    Additional plugin directory/directories to load
   --dry-run             Force dryRun: true
   --silent              Suppress the progress bar on stdout (logs still go to stderr)
+
+`sluice run` options:
+  --no-enrich           Skip the Phase 4a enrich phase even if `enrich:` is configured.
+                        (validate / profile / check do not run enrich at all, by design.)
 ```
 
 **Progress feedback:** `sluice run`, `sluice validate`, and `sluice profile`
 render a phase-by-phase progress bar to stdout via
 `src/utils/progress.ts → ProgressReporter`, with per-phase emoji icons
-(🔎 extract · 🛡️ DQ · 🔀 merge · 🔧 transform · 📤 load), an ETA for
+(🔎 extract · 🛡️ DQ · 🔀 merge · 🌐 enrich · 🔧 transform · 📤 load), an ETA for
 determinate phases, and a coloured ✅/⚠️/❌ run-summary line. The bar
 degrades gracefully:
   - `--silent`                → no stdout output at all
@@ -1587,7 +1620,7 @@ degrades gracefully:
                                 no emojis, no ANSI escapes — log-file friendly
   - `NO_COLOR` env var        → ANSI colour dropped (handled by `picocolors`)
 
-**Exit codes:** `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error
+**Exit codes:** `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error · `4` enrich error (Phase 4a)
 
 ---
 

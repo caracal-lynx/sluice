@@ -13,6 +13,7 @@
  *   1  pipeline error
  *   2  DQ critical violations
  *   3  config error
+ *   4  enrich error (Phase 4)
  */
 
 import { Command } from 'commander';
@@ -21,11 +22,15 @@ import * as path from 'node:path';
 import { ConfigLoader } from './config/loader.js';
 import { isMultiSource, type Pipeline } from './config/types.js';
 import { MultiSourcePipelineRunner } from './multi-source-runner.js';
-import { PipelineRunner, type RunOverrides } from './runner.js';
+import {
+  PipelineRunner,
+  _isEnrichPhaseRegistered,
+  type RunOverrides,
+} from './runner.js';
 import { RuleRegistry, TransformRegistry, loadPlugins, loadNpmPlugins } from './plugins/index.js';
 import { MergeStrategyRegistry } from './merge/index.js';
 import { loadEnv } from './utils/env.js';
-import { ConfigError, PipelineDQError, PipelineError } from './utils/errors.js';
+import { ConfigError, EnrichError, PipelineDQError, PipelineError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
 import { ProgressReporter, type ProgressLogLevel } from './utils/progress.js';
 
@@ -48,6 +53,7 @@ export function resolvePluginDirs(cwd: string, pluginDirs: string[] = []): strin
 export function exitCodeFor(err: unknown): number {
   if (err instanceof PipelineDQError) return 2;
   if (err instanceof ConfigError) return 3;
+  if (err instanceof EnrichError) return 4;
   if (err instanceof PipelineError) return 1;
   return 1;
 }
@@ -66,30 +72,44 @@ function applyGlobals(opts: GlobalOpts): RunOverrides {
   return overrides;
 }
 
-function phaseCountForRun(config: Pipeline): number {
+function phaseCountForRun(config: Pipeline, skipEnrich: boolean): number {
   const willLoad = !(config.run.dryRun || config.run.mode === 'validate-only');
+  // Enrich runs only when: enrich block configured, run isn't validate/dry-run,
+  // --no-enrich wasn't passed, and the private package has registered a factory.
+  const willEnrich =
+    Boolean(config.enrich) &&
+    willLoad &&
+    !skipEnrich &&
+    _isEnrichPhaseRegistered();
+  const enrichPhases = willEnrich ? 1 : 0;
+
   if (isMultiSource(config)) {
     const sourcesWithPreMergeRules = new Set(
       config.dq.rules.filter((r) => r.sourceId).map((r) => r.sourceId as string),
     );
-    // Extract per source + DQ per source with rules + Merge + post-merge DQ + Transform [+ Load]
+    // Extract per source + DQ per source with rules + Merge [+ Enrich] + post-merge DQ + Transform [+ Load]
     return (
       config.sources.length +
       sourcesWithPreMergeRules.size +
       1 + // merge
+      enrichPhases +
       1 + // post-merge DQ
       1 + // transform
       (willLoad ? 1 : 0)
     );
   }
-  // Single source: Extract + DQ + Transform [+ Load]
-  return 3 + (willLoad ? 1 : 0);
+  // Single source: Extract [+ Enrich] + DQ + Transform [+ Load]
+  return 3 + enrichPhases + (willLoad ? 1 : 0);
 }
 
-function buildProgressReporter(opts: GlobalOpts, config: Pipeline): ProgressReporter {
+function buildProgressReporter(
+  opts: GlobalOpts,
+  config: Pipeline,
+  skipEnrich = false,
+): ProgressReporter {
   return new ProgressReporter({
     silent: opts.silent ?? false,
-    totalPhases: phaseCountForRun(config),
+    totalPhases: phaseCountForRun(config, skipEnrich),
     logLevel: (opts.logLevel ?? 'info') as ProgressLogLevel,
   });
 }
@@ -103,14 +123,23 @@ export async function createRunnerForPipeline(
     : new PipelineRunner();
 }
 
-async function cmdRun(yaml: string, program: Command): Promise<never> {
+interface RunCmdOpts {
+  enrich?: boolean;
+}
+
+async function cmdRun(
+  yaml: string,
+  program: Command,
+  cmdOpts: RunCmdOpts = {},
+): Promise<never> {
   const opts = program.opts<GlobalOpts>();
   const overrides = applyGlobals(opts);
+  if (cmdOpts.enrich === false) overrides.skipEnrich = true;
   let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
     const config = await ConfigLoader.load(yaml);
-    progress = buildProgressReporter(opts, config);
+    progress = buildProgressReporter(opts, config, overrides.skipEnrich ?? false);
     overrides.progress = progress;
     const result = await runner.run(yaml, overrides);
     logger.info(
@@ -329,8 +358,9 @@ export function buildProgram(): Command {
   program
     .command('run <pipeline>')
     .description('Execute a full pipeline run')
-    .action((yaml: string) => {
-      void cmdRun(yaml, program);
+    .option('--no-enrich', 'Skip the Phase 4a enrich phase even if enrich: is configured')
+    .action((yaml: string, cmdOpts: RunCmdOpts) => {
+      void cmdRun(yaml, program, cmdOpts);
     });
   program
     .command('validate <pipeline>')

@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 11a)
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 4a OSC scaffolding)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -140,7 +140,7 @@ flowchart TD
     P1["✅ Phase 1<br/>Node v24 + DuckDB Neo<br/>COMPLETE"]
     P2["✅ Phase 2<br/>TypeScript v6 Upgrade<br/>COMPLETE"]
     P3["✅ Phase 3<br/>Plugin System<br/>COMPLETE"]
-    P4A["🔒 Phase 4a<br/>Enrich Framework<br/>(private sluice-enrich)"]
+    P4A["🟦 Phase 4a<br/>Enrich Framework<br/>OSC scaffolding shipped<br/>(private sluice-enrich next)"]
     P4B["🔒 Phase 4b<br/>Built-in Providers<br/>vies · hmrc-vat · uk-trade-tariff"]
     P5["🚀 Phase 5<br/>Repo Restructure &<br/>Open-Source Launch<br/>(2–3 weeks)"]
     P6["📣 Phase 6<br/>README & Marketing<br/>(1 week)"]
@@ -189,7 +189,7 @@ flowchart TD
 | **Phase 1** | Node v24 + DuckDB Neo | ✅ **COMPLETE** (3 May 2026, PR #8) | — |
 | **Phase 2** | TypeScript v6 | ✅ **COMPLETE** (4 May 2026, PR #13) | — |
 | **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
-| **Phase 4a** | Enrich framework (private) | 3–4 weeks | After Phase 2 + Phase 3 |
+| **Phase 4a** | Enrich framework — OSC scaffolding | 🟦 **OSC done** (this commit); private repo work next | — |
 | **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
 | **Phase 5** | Restructure & launch | 2–3 weeks | After Phase 4a + Phase 0 |
 | **Phase 6** | README & marketing | 1 week | After Phase 5 |
@@ -376,7 +376,7 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 
 - [x] All Vitest suites passing on Node 24 — 415 / 415 green
 - [x] `@duckdb/node-api` fully replaces `duckdb` — confirmed by codebase grep
-- [ ] Three Phase 4a stub methods present in `StagingStore` — **deferred to Phase 4a** (out of scope for this PR; will be added when `@caracal-lynx/sluice-enrich` development starts)
+- [x] Three Phase 4a stub methods present in `StagingStore` — landed alongside the rest of the Phase 4a OSC scaffolding (this commit). The private `@caracal-lynx/sluice-enrich` package overwrites them on the prototype at import time.
 - [x] CI workflow runs on `node-version: '24'` — `.github/workflows/ci.yml` updated; PR #8 CI passed in 55 s
 - [x] Real pipeline run (`sluice run`) completes end-to-end — live `sluice validate` against Cochran SQL Server round-tripped a query under Node 24 + OpenSSL 3.5; TLS pre-flight passed cleanly with no `cryptoCredentialsDetails` workaround required
 
@@ -468,7 +468,7 @@ flowchart TB
 
 ## 8. Phase 4 — Enrich Phase (Private)
 
-**Status:** 🟢 **Unblocked** — Phase 2 (TS 6) and Phase 3 (plugin system) both complete
+**Status:** 🟦 **Phase 4a — open-source-core scaffolding shipped** (this commit). The `EnrichPlugin` interface types, Zod `EnrichSchema`, three `RunSchema` tuning fields, the `registerEnrichPhase()` injection hook, the `runEnrich` slot in both `PipelineRunner` and `MultiSourcePipelineRunner`, the `--no-enrich` CLI flag, the `EnrichError` class with exit code 4, and three throwing `StagingStore` stubs are all in place behind 27 new tests. **Next:** scaffold the private `caracal-lynx/sluice-enrich` repository and implement the framework (registry, cache, runner, plugin loader, prototype patcher) against the now-stable public API. **Phase 4b (built-in providers) deferred.**
 
 **Reference:** `docs/PHASE-04-enrich-phase.md` — full specification (updated: private architecture)
 
