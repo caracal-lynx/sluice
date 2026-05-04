@@ -136,11 +136,11 @@ sluice docs/
 
 ```mermaid
 flowchart LR
-    A[Config Load\n+ Validation] --> B[Source Adapter\nExtract → stg_raw]
-    B --> C[DQ Engine\nValidate stg_raw]
-    C --> D[Transform Engine\nstg_raw → stg_transformed]
-    D --> E[Target Adapter\nLoad Output]
-    E --> F[Write Run\nState File]
+    A[Config Load<br/>+ Validation] --> B[Source Adapter<br/>Extract → stg_raw]
+    B --> C[DQ Engine<br/>Validate stg_raw]
+    C --> D[Transform Engine<br/>stg_raw → stg_transformed]
+    D --> E[Target Adapter<br/>Load Output]
+    E --> F[Write Run<br/>State File]
 ```
 
 ---

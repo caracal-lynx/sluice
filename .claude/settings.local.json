@@ -61,7 +61,12 @@
       "Bash(npx -y @andrewbranch/ts5to6 --fixRootDir .)",
       "Bash(npx -y @andrewbranch/ts5to6 --fixBaseUrl .)",
       "Bash(tee /tmp/tsc-ts6-pre-tsconfig.log)",
-      "Bash(npx tsgo *)"
+      "Bash(npx tsgo *)",
+      "Bash(python scripts/fix-mermaid-newlines.py docs/SLUICE-IMPLEMENTATION-PLAN.md)",
+      "Bash(echo \"Remaining \\\\\\\\n in file \\(any context\\):\")",
+      "Bash(grep -c '\\\\\\\\n' docs/SLUICE-IMPLEMENTATION-PLAN.md)",
+      "Bash(grep -nE '\\\\\\\\n' docs/SLUICE-IMPLEMENTATION-PLAN.md)",
+      "Bash(echo \"=== Remaining literal \\\\\\\\n in any docs file ===\")"
     ]
   }
 }
