@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 5 — open-source launch)
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 6 — README rewrite + PLUGINS.md)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -143,7 +143,7 @@ flowchart TD
     P4A["🟦 Phase 4a<br/>Enrich Framework<br/>OSC scaffolding shipped<br/>(private sluice-enrich next)"]
     P4B["🔒 Phase 4b<br/>Built-in Providers<br/>vies · hmrc-vat · uk-trade-tariff"]
     P5["✅ Phase 5<br/>Repo Restructure &<br/>Open-Source Launch<br/>COMPLETE 4 May 2026"]
-    P6["📣 Phase 6<br/>README & Marketing<br/>(1 week)"]
+    P6["✅ Phase 6<br/>README & Marketing<br/>COMPLETE 4 May 2026"]
     P7["⚙️ Phase 7<br/>git/npm Workflow<br/>(1–2 weeks)"]
     P8["📖 Phase 8<br/>GitHub Pages Docs<br/>(6–8 weeks)"]
     P9["🤖 Phase 9<br/>Sluice MCP Server<br/>(8–12 weeks, private paid)<br/>NOW UNBLOCKED ✅"]
@@ -172,7 +172,7 @@ flowchart TD
     style P4A fill:#d6d8f7,stroke:#6610f2
     style P4B fill:#d6d8f7,stroke:#6610f2
     style P5 fill:#d4edda,stroke:#28a745
-    style P6 fill:#e2e3e5,stroke:#6c757d
+    style P6 fill:#d4edda,stroke:#28a745
     style P7 fill:#e2e3e5,stroke:#6c757d
     style P8 fill:#e2e3e5,stroke:#6c757d
     style P9 fill:#d6d8f7,stroke:#6610f2
@@ -192,7 +192,7 @@ flowchart TD
 | **Phase 4a** | Enrich framework — OSC scaffolding | 🟦 **OSC done** (this commit); private repo work next | — |
 | **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
 | **Phase 5** | Restructure & launch | ✅ **COMPLETE** (4 May 2026, PRs [#18–#22](https://github.com/caracal-lynx/sluice/pulls?q=is%3Apr+is%3Amerged+phase-5)) | — |
-| **Phase 6** | README & marketing | 1 week | 🟢 **Unblocked** |
+| **Phase 6** | README & marketing | ✅ **COMPLETE** (4 May 2026, [PR #27](https://github.com/caracal-lynx/sluice/pull/27)) | — |
 | **Phase 7** | git/npm workflow | 1–2 weeks | 🟢 **Unblocked** |
 | **Phase 8** | GitHub Pages | 6–8 weeks | 🟢 **Unblocked** |
 | **Phase 9** | MCP Server | 8–12 weeks | **Now unblocked** (Phase 3 complete) |
@@ -646,11 +646,17 @@ Update `package.json`:
 
 ---
 
-## 10. Phase 6 — README & Marketing
+## 10. Phase 6 — README & Marketing ✅ COMPLETE
 
-**Status:** 🟢 **Unblocked** — Phase 5 shipped 4 May 2026
+**Status:** ✅ **COMPLETE** — shipped 4 May 2026 in [PR #27](https://github.com/caracal-lynx/sluice/pull/27).
 
-**Reference:** `docs/PHASE-06-readme-and-marketing-spec.md` — full Claude Code-ready execution plan (README delta, paid-services copy, marketing checklist, step-by-step to-do list)
+- README rewrite: elevator-pitch hero block, npm-version badge, three-tier Extension Model callout, copy-pasteable Quickstart YAML referencing `examples/hello-world.pipeline.yaml`, four-step bash quickstart, Paid Services section (with 🚧 Coming soon tag on the MCP Server), Community / Security / Licence / About sections.
+- **NEW [PLUGINS.md](../PLUGINS.md)** (~12 KB) — full Tier 1/2/3 plugin author guide. Closes the Phase 3 deferred deliverable.
+- **NEW [examples/hello-world.pipeline.yaml](../examples/hello-world.pipeline.yaml)** + matching CSV — newcomer-runnable end-to-end demo.
+- GitHub repo About panel: description set to *"Config-driven ETL toolkit for ERP data migrations. Clean data flows through."*; homepage URL `https://caracallynx.com`.
+- `package.json` `files` array now includes `PLUGINS.md` so it ships in the npm tarball.
+
+**Reference:** `docs/PHASE-06-readme-and-marketing-spec.md` — execution plan (executed; see PR #27)
 
 ### README Structure for the Public Repo
 
@@ -689,10 +695,10 @@ Caracal Lynx offers additional paid services built on top of it:
 
 ### Success Criteria
 
-- [ ] README live in the public repo with elevator pitch
-- [ ] Paid services section clearly signposted
-- [ ] Logo image rendering correctly
-- [ ] Quickstart badge linking to docs site
+- [x] README live in the public repo with elevator pitch — hero block sourced from [docs/elevator-pitch.md](elevator-pitch.md)
+- [x] Paid services section clearly signposted — at the bottom of the README between the deep documentation and the Community / Security / Licence sections
+- [x] Logo image rendering correctly — `images/sluice_banner.png` shows on github.com and on npmjs.com (verified via `npm pack --dry-run`)
+- [ ] Quickstart badge linking to docs site — **deferred** until Phase 8 ships the docs site; HTML comment placeholder in the README badge row
 
 ---
 
@@ -941,7 +947,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/elevator-pitch.md` | ✅ Good | Canonical home for the elevator pitch and positioning copy (one-liner, 30-second pitch, hero block, value props, AI angle, audience-specific framings). Sourced from previously-scattered fragments in Context.md, open-sourcing-sluice.md, PHASE-08, and README.md. Referenced by Phase 6 and Phase 8. |
 | `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ✅ Good | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference. |
 | `docs/branching-strategy.md` | ✅ Good | Working branching convention for all Sluice repos: single protected `master`, short-lived `feat/`/`fix/`/`docs/`/`chore/`/`hotfix/` branches, `[<branch-name>] - ` commit prefix. Lifted out of PHASE-05 during the 2026-05-04 rewrite. |
-| `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ Good | Detailed execution plan for Phase 6 — README delta, paid-services copy, marketing artefacts checklist, numbered to-do list. Forward-looking; blocked by Phase 5. |
+| `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ EXECUTED | Phase 6 shipped 4 May 2026 ([PR #27](https://github.com/caracal-lynx/sluice/pull/27)). Retained as implementation reference. |
 | `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ Good | Detailed execution plan for Phase 7 — Changesets in public sluice, publish workflow with npm provenance, Renovate config templates for all downstream repos, end-to-end cascade verification. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
 | `docs/PHASE-11-typescript-v7-spec.md` | ✅ 11a EXECUTED | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable. |
@@ -954,11 +960,18 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}.yml` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | GitHub form schemas |
 | `.github/PULL_REQUEST_TEMPLATE.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | PR checklist (type, public-API impact, tests, sign-off) |
 
+### Documents shipped in Phase 6
+
+| Document | Notes |
+|----------|-------|
+| `README.md` rewrite | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Hero block, npm badge, Extension Model callout, Quickstart YAML, Paid Services section with 🚧 MCP tag, Community / Security / Licence / About sections. |
+| `PLUGINS.md` (new) | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Full Tier 1/2/3 plugin author guide; closes the Phase 3 deferred deliverable. |
+| `examples/hello-world.pipeline.yaml` + `examples/data/hello-world.csv` (new) | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Newcomer-runnable end-to-end demo referenced from the Quickstart. |
+
 ### Documents to Create
 
 | Document | When | Notes |
 |----------|------|-------|
-| `README.md` rewrite | Phase 6 | Existing 21 KB README kept as placeholder; Phase 6 supplies elevator pitch + paid-services section |
 | GitHub Pages site | Phase 8 | Astro + Starlight (Pages currently serves `/docs` markdown as placeholder at https://caracal-lynx.github.io/sluice/) |
 
 ---
