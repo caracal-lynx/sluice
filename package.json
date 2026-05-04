@@ -2,11 +2,42 @@
   "name": "@caracal-lynx/sluice",
   "version": "0.1.0",
   "description": "Config-driven ETL toolkit for ERP data migrations",
+  "license": "Elastic-2.0",
+  "author": "Caracal Lynx Ltd. <michael.scott@caracallynx.com> (https://caracallynx.com)",
+  "homepage": "https://github.com/caracal-lynx/sluice#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caracal-lynx/sluice.git"
+  },
+  "bugs": {
+    "url": "https://github.com/caracal-lynx/sluice/issues"
+  },
+  "keywords": [
+    "etl",
+    "data-migration",
+    "erp",
+    "yaml",
+    "duckdb",
+    "cli",
+    "data-quality",
+    "pipeline",
+    "typescript"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "sluice": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "LICENCE-FAQ.md",
+    "CLAUDE.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=24.0.0"

@@ -5,8 +5,8 @@
 **`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Ltd.](https://caracallynx.com).
 
 [![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/license-private-red)](.)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.x-blue)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-Elastic_2.0-blue)](LICENSE)
 
 ---
 
