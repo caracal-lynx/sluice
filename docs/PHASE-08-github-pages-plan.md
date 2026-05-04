@@ -370,7 +370,7 @@ Each use case: 2–3 sentences describing the problem, and which Sluice features
 **Goal:** Quiet but effective lead generation for Caracal Lynx.
 
 **Content:**
-- One paragraph: Sluice is built and maintained by Caracal Lynx Limited, an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools
+- One paragraph: Sluice is built and maintained by Caracal Lynx Ltd., an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools
 - What Caracal Lynx offers (table format):
   - **AI Data Readiness Audit** — Caracal Lynx connects Sluice to your data sources, builds the quality ruleset, runs it, and delivers a clear report on what's AI-ready and what needs fixing first
   - **Enrich Service** — Async API lookups (EU VAT validation via VIES, UK VAT via HMRC, UK Trade Tariff) — fills gaps in source data before migration
