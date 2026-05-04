@@ -6,7 +6,7 @@
 
 # Sluice — Phase 3 Preparation Work for Phase 2
 # Implementation instructions for Claude Code
-# Author: Michael Scott, Caracal Lynx Limited
+# Author: Michael Scott, Caracal Lynx Ltd.
 # Date: 2026-04-17
 
 ---
