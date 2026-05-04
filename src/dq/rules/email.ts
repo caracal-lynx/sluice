@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 import type { CheckConfig } from '../../config/types.js';
 import type { Rule, RuleViolation } from './types.js';
 

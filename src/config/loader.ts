@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { load as yamlLoad } from 'js-yaml';

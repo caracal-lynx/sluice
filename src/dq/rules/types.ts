@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * Built-in DQ rules share the same interface as user-registered RulePlugins.
  * Keeping the shapes aligned means the engine can look up rules uniformly.
