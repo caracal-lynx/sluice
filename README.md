@@ -52,32 +52,32 @@ Pipelines can be **single-source** (one YAML per entity, one `source:` block) or
 
 ```mermaid
 flowchart LR
-    A[📄 Pipeline YAML] --> B[⚙️ Config Loader\nZod validation\nENV var resolution\nComposite rule expansion]
-    B --> C[🔌 Source Adapter\nmssql / pg / csv\nxlsx / rest]
-    C --> D[(🦆 DuckDB\nstg_raw)]
-    D --> E[🔍 DQ Engine\nRules validation\nRejection report]
-    E --> F[✨ Transform Engine\nField mapping\nLookup resolution\nCleanse ops\nCustom plugins]
-    F --> G[(🦆 DuckDB\nstg_transformed)]
-    G --> H[🎯 Target Adapter\nbc / ifs / bluecherry\ncsv / pg]
-    H --> I[📦 Output\nCSV / REST / DB]
-    E -->|❌ critical failures| J[🛑 Pipeline halted\ndq-summary.json\nrejected.csv]
+    A[📄 Pipeline YAML] --> B[⚙️ Config Loader<br/>Zod validation<br/>ENV var resolution<br/>Composite rule expansion]
+    B --> C[🔌 Source Adapter<br/>mssql / pg / csv<br/>xlsx / rest]
+    C --> D[(🦆 DuckDB<br/>stg_raw)]
+    D --> E[🔍 DQ Engine<br/>Rules validation<br/>Rejection report]
+    E --> F[✨ Transform Engine<br/>Field mapping<br/>Lookup resolution<br/>Cleanse ops<br/>Custom plugins]
+    F --> G[(🦆 DuckDB<br/>stg_transformed)]
+    G --> H[🎯 Target Adapter<br/>bc / ifs / bluecherry<br/>csv / pg]
+    H --> I[📦 Output<br/>CSV / REST / DB]
+    E -->|❌ critical failures| J[🛑 Pipeline halted<br/>dq-summary.json<br/>rejected.csv]
 ```
 
 ### Multi-source pipeline
 
 ```mermaid
 flowchart LR
-    A[📄 Pipeline YAML\nsources + merge] --> B[⚙️ Config Loader]
+    A[📄 Pipeline YAML<br/>sources + merge] --> B[⚙️ Config Loader]
     B --> C1[🔌 Source 1]
     B --> C2[🔌 Source 2]
     B --> C3[🔌 Source N]
-    C1 --> D1[(🦆 stg_raw_src1\n+ rename + per-source DQ)]
-    C2 --> D2[(🦆 stg_raw_src2\n+ rename + per-source DQ)]
-    C3 --> D3[(🦆 stg_raw_srcN\n+ rename + per-source DQ)]
-    D1 --> M[🔀 MergeEngine\ncoalesce / union\nintersect / priority-override]
+    C1 --> D1[(🦆 stg_raw_src1<br/>+ rename + per-source DQ)]
+    C2 --> D2[(🦆 stg_raw_src2<br/>+ rename + per-source DQ)]
+    C3 --> D3[(🦆 stg_raw_srcN<br/>+ rename + per-source DQ)]
+    D1 --> M[🔀 MergeEngine<br/>coalesce / union<br/>intersect / priority-override]
     D2 --> M
     D3 --> M
-    M --> G[(🦆 stg_merged\n+ stg_merge_conflicts.csv)]
+    M --> G[(🦆 stg_merged<br/>+ stg_merge_conflicts.csv)]
     G --> E[🔍 Post-merge DQ]
     E --> F[✨ Transform → stg_transformed]
     F --> H[🎯 Target Adapter]
