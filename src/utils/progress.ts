@@ -22,7 +22,7 @@
 import cliProgress from 'cli-progress';
 import pc from 'picocolors';
 
-export type PhaseKind = 'extract' | 'dq' | 'merge' | 'transform' | 'load';
+export type PhaseKind = 'extract' | 'dq' | 'merge' | 'enrich' | 'transform' | 'load';
 
 export type PhaseEndState = 'success' | 'warn' | 'fail';
 
@@ -70,6 +70,7 @@ const PHASE_ICON_EMOJI: Record<PhaseKind, string> = {
   extract: '🔎',
   dq: '🛡️ ',
   merge: '🔀',
+  enrich: '🌐',
   transform: '🔧',
   load: '📤',
 };
@@ -79,6 +80,7 @@ const PHASE_ICON_ASCII: Record<PhaseKind, string> = {
   extract: '[EX]',
   dq: '[DQ]',
   merge: '[MG]',
+  enrich: '[EN]',
   transform: '[TX]',
   load: '[LD]',
 };
@@ -87,6 +89,7 @@ const PHASE_COLOUR: Record<PhaseKind, (s: string) => string> = {
   extract: pc.cyan,
   dq: pc.yellow,
   merge: pc.magenta,
+  enrich: pc.cyan,
   transform: pc.blue,
   load: pc.green,
 };

@@ -22,3 +22,4 @@ export class PipelineDQError extends DQError {
 export class TransformError extends PipelineError {}
 export class ExpressionError extends TransformError {}
 export class LoadError extends PipelineError {}
+export class EnrichError extends PipelineError {}
