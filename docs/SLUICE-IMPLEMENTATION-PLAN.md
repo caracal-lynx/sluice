@@ -55,36 +55,36 @@ This is the "commoditise the platform, sell the expertise" model: the engine is 
 graph TB
     subgraph PUBLIC["🌍 Public — Open Source (ELv2 Licence)"]
         direction LR
-        CORE_REPO["GitHub: caracal-lynx/sluice\n(PUBLIC repository)\n\npackages/core\n────────────────\n@caracal-lynx/sluice\nCLI · engine · built-in source adapters\nDQ engine · transform engine\nDuckDB · Zod · pino\nEnrich types + registration hook only"]
-        NPM_PUB["npm: @caracal-lynx/sluice\n(PUBLIC package)"]
-        PAGES["GitHub Pages\nDocumentation Site\nVitePress / Astro"]
+        CORE_REPO["GitHub: caracal-lynx/sluice<br/>(PUBLIC repository)<br/><br/>packages/core<br/>────────────────<br/>@caracal-lynx/sluice<br/>CLI · engine · built-in source adapters<br/>DQ engine · transform engine<br/>DuckDB · Zod · pino<br/>Enrich types + registration hook only"]
+        NPM_PUB["npm: @caracal-lynx/sluice<br/>(PUBLIC package)"]
+        PAGES["GitHub Pages<br/>Documentation Site<br/>VitePress / Astro"]
     end
 
     subgraph PRIVATE_ENRICH["🔒 Private Paid — Enrichment Service"]
-        ENRICH_REPO["GitHub: caracal-lynx/sluice-enrich\n(PRIVATE)\n\n@caracal-lynx/sluice-enrich\nEnrichRegistry · EnrichmentRunner\nEnrichCache · CLI extensions\nBuilt-in providers (Phase 4b):\nvies · hmrc-vat · uk-trade-tariff"]
+        ENRICH_REPO["GitHub: caracal-lynx/sluice-enrich<br/>(PRIVATE)<br/><br/>@caracal-lynx/sluice-enrich<br/>EnrichRegistry · EnrichmentRunner<br/>EnrichCache · CLI extensions<br/>Built-in providers (Phase 4b):<br/>vies · hmrc-vat · uk-trade-tariff"]
     end
 
     subgraph PRIVATE_RULES["🔒 Private Paid — Rule Packages"]
         direction LR
-        RULES_REPO["GitHub: caracal-lynx/sluice-rules\n(PRIVATE monorepo)\n\netl-rules-uk · etl-rules-fashion"]
-        NPM_RULES["npm (private scope):\n@caracal-lynx/etl-rules-uk\n@caracal-lynx/etl-rules-fashion"]
+        RULES_REPO["GitHub: caracal-lynx/sluice-rules<br/>(PRIVATE monorepo)<br/><br/>etl-rules-uk · etl-rules-fashion"]
+        NPM_RULES["npm (private scope):<br/>@caracal-lynx/etl-rules-uk<br/>@caracal-lynx/etl-rules-fashion"]
     end
 
     subgraph PRIVATE_ADAPTERS["🔒 Private Paid — Application Adapters"]
         direction LR
-        IFS["caracal-lynx/sluice-adapter-ifs\n→ @caracal-lynx/sluice-adapter-ifs"]
-        BC["caracal-lynx/sluice-adapter-bc\n→ @caracal-lynx/sluice-adapter-bc"]
-        BLUE["caracal-lynx/sluice-adapter-bluecherry\n→ @caracal-lynx/sluice-adapter-bluecherry"]
+        IFS["caracal-lynx/sluice-adapter-ifs<br/>→ @caracal-lynx/sluice-adapter-ifs"]
+        BC["caracal-lynx/sluice-adapter-bc<br/>→ @caracal-lynx/sluice-adapter-bc"]
+        BLUE["caracal-lynx/sluice-adapter-bluecherry<br/>→ @caracal-lynx/sluice-adapter-bluecherry"]
     end
 
     subgraph PRIVATE_MCP["🔒 Private Paid — MCP Server"]
-        MCP_REPO["GitHub: caracal-lynx/sluice-mcp\n(PRIVATE)\n→ @caracal-lynx/sluice-mcp\nAI-assisted migration service"]
+        MCP_REPO["GitHub: caracal-lynx/sluice-mcp<br/>(PRIVATE)<br/>→ @caracal-lynx/sluice-mcp<br/>AI-assisted migration service"]
     end
 
     subgraph PRIVATE_CLIENTS["🔒 Private — Client Engagements"]
         direction LR
-        COCHRAN["caracal-lynx/sluice-client-cochran\nCochran Group · IFS ERP"]
-        ERIBE["caracal-lynx/sluice-client-eribe\nEribé Knitwear · BlueCherry ERP"]
+        COCHRAN["caracal-lynx/sluice-client-cochran<br/>Cochran Group · IFS ERP"]
+        ERIBE["caracal-lynx/sluice-client-eribe<br/>Eribé Knitwear · BlueCherry ERP"]
     end
 
     CORE_REPO -->|publish| NPM_PUB
@@ -136,20 +136,20 @@ The open-source core does **not** include: the `EnrichRegistry`, `EnrichmentRunn
 
 ```mermaid
 flowchart TD
-    P0["✅ Phase 0\nGovernance\nCOMPLETE"]
-    P1["✅ Phase 1\nNode v24 + DuckDB Neo\nCOMPLETE"]
-    P2["✅ Phase 2\nTypeScript v6 Upgrade\nCOMPLETE"]
-    P3["✅ Phase 3\nPlugin System\nCOMPLETE"]
-    P4A["🔒 Phase 4a\nEnrich Framework\n(private sluice-enrich)"]
-    P4B["🔒 Phase 4b\nBuilt-in Providers\nvies · hmrc-vat · uk-trade-tariff"]
-    P5["🚀 Phase 5\nRepo Restructure &\nOpen-Source Launch\n(2–3 weeks)"]
-    P6["📣 Phase 6\nREADME & Marketing\n(1 week)"]
-    P7["⚙️ Phase 7\ngit/npm Workflow\n(1–2 weeks)"]
-    P8["📖 Phase 8\nGitHub Pages Docs\n(6–8 weeks)"]
-    P9["🤖 Phase 9\nSluice MCP Server\n(8–12 weeks, private paid)\nNOW UNBLOCKED ✅"]
-    P10["⚡ Phase 10\nNode v26 Upgrade\n(Oct 2026 LTS)"]
-    P11A["✅ Phase 11a\ntsgo parallel\ntype-check in CI\nIN SOAK"]
-    P11B["🔶 Phase 11b\nFull switch tsc → tsgo\n(when emit stable, mid/late 2026)"]
+    P0["✅ Phase 0<br/>Governance<br/>COMPLETE"]
+    P1["✅ Phase 1<br/>Node v24 + DuckDB Neo<br/>COMPLETE"]
+    P2["✅ Phase 2<br/>TypeScript v6 Upgrade<br/>COMPLETE"]
+    P3["✅ Phase 3<br/>Plugin System<br/>COMPLETE"]
+    P4A["🔒 Phase 4a<br/>Enrich Framework<br/>(private sluice-enrich)"]
+    P4B["🔒 Phase 4b<br/>Built-in Providers<br/>vies · hmrc-vat · uk-trade-tariff"]
+    P5["🚀 Phase 5<br/>Repo Restructure &<br/>Open-Source Launch<br/>(2–3 weeks)"]
+    P6["📣 Phase 6<br/>README & Marketing<br/>(1 week)"]
+    P7["⚙️ Phase 7<br/>git/npm Workflow<br/>(1–2 weeks)"]
+    P8["📖 Phase 8<br/>GitHub Pages Docs<br/>(6–8 weeks)"]
+    P9["🤖 Phase 9<br/>Sluice MCP Server<br/>(8–12 weeks, private paid)<br/>NOW UNBLOCKED ✅"]
+    P10["⚡ Phase 10<br/>Node v26 Upgrade<br/>(Oct 2026 LTS)"]
+    P11A["✅ Phase 11a<br/>tsgo parallel<br/>type-check in CI<br/>IN SOAK"]
+    P11B["🔶 Phase 11b<br/>Full switch tsc → tsgo<br/>(when emit stable, mid/late 2026)"]
 
     P0 -.->|legal audit informs| P5
     P1 --> P2
@@ -336,11 +336,11 @@ Frozen at DuckDB 1.4.x           │  1.5.x onwards, actively maintained
 
 ```mermaid
 flowchart LR
-    A["Pre-flight check\nOpenSSL / TLS test\nagainst Cochran SQL Server\n⚠️ Critical — do first!"] --> B
-    B["DuckDB migration\nduckdb → @duckdb/node-api\nsrc/staging/store.ts rewrite\n~4–6 hours"] --> C
-    C["Add Phase 4a stubs\nselectDistinct()\naddColumnIfNotExists()\nbatchUpdateColumns()\n~30 min"] --> D
-    D["Minor updates\nvm hardening\nnpm lockfile regen\nCI workflow bump\n~1 hour"] --> E
-    E["Validate\nAll tests passing\nAll pipelines\nrunning on Node 24"]
+    A["Pre-flight check<br/>OpenSSL / TLS test<br/>against Cochran SQL Server<br/>⚠️ Critical — do first!"] --> B
+    B["DuckDB migration<br/>duckdb → @duckdb/node-api<br/>src/staging/store.ts rewrite<br/>~4–6 hours"] --> C
+    C["Add Phase 4a stubs<br/>selectDistinct()<br/>addColumnIfNotExists()<br/>batchUpdateColumns()<br/>~30 min"] --> D
+    D["Minor updates<br/>vm hardening<br/>npm lockfile regen<br/>CI workflow bump<br/>~1 hour"] --> E
+    E["Validate<br/>All tests passing<br/>All pipelines<br/>running on Node 24"]
 ```
 
 ### Phase 4a StagingStore Stubs
@@ -400,11 +400,11 @@ Sluice is already in the best possible position for this upgrade. Using `module:
 
 ```mermaid
 flowchart LR
-    A["Run automated\nmigration tool\nnpx @andrewbranch/ts5to6\n~30 min"] --> B
-    B["Fix new type errors\nsurfaced by improved\nTS6 inference\n~1–3 hrs"] --> C
-    C["Add stableTypeOrdering\nflag to tsconfig\n(pre-adopt TS7 ordering)\n~30 min"] --> D
-    D["Update target to ES2025\nbump lib to ES2025\n~15 min"] --> E
-    E["CI update\nmerge to master\n~30 min"]
+    A["Run automated<br/>migration tool<br/>npx @andrewbranch/ts5to6<br/>~30 min"] --> B
+    B["Fix new type errors<br/>surfaced by improved<br/>TS6 inference<br/>~1–3 hrs"] --> C
+    C["Add stableTypeOrdering<br/>flag to tsconfig<br/>(pre-adopt TS7 ordering)<br/>~30 min"] --> D
+    D["Update target to ES2025<br/>bump lib to ES2025<br/>~15 min"] --> E
+    E["CI update<br/>merge to master<br/>~30 min"]
 ```
 
 ### Phase 2B — TypeScript 7 (two-stage, from Phase 11 onwards)
@@ -442,19 +442,19 @@ The three-tier plugin/extension system is fully implemented. All three tiers are
 ```mermaid
 flowchart TB
     subgraph T1["Tier 1 — YAML Composite Rules (No code)"]
-        Y["my-rule.rule.yaml\ncomposed from built-in rules"]
+        Y["my-rule.rule.yaml<br/>composed from built-in rules"]
     end
     subgraph T2["Tier 2 — TypeScript Plugin Files (Local code)"]
-        TS["plugins/my-rule.rule.ts\nauto-discovered from plugins/"]
+        TS["plugins/my-rule.rule.ts<br/>auto-discovered from plugins/"]
     end
     subgraph T3["Tier 3 — npm Packages (Distributed)"]
-        NPM["@caracal-lynx/etl-rules-uk\n@caracal-lynx/etl-rules-fashion\nthird-party packages"]
+        NPM["@caracal-lynx/etl-rules-uk<br/>@caracal-lynx/etl-rules-fashion<br/>third-party packages"]
     end
 
-    T1 -->|"expanded by"| REGISTRY["Plugin Registry\nsrc/plugins/registry.ts"]
+    T1 -->|"expanded by"| REGISTRY["Plugin Registry<br/>src/plugins/registry.ts"]
     T2 -->|"registered in"| REGISTRY
     T3 -->|"imported by"| REGISTRY
-    REGISTRY --> ENGINE["DQ Engine +\nTransform Engine"]
+    REGISTRY --> ENGINE["DQ Engine +<br/>Transform Engine"]
 ```
 
 ### What This Enables
@@ -510,11 +510,11 @@ Builds the complete enrich infrastructure in the private `caracal-lynx/sluice-en
 
 ```mermaid
 flowchart LR
-    A["EnrichRegistry\nregister / resolve\nplugin discovery"] --> B
-    B["EnrichmentRunner\norchestrates batch\nasync lookups"] --> C
-    C["EnrichCache\nresult caching\nDuckDB-backed"] --> D
-    D["CLI extensions\nsluice enrich list\nsluice enrich run\nsluice enrich cache"] --> E
-    E["StagingStore impl\nimplement the 3\nPhase 1 stubs\n(selectDistinct etc)"]
+    A["EnrichRegistry<br/>register / resolve<br/>plugin discovery"] --> B
+    B["EnrichmentRunner<br/>orchestrates batch<br/>async lookups"] --> C
+    C["EnrichCache<br/>result caching<br/>DuckDB-backed"] --> D
+    D["CLI extensions<br/>sluice enrich list<br/>sluice enrich run<br/>sluice enrich cache"] --> E
+    E["StagingStore impl<br/>implement the 3<br/>Phase 1 stubs<br/>(selectDistinct etc)"]
 ```
 
 **Key constraints:**
@@ -704,9 +704,9 @@ This phase implements the automated dependency cascade that keeps all repos in s
 
 ```mermaid
 flowchart LR
-    CS["Changesets\n@changesets/cli\nVersioning + changelogs\nin monorepos"] --> NR
-    NR["npm Release\nAutomated via\nGitHub Actions\non master merge"] --> REN
-    REN["Renovate\nMonitors npm registry\nAuto-opens version-bump PRs\nin downstream repos"]
+    CS["Changesets<br/>@changesets/cli<br/>Versioning + changelogs<br/>in monorepos"] --> NR
+    NR["npm Release<br/>Automated via<br/>GitHub Actions<br/>on master merge"] --> REN
+    REN["Renovate<br/>Monitors npm registry<br/>Auto-opens version-bump PRs<br/>in downstream repos"]
 
     subgraph CASCADE["Dependency Cascade"]
         CORE["@caracal-lynx/sluice"] --> ENRICH["@caracal-lynx/sluice-enrich"]

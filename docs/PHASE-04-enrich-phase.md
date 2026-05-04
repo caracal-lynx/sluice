@@ -1807,15 +1807,15 @@ Built-in providers are developed AFTER Phase 4a framework is complete and in use
 
 ```mermaid
 flowchart TD
-    P0[Phase 0\nInit Registries\nLoad Plugins] --> P1[Phase 1\nConfig Load\nZod Validate]
-    P1 --> P2[Phase 2\nExtract\nstg_raw]
-    P2 --> enrich_check{enrich:\nconfigured?}
-    enrich_check -->|yes| P25[Phase 4\nEnrich Phase\nAPI lookups → stg_raw cols]
+    P0[Phase 0<br/>Init Registries<br/>Load Plugins] --> P1[Phase 1<br/>Config Load<br/>Zod Validate]
+    P1 --> P2[Phase 2<br/>Extract<br/>stg_raw]
+    P2 --> enrich_check{enrich:<br/>configured?}
+    enrich_check -->|yes| P25[Phase 4<br/>Enrich Phase<br/>API lookups → stg_raw cols]
     enrich_check -->|no| P3
-    P25 --> P3[Phase 3\nDQ Engine\nsync rules on all cols]
-    P3 --> P4[Phase 4\nTransform\nstg_transformed]
-    P4 --> P5[Phase 5\nLoad\nTarget adapter]
-    P5 --> P6[Phase 6\nWrite state JSON]
+    P25 --> P3[Phase 3<br/>DQ Engine<br/>sync rules on all cols]
+    P3 --> P4[Phase 4<br/>Transform<br/>stg_transformed]
+    P4 --> P5[Phase 5<br/>Load<br/>Target adapter]
+    P5 --> P6[Phase 6<br/>Write state JSON]
 
     style P25 fill:#0e3a4a,stroke:#22d3ee,color:#22d3ee
 ```
@@ -1823,17 +1823,17 @@ flowchart TD
 ```mermaid
 flowchart TD
     stg[stg_raw] --> distinct[SELECT DISTINCT field values]
-    distinct --> precheck{preValidate\nregex set?}
-    precheck -->|yes| regex{Value matches\nregex?}
+    distinct --> precheck{preValidate<br/>regex set?}
+    precheck -->|yes| regex{Value matches<br/>regex?}
     precheck -->|no| cache_check
-    regex -->|no| flag_invalid[Write valid=false\nno API call]
+    regex -->|no| flag_invalid[Write valid=false<br/>no API call]
     regex -->|yes| cache_check{In cache?}
-    cache_check -->|yes| apply[Apply cached result\nto all matching rows]
-    cache_check -->|no| api[Call provider.enrich\nwith p-limit concurrency]
+    cache_check -->|yes| apply[Apply cached result<br/>to all matching rows]
+    cache_check -->|no| api[Call provider.enrich<br/>with p-limit concurrency]
     api --> store_cache[Store result in cache]
     store_cache --> apply
-    apply --> write[ALTER + UPDATE stg_raw\nadd writeColumns]
-    write --> dq[Phase 3 DQ Engine\nvalidates enriched cols\nsync and pure]
+    apply --> write[ALTER + UPDATE stg_raw<br/>add writeColumns]
+    write --> dq[Phase 3 DQ Engine<br/>validates enriched cols<br/>sync and pure]
 
     style api fill:#0e3a4a,stroke:#22d3ee,color:#22d3ee
     style dq fill:#1e293b,stroke:#334155,color:#e2e8f0
