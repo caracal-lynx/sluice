@@ -1,9 +1,11 @@
 # Sluice — Phase 11: TypeScript v7 (`tsgo`) Spec
 
-> 🟡 **Status: Phase 11a is unblocked once Phase 2 (TypeScript v6) lands. Phase 11b is deferred until `tsgo` emit output is byte-stable (estimated mid/late 2026).**
+> ✅ **Status: Phase 11a MERGED — IN SOAK** ([PR #15](https://github.com/BCGubbins/sluice/pull/15), 4 May 2026). The parallel `tsgo --noEmit` step is running in CI with `continue-on-error: true`; once it stays clean across ~10 PRs / ~2 weeks, a follow-up PR will promote it to a required check.
+>
+> **Phase 11b is deferred** until `tsgo` emit output is byte-stable (estimated mid/late 2026).
 >
 > **Owner:** Caracal Lynx Ltd. · Michael Scott
-> **Estimated effort:** Phase 11a ≈ 1 hour. Phase 11b ≈ 1–2 hours.
+> **Estimated effort:** Phase 11a ≈ 1 hour (delivered). Phase 11b ≈ 1–2 hours.
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §15](./SLUICE-IMPLEMENTATION-PLAN.md#15-phase-11--typescript-v7)
 
 ---
@@ -119,11 +121,11 @@ Place this step *after* `npm test` so the existing pipeline isn't blocked. The `
 
 ### Phase 11a — Done criteria
 
-- [ ] `@typescript/native-preview` in `devDependencies`
-- [ ] `typecheck:tsgo` script in `package.json`
-- [ ] CI runs `tsgo --noEmit` on every PR
-- [ ] After soak period: `continue-on-error` removed; tsgo step is required
-- [ ] Any tsc/tsgo divergences documented (none expected for Sluice's surface)
+- [x] `@typescript/native-preview` in `devDependencies` — `^7.0.0-dev.20260504.1` (PR #15)
+- [x] `typecheck:tsgo` script in `package.json` — also added `typecheck` for symmetry
+- [x] CI runs `tsgo --noEmit` on every PR — step `Type-check (tsgo, parallel)` after `test:cov`, with `continue-on-error: true`
+- [ ] After soak period: `continue-on-error` removed; tsgo step is required — **pending** ~10 PRs / ~2 weeks of clean runs
+- [x] Any tsc/tsgo divergences documented (none expected for Sluice's surface) — **none observed** locally; both compilers reported zero errors at merge time. Re-confirm in CI logs over the soak period.
 
 ---
 
