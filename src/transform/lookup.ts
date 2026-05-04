@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * LookupResolver — preloads every `transform.lookups[]` entry into an
  * in-memory Map<string, string> keyed by name. Values stringified.

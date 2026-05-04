@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 /**
  * Global registry of source adapters, keyed by adapter id ('csv', 'mssql', ...).
  *
