@@ -1,0 +1,25 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💼 Commercial enquiry — paid services
+    url: mailto:michael.scott@caracallynx.com
+    about: |
+      For paid services — enrichment service, ERP adapters (IFS, Business
+      Central, BlueCherry), domain rule packages, the Sluice MCP server, or
+      full migration delivery — email michael.scott@caracallynx.com. These
+      are not handled via GitHub issues.
+  - name: 🔒 Security vulnerability
+    url: https://github.com/caracal-lynx/sluice/blob/master/SECURITY.md
+    about: |
+      Do not file public issues for security vulnerabilities. Email
+      security@caracallynx.com — see SECURITY.md for the disclosure process.
+  - name: ❓ Question or licensing query
+    url: https://github.com/caracal-lynx/sluice/blob/master/LICENCE-FAQ.md
+    about: |
+      Questions about whether your use case is permitted under the Elastic
+      Licence 2.0? Read the plain-English LICENCE FAQ first; if it doesn't
+      cover your situation, email michael.scott@caracallynx.com.
+  - name: 💬 Discussions (community Q&A)
+    url: https://github.com/caracal-lynx/sluice/discussions
+    about: |
+      For general questions, use cases, or "how do I…?" — please start a
+      Discussion rather than an issue.
