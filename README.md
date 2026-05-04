@@ -518,15 +518,6 @@ A full working example lives at [tests/fixtures/style-co-products-merged.pipelin
 
 ---
 
-## 🤝 Known Clients
-
-| Client | Source | Target | Adapter |
-|--------|--------|--------|---------|
-| Acme Corp | MSSQL legacy DB | IFS ERP | `ifs` |
-| Style Co | MSSQL / CSV exports | BlueCherry ERP | `bluecherry` |
-
----
-
 ## 🧪 Testing
 
 ```bash
