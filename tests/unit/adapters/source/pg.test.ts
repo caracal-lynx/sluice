@@ -81,9 +81,9 @@ describe('PgSourceAdapter', () => {
       encoding: 'utf-8',
     };
     await adapter.connect(config);
-    const result = await adapter.extract(config, store, BASE_RUN, () => {}, 'stg_raw_odoo');
-    expect(result.tableName).toBe('stg_raw_odoo');
-    expect(await store.tableExists('stg_raw_odoo')).toBe(true);
+    const result = await adapter.extract(config, store, BASE_RUN, () => {}, 'stg_raw_custom');
+    expect(result.tableName).toBe('stg_raw_custom');
+    expect(await store.tableExists('stg_raw_custom')).toBe(true);
     await adapter.disconnect();
   });
 

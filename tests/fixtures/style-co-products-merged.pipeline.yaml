@@ -3,7 +3,7 @@ pipeline:
   client: style-co
   version: "1.0"
   entity: Style
-  description: Product master assembled from SQL Server, Odoo, and Excel
+  description: Product master assembled from SQL Server, REST API, and Excel
 
 sources:
   - id: sql-server
@@ -14,12 +14,12 @@ sources:
       SELECT STYLE_NO, STYLE_DESC, COST_PRICE, RETAIL_PRICE
       FROM dbo.Styles WHERE Active = 1
 
-  - id: odoo
+  - id: rest-api
     priority: 2
     adapter: rest
-    endpoint: ${ODOO_BASE}/products
+    endpoint: ${REST_API_BASE}/products
     headers:
-      Authorization: Bearer ${ODOO_TOKEN}
+      Authorization: Bearer ${REST_API_TOKEN}
     pagination:
       type: offset
       pageSize: 100

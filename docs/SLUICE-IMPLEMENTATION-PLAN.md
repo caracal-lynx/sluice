@@ -558,8 +558,8 @@ All three providers are behind the `@caracal-lynx/sluice-enrich` paywall. They a
 - **Public repo:** [caracal-lynx/sluice](https://github.com/caracal-lynx/sluice) (transferred from `BCGubbins/sluice`; redirect retained)
 - **First public npm release:** [`@caracal-lynx/sluice@0.1.0`](https://www.npmjs.com/package/@caracal-lynx/sluice) under Elastic Licence 2.0
 - **GitHub Pages:** [caracal-lynx.github.io/sluice](https://caracal-lynx.github.io/sluice/) — placeholder serving `docs/` until Phase 8 fills it
-- **PRs landed:** [#18 SPDX + LICENSE](https://github.com/caracal-lynx/sluice/pull/18) · [#19 hygiene files](https://github.com/caracal-lynx/sluice/pull/19) · [#20 fixture renames](https://github.com/caracal-lynx/sluice/pull/20) · [#21 package.json metadata](https://github.com/caracal-lynx/sluice/pull/21) · [#22 TM2 example removal](https://github.com/caracal-lynx/sluice/pull/22)
-- **History rewrites:** three `git filter-repo` passes purged a 1.9 MB Bleckmann/Odoo dataset, two TM2-specific example pipelines, and a stray SSMS-default-named SQL file from full git history before the visibility flip.
+- **PRs landed:** [#18 SPDX + LICENSE](https://github.com/caracal-lynx/sluice/pull/18) · [#19 hygiene files](https://github.com/caracal-lynx/sluice/pull/19) · [#20 fixture renames](https://github.com/caracal-lynx/sluice/pull/20) · [#21 package.json metadata](https://github.com/caracal-lynx/sluice/pull/21) · [#22 client-specific example removal](https://github.com/caracal-lynx/sluice/pull/22)
+- **History rewrites:** multiple `git filter-repo` passes purged a 1.9 MB client dataset, client-specific example pipelines, and a stray SQL file from full git history before the visibility flip.
 
 **Reference:** `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md`
 
@@ -642,7 +642,7 @@ Update `package.json`:
 - [ ] `caracal-lynx/sluice-rules` is private on GitHub — **deferred**, created lazily when the rule packages are ported (per the resolved scope decision: only the public repo flipped during Phase 5; sibling private repos created on demand)
 - [x] All hygiene files present and correct — `LICENSE`, `LICENCE-FAQ.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md`, three issue-template forms, PR template
 - [x] ELv2 licence applied to all source files — SPDX header on all 67 `src/**/*.ts` files; `"license": "Elastic-2.0"` in `package.json`
-- [x] Git history verified clean — three `filter-repo` rewrites; final §2.1 audit shows zero hits for Bleckmann, ProHead, PRODHEAD, TM2.dbo, [TM2], "TOP (1000)"
+- [x] Git history verified clean — multiple `filter-repo` rewrites; final §2.1 audit shows zero hits for the audited client and system terms
 
 ---
 
