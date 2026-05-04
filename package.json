@@ -34,7 +34,8 @@
     "README.md",
     "LICENSE",
     "LICENCE-FAQ.md",
-    "CLAUDE.md"
+    "CLAUDE.md",
+    "PLUGINS.md"
   ],
   "publishConfig": {
     "access": "public"
