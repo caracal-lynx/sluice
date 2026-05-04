@@ -21,6 +21,7 @@ import { ConfigLoader } from './config/loader.js';
 import { isMultiSource } from './config/schema.js';
 import type { Pipeline } from './config/types.js';
 import { DQEngine, type DQSummary } from './dq/index.js';
+import type { EnrichPhaseFactory, EnrichSummary } from './enrich/types.js';
 import { MergeStrategyRegistry } from './merge/index.js';
 import { StagingStore, quoteIdent } from './staging/index.js';
 import { TransformEngine, type TransformResult } from './transform/index.js';
@@ -30,6 +31,29 @@ import { ConfigError, PipelineDQError } from './utils/errors.js';
 import { logger } from './utils/logger.js';
 import { ProgressReporter, createSilentProgress } from './utils/progress.js';
 
+// ── Phase 4a — Enrich phase injection hook ─────────────────────────────────
+//
+// `@caracal-lynx/sluice-enrich` calls `registerEnrichPhase()` once at import
+// time to inject its phase factory. If the private package is not installed,
+// the slot stays undefined and `runEnrich()` no-ops with a WARN log so the
+// operator notices the misconfiguration.
+
+let _enrichPhaseFactory: EnrichPhaseFactory | undefined;
+
+export function registerEnrichPhase(factory: EnrichPhaseFactory): void {
+  _enrichPhaseFactory = factory;
+}
+
+/** Test-only helper. Not exported from `src/index.ts`. */
+export function _resetEnrichPhaseForTesting(): void {
+  _enrichPhaseFactory = undefined;
+}
+
+/** Test-only helper. Not exported from `src/index.ts`. */
+export function _isEnrichPhaseRegistered(): boolean {
+  return _enrichPhaseFactory !== undefined;
+}
+
 export interface RunResult {
   pipeline: string;
   mode: Pipeline['run']['mode'];
@@ -38,6 +62,8 @@ export interface RunResult {
   transform: TransformResult | null;
   load: LoadResult | null;
   merge?: { rowsMerged: number; conflicts: number; unmatched: number };
+  /** Phase 4a — populated when an `enrich:` block ran. */
+  enrichSummary?: EnrichSummary;
   /** Path to the state JSON written at the end of a successful run. */
   stateFilePath?: string;
   /** Set by `sluice profile`; absent for other commands. */
@@ -50,6 +76,8 @@ export interface RunOverrides {
   dryRun?: boolean;
   mode?: Pipeline['run']['mode'];
   pluginDirs?: string[];
+  /** Set by `sluice run --no-enrich` to skip the Phase 4a enrich phase. */
+  skipEnrich?: boolean;
   /**
    * Optional progress reporter. CLI callers pass a live reporter; library
    * callers (and tests) can omit it to get a silent no-op.
@@ -174,6 +202,13 @@ export class PipelineRunner {
         }
       }
 
+      const enrichSummary = await this.runEnrich(
+        config,
+        store,
+        path.dirname(path.resolve(yamlPath)),
+        overrides,
+      );
+
       const dqSummary = await this.runDQ(config, store, extractResult.tableName);
 
       if (config.dq.stopOnCritical && dqSummary.violations.critical > 0) {
@@ -206,11 +241,24 @@ export class PipelineRunner {
           warnings: dqSummary.violations.warning,
           state: dqSummary.violations.warning > 0 ? 'warn' : 'success',
         });
-        return this.buildRunResult(config, extractResult, dqSummary, transformResult, null);
+        return this.buildRunResult(
+          config,
+          extractResult,
+          dqSummary,
+          transformResult,
+          null,
+          enrichSummary,
+        );
       }
 
       const loadResult = await this.runLoad(config, store);
-      const stateFilePath = await this.writeStateFile(config, extractResult, dqSummary, loadResult);
+      const stateFilePath = await this.writeStateFile(
+        config,
+        extractResult,
+        dqSummary,
+        loadResult,
+        enrichSummary,
+      );
 
       logger.info(
         {
@@ -231,7 +279,14 @@ export class PipelineRunner {
       });
 
       return {
-        ...this.buildRunResult(config, extractResult, dqSummary, transformResult, loadResult),
+        ...this.buildRunResult(
+          config,
+          extractResult,
+          dqSummary,
+          transformResult,
+          loadResult,
+          enrichSummary,
+        ),
         stateFilePath,
       };
     } finally {
@@ -322,6 +377,67 @@ export class PipelineRunner {
     }
   }
 
+  /**
+   * Phase 4a enrich phase. No-ops (returns `undefined`) when:
+   *   - the pipeline has no `enrich:` block;
+   *   - `--no-enrich` was set (`overrides.skipEnrich`);
+   *   - the run is `validate-only` or `dryRun`;
+   *   - `@caracal-lynx/sluice-enrich` is not installed (no factory registered).
+   *
+   * The "not installed" case logs a WARN so an operator who configured an
+   * `enrich:` block expecting it to run notices the misconfiguration.
+   */
+  protected async runEnrich(
+    config: Pipeline,
+    store: StagingStore,
+    pluginDir: string,
+    overrides: RunOverrides,
+  ): Promise<EnrichSummary | undefined> {
+    if (!config.enrich) return undefined;
+    if (overrides.skipEnrich) {
+      logger.info(
+        { pipeline: config.pipeline.name },
+        'pipeline: enrich skipped (--no-enrich)',
+      );
+      return undefined;
+    }
+    if (config.run.dryRun || config.run.mode === 'validate-only') {
+      logger.info(
+        { mode: config.run.mode, dryRun: config.run.dryRun },
+        'pipeline: enrich skipped (validate / dry run)',
+      );
+      return undefined;
+    }
+    if (!_enrichPhaseFactory) {
+      logger.warn(
+        { pipeline: config.pipeline.name },
+        'pipeline: enrich block configured but @caracal-lynx/sluice-enrich is not installed — skipping',
+      );
+      return undefined;
+    }
+
+    this.progress.startPhase('enrich', 'Enrich');
+    try {
+      const phase = _enrichPhaseFactory(
+        config.enrich,
+        config.run,
+        store,
+        pluginDir,
+        logger,
+      );
+      const summary = await phase.run();
+      logger.info(
+        { lookups: summary.lookups.length },
+        'pipeline: enrich complete',
+      );
+      this.progress.endPhase({ state: 'success' });
+      return summary;
+    } catch (err) {
+      this.progress.endPhase({ state: 'fail' });
+      throw err;
+    }
+  }
+
   protected async runTransform(
     config: Pipeline,
     store: StagingStore,
@@ -399,11 +515,12 @@ export class PipelineRunner {
     extract: ExtractResult,
     dq: DQSummary,
     load: LoadResult,
+    enrichSummary?: EnrichSummary,
   ): Promise<string> {
     const outputDir = path.resolve(config.run.outputDir);
     await fs.mkdir(outputDir, { recursive: true });
     const stateFilePath = path.join(outputDir, `${config.pipeline.name}-state.json`);
-    const state = {
+    const state: Record<string, unknown> = {
       pipeline: config.pipeline.name,
       lastRunAt: new Date().toISOString(),
       lastMode: config.run.mode,
@@ -413,6 +530,11 @@ export class PipelineRunner {
       warnings: dq.violations.warning,
       incrementalSince: this.incrementalSinceUsed || (config.run.incrementalSince ?? ''),
     };
+    // Omit the key entirely when no enrich phase ran, so existing pipelines
+    // produce byte-for-byte identical state files.
+    if (enrichSummary !== undefined) {
+      state['enrichSummary'] = enrichSummary;
+    }
     await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
     logger.debug({ stateFilePath }, 'pipeline: state file written');
     return stateFilePath;
@@ -652,8 +774,9 @@ export class PipelineRunner {
     dq: DQSummary,
     transform: TransformResult | null,
     load: LoadResult | null,
+    enrichSummary?: EnrichSummary,
   ): RunResult {
-    return {
+    const result: RunResult = {
       pipeline: config.pipeline.name,
       mode: config.run.mode,
       extract,
@@ -661,6 +784,8 @@ export class PipelineRunner {
       transform,
       load,
     };
+    if (enrichSummary !== undefined) result.enrichSummary = enrichSummary;
+    return result;
   }
 }
 

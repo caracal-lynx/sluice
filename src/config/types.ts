@@ -12,6 +12,9 @@ export type {
   CompositeRuleLibrary,
   MergeConfig,
   MultiSourceEntry,
+  EnrichConfig,
+  EnrichLookupConfig,
+  EnrichWriteColumns,
 } from './schema.js';
 
 export { isSingleSource, isMultiSource } from './schema.js';
