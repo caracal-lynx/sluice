@@ -18,8 +18,16 @@ export {
 } from './transform/index.js';
 export type { TransformResult } from './transform/index.js';
 
-export { PipelineRunner } from './runner.js';
+export { PipelineRunner, registerEnrichPhase } from './runner.js';
 export type { RunResult, RunOverrides } from './runner.js';
 export { MultiSourcePipelineRunner } from './multi-source-runner.js';
 export { MergeEngine, MergeStrategyRegistry } from './merge/index.js';
 export type { MergeStrategyPlugin, MergeSourceMeta, MergeResult } from './merge/index.js';
+export type {
+  EnrichPlugin,
+  EnrichResult,
+  EnrichOptions,
+  EnrichSummary,
+  LookupSummary,
+  EnrichPhaseFactory,
+} from './enrich/types.js';

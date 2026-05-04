@@ -5,6 +5,7 @@ import { type ExtractResult } from './adapters/source/index.js';
 import { ConfigLoader } from './config/loader.js';
 import { isMultiSource, type MultiSourceEntry, type Pipeline } from './config/types.js';
 import type { DQSummary } from './dq/index.js';
+import type { EnrichSummary } from './enrich/types.js';
 import { MergeEngine } from './merge/index.js';
 import { PipelineRunner, type RunOverrides, type RunResult } from './runner.js';
 import { type ColumnMeta, StagingStore, quoteIdent } from './staging/index.js';
@@ -197,6 +198,14 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       }
 
       const postMergeConfig = this.buildPostMergeConfig(config);
+
+      const enrichSummary = await this.runEnrich(
+        postMergeConfig,
+        store,
+        path.dirname(path.resolve(yamlPath)),
+        overrides,
+      );
+
       const dqSummary = await this.runDQ(
         postMergeConfig,
         store,
@@ -235,6 +244,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         dqSummary,
         transformResult,
         null,
+        enrichSummary,
       );
       const mergeSummary = {
         rowsMerged: mergeResult.rowsMerged,
@@ -261,7 +271,13 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       }
 
       const loadResult = await this.runLoad(postMergeConfig, store);
-      const stateFilePath = await this.writeStateFile(postMergeConfig, extractResult, dqSummary, loadResult);
+      const stateFilePath = await this.writeStateFile(
+        postMergeConfig,
+        extractResult,
+        dqSummary,
+        loadResult,
+        enrichSummary,
+      );
 
       logger.info(
         {
@@ -282,7 +298,14 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       });
 
       return {
-        ...this.buildRunResult(postMergeConfig, extractResult, dqSummary, transformResult, loadResult),
+        ...this.buildRunResult(
+          postMergeConfig,
+          extractResult,
+          dqSummary,
+          transformResult,
+          loadResult,
+          enrichSummary,
+        ),
         merge: mergeSummary,
         stateFilePath,
       };
@@ -296,6 +319,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     extract: ExtractResult,
     dq: DQSummary,
     load: LoadResult,
+    enrichSummary?: EnrichSummary,
   ): Promise<string> {
     const outputDir = path.resolve(config.run.outputDir);
     await fs.mkdir(outputDir, { recursive: true });
@@ -312,7 +336,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       ]),
     );
 
-    const state = {
+    const state: Record<string, unknown> = {
       pipeline: config.pipeline.name,
       lastRunAt: new Date().toISOString(),
       lastMode: config.run.mode,
@@ -323,6 +347,9 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       incrementalSince: config.run.incrementalSince ?? '',
       sources: sourcesBlock,
     };
+    if (enrichSummary !== undefined) {
+      state['enrichSummary'] = enrichSummary;
+    }
 
     await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
     logger.debug({ stateFilePath }, 'pipeline: state file written');
