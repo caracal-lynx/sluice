@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Limited** | Owner: Michael Scott | Last updated: May 2026
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: May 2026
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -167,7 +167,7 @@ flowchart TD
 
     style P0 fill:#d4edda,stroke:#28a745
     style P1 fill:#d4edda,stroke:#28a745
-    style P2 fill:#d4edda,stroke:#28a745
+    style P2 fill:#fff3cd,stroke:#f0ad4e
     style P3 fill:#d4edda,stroke:#28a745
     style P4A fill:#d6d8f7,stroke:#6610f2
     style P4B fill:#d6d8f7,stroke:#6610f2
@@ -470,7 +470,7 @@ flowchart TB
 
 **Reference:** `docs/PHASE-04-enrich-phase.md` — full specification (updated: private architecture)
 
-> ⚠️ **The entire enrich subsystem is a private, commercial offering from Caracal Lynx Limited.** It is not part of the open-source core and is not published to the public npm registry. The open-source `@caracal-lynx/sluice` core includes only the `EnrichPlugin` interface type, Zod schema stubs, and the `registerEnrichPhase()` injection hook — no implementation.
+> ⚠️ **The entire enrich subsystem is a private, commercial offering from Caracal Lynx Ltd.** It is not part of the open-source core and is not published to the public npm registry. The open-source `@caracal-lynx/sluice` core includes only the `EnrichPlugin` interface type, Zod schema stubs, and the `registerEnrichPhase()` injection hook — no implementation.
 
 ### 8.1 Package Architecture
 
@@ -595,7 +595,7 @@ AFTER (separate repos):
 
 ```typescript
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Limited
+// Copyright (c) 2026 Caracal Lynx Ltd.
 ```
 
 Add to the top of every `.ts` file in `packages/core/src/`.
@@ -808,7 +808,7 @@ docs.sluice.dev (or sluice.caracallynx.com)
 
 **Reference:** `docs/PHASE-09-sluice-mcp-spec.md` — full Claude Code-ready specification (1,168 lines)
 
-> ⚠️ The Sluice MCP Server is a **private, commercial offering from Caracal Lynx Limited**. It is not part of the open-source core and is not published to the public npm registry. It is provided to clients as part of a paid Sluice-assisted migration engagement.
+> ⚠️ The Sluice MCP Server is a **private, commercial offering from Caracal Lynx Ltd.**. It is not part of the open-source core and is not published to the public npm registry. It is provided to clients as part of a paid Sluice-assisted migration engagement.
 
 ### What it delivers
 
@@ -936,7 +936,8 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/PHASE-02-typescript-v6-upgrade.md` | ✅ Good | Comprehensive. Ready to execute as Phase 2 — baselined on Node 24. (Renamed from `typescript6-upgrade-plan.md`.) |
 | `docs/PHASE-04-enrich-phase.md` | ✅ Good | Reflects fully private architecture (open-source core: interface types + Zod stubs + `registerEnrichPhase()` hook only; everything else in private `@caracal-lynx/sluice-enrich`). Last updated 2026-05-01. (Renamed from `PHASE2.5-ENRICH.md`.) |
 | `docs/elevator-pitch.md` | ✅ Good | Canonical home for the elevator pitch and positioning copy (one-liner, 30-second pitch, hero block, value props, AI angle, audience-specific framings). Sourced from previously-scattered fragments in Context.md, open-sourcing-sluice.md, PHASE-08, and README.md. Referenced by Phase 6 and Phase 8. |
-| `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ⚠️ Stale — pending Phase 5 rewrite | Pre-Phase-1 placeholder content (Node 20, old phase numbering, rule packages incorrectly placed in public monorepo). Banner updated 2026-05-03; this file is the canonical location for the workflow doc and must be reauthored during Phase 5. (Renamed from `docs/DEVELOPMENT-WORKFLOW.md`.) |
+| `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ✅ Good | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference. |
+| `docs/branching-strategy.md` | ✅ Good | Working branching convention for all Sluice repos: single protected `master`, short-lived `feat/`/`fix/`/`docs/`/`chore/`/`hotfix/` branches, `[<branch-name>] - ` commit prefix. Lifted out of PHASE-05 during the 2026-05-04 rewrite. |
 | `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ Good | Detailed execution plan for Phase 6 — README delta, paid-services copy, marketing artefacts checklist, numbered to-do list. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ Good | Detailed execution plan for Phase 7 — Changesets in public sluice, publish workflow with npm provenance, Renovate config templates for all downstream repos, end-to-end cascade verification. Forward-looking; blocked by Phase 5. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
@@ -970,5 +971,5 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
+*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

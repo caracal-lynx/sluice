@@ -1,7 +1,7 @@
 # Sluice — Phase 3 Extensions
 # Custom validation and transformation rules
 # npm package: @caracal-lynx/sluice
-# Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+# Owner: Michael Scott, Caracal Lynx Ltd. (SC826823)
 # Depends on: CLAUDE.md (Phase 1 complete)
 # Last updated: 2026-04-15
 

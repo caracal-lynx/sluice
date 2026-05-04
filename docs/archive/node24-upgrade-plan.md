@@ -6,7 +6,7 @@
 
 ---
 
-**Prepared for:** Caracal Lynx Limited / Michael Scott  
+**Prepared for:** Caracal Lynx Ltd. / Michael Scott  
 **Date:** 2026-05-01  
 **Starting point:** Node.js 20 LTS (EOL April 2026)  
 **Target:** Node.js 24 LTS (released April 2025; LTS since October 2025; EOL April 2028)  
@@ -289,7 +289,7 @@ Replace the entire content of `src/staging/store.ts` with the following. Keep th
 // @duckdb/node-api. All other modules interact with DuckDB exclusively through
 // StagingStore methods. Do not add DuckDB imports anywhere else.
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Limited
+// Copyright (c) 2026 Caracal Lynx Ltd.
 
 import { DuckDBInstance, type DuckDBConnection } from '@duckdb/node-api';
 import { logger } from '@/utils/logger';
@@ -814,4 +814,4 @@ Once all tests pass and this branch is merged to `develop`:
 
 *Prerequisite for: `docs/typescript6-upgrade-plan.md` (Phase 2) and `docs/PHASE2.5-ENRICH.md` (Phase 4a/4b)*  
 *See also: `docs/node26-upgrade-plan.md` (Phase 10 — deferred until Node 26 LTS, October 2026)*  
-*Caracal Lynx Limited — SC826823*
+*Caracal Lynx Ltd. — SC826823*

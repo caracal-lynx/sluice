@@ -5,7 +5,7 @@
 ---
 
 # Sluice — Node.js 20 → 26 Upgrade Plan
-**Prepared for:** Caracal Lynx Limited / Michael Scott  
+**Prepared for:** Caracal Lynx Ltd. / Michael Scott  
 **Date:** 2026-04-22  
 **Target:** Node.js 26.0.0 (released today — LTS October 2026, EOL April 2029)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  

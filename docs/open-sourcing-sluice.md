@@ -1,6 +1,6 @@
 # Open-Sourcing Sluice — Decision & Action Plan
 
-> **Context:** Sluice (`@caracal-lynx/sluice`) is a YAML-controlled ETL pipeline CLI owned by Caracal Lynx Limited (SC826823). **Decision made (April 2026):** The core Sluice CLI will be open-sourced under the Elastic Licence 2.0. Country/region rule packages, application adapters, client-specific plugins, and the Sluice MCP Server remain private commercial offerings from Caracal Lynx.
+> **Context:** Sluice (`@caracal-lynx/sluice`) is a YAML-controlled ETL pipeline CLI owned by Caracal Lynx Ltd. (SC826823). **Decision made (April 2026):** The core Sluice CLI will be open-sourced under the Elastic Licence 2.0. Country/region rule packages, application adapters, client-specific plugins, and the Sluice MCP Server remain private commercial offerings from Caracal Lynx.
 >
 > **Sequencing:** Node v24 upgrade (Phase 1) and the Phase 3 plugin system are complete. TypeScript v6 (Phase 2) is ready to run (3–5 hours). Phase 4a (Enrich framework) follows Phase 2. The open-source restructure and public launch follow as Phase 5.
 >

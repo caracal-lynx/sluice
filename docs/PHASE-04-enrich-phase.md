@@ -1,6 +1,6 @@
 # Sluice — Phase 4: External Validation / Enrich Phase
 # npm package: @caracal-lynx/sluice-enrich  ⚠️ PRIVATE — NOT OPEN SOURCE
-# Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+# Owner: Michael Scott, Caracal Lynx Ltd. (SC826823)
 # Depends on: CLAUDE.md (Phase 1 complete), archive/PHASE2-EXTENSIONS.md (Phase 3 complete)
 # Last updated: 2026-05-01
 
@@ -8,7 +8,7 @@
 
 > ## ⚠️ PRIVATE COMMERCIAL SERVICE
 >
-> **The entire Enrich subsystem is a private, commercially-licenced offering from Caracal Lynx Limited.**
+> **The entire Enrich subsystem is a private, commercially-licenced offering from Caracal Lynx Ltd.**
 > It is developed and maintained in the **private** `caracal-lynx/sluice-enrich` repository
 > and published as the **private** npm package `@caracal-lynx/sluice-enrich`.
 >

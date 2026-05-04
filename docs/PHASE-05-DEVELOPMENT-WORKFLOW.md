@@ -1,879 +1,752 @@
-> ⚠️ **STALE — pending Phase 5 rewrite.** This file (`docs/PHASE-05-DEVELOPMENT-WORKFLOW.md`) is the placeholder for the canonical workflow doc. The content below is the pre-Phase-1 version (Node 20, old phase numbering, rule packages incorrectly placed in public monorepo) and must be reauthored during Phase 5 — see [SLUICE-IMPLEMENTATION-PLAN.md §9](SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch).
+# Sluice — Phase 5: Repo Restructure & Open-Source Launch (Spec)
+
+> 🔴 **Status: BLOCKED by Phase 4a + Phase 0.** This document specifies how Phase 5 will be executed once the private `caracal-lynx/sluice-enrich` repo exists (Phase 4a) and the Phase 0 governance audits are confirmed clean. Do **not** start Phase 5 work until both gates are green — the post-launch topology assumes `sluice-enrich` is already a separate private repo, and the public flip is irreversible without legal cover.
 >
-> *The content below is retained for reference until Phase 5 supersedes it.*
+> **Owner:** Caracal Lynx Ltd. · Michael Scott
+> **Estimated effort:** 2–3 weeks
+> **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch)
 
 ---
 
-# Sluice — Development Workflow & Implementation Guide
+## Context
 
-> **Caracal Lynx Limited** | Maintained by Michael Scott  
-> Covers: Git/GitHub strategy, npm package publishing, release pipeline, adapter repo management, client repo management, client local setup, and implementation plan.
+Today the entire Sluice ecosystem lives inside one private GitHub repository (`caracal-lynx/sluice`). Phase 5 turns that repository public under the **Elastic Licence 2.0** while moving everything that must remain commercial — domain rule packages, ERP adapters, the enrichment service, the MCP server, and per-client engagement code — into separate private repositories under the same `caracal-lynx` organisation.
 
----
+The strategic intent is the "commoditise the platform, sell the expertise" model captured in [SLUICE-IMPLEMENTATION-PLAN.md §1](./SLUICE-IMPLEMENTATION-PLAN.md#1-the-vision): the engine becomes a free, auditable, community-credible asset; the consultancy keeps everything that represents accumulated client knowledge and bespoke delivery as paid services. Phase 5 is the irreversible flip that makes that split real.
 
-## Contents
-
-1. [Overview](#1-overview)
-2. [Repository Architecture](#2-repository-architecture)
-3. [npm Package Strategy](#3-npm-package-strategy)
-4. [Repository Structure](#4-repository-structure)
-5. [Branching Strategy](#5-branching-strategy)
-6. [Release Pipeline](#6-release-pipeline)
-7. [CI/CD Pipeline](#7-cicd-pipeline)
-8. [Client Package Dependencies](#8-client-package-dependencies)
-9. [Implementation Plan](#9-implementation-plan)
-10. [Tooling Reference](#10-tooling-reference)
-11. [Client Local Setup](#11-client-local-setup)
+Phase 5 is **not** a monorepo-split. The current repo is already a flat single-package layout (no `packages/` directory). The work is mostly in-place open-sourcing of `caracal-lynx/sluice` plus the *creation* of new sibling private repos — a smaller, lower-risk migration than the master plan's "before / after" diagram (which carries an aspirational pre-state) might suggest.
 
 ---
 
-## 1. Overview
+## Goals & non-goals
 
-Sluice is a YAML-controlled ETL and data quality pipeline CLI built in TypeScript. The development workflow separates concerns across four distinct repo types, each with its own release cadence and ownership boundary.
+### Goals
 
-**Key principles:**
+- The public repository at `github.com/caracal-lynx/sluice` is live, discoverable, and licensed under ELv2.
+- Every source file in the public repo carries an SPDX `Elastic-2.0` header.
+- All open-source hygiene files (`LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `LICENCE-FAQ.md`, issue/PR templates) are committed at the repo root.
+- The `@caracal-lynx/sluice` package is published as a public npm package; the npm scope is configured for further private packages.
+- Seven sibling private repos exist in their post-launch shape: `sluice-enrich` (already created in Phase 4a), `sluice-rules`, `sluice-adapter-{ifs,bc,bluecherry}`, `sluice-mcp`, and per-client repos for Cochran and Eribé.
+- `clients/` is no longer present in the public repo's working tree or any reachable git history.
 
-- The `sluice` monorepo contains the **core engine** plus all **country- and industry-specific rule/transform packages** — things reusable across many clients regardless of target application
-- **Application adapters** (IFS, Business Central, BlueCherry) each live in their own standalone repo, with their own versioning and release cycle independent of the core
-- Each **client engagement** lives in its own private GitHub repository, consuming whichever core, rule, and adapter packages it needs
-- All packages are published to the **npm registry** under the `@caracal-lynx` scope (Pro plan — private packages)
-- **Renovate** monitors the npm registry and automatically opens version-bump PRs downstream when any package is released
-- **Changesets** manages versioning and changelogs inside the monorepo; adapter repos use a simpler tag-based release approach
-- Breaking changes (major version bumps) require manual review at every downstream boundary
+### Non-goals (explicitly deferred)
 
----
-
-## 2. Repository Architecture
-
-The system operates across four layers. The cascade flows top-to-bottom: core changes ripple through adapter repos, then down to client repos.
-
-```mermaid
-graph TD
-    subgraph MONO["🏗️  caracal-lynx/sluice   (GitHub — monorepo)"]
-        direction LR
-        CORE["packages/core\n──────────────\n@caracal-lynx/sluice\nCLI · engine · built-in adapters\nDQ engine · transform engine\nDuckDB · Zod · pino"]
-        RULES_UK["packages/etl-rules-uk\n──────────────\n@caracal-lynx/etl-rules-uk\nukVat · ukNi · ukPostcode\nukSortCode · ukCompanyNo"]
-        RULES_FASHION["packages/etl-rules-fashion\n──────────────\n@caracal-lynx/etl-rules-fashion\nseasonCode · colourCode\nsizeCode · eanBarcode"]
-    end
-
-    subgraph ADAPTERS["⚙️  Application Adapter Repos   (GitHub — standalone, private)"]
-        direction LR
-        REPO_IFS["caracal-lynx/sluice-adapter-ifs\n──────────────\n@caracal-lynx/sluice-adapter-ifs\nerpAccountFormat\nifsDateFormat · ifsYesNo"]
-        REPO_BC["caracal-lynx/sluice-adapter-bc\n──────────────\n@caracal-lynx/sluice-adapter-bc\nbcStyleNo · bcVendorNo\nbcSeasonCode · OData REST\nOAuth2 token handling"]
-        REPO_BLUE["caracal-lynx/sluice-adapter-bluecherry\n──────────────\n@caracal-lynx/sluice-adapter-bluecherry\nbcStyleNo · bcVendorNo\nbcSeasonCode · US date fmt\nCSV headers required"]
-    end
-
-    subgraph NPM["📦  npm Registry   (@caracal-lynx scope — Pro plan, private)"]
-        direction LR
-        N1["@caracal-lynx/sluice"]
-        N2["@caracal-lynx/etl-rules-uk"]
-        N3["@caracal-lynx/etl-rules-fashion"]
-        N4["@caracal-lynx/sluice-adapter-ifs"]
-        N5["@caracal-lynx/sluice-adapter-bc"]
-        N6["@caracal-lynx/sluice-adapter-bluecherry"]
-    end
-
-    subgraph CLIENTS["🔒  Client Repos   (GitHub — private)"]
-        direction LR
-        COCHRAN["caracal-lynx/sluice-client-cochran\nCochran Group · Annan\nIFS ERP"]
-        ERIBE["caracal-lynx/sluice-client-eribe\nEribé Knitwear\nBlueCherry ERP"]
-    end
-
-    CORE          -->|publish| N1
-    RULES_UK      -->|publish| N2
-    RULES_FASHION -->|publish| N3
-
-    N1 -->|peer dep| REPO_IFS
-    N1 -->|peer dep| REPO_BC
-    N1 -->|peer dep| REPO_BLUE
-
-    REPO_IFS  -->|publish| N4
-    REPO_BC   -->|publish| N5
-    REPO_BLUE -->|publish| N6
-
-    N1 -->|npm install| COCHRAN
-    N2 -->|npm install| COCHRAN
-    N4 -->|npm install| COCHRAN
-
-    N1 -->|npm install| ERIBE
-    N2 -->|npm install| ERIBE
-    N3 -->|npm install| ERIBE
-    N6 -->|npm install| ERIBE
-```
-
-> **Note:** `@caracal-lynx/sluice-adapter-bc` (Business Central) exists as a maintained adapter available for future client engagements. It is not currently used by any active client.
+- **Release automation, Changesets, Renovate, GitHub Actions release workflows** → owned by [Phase 7](./PHASE-07-git-npm-workflow-spec.md). Phase 5 sets up scopes and tokens; Phase 7 wires up the cascade.
+- **README hero copy, paid-services section, marketing artefacts** → owned by [Phase 6](./PHASE-06-readme-and-marketing-spec.md). Phase 5 leaves a placeholder README that meets the licensing-and-pointer minimum so the repo isn't bare on day one.
+- **Documentation site (Astro/Starlight)** → owned by [Phase 8](./SLUICE-IMPLEMENTATION-PLAN.md#12-phase-8--github-pages-documentation-site). Phase 5 enables GitHub Pages on the public repo but doesn't author the site.
+- **Enrich service implementation** → owned by [Phase 4](./PHASE-04-enrich-phase.md). Phase 5 assumes `sluice-enrich` already exists as a private repo.
+- **MCP server implementation** → owned by [Phase 9](./PHASE-09-sluice-mcp-spec.md). Phase 5 only creates the empty `sluice-mcp` repo as part of the topology.
+- **Branching strategy & PR conventions** → moved to [`branching-strategy.md`](./branching-strategy.md). Not a Phase 5 deliverable.
 
 ---
 
-## 3. npm Package Strategy
+## Prerequisites (must be true before starting)
 
-All packages are published under the `@caracal-lynx` scope to the public npm registry using an **npm Pro plan**, which allows unlimited private packages. No special registry overrides are needed — `npm install` works identically to any other dependency, authenticated via `NPM_TOKEN`.
-
-### Package Catalogue
-
-| Package | Source Repo | Description | Current Consumers |
+| # | Prerequisite | Owned by | Verify with |
 |---|---|---|---|
-| `@caracal-lynx/sluice` | `sluice` monorepo | Core CLI engine, built-in adapters, DQ engine, transform engine | All adapter repos · all client repos |
-| `@caracal-lynx/etl-rules-uk` | `sluice` monorepo | UK validation rules: VAT, NI, postcode, sort code, company number | All UK client repos |
-| `@caracal-lynx/etl-rules-fashion` | `sluice` monorepo | Fashion industry rules: season, colour, size, EAN barcode | Eribé |
-| `@caracal-lynx/sluice-adapter-ifs` | `sluice-adapter-ifs` | IFS ERP format transforms and target adapter | Cochran |
-| `@caracal-lynx/sluice-adapter-bc` | `sluice-adapter-bc` | Business Central OData REST adapter + format transforms | *(future clients)* |
-| `@caracal-lynx/sluice-adapter-bluecherry` | `sluice-adapter-bluecherry` | BlueCherry CSV adapter + US date / header format transforms | Eribé |
+| 1 | Phase 0 board resolution minuted; ELv2 decision recorded | Phase 0 | Caracal Lynx board minutes |
+| 2 | Phase 0 client contract audit clean (no IP / confidentiality blockers) | Phase 0 | Legal review record |
+| 3 | Phase 0 GDPR audit clean across HEAD **and history** | Phase 0 | `git log -S "cochran"` etc. — see §2.1 below |
+| 4 | Phase 0 dependency licence audit clean (MIT / Apache 2.0 / BSD / ISC only) | Phase 0 | `npx license-checker --summary --excludePrivatePackages` |
+| 5 | npm `@caracal-lynx` org confirmed, Pro plan active | Phase 0 | `npm whoami && npm access list packages @caracal-lynx` |
+| 6 | Phase 4a complete — `caracal-lynx/sluice-enrich` exists as a private repo | Phase 4a | `gh repo view caracal-lynx/sluice-enrich --json visibility` |
+| 7 | All Vitest suites green on master | continuous | `npm test` |
+| 8 | Working tree clean; no uncommitted changes | continuous | `git status` |
 
-> **Naming convention:** `@caracal-lynx/sluice` is the core engine. `@caracal-lynx/etl-rules-*` are reusable rule plugins. `@caracal-lynx/sluice-adapter-*` are full application adapters (target adapter + ERP-specific transforms in one package).
-
-### npm Authentication Setup
-
-One-time setup per developer machine and per CI environment:
-
-```bash
-# Authenticate with npm (once per machine)
-npm login --scope=@caracal-lynx
-
-# .npmrc at repo root (committed) — scope binding
-@caracal-lynx:registry=https://registry.npmjs.org/
-//registry.npmjs.org/:_authToken=${NPM_TOKEN}
-```
-
-The `NPM_TOKEN` is stored as:
-- A **GitHub Actions secret** (`NPM_TOKEN`) in each repo's settings
-- A **local environment variable** on developer machines (`~/.bashrc` / `~/.zshrc`)
-
-For **client machines** a read-only token is generated from the `@caracal-lynx` npm org and distributed to the client. See [Section 11 — Client Local Setup](#11-client-local-setup).
+If any row is not green, do not start Phase 5.
 
 ---
 
-## 4. Repository Structure
-
-### 4.1 Sluice Monorepo (`caracal-lynx/sluice`)
-
-Contains the core engine and all country- and industry-specific rule/transform packages.
-
-```
-sluice/
-├── .changeset/                      # Changeset files (one per unreleased change)
-│   └── config.json
-├── .github/
-│   └── workflows/
-│       ├── ci.yml                   # Runs on every PR: lint · tsc · vitest
-│       └── release.yml              # Runs on merge to master: changeset publish
-├── packages/
-│   ├── core/                        # @caracal-lynx/sluice
-│   │   ├── src/
-│   │   │   ├── adapters/            # Built-in source/target adapters
-│   │   │   ├── config/              # YAML loader + Zod schemas
-│   │   │   ├── dq/                  # DQ engine + built-in rules
-│   │   │   ├── plugins/             # Plugin registry + loader (Phase 2)
-│   │   │   ├── runner/              # PipelineRunner orchestrator
-│   │   │   └── transform/           # Transform engine
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   ├── etl-rules-uk/                # @caracal-lynx/etl-rules-uk
-│   │   ├── src/
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   └── etl-rules-fashion/           # @caracal-lynx/etl-rules-fashion
-│       ├── src/
-│       ├── package.json
-│       └── tsconfig.json
-├── docs/                            # Framework-level documentation
-├── package.json                     # Root — workspaces: ["packages/*"]
-├── tsconfig.base.json               # Shared TypeScript config
-├── .eslintrc.js
-└── vitest.config.ts
-```
-
-### 4.2 Application Adapter Repo (`caracal-lynx/sluice-adapter-{app}`)
-
-Each ERP application has its own standalone repo. Structure is the same across all three.
-
-```
-sluice-adapter-ifs/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml                   # lint · tsc · vitest on every PR
-│       └── release.yml              # npm publish on version tag push
-├── src/
-│   ├── adapter/                     # IFS target adapter implementation
-│   ├── transforms/                  # IFS-specific transform plugins
-│   │   ├── erpAccountFormat.transform.ts
-│   │   ├── ifsDateFormat.transform.ts
-│   │   └── ifsYesNo.transform.ts
-│   └── index.ts                     # Public exports
-├── test/
-├── .npmrc                           # npm auth for @caracal-lynx scope
-├── package.json                     # peerDependency: @caracal-lynx/sluice
-├── tsconfig.json
-└── renovate.json                    # Watches for @caracal-lynx/sluice updates
-```
-
-> The adapter repo declares `@caracal-lynx/sluice` as a **peer dependency** — it relies on the host client repo supplying the core engine, avoiding duplicate bundling.
-
-### 4.3 Client Repository (`caracal-lynx/sluice-client-{name}`)
-
-Contains YAML pipeline configs, Tier-1 composite rules, any bespoke Tier-2 plugins, and client documentation.
-
-```
-sluice-client-cochran/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                   # tsc · lint · dry-run on every PR + Renovate bumps
-├── pipelines/
-│   ├── customers.pipeline.yaml
-│   ├── orders.pipeline.yaml
-│   ├── products.pipeline.yaml
-│   └── shared/
-│       └── rules.yaml               # Tier-1 composite rule library
-├── plugins/                         # Tier-2 bespoke plugins (not covered by adapter packages)
-│   ├── cochranAccountCode.rule.ts
-│   └── ...
-├── docs/                            # Client-facing documentation
-├── .env.example                     # Template of required environment variables
-├── .npmrc                           # npm auth for @caracal-lynx scope
-├── package.json                     # @caracal-lynx/sluice + adapter + rules packages
-├── tsconfig.json
-└── renovate.json
-```
-
----
-
-## 5. Branching Strategy
-
-### 5.1 Sluice Monorepo Branching
-
-```mermaid
-gitGraph
-    commit id: "initial"
-    branch develop
-    checkout develop
-
-    branch feature/phase2-registry
-    checkout feature/phase2-registry
-    commit id: "add RuleRegistry"
-    commit id: "add TransformRegistry"
-    checkout develop
-    merge feature/phase2-registry id: "merge: phase2 registry"
-
-    branch feature/etl-rules-uk
-    checkout feature/etl-rules-uk
-    commit id: "ukVatNumber rule"
-    commit id: "ukPostcode rule"
-    checkout develop
-    merge feature/etl-rules-uk id: "merge: etl-rules-uk"
-
-    branch changeset/release
-    checkout changeset/release
-    commit id: "changeset: bump v2.1.0"
-    checkout master
-    merge changeset/release id: "release v2.1.0" tag: "v2.1.0"
-
-    checkout develop
-    branch hotfix/fix-dq-nullcheck
-    checkout hotfix/fix-dq-nullcheck
-    commit id: "fix null check in DQ"
-    checkout master
-    merge hotfix/fix-dq-nullcheck id: "hotfix v2.1.1" tag: "v2.1.1"
-    checkout develop
-    merge master id: "sync hotfix back"
-```
-
-### 5.2 Monorepo Branch Rules
-
-| Branch | Purpose | Protected | PR Required | Who merges |
-|---|---|---|---|---|
-| `master` | Stable releases only | ✅ | ✅ | Michael |
-| `develop` | Integration — all features land here first | ✅ | ✅ | Michael |
-| `feature/*` | New functionality, branches from `develop` | ❌ | via develop | Developer |
-| `fix/*` | Bug fixes, branches from `develop` | ❌ | via develop | Developer |
-| `hotfix/*` | Critical production fixes, branches from `master` | ❌ | via master | Michael |
-
-### 5.3 Adapter and Client Repo Branching
-
-Adapter and client repos use a simpler flat model — no `develop` branch needed:
-
-```
-master        ← production; PRs and Renovate bump PRs target this
-feature/*     ← new adapter functionality or new pipeline configs
-fix/*         ← bug fixes
-```
-
-Releases in adapter repos are triggered by **pushing a version tag** (e.g. `git tag v1.2.0 && git push --tags`) rather than using Changesets.
-
----
-
-## 6. Release Pipeline
-
-### 6.1 Two-Level Cascade
-
-A release in either the monorepo or an adapter repo triggers a downstream cascade. The two levels are independent — an IFS adapter release cascades only to repos that depend on it.
-
-```mermaid
-flowchart TD
-    A["🏗️ sluice monorepo\nnew release published"] --> B["Renovate detects\n@caracal-lynx/sluice update"]
-    B --> C["Bump PR → sluice-adapter-ifs"]
-    B --> D["Bump PR → sluice-adapter-bc"]
-    B --> E["Bump PR → sluice-adapter-bluecherry"]
-    B --> F["Bump PR → sluice-client-cochran\n(direct core dependency)"]
-    B --> G["Bump PR → sluice-client-eribe\n(direct core dependency)"]
-
-    C --> H["Adapter CI passes\nMichael merges"]
-    D --> I["Adapter CI passes\nMichael merges"]
-    E --> J["Adapter CI passes\nMichael merges"]
-
-    H --> K["⚙️ sluice-adapter-ifs\nnew release published"]
-    I --> L["⚙️ sluice-adapter-bc\n(no active clients — no cascade)"]
-    J --> M["⚙️ sluice-adapter-bluecherry\nnew release published"]
-
-    K --> N["Renovate: Bump PR\n→ sluice-client-cochran"]
-    M --> O["Renovate: Bump PR\n→ sluice-client-eribe"]
-
-    N --> P["Client CI passes\nMichael merges ✅"]
-    O --> Q["Client CI passes\nMichael merges ✅"]
-
-    F --> P
-    G --> Q
-```
-
-### 6.2 Full Monorepo Release Sequence
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant GH as GitHub (sluice)
-    participant CI as GitHub Actions
-    participant CS as Changesets Bot
-    participant NPM as npm Registry
-    participant REN as Renovate Bot
-    participant AI as sluice-adapter-ifs
-    participant CC as sluice-client-cochran
-
-    Dev->>GH: Push feature branch
-    Dev->>GH: Open PR → develop
-    GH->>CI: Trigger CI workflow
-    CI->>CI: lint · tsc · vitest
-    CI-->>GH: ✅ checks pass
-    Dev->>GH: Merge to develop
-
-    Note over Dev,GH: Ready to release
-
-    Dev->>GH: Open PR → develop to master
-    CI-->>GH: ✅ checks pass
-    Dev->>GH: Merge to master
-
-    GH->>CI: Trigger release workflow
-    CI->>CS: changeset version
-    CS->>GH: Open "Version Packages" PR
-    Dev->>GH: Review changelog · merge
-    GH->>CI: Trigger publish
-    CI->>NPM: npm publish @caracal-lynx/sluice@2.1.0
-    NPM-->>CI: ✅ published
-
-    Note over NPM,CC: Level 1 cascade — adapter repos
-
-    REN->>AI: Bump PR (sluice ^2.1.0)
-    AI->>CI: Adapter CI runs
-    CI-->>AI: ✅ pass
-    Dev->>AI: Merge · tag v1.3.0
-    AI->>NPM: npm publish sluice-adapter-ifs@1.3.0
-
-    Note over NPM,CC: Level 2 cascade — client repos
-
-    REN->>CC: Bump PR (sluice ^2.1.0 + adapter-ifs ^1.3.0)
-    CC->>CI: Client CI: tsc · lint · dry-run
-    CI-->>CC: ✅ pass
-    Dev->>CC: Merge ✅
-```
-
-### 6.3 Breaking Change Handling
-
-```mermaid
-flowchart TD
-    A["New release published to npm"] --> B{Major version bump?}
-    B -->|No — patch or minor| C["Renovate opens bump PR\nauto-merge if CI passes"]
-    B -->|Yes — breaking change| D["Renovate opens bump PR\nlabelled ⚠️ breaking-change\nNO auto-merge"]
-    C --> E["Downstream CI: lint · tsc · vitest / dry-run"]
-    D --> F["Michael reviews\nChecks interface changes\nUpdates adapter or client plugins if needed"]
-    F --> E
-    E -->|Pass| G["Merge — downstream updated ✅"]
-    E -->|Fail| H["Fix in downstream repo\nre-push to bump PR branch"]
-    H --> E
-```
-
----
-
-## 7. CI/CD Pipeline
-
-### 7.1 Sluice Monorepo CI (`.github/workflows/ci.yml`)
-
-Runs on every PR targeting `develop` or `master`.
-
-```mermaid
-flowchart TD
-    A["PR opened / updated"] --> B["Checkout + npm ci"]
-    B --> C["ESLint"]
-    B --> D["tsc --noEmit"]
-    B --> E["vitest run --coverage"]
-    C & D & E --> F{All passed?}
-    F -->|Yes| G["✅ PR checks green"]
-    F -->|No| H["❌ PR blocked\nFix and push"]
-    H --> B
-```
-
-### 7.2 Sluice Monorepo Release Workflow (`.github/workflows/release.yml`)
-
-```mermaid
-flowchart TD
-    A["Push to master"] --> B["Checkout + npm ci"]
-    B --> C{Unreleased changeset files?}
-    C -->|Yes| D["Changesets Action:\nOpen 'Version Packages' PR\nBump versions · update CHANGELOGs"]
-    C -->|No — Version PR just merged| E["Changesets Action:\nnpm publish all changed packages"]
-    E --> F["Create GitHub Release + tag"]
-    F --> G["Renovate cascade begins\nin adapter + client repos"]
-    D --> H["Michael reviews & merges\nVersion Packages PR"]
-    H --> A
-```
-
-### 7.3 Adapter Repo CI + Release
-
-Adapter repos use a simpler tag-based release — no Changesets needed.
-
-```mermaid
-flowchart TD
-    A["PR to master\n(or Renovate bump PR)"] --> B["Checkout + npm ci"]
-    B --> C["tsc --noEmit"]
-    B --> D["ESLint"]
-    B --> E["vitest run"]
-    C & D & E --> F{All passed?}
-    F -->|Yes| G["✅ Merge PR"]
-    F -->|No| H["Fix and push"]
-    H --> B
-    G --> I{Ready to release?}
-    I -->|Yes| J["git tag v1.x.x\ngit push --tags"]
-    J --> K["release.yml triggers\nnpm publish @caracal-lynx/sluice-adapter-*"]
-    K --> L["Renovate cascade begins\nin client repos"]
-    I -->|No| M["Continue development"]
-```
-
-### 7.4 Client Repo CI (`.github/workflows/ci.yml`)
-
-Runs on every PR including Renovate bump PRs.
-
-```mermaid
-flowchart TD
-    A["PR opened\n(feature or Renovate bump)"] --> B["Checkout + npm ci\n(installs all @caracal-lynx/* deps)"]
-    B --> C["tsc --noEmit"]
-    B --> D["ESLint plugins/"]
-    B --> E["npx sluice run --dry-run --all"]
-    C & D & E --> F{All passed?}
-    F -->|Yes| G["✅ Safe to merge"]
-    F -->|No| H{Renovate bump?}
-    H -->|Yes| I["Breaking change upstream\nUpdate plugins to match\nnew interfaces — push fix"]
-    H -->|No| J["Fix pipeline config\nor plugin logic"]
-    I & J --> B
-```
-
----
-
-## 8. Client Package Dependencies
+## §1 — Topology: before & after
 
 ```mermaid
 graph LR
-    subgraph MONO["sluice monorepo"]
-        SLUICE["@caracal-lynx/sluice"]
-        UK["@caracal-lynx/etl-rules-uk"]
-        FASHION["@caracal-lynx/etl-rules-fashion"]
+    subgraph BEFORE["TODAY · single private repo"]
+        SLUICE_OLD["caracal-lynx/sluice (private)<br/>src/ · tests/ · docs/<br/>clients/cochran · clients/eribe"]
     end
 
-    subgraph APP["Application adapter repos"]
-        IFS["@caracal-lynx/sluice-adapter-ifs"]
-        BC["@caracal-lynx/sluice-adapter-bc\n(future clients)"]
-        BLUE["@caracal-lynx/sluice-adapter-bluecherry"]
+    subgraph AFTER["AFTER PHASE 5"]
+        direction TB
+        subgraph PUB["🌍 Public · ELv2"]
+            SLUICE_NEW["caracal-lynx/sluice<br/>(same flat layout, now public)<br/>+ LICENSE · CONTRIBUTING · etc."]
+        end
+        subgraph PRIV["🔒 Private siblings"]
+            ENRICH["sluice-enrich<br/>(from Phase 4a)"]
+            RULES["sluice-rules<br/>(monorepo: etl-rules-uk, etl-rules-fashion)"]
+            IFS["sluice-adapter-ifs"]
+            BC["sluice-adapter-bc"]
+            BLUE["sluice-adapter-bluecherry"]
+            MCP["sluice-mcp<br/>(empty skeleton; impl is Phase 9)"]
+            COCHRAN["sluice-client-cochran"]
+            ERIBE["sluice-client-eribe"]
+        end
     end
 
-    subgraph COCHRAN["sluice-client-cochran\n(Cochran Group — IFS only)"]
-        C_PLUGINS["plugins/\nclient-specific only"]
-        C_YAML["pipelines/*.yaml"]
-    end
+    SLUICE_OLD -->|in-place flip| SLUICE_NEW
+    SLUICE_OLD -.->|extract clients/| COCHRAN
+    SLUICE_OLD -.->|extract clients/| ERIBE
 
-    subgraph ERIBE["sluice-client-eribe\n(Eribé Knitwear)"]
-        E_PLUGINS["plugins/\nclient-specific only"]
-        E_YAML["pipelines/*.yaml"]
-    end
+    style SLUICE_OLD fill:#e2e3e5,stroke:#6c757d
+    style SLUICE_NEW fill:#d4edda,stroke:#28a745
+    style ENRICH fill:#f8d7da,stroke:#dc3545
+    style RULES fill:#f8d7da,stroke:#dc3545
+    style IFS fill:#f8d7da,stroke:#dc3545
+    style BC fill:#f8d7da,stroke:#dc3545
+    style BLUE fill:#f8d7da,stroke:#dc3545
+    style MCP fill:#f8d7da,stroke:#dc3545
+    style COCHRAN fill:#f8d7da,stroke:#dc3545
+    style ERIBE fill:#f8d7da,stroke:#dc3545
+```
 
-    SLUICE -->|peer dep| IFS
-    SLUICE -->|peer dep| BC
-    SLUICE -->|peer dep| BLUE
+Two things are worth calling out about this diagram:
 
-    SLUICE --> COCHRAN
-    UK     --> COCHRAN
-    IFS    --> COCHRAN
+1. **The public repo's internal layout doesn't change.** `src/`, `tests/`, `docs/`, `examples/` stay where they are. Phase 5 adds files (LICENSE, hygiene files, SPDX headers) and removes the `clients/` directory; it does not introduce a `packages/` split.
+2. **`sluice-rules` is a private monorepo of its own**, not a folder inside the public repo. The earlier draft of this document (and the master plan's pre-Phase-5 "before" diagram) showed `etl-rules-uk` and `etl-rules-fashion` as `packages/*` inside the public sluice repo. That was always wrong for the open-source split: domain rules are paid services and must live in a private repo. Putting them inside the public repo would have either licensed away paid IP or created an awkward `.npmignore` mess.
 
-    SLUICE  --> ERIBE
-    UK      --> ERIBE
-    FASHION --> ERIBE
-    BLUE    --> ERIBE
+---
 
-    SLUICE -.->|"RulePlugin / TransformPlugin\ninterfaces"| C_PLUGINS
-    SLUICE -.->|"RulePlugin / TransformPlugin\ninterfaces"| E_PLUGINS
+## §2 — Repository restructure execution
+
+The Phase 5 work happens in a controlled sequence on a single working day. Each step is gated on the previous one passing.
+
+### 2.1 — GDPR / secrets history audit
+
+Run the audit listed in [SLUICE-IMPLEMENTATION-PLAN.md §4.3](./SLUICE-IMPLEMENTATION-PLAN.md#43-uk-gdpr-audit) against the **full git history**, not just HEAD:
+
+```bash
+# Client identifiers (real client names should not appear anywhere in the public repo)
+git log --all -S "cochran" --pretty=oneline
+git log --all -S "eribe"   --pretty=oneline
+git log --all -S "Eribé"   --pretty=oneline
+
+# Credential patterns
+git log --all -S "password=" --pretty=oneline
+git log --all -S "Bearer "   --pretty=oneline
+git log --all -S "BEGIN PRIVATE KEY" --pretty=oneline
+git log --all -S "BEGIN RSA PRIVATE KEY" --pretty=oneline
+
+# Connection strings
+git log --all -S "mssql://" --pretty=oneline
+git log --all -S "postgres://" --pretty=oneline
+
+# Internal hostnames (substitute for the actual ones the consultancy uses)
+git log --all -S ".cochran.local"  --pretty=oneline
+git log --all -S ".eribe.local"    --pretty=oneline
+```
+
+Expected: every command returns no rows. If any row appears, **do not flip public** — investigate, decide whether to rewrite history (BFG / `git filter-repo`) or to leave as private and re-evaluate. A single overlooked credential is a flip-blocker.
+
+### 2.2 — Move client folders out
+
+Before the flip, the existing `clients/cochran/` and `clients/eribe/` folders need to be in their new private repos (`sluice-client-cochran`, `sluice-client-eribe`). The clean way is to extract with history preserved:
+
+```bash
+# From a fresh clone of the current repo
+git clone https://github.com/caracal-lynx/sluice.git sluice-client-cochran
+cd sluice-client-cochran
+git filter-repo --path clients/cochran --path-rename clients/cochran/:
+# Push to the new private repo
+git remote remove origin
+git remote add origin https://github.com/caracal-lynx/sluice-client-cochran.git
+git push -u origin master
+```
+
+Repeat for Eribé. Then in the original repo, delete the `clients/` directory and commit:
+
+```bash
+git rm -r clients/
+git commit -m "[master] - chore: remove clients/ from public repo (now in client-specific private repos)"
+```
+
+The deletion does **not** by itself remove client data from history. That's why §2.1's history audit is a prerequisite — if it's clean, the recipe-only YAML configs that lived in `clients/` are not a confidentiality concern (they're not real data, they describe migration mappings). If §2.1 surfaced anything sensitive, it must be removed via a history rewrite *before* the flip.
+
+### 2.3 — Final HEAD scrub
+
+With `clients/` gone, do one more pass over HEAD for stale identifiers:
+
+```bash
+# In the working tree, not history
+grep -ri --include="*.ts" --include="*.md" --include="*.yaml" --include="*.yml" \
+  -e "cochran" -e "eribe" -e "Eribé" \
+  src/ tests/ docs/ examples/ README.md
+```
+
+Some hits are legitimate (this very file, the master plan, CLAUDE.md mention the clients by name as documented case studies — that's allowed by the Phase 0 client-contract audit). Hits in `src/` or `tests/fixtures/*.yaml` are not allowed. Replace with generic placeholders (`acme-corp`, `style-co`) and commit.
+
+### 2.4 — Git history strategy
+
+Decision: **preserve history**. Phase 0.3 + §2.1 + §2.3 are the gates. If they pass, the public repo ships with full history including PR numbers, attributions, and the entire Phase 1 / Phase 3 implementation arc. This is the cheaper option and gives the open-source repo more credibility (visible engineering history, not a single squash commit).
+
+The fresh-start alternative (squash to a single commit before flipping) is only needed if §2.1 surfaces something that can't be cleaned up. Document the choice in the board minutes for completeness.
+
+---
+
+## §3 — Open-source hygiene files
+
+Author and commit these at the repo root before flipping public.
+
+| File | Source / template | Acceptance criterion |
+|---|---|---|
+| `LICENSE` | Verbatim ELv2 text from [elastic.co/licensing/elastic-license](https://www.elastic.co/licensing/elastic-license) | First line: `Elastic License 2.0`; last line includes `Limitations` |
+| `LICENCE-FAQ.md` | Already authored; verify it's current | Mentions `@caracal-lynx/sluice` by name and gives the plain-English "may I…?" answers |
+| `CONTRIBUTING.md` | New — author per template below | Covers PR process, conventional commits convention, DCO sign-off requirement, link to `branching-strategy.md` |
+| `CODE_OF_CONDUCT.md` | [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) verbatim | Reporting email is `conduct@caracallynx.com` |
+| `SECURITY.md` | New — author per template below | Reporting channel: `security@caracallynx.com`; SLA: 48-hour acknowledgement, 90-day disclosure |
+| `.github/ISSUE_TEMPLATE/bug_report.yml` | GitHub form schema | Captures: Sluice version, Node version, OS, pipeline YAML excerpt, expected vs actual |
+| `.github/ISSUE_TEMPLATE/feature_request.yml` | GitHub form schema | Captures: use case, proposed YAML / API shape, willingness to PR |
+| `.github/ISSUE_TEMPLATE/config.yml` | Routing config | Disables blank issues; routes commercial enquiries to `michael.scott@caracallynx.com` |
+| `.github/PULL_REQUEST_TEMPLATE.md` | New — short checklist | Covers: tests added, CHANGELOG updated, breaks public API? |
+
+`CONTRIBUTING.md` skeleton:
+
+```markdown
+# Contributing to Sluice
+
+Thanks for considering a contribution. Sluice is open-source under the Elastic
+Licence 2.0; bug reports, feature requests, and PRs are all welcome under that
+licence's terms.
+
+## Reporting bugs
+
+Use the bug report issue template. Include the smallest pipeline YAML that
+reproduces the issue.
+
+## Submitting a PR
+
+1. Fork the repo and create a feature branch from `master`. Branch naming
+   conventions are documented in [branching-strategy.md](./docs/branching-strategy.md).
+2. Add tests for any new behaviour. Sluice maintains 80% line coverage in
+   `src/dq/` and `src/transform/` — see [CLAUDE.md](./CLAUDE.md).
+3. Run `npm test` and `npm run lint` locally before opening the PR.
+4. Add a `.changeset/` entry describing the change (see Phase 7 docs).
+5. Sign off your commits: `git commit -s -m "..."`.
+
+## Commercial questions
+
+For paid services (enrichment, ERP adapters, domain rule packages, MCP server,
+or migration delivery) email michael.scott@caracallynx.com — these are not
+handled via GitHub issues.
+```
+
+`SECURITY.md` skeleton:
+
+```markdown
+# Security Policy
+
+## Reporting a vulnerability
+
+Email security@caracallynx.com with details. Please do not open a public issue
+for security reports.
+
+We aim to acknowledge within 48 hours and to publish a fix within 90 days.
+
+## Supported versions
+
+The current major version of `@caracal-lynx/sluice` receives security fixes.
+Older majors do not.
 ```
 
 ---
 
-## 9. Implementation Plan
+## §4 — ELv2 licence header application
 
-### Phase 0 — Monorepo Setup (Prerequisite)
+Every TypeScript file in `src/` must carry the SPDX header:
 
-> Restructures the existing `sluice` repo into a proper npm workspace monorepo. Must be complete before Phase 2 plugin work begins.
+```typescript
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+```
 
-| Step | Task | Detail |
-|---|---|---|
-| 0.1 | Initialise npm workspaces | Add `"workspaces": ["packages/*"]` to root `package.json` |
-| 0.2 | Move core source | Move `src/` → `packages/core/src/`; set `package.json` name to `@caracal-lynx/sluice` |
-| 0.3 | Configure Changesets | `npx changeset init`; set `access: restricted` in `.changeset/config.json` |
-| 0.4 | Shared TypeScript config | Create `tsconfig.base.json` at root; extend in each package |
-| 0.5 | npm Pro plan | Upgrade `caracal-lynx` org on npmjs.com to Pro; create `NPM_TOKEN` secret in GitHub org settings |
-| 0.6 | CI workflow | `.github/workflows/ci.yml` — lint · tsc · vitest |
-| 0.7 | Release workflow | `.github/workflows/release.yml` — Changesets publish action |
-| 0.8 | Branch protection | Protect `master` and `develop`; require PR + CI pass to merge |
+Application script (one-off, idempotent — safe to re-run):
 
-### Phase 1 — Rule Package Scaffolding (in monorepo)
+```bash
+HEADER=$'// SPDX-License-Identifier: Elastic-2.0\n// Copyright (c) 2026 Caracal Lynx Ltd.\n\n'
+find src -name "*.ts" -type f | while read -r f; do
+  if ! grep -q "SPDX-License-Identifier: Elastic-2.0" "$f"; then
+    printf '%s' "$HEADER" | cat - "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+  fi
+done
+```
 
-> Scaffold the country- and industry-specific rule packages inside the monorepo. Shell structure only — implementation logic comes in Phase 2.
+Verification:
 
-| Step | Task | Detail |
-|---|---|---|
-| 1.1 | Scaffold `packages/etl-rules-uk` | `package.json` name `@caracal-lynx/etl-rules-uk`; peer dep on `@caracal-lynx/sluice` for `RulePlugin` types |
-| 1.2 | Scaffold `packages/etl-rules-fashion` | Same pattern |
-| 1.3 | Verify workspace linking | `npm install` from root; confirm cross-package resolution works locally |
+```bash
+# Should print nothing — every src/*.ts has the header
+find src -name "*.ts" -type f -exec grep -L "SPDX-License-Identifier: Elastic-2.0" {} \;
+```
 
-### Phase 2 — Core Plugin System (PHASE2-EXTENSIONS.md)
-
-> Implements the three-tier plugin architecture in `packages/core`. Follow the 10-step build order in `PHASE2-EXTENSIONS.md`.
-
-| Step | Task | Detail |
-|---|---|---|
-| 2.1 | Registry classes | `src/plugins/registry.ts` + `src/plugins/types.ts` — `RuleRegistry` / `TransformRegistry` |
-| 2.2 | Composite rule expansion | Extend `src/config/loader.ts` — expand `dq.rulesFile` composites (one level deep) |
-| 2.3 | Plugin file loader | `src/plugins/loader.ts` — auto-discover `*.rule.ts` / `*.transform.ts` from `plugins/` |
-| 2.4 | DQ engine extension | Pass `RuleRegistry` to `DQEngine` |
-| 2.5 | Transform engine extension | Pass `TransformRegistry`; handle `type: custom` + `customOp` |
-| 2.6 | Runner wiring | Init registries + load plugins before pipeline execution |
-| 2.7 | npm plugin loading | `loadNpmPlugins()` — load packages declared in `sluice.config.yaml` `ToolkitConfig` |
-| 2.8 | CLI additions | `sluice plugins` command + `--plugins` flag |
-| 2.9 | Rule package implementation | Implement real logic in `packages/etl-rules-uk` and `packages/etl-rules-fashion` |
-| 2.10 | Tests | Vitest tests for registry, loader, and each rule package |
-
-### Phase 3 — Application Adapter Repos
-
-> Create the three standalone adapter repos. Each implements its target adapter and ERP-specific transform plugins.
-
-| Step | Task | Detail |
-|---|---|---|
-| 3.1 | Create `caracal-lynx/sluice-adapter-ifs` | Private GitHub repo; `package.json`, `.npmrc`, `renovate.json`; peer dep on `@caracal-lynx/sluice` |
-| 3.2 | Implement IFS adapter | Port IFS target adapter + transforms from current codebase into `src/` |
-| 3.3 | IFS CI + release workflow | `.github/workflows/ci.yml` + `release.yml` (tag-triggered publish) |
-| 3.4 | Create `caracal-lynx/sluice-adapter-bc` | Same scaffolding; implement BC OData REST + OAuth2 adapter (no active client — for future use) |
-| 3.5 | BC CI + release workflow | Same as 3.3 |
-| 3.6 | Create `caracal-lynx/sluice-adapter-bluecherry` | Same scaffolding as 3.1 |
-| 3.7 | Implement BlueCherry adapter | Port BlueCherry CSV adapter + US date formatting + transforms |
-| 3.8 | BlueCherry CI + release workflow | Same as 3.3 |
-| 3.9 | Install Renovate on all adapter repos | Watches for `@caracal-lynx/sluice` core updates |
-
-### Phase 4 — Client Repo Extraction
-
-> Extract client-specific configs and plugins from the monorepo into standalone private repos.
-
-| Step | Task | Detail |
-|---|---|---|
-| 4.1 | Create `caracal-lynx/sluice-client-cochran` | Private repo; `package.json` with `@caracal-lynx/sluice` + `etl-rules-uk` + `sluice-adapter-ifs` |
-| 4.2 | Migrate Cochran pipelines | Copy `clients/cochran/` YAML configs → `pipelines/` |
-| 4.3 | Migrate Cochran plugins | Copy bespoke plugin files → `plugins/` |
-| 4.4 | Add `.env.example` to Cochran repo | Document all required env vars (DB host, credentials, etc.) |
-| 4.5 | Create `caracal-lynx/sluice-client-eribe` | Private repo; `package.json` with `sluice` + `etl-rules-uk` + `etl-rules-fashion` + `sluice-adapter-bluecherry` |
-| 4.6 | Migrate Eribé pipelines + plugins | Same pattern as 4.2–4.3 |
-| 4.7 | Add `.env.example` to Eribé repo | Document all required env vars |
-| 4.8 | Add CI to each client repo | `.github/workflows/ci.yml` — tsc · lint · dry-run |
-| 4.9 | Install Renovate on client repos | Watches for all `@caracal-lynx/*` updates |
-| 4.10 | Remove `clients/` from monorepo | Clean up after verifying client repos are fully operational |
-
-### Phase 5 — First Production Release
-
-| Step | Task | Detail |
-|---|---|---|
-| 5.1 | Write changeset for Phase 2 | `npx changeset add` — minor bump; describe plugin system additions |
-| 5.2 | Merge Version Packages PR | Review changelog; merge to trigger publish |
-| 5.3 | Verify npm publish | Confirm all packages visible on `npmjs.com` under `@caracal-lynx` |
-| 5.4 | Tag adapter repos | `git tag v1.0.0` on each adapter repo; verify publish workflows trigger |
-| 5.5 | Verify Renovate cascade | Confirm bump PRs appear in adapter repos, then client repos |
-| 5.6 | Merge all bump PRs | Review CI output; merge to complete first full cascade |
-
----
-
-## 10. Tooling Reference
-
-| Tool | Purpose | Config file |
-|---|---|---|
-| **npm workspaces** | Links monorepo packages locally during development | Root `package.json` `workspaces` field |
-| **Changesets** | Version bumps and changelogs for monorepo packages | `.changeset/config.json` |
-| **Git tags + release.yml** | Version and publish for standalone adapter repos | `.github/workflows/release.yml` |
-| **Renovate** | Auto-opens dependency-bump PRs downstream on new releases | `renovate.json` in each adapter + client repo |
-| **GitHub Actions** | CI (lint · tsc · vitest) and release automation | `.github/workflows/*.yml` |
-| **Vitest** | Unit and integration testing | `vitest.config.ts` |
-| **tsx** | TypeScript execution for CLI and scripts | `package.json` scripts |
-| **pino** | Structured logging in the pipeline runner | `packages/core` |
-| **Zod v3** | Runtime config validation (YAML schema) | `packages/core` |
-| **DuckDB** | Embedded staging store (`stg_raw` → `stg_transformed`) | `packages/core` |
-| **expr-eval** | Expression evaluation in transform `expression` fields | `packages/core` |
-
-### Renovate Configuration (`renovate.json`)
-
-Applies to all adapter repos and client repos:
+`package.json` change:
 
 ```json
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
-  "packageRules": [
-    {
-      "matchPackagePrefixes": ["@caracal-lynx/"],
-      "groupName": "Sluice packages",
-      "labels": ["dependencies", "sluice-update"]
-    },
-    {
-      "matchPackagePrefixes": ["@caracal-lynx/"],
-      "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true,
-      "automergeType": "pr",
-      "requiredStatusChecks": ["CI"]
-    },
-    {
-      "matchPackagePrefixes": ["@caracal-lynx/"],
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "labels": ["dependencies", "sluice-update", "breaking-change"]
-    }
-  ]
+  "license": "Elastic-2.0"
 }
 ```
 
-### Changesets Config (`.changeset/config.json`) — monorepo only
-
-```json
-{
-  "$schema": "https://unpkg.com/@changesets/config/schema.json",
-  "changelog": "@changesets/cli/changelog",
-  "commit": false,
-  "linked": [],
-  "access": "restricted",
-  "baseBranch": "master",
-  "updateInternalDependencies": "patch",
-  "ignore": []
-}
-```
+`tests/` and `examples/` do **not** need the header — they are illustrative, not part of the licensed product. `docs/` is markdown and is governed by the repo-level `LICENSE` file.
 
 ---
 
-## 11. Client Local Setup
+## §5 — npm publishing setup
 
-This section covers everything a client needs to install and run Sluice pipelines on their own laptop. The client does not need to understand the monorepo structure or the release pipeline — they only interact with their own client repo.
+Phase 5 only sets up the *access*. The publish *workflow* (Changesets bot, GitHub Actions, automated tagging) is wired up in Phase 7.
 
-### 11.1 Prerequisites
+### 5.1 — Public package configuration
 
-The client machine needs the following installed before anything else:
+Add to the root `package.json`:
 
-| Tool | Version | Download |
-|---|---|---|
-| **Node.js** | 20 LTS (or later) | https://nodejs.org — use the LTS installer |
-| **npm** | Comes with Node.js | (no separate install needed) |
-| **Git** | Any recent version | https://git-scm.com |
-
-To verify everything is in place after installation:
-
-```bash
-node --version    # should print v20.x.x or higher
-npm --version     # should print 10.x.x or higher
-git --version     # should print git version 2.x.x or higher
+```json
+{
+  "name": "@caracal-lynx/sluice",
+  "license": "Elastic-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caracal-lynx/sluice.git"
+  },
+  "homepage": "https://github.com/caracal-lynx/sluice#readme",
+  "bugs": {
+    "url": "https://github.com/caracal-lynx/sluice/issues"
+  }
+}
 ```
 
-### 11.2 npm Authentication
-
-All `@caracal-lynx` packages are private. The client needs a read-only npm access token to install them. Caracal Lynx generates this token from the `@caracal-lynx` npm organisation and provides it to the client — **the client does not need their own npm account**.
-
-**Caracal Lynx generates the token (one-time, per client):**
-
-1. Log in to npmjs.com as `caracal-lynx`
-2. Go to **Access Tokens** → **Generate New Token** → **Granular Access Token**
-3. Set: read-only access, scoped to the `@caracal-lynx` org
-4. Copy the token and send it to the client securely (e.g. via 1Password share link or encrypted email)
-
-**Client configures the token on their machine (one-time):**
+### 5.2 — npm token (org-level automation token)
 
 ```bash
-# On Windows (PowerShell) — adds to your user profile permanently
-[System.Environment]::SetEnvironmentVariable("NPM_TOKEN", "npm_xxxxxxxxxxxx", "User")
+# Generate at npmjs.com → Access Tokens → Granular → Automation
+#  - Scope: @caracal-lynx
+#  - Permissions: Read and write
+#  - Expiry: 12 months (renewal calendared)
 
-# On macOS / Linux — add to ~/.zshrc or ~/.bashrc
-echo 'export NPM_TOKEN=npm_xxxxxxxxxxxx' >> ~/.zshrc
-source ~/.zshrc
+# Store as a GitHub Actions org-level secret named NPM_TOKEN
+gh secret set NPM_TOKEN --org caracal-lynx --body "npm_xxxxxxxx" \
+  --visibility selected --repos sluice
+# (extend --repos in Phase 7 to include adapter and rules repos)
 ```
 
-Then create (or confirm the existence of) a `.npmrc` file in the client repo root. This file is already committed to the repo — the client does not need to create it themselves:
+### 5.3 — First manual publish (smoke test)
 
-```ini
-# .npmrc (committed to the client repo — do not edit)
+Phase 5 does **one** manual publish to confirm the pipeline works end-to-end. Subsequent releases are automated by Phase 7.
+
+```bash
+npm whoami                              # confirm logged in as caracal-lynx
+npm run build && npm test               # green
+npm publish --access public --dry-run   # inspect tarball contents
+npm publish --access public             # the real publish
+npm view @caracal-lynx/sluice version   # confirm registry resolves
+```
+
+**See [PHASE-07-git-npm-workflow-spec.md](./PHASE-07-git-npm-workflow-spec.md)** for everything beyond this first publish: Changesets configuration, the `release.yml` GitHub Actions workflow, npm provenance attestations, and Renovate cascade across the private repos.
+
+---
+
+## §6 — Make the GitHub repository public
+
+This is the irreversible step. Only proceed once every preceding section is done.
+
+### 6.1 — Pre-flight checklist (every box must be ✅)
+
+- [ ] §2.1 GDPR / secrets history audit returned zero hits
+- [ ] §2.2 `clients/` folders extracted to private repos and verified runnable there
+- [ ] §2.3 final HEAD scrub clean
+- [ ] §3 hygiene files all committed at repo root and rendering correctly on github.com (preview via the GitHub web UI on the private repo)
+- [ ] §4 ELv2 SPDX header on every `src/*.ts` file (verification grep returns nothing)
+- [ ] §5 `package.json` has `"license": "Elastic-2.0"` and the public publish smoke-test succeeded
+- [ ] All tests green on master
+- [ ] Phase 0 governance sign-off recorded
+
+### 6.2 — Flip the visibility
+
+GitHub web UI:
+
+1. **Settings → General → Danger Zone → Change repository visibility → Make public.**
+2. Confirm by typing the repo name.
+3. The repo is now public. URL is unchanged: `github.com/caracal-lynx/sluice`.
+
+### 6.3 — Post-flip configuration
+
+Done immediately after the flip, in the same window:
+
+| Setting | Value |
+|---|---|
+| Pages | Source: `master` branch · `/docs` folder (placeholder until Phase 8 fills the site). Custom domain: `sluice.caracallynx.com` if/when DNS ready. |
+| Discussions | Enable (community Q&A channel) |
+| Topics | `etl`, `data-migration`, `erp`, `typescript`, `yaml`, `duckdb`, `cli`, `data-quality`, `pipeline` |
+| Default branch protection on `master` | Require PR before merge · Require 1 approval · Require CI to pass · Restrict force-push |
+| Issue labels | Add `area/dq`, `area/transform`, `area/adapter-source`, `area/adapter-target`, `area/staging`, `good-first-issue`, `help-wanted` |
+| About panel (sidebar) | Description copy lifted from [PHASE-06](./PHASE-06-readme-and-marketing-spec.md); website link to docs (Phase 8) |
+| Sponsorship | Off — paid services are pitched in the README, not via GitHub Sponsors |
+
+The README copy itself is Phase 6's deliverable; Phase 5 leaves the existing internal README in place as a placeholder. The visible defects (a `License: private` badge, no commercial-services section) are acceptable for the few weeks between Phase 5 and Phase 6.
+
+---
+
+## §7 — Sibling private repos
+
+Each private repo follows the same skeleton. Phase 5 creates them empty (or near-empty) so the topology is in place; the actual implementations are owned by their respective phases.
+
+### 7.1 — `sluice-rules` (private monorepo)
+
+Already specified in [SLUICE-IMPLEMENTATION-PLAN.md §9.1](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch). Repository contains two npm packages: `@caracal-lynx/etl-rules-uk` and `@caracal-lynx/etl-rules-fashion`. Layout:
+
+```
+sluice-rules/
+├── packages/
+│   ├── etl-rules-uk/
+│   │   ├── src/index.ts
+│   │   ├── package.json     # peer dep on @caracal-lynx/sluice
+│   │   └── tsconfig.json
+│   └── etl-rules-fashion/
+│       └── (mirror layout)
+├── package.json             # workspaces: ["packages/*"]
+├── tsconfig.base.json
+└── .github/workflows/ci.yml
+```
+
+Empty packages on first commit are fine — the rules themselves are existing internal IP that gets ported in over time.
+
+### 7.2 — Adapter repos (`sluice-adapter-{ifs,bc,bluecherry}`)
+
+Three repos, identical skeleton, one per ERP. Each declares `@caracal-lynx/sluice` as a peer dependency:
+
+```
+sluice-adapter-ifs/
+├── src/
+│   ├── adapter.ts           # extracted from current src/adapters/target/ifs.ts
+│   └── transforms/          # extracted from current src/transform/* if IFS-specific
+├── tests/
+├── package.json             # peer dep on @caracal-lynx/sluice
+├── tsconfig.json
+└── .github/workflows/ci.yml
+```
+
+The current `src/adapters/target/{bc,ifs,bluecherry}.ts` files **stay in the public repo** until the adapter repos are populated and the Phase 7 cascade is wired up. The clean removal happens in a later phase, not Phase 5. Phase 5 just creates the empty target repos so they exist in the topology.
+
+### 7.3 — `sluice-mcp`
+
+Created empty in Phase 5; populated by [Phase 9](./PHASE-09-sluice-mcp-spec.md). Skeleton: `package.json`, `tsconfig.json`, `README.md` pointing at the spec doc, that's it.
+
+### 7.4 — Client repos (`sluice-client-{cochran,eribe}`)
+
+Already populated by §2.2's `git filter-repo` extraction. Phase 5 just adds the standard skeleton on top:
+
+```
+sluice-client-cochran/
+├── pipelines/               # the YAML configs from clients/cochran/
+├── lookups/                 # CSV lookup tables
+├── plugins/                 # any client-bespoke plugins (Tier-2)
+├── .env.example             # template — real .env is gitignored
+├── .npmrc                   # ${NPM_TOKEN} for @caracal-lynx scope
+├── package.json             # depends on @caracal-lynx/sluice + relevant adapters + relevant rules
+├── README.md                # how to run; what's in scope; emergency contacts
+└── .github/workflows/ci.yml # tsc · lint · sluice check --all (no live runs in CI)
+```
+
+Renovate config for these repos is a Phase 7 deliverable, not here.
+
+### 7.5 — npm scope registration for all private repos
+
+Each private repo's `.npmrc` (committed):
+
+```
 @caracal-lynx:registry=https://registry.npmjs.org/
 //registry.npmjs.org/:_authToken=${NPM_TOKEN}
 ```
 
-The `${NPM_TOKEN}` is read from the environment variable set above. The actual token value is **never committed to the repo**.
+The first `npm publish` from each private repo is manual (Phase 5 smoke test); automation is Phase 7.
 
-### 11.3 Cloning and Installing
+---
+
+## §8 — Verification & success criteria
+
+Manual + automated checks that prove Phase 5 is done. Run all of these after the flip.
+
+### 8.1 — Public repo proofs
 
 ```bash
-# 1. Clone the client repo (replace cochran with the correct client name)
+# Repo is public
+gh repo view caracal-lynx/sluice --json visibility -q .visibility    # → "PUBLIC"
+
+# Licence is set in package.json
+jq -r .license package.json                                          # → "Elastic-2.0"
+
+# SPDX header on every source file
+find src -name "*.ts" -exec grep -L "SPDX-License-Identifier: Elastic-2.0" {} \; | wc -l
+                                                                     # → 0
+
+# Hygiene files present
+ls LICENSE LICENCE-FAQ.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md \
+   .github/ISSUE_TEMPLATE/bug_report.yml \
+   .github/ISSUE_TEMPLATE/feature_request.yml \
+   .github/PULL_REQUEST_TEMPLATE.md                                  # → all listed
+
+# npm publish succeeded
+npm view @caracal-lynx/sluice version                                # → resolves to a version
+
+# clients/ is gone from HEAD
+ls clients/ 2>&1 | grep -q "No such"                                 # → exit 0
+```
+
+### 8.2 — Private repo proofs
+
+```bash
+gh repo list caracal-lynx --json name,visibility \
+  | jq '.[] | select(.name | startswith("sluice-")) | "\(.visibility)  \(.name)"'
+# Expected output (order may vary):
+# PUBLIC   sluice
+# PRIVATE  sluice-enrich
+# PRIVATE  sluice-rules
+# PRIVATE  sluice-adapter-ifs
+# PRIVATE  sluice-adapter-bc
+# PRIVATE  sluice-adapter-bluecherry
+# PRIVATE  sluice-mcp
+# PRIVATE  sluice-client-cochran
+# PRIVATE  sluice-client-eribe
+```
+
+### 8.3 — Manual / human checks
+
+- LICENCE-FAQ.md renders with correct headings and links on `github.com/caracal-lynx/sluice`.
+- The default Issues view shows the bug-report and feature-request templates.
+- Discussions tab is enabled and visible on the public repo.
+- Repo About panel has a description, topics, and (eventually) a website link.
+- Searching `etl typescript yaml` on github.com/search returns the public repo within the first page within 7 days.
+
+### 8.4 — Master plan checkbox alignment
+
+- [SLUICE-IMPLEMENTATION-PLAN.md §9 success criteria](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch) — all six checkboxes flip from `- [ ]` to `- [x]`.
+
+---
+
+## §9 — Rollback plan
+
+The flip is essentially one-way, but partial rollbacks are possible.
+
+### 9.1 — Reverting visibility
+
+GitHub Settings → General → Danger Zone → Change repository visibility → Private. Instant. **Caveat:** anyone who cloned during the public window keeps their clone; anyone who forked keeps their fork (until manually deleted by them). The repo's existence and metadata may already be cached by github.com search, by web archives, and by various npm mirrors.
+
+### 9.2 — Reverting the npm publish
+
+`npm unpublish @caracal-lynx/sluice@<version>` is allowed within 72 hours of publish, with caveats:
+
+- Doesn't remove cached tarballs from npm mirrors (unpkg, jsdelivr, etc.)
+- Doesn't invalidate clones already done by `npm install`
+- After the 72-hour window: `npm deprecate @caracal-lynx/sluice "deprecated"` is the only option, which leaves the version on the registry but warns on install
+
+### 9.3 — Licence consequences
+
+The ELv2 grant is **irrevocable for any version published**. Even if the repo and npm package are pulled, the version that was public remains usable under ELv2 by anyone who downloaded it. This is by design — ELv2 is not a rug-pull license.
+
+### 9.4 — When rollback is the right call
+
+Only if §6.1's pre-flight checklist had a false negative — i.e. something sensitive slipped through that wasn't caught by the audits. In that case: revert visibility, do the cleanup with `git filter-repo`, redo the audits, and re-flip when clean.
+
+For "we changed our minds about open-sourcing" — there is no rollback. ELv2 versions stay out.
+
+---
+
+## §10 — Out-of-scope cross-references
+
+Anything not covered in §§1–9 belongs to a sibling phase doc. This section exists so future readers don't grep this file looking for what's not here.
+
+| Topic | Owning doc |
+|---|---|
+| Branching strategy, PR conventions, hotfix flow | [`docs/branching-strategy.md`](./branching-strategy.md) |
+| Changesets, GitHub Actions release workflow, Renovate cascade, breaking-change policy | [`docs/PHASE-07-git-npm-workflow-spec.md`](./PHASE-07-git-npm-workflow-spec.md) |
+| README hero, paid-services section, marketing artefacts (logo, social card, About panel copy) | [`docs/PHASE-06-readme-and-marketing-spec.md`](./PHASE-06-readme-and-marketing-spec.md) |
+| GitHub Pages docs site (Astro / Starlight) | [`docs/PHASE-08-github-pages-plan.md`](./PHASE-08-github-pages-plan.md) |
+| Enrich service architecture & providers | [`docs/PHASE-04-enrich-phase.md`](./PHASE-04-enrich-phase.md) |
+| MCP server tools and implementation | [`docs/PHASE-09-sluice-mcp-spec.md`](./PHASE-09-sluice-mcp-spec.md) |
+| Node 24 + DuckDB Neo upgrade (already shipped) | [`docs/archive/node24-upgrade-plan.md`](./archive/node24-upgrade-plan.md) |
+| TypeScript v6 upgrade (Phase 2) | [`docs/PHASE-02-typescript-v6-upgrade.md`](./PHASE-02-typescript-v6-upgrade.md) |
+| TypeScript v7 / tsgo migration (Phase 11) | [`docs/PHASE-11-typescript-v7-spec.md`](./PHASE-11-typescript-v7-spec.md) |
+
+---
+
+## §11 — Client local setup
+
+This section is the canonical reference for getting a client engagement running on a fresh laptop. It is referenced by [SLUICE-IMPLEMENTATION-PLAN.md §13 (Phase 9 success criteria)](./SLUICE-IMPLEMENTATION-PLAN.md#13-phase-9--sluice-mcp-server-private-paid-service) and survives the Phase 5 rewrite for that reason.
+
+### 11.1 — Prerequisites
+
+| Tool | Required version | Notes |
+|---|---|---|
+| Node.js | 24 LTS or later | Phase 1 raised the floor from Node 20 to Node 24. The `engines` field in `package.json` enforces this. |
+| npm | 10.x (ships with Node 24) | No separate install. |
+| Git | Any recent | 2.30+ for `--filter` support if the client ever needs `filter-repo`. |
+| PowerShell 7 (Windows) or zsh/bash (macOS/Linux) | Any | Sluice runs on all three; Caracal Lynx develops on Windows / PowerShell 7. |
+
+Verification:
+
+```bash
+node --version    # v24.x.x or higher
+npm --version     # 10.x.x or higher
+git --version     # 2.30+
+```
+
+### 11.2 — npm authentication for private packages
+
+The public `@caracal-lynx/sluice` package needs no authentication. The private packages (rule packages, adapters, enrichment, MCP) require an `NPM_TOKEN` provisioned by Caracal Lynx.
+
+**Caracal Lynx provisions the token (one-off per client engagement):**
+
+1. Sign in to npmjs.com as the `caracal-lynx` org owner.
+2. Access Tokens → Granular Access Token → read-only, scoped to `@caracal-lynx`, expiry 12 months.
+3. Send to the client over a 1Password secure share or equivalent — never email.
+
+**Client configures the token (one-off per machine):**
+
+```powershell
+# Windows / PowerShell — persists across sessions for the user
+[System.Environment]::SetEnvironmentVariable("NPM_TOKEN", "npm_xxxxxxxx", "User")
+```
+
+```bash
+# macOS / Linux — add to ~/.zshrc or ~/.bashrc
+echo 'export NPM_TOKEN=npm_xxxxxxxx' >> ~/.zshrc
+source ~/.zshrc
+```
+
+The client repo's `.npmrc` file (committed to the repo) reads the token from the environment:
+
+```
+@caracal-lynx:registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+```
+
+The actual token never appears in the repo.
+
+### 11.3 — Cloning and installing
+
+```bash
+# 1. Clone the client engagement repo (substitute for the right name)
 git clone https://github.com/caracal-lynx/sluice-client-cochran.git
 cd sluice-client-cochran
 
-# 2. Install all dependencies (this pulls @caracal-lynx/* packages from npm)
+# 2. Install all dependencies — pulls @caracal-lynx/* from npm
 npm install
 
-# 3. Verify the sluice CLI is available
+# 3. Verify the sluice CLI resolves
 npx sluice --version
 ```
 
-`npm install` will download `@caracal-lynx/sluice` and all required adapter and rules packages into `node_modules/`. The `sluice` CLI is available via `npx sluice` — no global install is needed or recommended.
+`npm install` resolves the public `@caracal-lynx/sluice` plus whichever paid packages this engagement requires. Cochran's `package.json` declares `@caracal-lynx/sluice`, `@caracal-lynx/etl-rules-uk`, and `@caracal-lynx/sluice-adapter-ifs`. Eribé's adds `@caracal-lynx/etl-rules-fashion` and `@caracal-lynx/sluice-adapter-bluecherry` instead.
 
-### 11.4 Environment Configuration
+### 11.4 — Environment configuration
 
-Sluice reads database credentials and other secrets from environment variables, never from YAML files. The client repo contains a `.env.example` file listing every variable required. The client copies this to `.env` and fills in their values.
+Sluice never reads credentials from YAML — only from environment variables, interpolated at config-load time via `${ENV_VAR}` tokens. The client repo ships a `.env.example` documenting every variable required.
 
 ```bash
-# Copy the template
 cp .env.example .env
-
-# Open in any text editor and fill in your values
-notepad .env        # Windows
-open -a TextEdit .env   # macOS
+# Edit .env with the client's actual values
 ```
 
-A typical `.env.example` for a MSSQL → IFS pipeline looks like this:
+A typical `.env.example` for an MSSQL-source / IFS-target engagement:
 
 ```ini
-# .env.example — copy to .env and fill in values
-# .env is gitignored and must NEVER be committed
+# .env.example — copy to .env (which is gitignored) and fill in real values
 
-# Source database (MSSQL)
-MSSQL_HOST=your-server.database.windows.net
-MSSQL_PORT=1433
-MSSQL_DATABASE=your_database_name
-MSSQL_USER=your_username
-MSSQL_PASSWORD=your_password
+# Source — Cochran legacy SQL Server
+COCHRAN_MSSQL=mssql://user:password@server.cochran.local/LegacyDB
 
-# IFS target (if using IFS REST adapter)
-IFS_BASE_URL=https://your-ifs-instance.example.com
-IFS_API_KEY=your_ifs_api_key
+# Target — IFS bulk-import location (file-based, not REST)
+IFS_IMPORT_PATH=C:\IFS\Import
 
-# Output directory for run results, rejection CSVs, and state files
+# Output — where Sluice writes rejection CSVs, summaries, state files
 SLUICE_OUTPUT_DIR=./output
+
+# Runtime
+NODE_ENV=development
+LOG_LEVEL=info
 ```
 
-> **Important:** The `.env` file contains passwords and API keys. It is listed in `.gitignore` and must never be committed to the repository or shared by email.
-
-### 11.5 Running Pipelines
-
-Once the `.env` is configured, the client can run pipelines using the `sluice` CLI:
+### 11.5 — Running pipelines
 
 ```bash
-# Dry run — validates config and simulates execution without writing any output
-npx sluice run --dry-run --all
+# Validate config without running anything
+npx sluice check pipelines/customers.pipeline.yaml
 
-# Run a single pipeline
+# DQ + transform only; no load
+npx sluice validate pipelines/customers.pipeline.yaml
+
+# Full run, dry-run mode (no output written)
+npx sluice run --dry-run pipelines/customers.pipeline.yaml
+
+# Full live run
 npx sluice run pipelines/customers.pipeline.yaml
-
-# Run all pipelines in sequence
-npx sluice run --all
-
-# Run all pipelines and write output to a specific directory
-npx sluice run --all --output ./output/2026-04-27
-
-# List all available pipelines in the repo
-npx sluice list
 ```
 
-The client repo's `package.json` includes convenience scripts so the client can use `npm run` instead of typing `npx sluice` each time:
+Convenience scripts in `package.json`:
 
 ```json
 {
   "scripts": {
-    "sluice:dry-run":  "sluice run --dry-run --all",
-    "sluice:run":      "sluice run --all",
-    "sluice:list":     "sluice list",
-    "sluice:validate": "sluice validate --all"
+    "sluice:check":     "sluice check pipelines/*.pipeline.yaml",
+    "sluice:validate":  "sluice validate pipelines/*.pipeline.yaml",
+    "sluice:dry-run":   "sluice run --dry-run pipelines/*.pipeline.yaml",
+    "sluice:run":       "sluice run pipelines/*.pipeline.yaml"
   }
 }
 ```
 
 ```bash
-# Equivalent shorthand commands
+npm run sluice:check
 npm run sluice:dry-run
 npm run sluice:run
-npm run sluice:list
-npm run sluice:validate
 ```
 
-### 11.6 Output Files
+### 11.6 — Output files
 
-After a run, Sluice writes the following to the configured output directory:
+After a run, `${SLUICE_OUTPUT_DIR}` contains:
 
 | File | Description |
 |---|---|
-| `{pipeline-name}-state.json` | Run summary: row counts, duration, status (passed / failed) |
-| `{pipeline-name}-rejections.csv` | Rows that failed DQ validation, with the rule that rejected each row |
-| `{pipeline-name}-dq-summary.json` | Aggregated DQ statistics: pass rate, failure counts per rule |
+| `{name}-state.json` | Run summary: row counts, durations, status, `lastRunAt` for incremental mode |
+| `{name}-rejected.csv` | Rows that failed DQ rules — one row per violation, with field/rule/severity columns |
+| `{name}-dq-summary.json` | Aggregate DQ statistics — counts by rule, counts by severity, by-field breakdown |
+| `{name}.duckdb` | DuckDB staging file (deleted at end of run unless `--keep-staging`) |
+
+### 11.7 — Updating Sluice
+
+When Caracal Lynx releases a new version:
 
 ```bash
-output/
-├── customers-state.json
-├── customers-rejections.csv
-├── customers-dq-summary.json
-├── orders-state.json
-└── ...
-```
-
-### 11.7 Updating Sluice
-
-When Caracal Lynx releases a new version of Sluice, the client repo will receive an automatic pull request via Renovate (or Caracal Lynx will send the client a notification). To apply the update:
-
-```bash
-# Pull the latest changes from the repo (after the bump PR has been merged)
+# Pull the bump PR if Renovate has merged it (Phase 7)
 git pull
 
-# Re-install dependencies to get the new version
+# Reinstall to pick up the new versions
 npm install
 
-# Run a dry-run to confirm the update didn't break anything
-npm run sluice:dry-run
+# Sanity-check
+npm run sluice:check
 ```
 
-The client does not need to manually change any version numbers — that is handled by the automated release pipeline.
+The client never edits version numbers manually — Renovate (Phase 7) bumps them and the client just merges the PR after CI passes.
 
-### 11.8 Local Setup Flow
+### 11.8 — Local-setup flow at a glance
 
 ```mermaid
 flowchart TD
-    A["Install Node.js 20 LTS\nnodejs.org"] --> B["Install Git\ngit-scm.com"]
-    B --> C["Receive NPM_TOKEN\nfrom Caracal Lynx"]
-    C --> D["Set NPM_TOKEN\nenvironment variable"]
-    D --> E["git clone\nsluice-client-{name}"]
-    E --> F["npm install\n(downloads @caracal-lynx/* packages)"]
-    F --> G["cp .env.example .env\nFill in DB credentials + API keys"]
-    G --> H["npm run sluice:dry-run\nValidate setup"]
-    H --> I{Dry run passes?}
-    I -->|Yes ✅| J["Ready to run pipelines\nnpm run sluice:run"]
-    I -->|No ❌| K["Check .env values\nVerify DB/network connectivity"]
+    A["Install Node 24 LTS<br/>nodejs.org"] --> B["Install Git<br/>git-scm.com"]
+    B --> C["Receive NPM_TOKEN<br/>from Caracal Lynx"]
+    C --> D["Set NPM_TOKEN<br/>environment variable"]
+    D --> E["git clone<br/>sluice-client-{name}"]
+    E --> F["npm install<br/>(pulls @caracal-lynx/* packages)"]
+    F --> G["cp .env.example .env<br/>fill in DB credentials + paths"]
+    G --> H["npm run sluice:check<br/>validate config"]
+    H --> I{"All pipelines valid?"}
+    I -->|✅ Yes| J["npm run sluice:dry-run<br/>full pipeline rehearsal"]
+    I -->|❌ No| K["Inspect error<br/>fix YAML / .env / credentials"]
     K --> H
+    J --> L{"Dry run clean?"}
+    L -->|✅ Yes| M["npm run sluice:run<br/>live migration"]
+    L -->|❌ No| K
 ```
 
 ---
 
-*Document maintained by Caracal Lynx Limited. Update this file when workflow decisions change.*
+*Document maintained by Caracal Lynx Ltd. Update this file when Phase 5 sub-tasks complete, when the post-launch topology changes, or when client setup steps shift. The matching master-plan section is [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch).*
