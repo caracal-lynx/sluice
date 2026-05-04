@@ -64,10 +64,10 @@ Phase 7 wires up the **dependency cascade**: a release of `@caracal-lynx/sluice`
 ```mermaid
 flowchart LR
     subgraph PUBLIC["Public — caracal-lynx/sluice"]
-        DEV["Developer commits PR\n+ changeset entry"] --> CSPR["Changesets Bot\nopens Version PR"]
-        CSPR --> MERGE["Merge Version PR\n→ master"]
-        MERGE --> CI["GitHub Actions\nbuild + test + publish"]
-        CI --> NPM[("npm: @caracal-lynx/sluice\nnew version")]
+        DEV["Developer commits PR<br/>+ changeset entry"] --> CSPR["Changesets Bot<br/>opens Version PR"]
+        CSPR --> MERGE["Merge Version PR<br/>→ master"]
+        MERGE --> CI["GitHub Actions<br/>build + test + publish"]
+        CI --> NPM[("npm: @caracal-lynx/sluice<br/>new version")]
     end
 
     NPM -.->|monitored by| R1[Renovate]
@@ -75,10 +75,10 @@ flowchart LR
     NPM -.->|monitored by| R3[Renovate]
     NPM -.->|monitored by| R4[Renovate]
 
-    R1 --> ENRICH["sluice-enrich\nversion-bump PR"]
-    R2 --> RULES["sluice-rules\nversion-bump PR"]
-    R3 --> ADAPTERS["adapter repos\nversion-bump PRs"]
-    R4 --> CLIENTS["client repos\nversion-bump PRs"]
+    R1 --> ENRICH["sluice-enrich<br/>version-bump PR"]
+    R2 --> RULES["sluice-rules<br/>version-bump PR"]
+    R3 --> ADAPTERS["adapter repos<br/>version-bump PRs"]
+    R4 --> CLIENTS["client repos<br/>version-bump PRs"]
 
     style NPM fill:#d4edda,stroke:#28a745
     style ENRICH fill:#f8d7da,stroke:#dc3545
