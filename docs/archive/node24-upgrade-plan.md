@@ -118,14 +118,14 @@ const config: mssql.config = {
 
 ```mermaid
 flowchart LR
-    P0["🔍 Phase 0\nPre-flight\nSQL Server TLS\ncritical path"] --> P1
-    P1["📦 Phase 1\nDependency\nupdates\n~30 min"] --> P2
-    P2["🦆 Phase 2\nDuckDB Neo\nstore.ts rewrite\n~4–6 hours"] --> P3
-    P3["🔒 Phase 3\nMSSQL TLS\nvalidation\n~1 hour"] --> P4
-    P4["🛡️ Phase 4\nvm hardening\n~30 min"] --> P5
-    P5["⚙️ Phase 5\nCI update\n~15 min"] --> P6
-    P6["✅ Phase 6\nFull test suite\n~1 hour"] --> P7
-    P7["📝 Phase 7\nDocs + merge\n~30 min"]
+    P0["🔍 Phase 0<br/>Pre-flight<br/>SQL Server TLS<br/>critical path"] --> P1
+    P1["📦 Phase 1<br/>Dependency<br/>updates<br/>~30 min"] --> P2
+    P2["🦆 Phase 2<br/>DuckDB Neo<br/>store.ts rewrite<br/>~4–6 hours"] --> P3
+    P3["🔒 Phase 3<br/>MSSQL TLS<br/>validation<br/>~1 hour"] --> P4
+    P4["🛡️ Phase 4<br/>vm hardening<br/>~30 min"] --> P5
+    P5["⚙️ Phase 5<br/>CI update<br/>~15 min"] --> P6
+    P6["✅ Phase 6<br/>Full test suite<br/>~1 hour"] --> P7
+    P7["📝 Phase 7<br/>Docs + merge<br/>~30 min"]
 ```
 
 **Estimated total effort:** 1–2 days, with Phase 2 (DuckDB rewrite) representing the majority of the work.
