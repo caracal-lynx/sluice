@@ -2,7 +2,7 @@
 
 > 🔴 **Status: BLOCKED by Phase 5.** This document specifies how Phase 7 will be executed once Phase 5 (Repo Restructure & Open-Source Launch) lands. Do **not** start Phase 7 work until the public `caracal-lynx/sluice` repository exists, the package is publishing to npm, and the private repos (`sluice-enrich`, `sluice-rules`, adapter repos, client repos) are in their post-Phase-5 layout.
 >
-> **Owner:** Caracal Lynx Limited · Michael Scott
+> **Owner:** Caracal Lynx Ltd. · Michael Scott
 > **Estimated effort:** 1–2 weeks
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §11](./SLUICE-IMPLEMENTATION-PLAN.md#11-phase-7--gitnpm-workflow)
 
@@ -377,5 +377,5 @@ When this spec is created, update [SLUICE-IMPLEMENTATION-PLAN.md §16 Document I
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
+*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

@@ -2,7 +2,7 @@
 
 > 🟡 **Status: Phase 11a is unblocked once Phase 2 (TypeScript v6) lands. Phase 11b is deferred until `tsgo` emit output is byte-stable (estimated mid/late 2026).**
 >
-> **Owner:** Caracal Lynx Limited · Michael Scott
+> **Owner:** Caracal Lynx Ltd. · Michael Scott
 > **Estimated effort:** Phase 11a ≈ 1 hour. Phase 11b ≈ 1–2 hours.
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §15](./SLUICE-IMPLEMENTATION-PLAN.md#15-phase-11--typescript-v7)
 
@@ -229,5 +229,5 @@ When this spec is created, update [SLUICE-IMPLEMENTATION-PLAN.md §16 Document I
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
+*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

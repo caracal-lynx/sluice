@@ -1,12 +1,12 @@
 \# CONTEXT.md
 
-<!-- Sluice project memory — updated 2026-04-28 -->
+<!-- Sluice project memory — updated 2026-05-04 -->
 
 
 
 \## Project summary
 
-Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migrations, built and maintained by Caracal Lynx Limited (Michael Scott). The engine is written once in TypeScript; each client engagement is delivered as a folder of YAML pipeline configs. It replaces one-off migration scripts with a reusable, testable, CLI-driven pipeline that covers extract, data quality, transform, and load — with no UI, no server, and no cloud dependency. Sluice is general-purpose: any data migration from any source to any target. Caracal Lynx's paid adapter packages add ERP-specific connectors (IFS, Business Central, BlueCherry) on top of the open-source core.
+Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migrations, built and maintained by Caracal Lynx Ltd. (Michael Scott). The engine is written once in TypeScript; each client engagement is delivered as a folder of YAML pipeline configs. It replaces one-off migration scripts with a reusable, testable, CLI-driven pipeline that covers extract, data quality, transform, and load — with no UI, no server, and no cloud dependency. Sluice is general-purpose: any data migration from any source to any target. Caracal Lynx's paid adapter packages add ERP-specific connectors (IFS, Business Central, BlueCherry) on top of the open-source core.
 
 
 
@@ -40,19 +40,19 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- \*\*Phase 3 plugin system:\*\* three-tier (composite YAML rules → TypeScript plugin files → npm packages); plugins must be synchronous and pure; no I/O in `validate()` or `apply()`; composite rule expansion is one level deep only; duplicate rule IDs throw `ConfigError` — **complete** (Phase 3)
 
-\- \*\*Phase 1 complete and all tests passing\*\* as of 2026-04-17
+\- \*\*Phase 1 complete and all tests passing\*\* — merged to master on 2026-05-03 ([PR #8](https://github.com/BCGubbins/sluice/pull/8), squash commit `e1be8c4`)
 
 \- \*\*Open-source decision (April 2026):\*\* Core CLI engine (`@caracal-lynx/sluice`) will be open-sourced under the **Elastic Licence 2.0 (ELv2)**. Country/region rule packages (`etl-rules-uk`, `etl-rules-fashion`), application adapters (IFS, BC, BlueCherry), and the Sluice MCP Server remain **private paid services** from Caracal Lynx. See `SLUICE-IMPLEMENTATION-PLAN.md` for the full phased plan.
 
 \- \*\*Sluice MCP Server:\*\* `@caracal-lynx/sluice-mcp` — a private, paid commercial offering. Provides 16 MCP tools enabling AI-assisted migration (agentic pipeline authoring, live schema inspection, automatic DQ iteration). See `docs/PHASE-09-sluice-mcp-spec.md`.
 
-\- \*\*Implementation sequencing:\*\* ✅ Phase 0 — Governance & Prerequisites: COMPLETE | ✅ Phase 1 — Node v24 + DuckDB Neo upgrade: COMPLETE (PR #8, 3 May 2026) | 🟢 Phase 2 — TypeScript v6 upgrade: READY (3–5 hours, after Phase 1) | ✅ Phase 3 — Plugin System (three-tier extension model): COMPLETE | 🔵 Phase 4a — Enrich Framework (private `sluice-enrich` repo): After Phase 2 | 🔵 Phase 4b — Built-in Enrich Providers (VIES, HMRC VAT, UK Trade Tariff): After Phase 4a | 🔴 Phase 5 — Repo Restructure & Open-Source Launch: Blocked by Phase 4a | 🔴 Phase 6 — README & Marketing: Blocked by Phase 5 | 🔴 Phase 7 — git/npm Workflow: Blocked by Phase 5 | 🔴 Phase 8 — GitHub Pages Documentation Site: Blocked by Phase 5 | Full sequence in `SLUICE-IMPLEMENTATION-PLAN.md`
+\- \*\*Implementation sequencing:\*\* ✅ Phase 0 — Governance & Prerequisites: COMPLETE | ✅ Phase 1 — Node v24 + DuckDB Neo upgrade: COMPLETE (PR #8, 3 May 2026) | 🟢 Phase 2 — TypeScript v6 upgrade: READY (3–5 hours, after Phase 1; current next-action) | ✅ Phase 3 — Plugin System (three-tier extension model): COMPLETE | 🔵 Phase 4a — Enrich Framework (private `sluice-enrich` repo): After Phase 2 | 🔵 Phase 4b — Built-in Enrich Providers (VIES, HMRC VAT, UK Trade Tariff): After Phase 4a | 🔴 Phase 5 — Repo Restructure & Open-Source Launch: Blocked by Phase 4a + Phase 0 | 🔴 Phase 6 — README & Marketing: Blocked by Phase 5 | 🔴 Phase 7 — git/npm Workflow (Changesets, Renovate, release cascade): Blocked by Phase 5 | 🔴 Phase 8 — GitHub Pages Documentation Site: Blocked by Phase 5 | 🟡 Phase 9 — Sluice MCP Server (private paid): NOW UNBLOCKED (Phase 3 complete) | 🔵 Phase 10 — Node v26 upgrade: Deferred to Oct 2026 LTS cut | 🟡 Phase 11a — tsgo parallel CI type-check: After Phase 2, ~1 hour | 🟡 Phase 11b — Full TS 7 / tsgo compiler switch: Deferred until tsgo emit is byte-stable | Full sequence in `SLUICE-IMPLEMENTATION-PLAN.md`
 
 
 
 \## Facts \& constraints
 
-\- \*\*Owner:\*\* Michael Scott, Caracal Lynx Limited (SC826823), Gretna, Scotland
+\- \*\*Owner:\*\* Michael Scott, Caracal Lynx Ltd. (SC826823), Gretna, Scotland
 
 \- \*\*Known clients:\*\* Acme Corp — IFS ERP (note: Acme Corp does NOT use Business Central and has no plans to); Style Co — BlueCherry ERP
 
@@ -82,17 +82,29 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- ✅ **Phase 1:** Node v24 + DuckDB Neo (`@duckdb/node-api`) upgrade — complete.
 
-\- ✅ **Phase 2:** TypeScript v6 upgrade — complete.
+\- 🟢 **Phase 2 (NEXT):** TypeScript v6 upgrade — ready to start; ~3–5 hours. See `PHASE-02-typescript-v6-upgrade.md`. (Phase 2 was incorrectly marked complete in earlier revisions of this file; the codebase still runs TypeScript 5.7 with `target: ES2022`.)
 
 \- ✅ **Phase 3:** Plugin system (three-tier extension model) — complete. See `archive/PHASE2-EXTENSIONS.md`.
 
-\- 🔵 **Phase 4a (NOW):** Enrich Framework — private `caracal-lynx/sluice-enrich` repo; current active work.
+\- 🔵 **Phase 4a (after Phase 2):** Enrich Framework — private `caracal-lynx/sluice-enrich` repo; not yet started.
 
 \- 🔵 **Phase 4b (after Phase 4a):** Built-in Enrich Providers — VIES, HMRC VAT, UK Trade Tariff.
 
-\- 🔴 **Phase 5 (blocked by Phase 4a):** Repo restructure & open-source launch.
+\- 🔴 **Phase 5 (blocked by Phase 4a + Phase 0):** Repo restructure & open-source launch. See `PHASE-05-DEVELOPMENT-WORKFLOW.md`.
 
-\- 🔴 **Phase 6 (blocked by Phase 5):** git/npm workflow.
+\- 🔴 **Phase 6 (blocked by Phase 5):** README & marketing. See `PHASE-06-readme-and-marketing-spec.md`.
+
+\- 🔴 **Phase 7 (blocked by Phase 5):** git/npm workflow — Changesets, Renovate, automated release cascade. See `PHASE-07-git-npm-workflow-spec.md`.
+
+\- 🔴 **Phase 8 (blocked by Phase 5):** GitHub Pages documentation site (Astro / Starlight). See `PHASE-08-github-pages-plan.md`.
+
+\- 🟡 **Phase 9 (now unblocked):** Sluice MCP Server — private paid offering; can begin in parallel with Phase 4a/5/etc. once bandwidth allows. See `PHASE-09-sluice-mcp-spec.md`.
+
+\- 🔵 **Phase 10 (deferred):** Node v26 upgrade — start after Node 26 LTS cut (October 2026). See `PHASE-10-node26-upgrade.md`.
+
+\- 🟡 **Phase 11a (after Phase 2):** tsgo parallel CI type-check — ~1 hour, low risk. See `PHASE-11-typescript-v7-spec.md`.
+
+\- 🟡 **Phase 11b (deferred):** Full TS 7 / tsgo compiler switch — when tsgo emit is byte-stable (estimated mid/late 2026).
 
 \- BlueCherry `REQUIRED\_COLUMNS` names need verification against actual BlueCherry import documentation before live migration.
 
