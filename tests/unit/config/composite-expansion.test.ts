@@ -38,7 +38,7 @@ dq:
   rules:
     - field: STYLE_NO
       checks:
-        - type: eribeStyleNo
+        - type: styleCoStyleNo
 transform:
   fields:
     - to: StyleNo
@@ -217,7 +217,7 @@ dq:
   rules:
     - field: TEST
       checks:
-        - type: eribeStyleNo
+        - type: styleCoStyleNo
 transform:
   fields:
     - to: Test
@@ -330,7 +330,7 @@ dq:
   rules:
     - field: STYLE_NO
       checks:
-        - type: eribeStyleNo
+        - type: styleCoStyleNo
 transform:
   fields:
     - to: StyleNo

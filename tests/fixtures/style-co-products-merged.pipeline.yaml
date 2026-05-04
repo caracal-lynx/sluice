@@ -1,6 +1,6 @@
 pipeline:
-  name: eribe-products-merged
-  client: eribe-knitwear
+  name: style-co-products-merged
+  client: style-co
   version: "1.0"
   entity: Style
   description: Product master assembled from SQL Server, Odoo, and Excel
@@ -46,12 +46,12 @@ merge:
   fieldStrategies:
     - field: FIBRE_CONTENT
       source: excel
-  conflictLog: ./output/eribe-products-conflicts.csv
+  conflictLog: ./output/style-co-products-conflicts.csv
   incrementalSource: sql-server
 
 dq:
   stopOnCritical: true
-  rejectionFile: ./output/eribe-products-merged-rejected.csv
+  rejectionFile: ./output/style-co-products-merged-rejected.csv
   rules:
     - field: STYLE_NO
       sourceId: sql-server
@@ -78,7 +78,7 @@ transform:
 target:
   adapter: bluecherry
   entity: Style
-  output: ./output/eribe-products-merged-bc.csv
+  output: ./output/style-co-products-merged-bc.csv
   includeHeader: true
   dateFormat: MM/DD/YYYY
 

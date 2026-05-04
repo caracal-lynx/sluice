@@ -81,8 +81,8 @@ function makeSingleSource(overrides: Record<string, unknown> = {}): unknown {
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
 describe('multi-source fixture', () => {
-  it('parses the eribe-products-merged fixture cleanly', () => {
-    const raw = loadFixture('eribe-products-merged.pipeline.yaml');
+  it('parses the style-co-products-merged fixture cleanly', () => {
+    const raw = loadFixture('style-co-products-merged.pipeline.yaml');
     // Substitute env vars that ConfigLoader would normally resolve
     const withEnv = JSON.parse(
       JSON.stringify(raw).replace(/\$\{[^}]+\}/g, 'placeholder'),
@@ -94,7 +94,7 @@ describe('multi-source fixture', () => {
     }
     expect(result.success).toBe(true);
     const p = result.data;
-    expect(p.pipeline.name).toBe('eribe-products-merged');
+    expect(p.pipeline.name).toBe('style-co-products-merged');
     expect(p.sources).toHaveLength(3);
     expect(p.merge?.key).toBe('STYLE_NO');
     expect(p.merge?.strategy).toBe('coalesce');

@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Sluice pipeline config — Cochran Group customer migration
+# Sluice pipeline config — example customer migration (legacy SQL → IFS ERP)
 # @caracal-lynx/sluice
 #
 # Usage:
@@ -11,11 +11,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 pipeline:
-  name: cochran-customers
-  client: cochran-group
+  name: acme-corp-customers
+  client: acme-corp
   version: "1.0"
   entity: CustomerInfo
-  description: Customer master migration — legacy Sage SQL to IFS ERP
+  description: Customer master migration — legacy SQL to IFS ERP
 
 
 # ── EXTRACT ───────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ source:
 # ── DATA QUALITY ──────────────────────────────────────────────────────────────
 dq:
   stopOnCritical: true
-  rejectionFile: ./output/cochran-customers-rejected.csv
+  rejectionFile: ./output/acme-corp-customers-rejected.csv
 
   rules:
     - field: CUST_CODE
@@ -104,7 +104,7 @@ transform:
 target:
   adapter: ifs
   entity: CustomerInfo
-  output: ./output/cochran-customers-ifs.csv
+  output: ./output/acme-corp-customers-ifs.csv
   includeHeader: false
   columnOrder:
     - CustomerNo

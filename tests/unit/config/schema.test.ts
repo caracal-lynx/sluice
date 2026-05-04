@@ -39,19 +39,19 @@ const minimal = {
 
 describe('PipelineSchema', () => {
   describe('fixture pipelines', () => {
-    it('parses cochran-customers.pipeline.yaml cleanly', () => {
-      const raw = loadFixture('cochran-customers.pipeline.yaml');
+    it('parses acme-corp-customers.pipeline.yaml cleanly', () => {
+      const raw = loadFixture('acme-corp-customers.pipeline.yaml');
       const result = PipelineSchema.parse(raw);
-      expect(result.pipeline.name).toBe('cochran-customers');
+      expect(result.pipeline.name).toBe('acme-corp-customers');
       expect(result.pipeline.entity).toBe('CustomerInfo');
       expect(result.source.adapter).toBe('mssql');
       expect(result.target.adapter).toBe('ifs');
     });
 
-    it('parses eribe-styles.pipeline.yaml cleanly', () => {
-      const raw = loadFixture('eribe-styles.pipeline.yaml');
+    it('parses style-co-styles.pipeline.yaml cleanly', () => {
+      const raw = loadFixture('style-co-styles.pipeline.yaml');
       const result = PipelineSchema.parse(raw);
-      expect(result.pipeline.name).toBe('eribe-styles');
+      expect(result.pipeline.name).toBe('style-co-styles');
       expect(result.pipeline.entity).toBe('Style');
       expect(result.source.adapter).toBe('csv');
       expect(result.target.adapter).toBe('bluecherry');
@@ -206,7 +206,7 @@ describe('PipelineSchema', () => {
 describe('CompositeRuleSchema', () => {
   it('accepts a valid composite rule', () => {
     const raw = {
-      id: 'eribeStyleNo',
+      id: 'styleCoStyleNo',
       checks: [{ type: 'pattern', value: '^[A-Z]{2}$', severity: 'critical' }],
     };
     expect(() => CompositeRuleSchema.parse(raw)).not.toThrow();
