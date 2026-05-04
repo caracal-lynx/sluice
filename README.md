@@ -4,9 +4,19 @@
 
 **`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Ltd.](https://caracallynx.com).
 
+[![npm](https://img.shields.io/npm/v/@caracal-lynx/sluice)](https://www.npmjs.com/package/@caracal-lynx/sluice)
 [![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.x-blue)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/license-Elastic_2.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-Elastic_2.0-blue)](LICENCE-FAQ.md)
+<!-- TODO: add Docs badge once Phase 8 ships -->
+
+---
+
+> **Data quality is the hidden blocker for both migrations and AI adoption.**
+>
+> Sluice is a data migration and data quality tool that validates your data *before* it reaches its destination — not after. You describe the entire migration as a YAML file: where the data comes from, the quality rules it has to pass, how each field maps to the target. Sluice validates the source, transforms it, and loads only the clean records — the bad rows go to a rejection report so you can fix the source.
+>
+> *Clean data flows through.*
 
 ---
 
@@ -106,22 +116,79 @@ flowchart LR
 
 ---
 
+## 🧩 Extension model
+
+Sluice's pipeline schema is fixed by design (readability, reviewability, predictable validation). Anything you can't express in the schema, you add via plugins. Three tiers, scaling from "no code, no install" to "publishable npm package":
+
+| Tier | What it is | Where it lives | Best for |
+|---|---|---|---|
+| **Tier 1** | YAML composite rules — bundle built-in DQ checks under a single ID | `shared/rules.yaml` in your project | Reusing common check combinations across pipelines without writing code |
+| **Tier 2** | TypeScript file plugins — `*.rule.ts` / `*.transform.ts` / `*.merge.ts` | `plugins/` next to your YAML | Custom logic for one project; rapid iteration |
+| **Tier 3** | npm packages exporting `register()` | npmjs.com (public or private) | Distributing rules / adapters / strategies across teams or as paid products |
+
+See **[PLUGINS.md](PLUGINS.md)** for the full author's guide with worked examples for all three tiers.
+
+---
+
 ## 🚀 Quick Start
 
+A complete pipeline in 20 lines: read a CSV, validate emails, lowercase them, write the clean rows to a new CSV. The full file is checked into the repo at [`examples/hello-world.pipeline.yaml`](examples/hello-world.pipeline.yaml) with sample data at [`examples/data/hello-world.csv`](examples/data/hello-world.csv).
+
+```yaml
+pipeline:
+  name: hello-world
+  client: demo
+  version: "1.0"
+  entity: Customer
+
+source:
+  adapter: csv
+  file: ./examples/data/hello-world.csv
+
+dq:
+  rules:
+    - field: email
+      checks:
+        - { type: notNull, severity: critical }
+        - { type: email,   severity: warning  }
+
+transform:
+  fields:
+    - { from: name,    to: Name,    type: string, cleanse: trim }
+    - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+    - { from: country, to: Country, type: string, default: GB }
+
+target:
+  adapter: csv
+  output: ./output/hello-world-clean.csv
+```
+
+Run it end to end:
+
 ```bash
-# Install
-npm install @caracal-lynx/sluice
+# 1. Install
+npm install -g @caracal-lynx/sluice
 
-# Check a pipeline config is valid (no data touched)
-sluice check customers.pipeline.yaml
+# 2. Validate the config without touching any data
+sluice check examples/hello-world.pipeline.yaml
 
-# Run DQ and transform but don't write output
+# 3. Dry-run: extract + DQ + transform but don't write the target
+sluice run examples/hello-world.pipeline.yaml --dry-run
+
+# 4. Live run — writes ./output/hello-world-clean.csv +
+#                        ./output/hello-world-rejected.csv (if any DQ failures)
+sluice run examples/hello-world.pipeline.yaml
+```
+
+The sample data has one row with a malformed email — that's a `warning`, so the row is kept in the output but flagged in `output/hello-world-rejected.csv`. Open both CSVs side by side to see what passed and what got reported. Add an `unknown@bad`-style row (or strip an email entirely) to see how a `critical` failure halts the pipeline before any output is written.
+
+### Other CLI commands
+
+```bash
+# Run DQ + transform; skip the load (faster than --dry-run for spec checks)
 sluice validate customers.pipeline.yaml
 
-# Go for it 🚀
-sluice run customers.pipeline.yaml
-
-# Profile source data (column stats, no DQ)
+# Profile source data — column stats, distinct counts, samples; no DQ
 sluice profile customers.pipeline.yaml
 
 # Inspect loaded plugins and merge strategies
@@ -559,7 +626,48 @@ npm run dev -- run customers.pipeline.yaml | npx pino-pretty
 
 ---
 
-## 📦 Package Info
+## 🏢 Sluice + Caracal Lynx Professional Services
+
+The Sluice core CLI is open-source and free to use. Caracal Lynx offers additional paid services built on top of it:
+
+| Service | What it is |
+|---|---|
+| **Enrichment Service** | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data |
+| **Application Adapters** | Pre-built ERP adapters (IFS, Business Central, BlueCherry) |
+| **Domain Rule Packages** | UK compliance rules, fashion/retail data standards |
+| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model |
+| **Sluice MCP Server** 🚧 | AI-assisted migration using Claude — agentic pipeline authoring, live schema inspection, automatic DQ iteration. *Coming soon — Phase 9.* |
+| **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
+
+📧 **michael.scott@caracallynx.com**
+🌐 **[caracallynx.com](https://caracallynx.com)**
+
+---
+
+## 🤝 Community
+
+- 🐛 [Report a bug or request a feature](https://github.com/caracal-lynx/sluice/issues/new/choose)
+- 💬 [Ask a question or share a use case](https://github.com/caracal-lynx/sluice/discussions)
+- 🤲 [Contributing guide](CONTRIBUTING.md)
+- 🤝 [Code of Conduct](CODE_OF_CONDUCT.md)
+
+---
+
+## 🔐 Security
+
+Found a vulnerability? Please **do not** open a public issue. See [SECURITY.md](SECURITY.md) for the disclosure process — `security@caracallynx.com`, 48-hour acknowledgement, 90-day disclosure SLA.
+
+---
+
+## ⚖️ Licence
+
+Sluice is licensed under the [Elastic Licence 2.0](LICENSE). See [LICENCE-FAQ.md](LICENCE-FAQ.md) for a plain-English explainer of what you can and can't do with it. Short version: use it freely for your own data migrations; don't resell it as a hosted service or strip the licence headers.
+
+---
+
+## 🏷️ About
+
+Built and maintained by [Caracal Lynx Ltd.](https://caracallynx.com) (SC826823) — Gretna, Scotland.
 
 ```
 npm package:  @caracal-lynx/sluice
