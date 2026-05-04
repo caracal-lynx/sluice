@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: May 2026
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -13,7 +13,7 @@
 3. [Phase Overview & Dependencies](#3-phase-overview--dependencies)
 4. [Phase 0 — Governance & Prerequisites ✅ COMPLETE](#4-phase-0--governance--prerequisites)
 5. [Phase 1 — Node v24 + DuckDB Neo Upgrade ✅ COMPLETE](#5-phase-1--node-v24--duckdb-neo-upgrade)
-6. [Phase 2 — TypeScript v6 Upgrade](#6-phase-2--typescript-v6-upgrade)
+6. [Phase 2 — TypeScript v6 Upgrade ✅ COMPLETE](#6-phase-2--typescript-v6-upgrade--complete)
 7. [Phase 3 — Plugin System ✅ COMPLETE](#7-phase-3--plugin-system--complete)
 8. [Phase 4 — Enrich Phase (Private)](#8-phase-4--enrich-phase-private)
 9. [Phase 5 — Repo Restructure & Open-Source Launch](#9-phase-5--repo-restructure--open-source-launch)
@@ -138,7 +138,7 @@ The open-source core does **not** include: the `EnrichRegistry`, `EnrichmentRunn
 flowchart TD
     P0["✅ Phase 0\nGovernance\nCOMPLETE"]
     P1["✅ Phase 1\nNode v24 + DuckDB Neo\nCOMPLETE"]
-    P2["🔷 Phase 2\nTypeScript v6 Upgrade\n(~3–5 hours after Phase 1)"]
+    P2["✅ Phase 2\nTypeScript v6 Upgrade\nCOMPLETE"]
     P3["✅ Phase 3\nPlugin System\nCOMPLETE"]
     P4A["🔒 Phase 4a\nEnrich Framework\n(private sluice-enrich)"]
     P4B["🔒 Phase 4b\nBuilt-in Providers\nvies · hmrc-vat · uk-trade-tariff"]
@@ -167,7 +167,7 @@ flowchart TD
 
     style P0 fill:#d4edda,stroke:#28a745
     style P1 fill:#d4edda,stroke:#28a745
-    style P2 fill:#fff3cd,stroke:#f0ad4e
+    style P2 fill:#d4edda,stroke:#28a745
     style P3 fill:#d4edda,stroke:#28a745
     style P4A fill:#d6d8f7,stroke:#6610f2
     style P4B fill:#d6d8f7,stroke:#6610f2
@@ -187,7 +187,7 @@ flowchart TD
 |-------|------|----------|-----------|
 | **Phase 0** | Governance & legal | ✅ **COMPLETE** | — |
 | **Phase 1** | Node v24 + DuckDB Neo | ✅ **COMPLETE** (3 May 2026, PR #8) | — |
-| **Phase 2** | TypeScript v6 | 3–5 hours | After Phase 1 |
+| **Phase 2** | TypeScript v6 | ✅ **COMPLETE** (4 May 2026, PR #13) | — |
 | **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
 | **Phase 4a** | Enrich framework (private) | 3–4 weeks | After Phase 2 + Phase 3 |
 | **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
@@ -213,7 +213,7 @@ gantt
 
     section Now — Runtime Upgrades
     Phase 1 — Node v24 + DuckDB Neo        :done, p1, 2026-05-03, 1d
-    Phase 2 — TypeScript v6                :p2, after p1, 1d
+    Phase 2 — TypeScript v6                :done, p2, 2026-05-04, 1d
     Phase 11a — tsgo Parallel Type-check   :p11a, after p2, 1d
 
     section Enrich Service (Private)
@@ -384,13 +384,13 @@ async batchUpdateColumns(_updates: Map<number, Record<string, unknown>>): Promis
 
 ---
 
-## 6. Phase 2 — TypeScript v6 Upgrade
+## 6. Phase 2 — TypeScript v6 Upgrade ✅ COMPLETE
 
-**Status:** 🟢 Ready — TypeScript 6.0 released March 2026
+**Status:** ✅ **COMPLETE** — merged to `master` on 4 May 2026 ([PR #13](https://github.com/BCGubbins/sluice/pull/13)).
 
-**Reference:** `docs/PHASE-02-typescript-v6-upgrade.md` — full Claude Code-ready plan
+**Reference:** `docs/PHASE-02-typescript-v6-upgrade.md` — execution plan (executed; see PR #13)
 
-**Prerequisite:** Phase 1 (Node 24 + DuckDB Neo) complete and all tests passing
+**Prerequisite:** Phase 1 (Node 24 + DuckDB Neo) complete — shipped 3 May 2026 (PR #8).
 
 ### Summary
 
@@ -418,10 +418,12 @@ TypeScript 7 uses a native Go compiler (`tsgo`) — 10× faster type-checking. T
 
 ### Success Criteria
 
-- [ ] `tsc --noEmit` passes with zero errors on TS6
-- [ ] All Vitest suites passing
-- [ ] `tsgo --noEmit` added to CI (Phase 11A done)
-- [ ] No `console.log` introduced (pino only)
+- [x] `tsc --noEmit` passes with zero errors on TS6 — confirmed clean on both `tsconfig.json` and `tsconfig.test.json`; type-check time dropped from ~14.4 s on TS 5.7 to ~3.4 s on TS 6 + ES2025
+- [x] All Vitest suites passing — 415 / 415 green, matching the Phase 1 baseline
+- [ ] `tsgo --noEmit` added to CI (Phase 11A done) — **deferred to Phase 11a** (separate branch per master plan §15)
+- [x] No `console.log` introduced (pino only) — no source-file changes were needed; the codebase had no latent type issues that TS 6 surfaced
+
+**Bonus:** the `typescript-eslint` peer-dep at `^8.18.0` capped TypeScript at `<5.8.0`; bumped to `^8.59.1` (still v8) which supports `<6.1.0`. `vitest@^2.1.0` has no `typescript` peer dep and stayed put. `.github/workflows/ci.yml` gained an explicit `npx tsc --noEmit` step before `build` for clearer failure attribution.
 
 ---
 
@@ -466,7 +468,7 @@ flowchart TB
 
 ## 8. Phase 4 — Enrich Phase (Private)
 
-**Status:** 🔵 Specced — starts after Phase 2 + Phase 3
+**Status:** 🟢 **Unblocked** — Phase 2 (TS 6) and Phase 3 (plugin system) both complete
 
 **Reference:** `docs/PHASE-04-enrich-phase.md` — full specification (updated: private architecture)
 
@@ -884,7 +886,7 @@ Node 26 is currently "Current" (non-LTS). It becomes LTS in October 2026. There 
 
 ## 15. Phase 11 — TypeScript v7
 
-**Status:** 🟡 Phase 11a can start immediately after Phase 2. Phase 11b runs when `tsgo` emit is stable (estimated mid/late 2026).
+**Status:** 🟢 Phase 11a now unblocked (Phase 2 complete) — ~1 hour, low risk. Phase 11b runs when `tsgo` emit is stable (estimated mid/late 2026).
 
 **Reference:** `docs/PHASE-11-typescript-v7-spec.md` — full Claude Code-ready execution plan, split into Phase 11a (parallel CI type-check, ~1 hour, after Phase 2) and Phase 11b (full compiler switch, deferred until `tsgo` emit is stable).
 
@@ -933,7 +935,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/archive/typescript-upgrade-plan.md` | 📦 Archived | Exact duplicate of the active `docs/PHASE-02-typescript-v6-upgrade.md`. |
 | `docs/archive/PHASE2-EXTENSIONS.md` | 📦 Archived | Full plugin system spec — implemented in Phase 3. `PLUGINS.md` is the canonical author guide. |
 | `docs/archive/phase1-3-release-packaging.md`, `docs/archive/phase3-multi-source-merge.md`, `docs/archive/phase3-prep-phase{1,2}.md` | 📦 Archived | Old phase-numbering design notes; technical content retained for reference. Multi-source merge has shipped. |
-| `docs/PHASE-02-typescript-v6-upgrade.md` | ✅ Good | Comprehensive. Ready to execute as Phase 2 — baselined on Node 24. (Renamed from `typescript6-upgrade-plan.md`.) |
+| `docs/PHASE-02-typescript-v6-upgrade.md` | ✅ EXECUTED | Comprehensive. Phase 2 shipped on 4 May 2026 ([PR #13](https://github.com/BCGubbins/sluice/pull/13)). Retained as implementation reference. (Renamed from `typescript6-upgrade-plan.md`.) |
 | `docs/PHASE-04-enrich-phase.md` | ✅ Good | Reflects fully private architecture (open-source core: interface types + Zod stubs + `registerEnrichPhase()` hook only; everything else in private `@caracal-lynx/sluice-enrich`). Last updated 2026-05-01. (Renamed from `PHASE2.5-ENRICH.md`.) |
 | `docs/elevator-pitch.md` | ✅ Good | Canonical home for the elevator pitch and positioning copy (one-liner, 30-second pitch, hero block, value props, AI angle, audience-specific framings). Sourced from previously-scattered fragments in Context.md, open-sourcing-sluice.md, PHASE-08, and README.md. Referenced by Phase 6 and Phase 8. |
 | `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ✅ Good | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference. |
