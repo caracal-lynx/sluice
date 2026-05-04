@@ -97,7 +97,7 @@ describe('Composite rule expansion', () => {
 
   it('expands a single composite rule to its constituent checks', async () => {
     const pipeline = makePipelineWithCompositeRules(
-      '- { type: eribeStyleNo }',
+      '- { type: styleCoStyleNo }',
     );
     installReadFileByPath({
       'pipeline.yaml': pipeline,
@@ -107,7 +107,7 @@ describe('Composite rule expansion', () => {
     const result = await ConfigLoader.load('/fake/pipeline.yaml');
     const checks = result.dq.rules[0].checks;
 
-    // eribeStyleNo expands to 3 checks: notNull, pattern, maxLength
+    // styleCoStyleNo expands to 3 checks: notNull, pattern, maxLength
     expect(checks).toHaveLength(3);
     expect(checks[0].type).toBe('notNull');
     expect(checks[1].type).toBe('pattern');
@@ -116,7 +116,7 @@ describe('Composite rule expansion', () => {
 
   it('drops dq.rulesFile from the parsed config after expansion', async () => {
     const pipeline = makePipelineWithCompositeRules(
-      '- { type: eribeStyleNo }',
+      '- { type: styleCoStyleNo }',
     );
     installReadFileByPath({
       'pipeline.yaml': pipeline,
@@ -149,7 +149,7 @@ describe('Composite rule expansion', () => {
 
   it('handles mixed composite + built-in checks in the same field rule', async () => {
     const pipeline = makePipelineWithCompositeRules(`
-        - { type: eribeStyleNo }
+        - { type: styleCoStyleNo }
         - { type: unique, severity: critical }
     `);
     installReadFileByPath({
@@ -160,7 +160,7 @@ describe('Composite rule expansion', () => {
     const result = await ConfigLoader.load('/fake/pipeline.yaml');
     const checks = result.dq.rules[0].checks;
 
-    // 3 from eribeStyleNo + 1 built-in unique = 4
+    // 3 from styleCoStyleNo + 1 built-in unique = 4
     expect(checks).toHaveLength(4);
     expect(checks[0].type).toBe('notNull');
     expect(checks[1].type).toBe('pattern');
@@ -182,14 +182,14 @@ describe('Composite rule expansion', () => {
     expect(err).toBeInstanceOf(ConfigError);
     expect(err.message).toContain('unknownRule');
     // Should list available composite rule ids
-    expect(err.message).toContain('eribeStyleNo');
+    expect(err.message).toContain('styleCoStyleNo');
     expect(err.message).toContain('positivePrice');
     expect(err.message).toContain('ifsCustomerNo');
   });
 
   it('throws ConfigError when rulesFile does not exist', async () => {
     const pipeline = makePipelineWithCompositeRules(
-      '- { type: eribeStyleNo }',
+      '- { type: styleCoStyleNo }',
     );
     const enoentError = Object.assign(new Error('ENOENT: no such file'), { code: 'ENOENT' });
 
@@ -238,7 +238,7 @@ rules:
     expect(library.version).toBe('1.0');
     expect(library.rules).toHaveLength(3);
     expect(library.rules.map(r => r.id)).toEqual(
-      expect.arrayContaining(['eribeStyleNo', 'positivePrice', 'ifsCustomerNo']),
+      expect.arrayContaining(['styleCoStyleNo', 'positivePrice', 'ifsCustomerNo']),
     );
     expect(library.rules[0].checks.length).toBeGreaterThan(0);
   });

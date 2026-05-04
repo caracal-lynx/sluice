@@ -205,7 +205,7 @@ run:
 describe('CLI multi-source handling', () => {
   const __dirname = fileURLToPath(new URL('.', import.meta.url));
   const fixturesDir = path.resolve(__dirname, '../fixtures');
-  const multiSourceFixture = path.join(fixturesDir, 'eribe-products-merged.pipeline.yaml');
+  const multiSourceFixture = path.join(fixturesDir, 'style-co-products-merged.pipeline.yaml');
   let workDir: string;
 
   beforeEach(() => {
@@ -222,11 +222,11 @@ describe('CLI multi-source handling', () => {
       fs.readFileSync(multiSourceFixture, 'utf-8')
         .replace(/\$\{[^}]+\}/g, 'placeholder'),
     );
-    const tmpYaml = path.join(tmpdir(), 'eribe-products-merged-test.pipeline.yaml');
+    const tmpYaml = path.join(tmpdir(), 'style-co-products-merged-test.pipeline.yaml');
     writeFileSync(tmpYaml, raw, 'utf-8');
 
     const config = await ConfigLoader.load(tmpYaml);
-    expect(config.pipeline.name).toBe('eribe-products-merged');
+    expect(config.pipeline.name).toBe('style-co-products-merged');
     expect(config.sources).toHaveLength(3);
     expect(config.merge?.key).toBe('STYLE_NO');
   });
@@ -236,7 +236,7 @@ describe('CLI multi-source handling', () => {
       fs.readFileSync(multiSourceFixture, 'utf-8')
         .replace(/\$\{[^}]+\}/g, 'placeholder'),
     );
-    const tmpYaml = path.join(tmpdir(), 'eribe-products-merged-run-test.pipeline.yaml');
+    const tmpYaml = path.join(tmpdir(), 'style-co-products-merged-run-test.pipeline.yaml');
     writeFileSync(tmpYaml, raw, 'utf-8');
 
     const runner = await createRunnerForPipeline(tmpYaml);
@@ -291,7 +291,7 @@ run: { stagingDb: ":memory:", outputDir: ${yp(workDir)} }
       fs.readFileSync(multiSourceFixture, 'utf-8')
         .replace(/\$\{[^}]+\}/g, 'placeholder'),
     );
-    const tmpYaml = path.join(tmpdir(), 'eribe-products-merged-profile-test.pipeline.yaml');
+    const tmpYaml = path.join(tmpdir(), 'style-co-products-merged-profile-test.pipeline.yaml');
     writeFileSync(tmpYaml, raw, 'utf-8');
 
     await expect(new PipelineRunner().profile(tmpYaml)).rejects.toBeInstanceOf(ConfigError);

@@ -1,5 +1,5 @@
 /**
- * End-to-end integration of an Eribé-styles-shaped pipeline:
+ * End-to-end integration of a styles-shaped pipeline:
  * CSV source → DQ rules → transforms (lookup, date, decimal, cleanse) →
  * BlueCherry target (required columns, header, date auto-format).
  */
@@ -16,11 +16,11 @@ function yp(p: string): string {
   return p.replace(/\\/g, '/');
 }
 
-describe('eribé-style pipeline (CSV → BlueCherry)', () => {
+describe('style-co-styles pipeline (CSV → BlueCherry)', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'sluice-eribe-'));
+    workDir = mkdtempSync(join(tmpdir(), 'sluice-style-co-'));
   });
 
   afterEach(() => {
@@ -49,11 +49,11 @@ describe('eribé-style pipeline (CSV → BlueCherry)', () => {
       'utf-8',
     );
 
-    const output = join(workDir, 'eribe-styles.csv');
+    const output = join(workDir, 'style-co-styles.csv');
     const yaml = `
 pipeline:
-  name: eribe-mini
-  client: eribe
+  name: style-co-mini
+  client: style-co
   version: "1.0"
   entity: Style
 
@@ -128,11 +128,11 @@ run:
     expect(csv).toContain('S001,Aran Jumper,WOMENS,AW25,25.00,89.99,Y,VENDOR-001');
 
     // State file written
-    const statePath = join(workDir, 'eribe-mini-state.json');
+    const statePath = join(workDir, 'style-co-mini-state.json');
     expect(existsSync(statePath)).toBe(true);
     const state = JSON.parse(readFileSync(statePath, 'utf-8'));
     expect(state).toMatchObject({
-      pipeline: 'eribe-mini',
+      pipeline: 'style-co-mini',
       lastMode: 'full',
       rowsExtracted: 2,
       rowsLoaded: 2,
