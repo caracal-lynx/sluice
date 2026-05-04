@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Caracal Lynx Ltd.
+
 import { BcTargetAdapter } from './bc.js';
 import { BlueCherryTargetAdapter } from './bluecherry.js';
 import { CsvTargetAdapter } from './csv.js';
