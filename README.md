@@ -432,7 +432,7 @@ Detailed guide: **[PLUGINS.md](./PLUGINS.md)**
 
 ## 🔀 Multi-Source Merge
 
-Phase 3 lets a single pipeline extract from **2+ sources** and merge them on a key column before DQ and transform. Useful when the master record for an entity is scattered across systems — master data in SQL Server, pricing enrichment in an Excel sheet, product descriptions in , and so on.
+Phase 3 lets a single pipeline extract from **2+ sources** and merge them on a key column before DQ and transform. Useful when the master record for an entity is scattered across systems — master data in SQL Server, pricing enrichment in an Excel sheet, product descriptions in a REST API, and so on.
 
 ### Built-in merge strategies
 
