@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Sluice pipeline config — Acme Corp customer migration
+# Sluice pipeline config — example customer migration (legacy SQL → IFS ERP)
 # @caracal-lynx/sluice
 #
 # Usage:
@@ -15,7 +15,7 @@ pipeline:
   client: acme-corp
   version: "1.0"
   entity: CustomerInfo
-  description: Customer master migration — legacy Sage SQL to IFS ERP
+  description: Customer master migration — legacy SQL to IFS ERP
 
 
 # ── EXTRACT ───────────────────────────────────────────────────────────────────

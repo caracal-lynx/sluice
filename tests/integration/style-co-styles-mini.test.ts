@@ -1,5 +1,5 @@
 /**
- * End-to-end integration of an Style Co-styles-shaped pipeline:
+ * End-to-end integration of a styles-shaped pipeline:
  * CSV source → DQ rules → transforms (lookup, date, decimal, cleanse) →
  * BlueCherry target (required columns, header, date auto-format).
  */
@@ -16,7 +16,7 @@ function yp(p: string): string {
   return p.replace(/\\/g, '/');
 }
 
-describe('eribé-style pipeline (CSV → BlueCherry)', () => {
+describe('style-co-styles pipeline (CSV → BlueCherry)', () => {
   let workDir: string;
 
   beforeEach(() => {
