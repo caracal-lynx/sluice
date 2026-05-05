@@ -1,0 +1,227 @@
+---
+title: Transforms
+description: Reference for every Sluice field transform type and cleanse operation.
+---
+
+The **transform phase** maps raw, validated source records into the shape the target adapter expects. Every transform is declared in `transform.fields[]` as a single YAML object with a `type` and a destination field name (`to:`).
+
+This page is the reference for every built-in transform type, every cleanse operation, and the safety rules around the `expression` type.
+
+## Common config keys
+
+These keys are valid on most transform types:
+
+| Key | Type | Notes |
+|---|---|---|
+| `from` | string \| string[] | Source field name(s). Required for most types; omitted for `constant`, `expression`, and `custom`. |
+| `to` | string | Destination field name (required for every transform). |
+| `type` | enum | The transform type — see below. |
+| `cleanse` | string | Pipe-separated cleanse ops (e.g. `trim\|titleCase\|normaliseUnicode`). |
+| `default` | any | Fallback value when source is null/empty. |
+| `optional` | boolean | If `true`, null result is allowed without raising a `TransformError`. Default: `false`. |
+| `max` | number | Truncate string output to N characters **after** cleanse. |
+
+## Transform types
+
+### `string`
+
+Casts to string, applies `cleanse`, then truncates to `max`.
+
+```yaml
+- from: CUST_NAME
+  to: Name
+  type: string
+  max: 100
+  cleanse: trim|titleCase
+```
+
+### `number`
+
+Coerces with `Math.round(Number(value))`. Throws `TransformError` if the result is `NaN`.
+
+```yaml
+- from: QTY
+  to: Quantity
+  type: number
+```
+
+### `decimal`
+
+Coerces with `parseFloat(value).toFixed(precision)`. The result is stored as a string with the configured precision; downstream targets render it as-is, which keeps trailing zeros intact.
+
+```yaml
+- from: COST_PRICE
+  to: CostPrice
+  type: decimal
+  precision: 2
+```
+
+`precision` defaults to `2` if omitted.
+
+### `boolean`
+
+Truthy values: `'1'`, `'true'`, `'yes'`, `'y'`, `'t'` (case-insensitive). Everything else is `false`.
+
+```yaml
+- from: IS_ACTIVE
+  to: Active
+  type: boolean
+```
+
+### `date`
+
+Parses the source value with dayjs using `format` (a dayjs format token) and outputs as the target's `dateFormat`, or ISO 8601 if the target has no `dateFormat`.
+
+```yaml
+- from: START_DATE
+  to: StartDate
+  type: date
+  format: DD/MM/YYYY
+```
+
+If `format` is omitted, dayjs auto-parses with its default rules.
+
+### `lookup`
+
+Resolves a value via a named lookup table loaded at the start of the transform phase.
+
+```yaml
+- from: CURRENCY
+  to: CurrencyCode
+  type: lookup
+  lookup: currencyMap
+  default: GBP        # used when key is missing AND optional is false
+  optional: false     # default: false. true = null on miss, no error.
+```
+
+The named `lookup` must match a `transform.lookups[].name`:
+
+```yaml
+transform:
+  lookups:
+    - name: currencyMap
+      source: { adapter: csv, file: ./lookups/currency-codes.csv }
+      key: legacyCode
+      value: isoCode
+```
+
+Lookup tables can come from any source adapter — CSV, MSSQL, REST, etc. They're loaded once and cached in memory for the run.
+
+### `concat`
+
+Joins multiple source fields with a separator, then applies cleanse.
+
+```yaml
+- from: [ADDR1, ADDR2]
+  to: Address1
+  type: concat
+  separator: ", "
+  cleanse: trim|nullIfEmpty
+```
+
+`separator` defaults to a single space.
+
+### `constant`
+
+Emits a fixed value for every row, regardless of source data. No `from` field.
+
+```yaml
+- to: CustomerGroup
+  type: constant
+  value: DOMESTIC
+```
+
+### `expression`
+
+Evaluates an expression against the source row.
+
+```yaml
+- to: SearchName
+  type: expression
+  value: "row.CUST_NAME.toUpperCase().substring(0, 20)"
+```
+
+Two evaluation modes:
+
+- **`expr-eval`** (default) — a safe, sandboxed expression parser. Supports arithmetic, comparison, logical operators, and method calls on `String`, `Number`, `Math`. **Cannot** access globals, `eval`, or `Function`.
+- **`js:` prefix** — escapes to `vm.runInNewContext` with a 1-second timeout. The sandbox exposes only `row`, `Date`, `Math`, `JSON`, `String`, `Number`, `Boolean`. Use sparingly; **every `js:` evaluation logs a warning** so they're easy to find later.
+
+```yaml
+- to: NetPrice
+  type: expression
+  value: "js: row.PRICE * (1 - row.DISCOUNT / 100)"
+```
+
+Sluice **never** uses `eval()` or `new Function()`.
+
+### `custom`
+
+Delegates to a [Tier 2 / Tier 3 transform plugin](/sluice/guides/plugin-system/). Requires `customOp` (the plugin id) and accepts arbitrary `options`.
+
+```yaml
+- from: VAT_NUMBER
+  to: VatNumberValid
+  type: custom
+  customOp: vies-validate
+  options:
+    cacheTtlDays: 7
+```
+
+Custom transforms are how the Enrich service (`@caracal-lynx/sluice-enrich`) ships VAT validation, postcode lookup, and HMRC tariff lookups.
+
+## Cleanse operations
+
+Apply via the `cleanse:` key on any transform that produces a string. Operations are applied **left-to-right** in the pipe chain.
+
+| Op | Example input | Example output |
+|---|---|---|
+| `trim` | `"  hello  "` | `"hello"` |
+| `uppercase` | `"hello"` | `"HELLO"` |
+| `lowercase` | `"HELLO"` | `"hello"` |
+| `titleCase` | `"john smith"` | `"John Smith"` |
+| `stripNonAlpha` | `"AB-12!"` | `"AB"` |
+| `stripNonNumeric` | `"AB-12!"` | `"12"` |
+| `stripWhitespace` | `"h e l l o"` | `"hello"` |
+| `padStart:6:0` | `"42"` | `"000042"` |
+| `truncate:20` | 21-char string | 20-char string |
+| `nullIfEmpty` | `""` | `null` |
+| `normaliseQuotes` | `"it's"` (curly apostrophe) | `"it's"` (straight) |
+| `normaliseUnicode` | `"café"` | `"cafe"` (NFD → ASCII) |
+
+Operations that take arguments use `:` as a separator: `padStart:6:0` means "pad start to 6 characters with `0`".
+
+Chain ops with `|`:
+
+```yaml
+cleanse: trim|titleCase|normaliseUnicode
+```
+
+The chain runs left-to-right: `trim` first, then `titleCase`, then `normaliseUnicode`.
+
+## Lookup tables
+
+`transform.lookups` is an array of named lookup tables, loaded once at the start of the transform phase and cached in memory:
+
+```yaml
+transform:
+  lookups:
+    - name: currencyMap
+      source: { adapter: csv, file: ./lookups/currency-codes.csv }
+      key: legacyCode
+      value: isoCode
+    - name: acctMgrMap
+      source:
+        adapter: mssql
+        connection: ${SOURCE_MSSQL}
+        query: "SELECT STAFF_ID as key, IFS_USER_ID as value FROM dbo.Staff"
+      key: key
+      value: value
+```
+
+Any source adapter works as a lookup source — CSV, MSSQL, PostgreSQL, REST, XLSX. The `key` column is matched against the transform's `from` value; the `value` column is the resolved output.
+
+## See also
+
+- [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/) — putting transforms together end-to-end
+- [Plugin System](/sluice/guides/plugin-system/) — writing custom transforms
+- [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/) — the canonical schema reference

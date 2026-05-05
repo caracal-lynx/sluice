@@ -1,0 +1,169 @@
+---
+title: Target Adapters
+description: Reference for every supported Sluice target adapter — config keys, examples, and format-specific notes.
+---
+
+A Sluice **target adapter** loads transformed records to the system that will own the data going forward. The open-source core ships with two built-in target adapters — `csv` and `pg` — that cover generic flat-file output and PostgreSQL bulk insert. ERP-specific adapters (`bc`, `ifs`, `bluecherry`) are paid add-ons from Caracal Lynx; their config is documented here so the same YAML works whether or not you have the add-on installed.
+
+## Common config
+
+Every target has the same `adapter` field plus adapter-specific keys. The `adapter` value is one of:
+
+```
+csv | pg | bc | ifs | bluecherry | rest
+```
+
+For ERP adapters, see [Commercial Support](/sluice/commercial-support/).
+
+## `csv` — Generic CSV output (built-in)
+
+The simplest target. Writes the transformed staging table to a CSV file. Use this when you need a portable, human-readable load file or a CI artefact.
+
+```yaml
+target:
+  adapter: csv
+  output: ./output/customers.csv
+  includeHeader: true
+  delimiter: ","
+  encoding: utf-8
+  nullValue: ""
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `output` | string | — | Path to write. |
+| `includeHeader` | boolean | `true` | Write column names on the first row. |
+| `delimiter` | string | `,` | Field delimiter. |
+| `encoding` | string | `utf-8` | File encoding. |
+| `nullValue` | string | `""` | How nulls are rendered. |
+
+## `pg` — PostgreSQL bulk insert (built-in)
+
+Loads the staging table into a PostgreSQL table. Supports insert, ignore-on-conflict, and upsert modes.
+
+```yaml
+target:
+  adapter: pg
+  connection: ${TARGET_PG}
+  table: customers
+  schema: public
+  onConflict: upsert
+  upsertKey: [customer_no]
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `connection` | string | — | PostgreSQL connection string. Resolved from `${ENV_VAR}` at runtime. |
+| `table` | string | — | Target table name. |
+| `schema` | string | `public` | Target schema. |
+| `onConflict` | enum | `fail` | `fail` \| `upsert` \| `ignore`. |
+| `upsertKey` | string[] | — | **Required** when `onConflict: upsert`. Column names that form the conflict key. |
+
+## `ifs` — IFS ERP CSV import (paid add-on)
+
+IFS imports CSV with no header row, in a column order defined by the IFS entity import contract.
+
+```yaml
+target:
+  adapter: ifs
+  entity: CustomerInfo
+  output: ./output/acme-corp-customers-ifs.csv
+  includeHeader: false
+  columnOrder:
+    - CustomerNo
+    - Name
+    - Address1
+    - ZipCode
+    - Country
+  dateFormat: YYYY-MM-DD
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `entity` | string | — | IFS entity name (e.g. `CustomerInfo`, `Supplier`). Recorded in the load log. |
+| `output` | string | — | Path to write. |
+| `includeHeader` | boolean | `false` | IFS expects no header. |
+| `columnOrder` | string[] | — | Forces the column order. Must match transform `to:` field names. |
+| `dateFormat` | string | `YYYY-MM-DD` | dayjs format token. |
+| `delimiter` | string | `,` | Field delimiter. |
+| `encoding` | string | `utf-8` | File encoding. |
+
+**Notes:**
+
+- Date columns are formatted with dayjs using `dateFormat`.
+- The exact column order is critical — IFS imports by position, not by name.
+
+## `bluecherry` — BlueCherry ERP CSV import (paid add-on)
+
+BlueCherry (CGS) uses fixed-format CSV imports per entity type. The adapter validates required columns at `connect()` time, before any data is read, so misconfigured pipelines fail fast.
+
+```yaml
+target:
+  adapter: bluecherry
+  entity: Style
+  output: ./output/style-co-styles-bc.csv
+  template: default
+  includeHeader: true
+  dateFormat: MM/DD/YYYY
+  nullValue: ""
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `entity` | enum | — | One of `Style`, `Vendor`, `PurchaseOrder`, `PODetail`, `Season`, `ColourSize`. |
+| `output` | string | — | Path to write. |
+| `template` | string | `default` | `default` uses built-in column order; or path to a header-only template CSV. |
+| `includeHeader` | boolean | `true` | BlueCherry expects headers. |
+| `dateFormat` | string | `MM/DD/YYYY` | BlueCherry is US-origin; default is US date format. |
+| `nullValue` | string | `""` | How nulls are rendered. |
+
+**Required columns per entity** (validated at `connect()`):
+
+| Entity | Required columns |
+|---|---|
+| `Style` | `StyleNo`, `StyleDesc`, `Division`, `Season`, `CostPrice`, `RetailPrice`, `ActiveFlag` |
+| `Vendor` | `VendorNo`, `VendorName`, `Country`, `CurrencyCode` |
+| `PurchaseOrder` | `PONumber`, `VendorNo`, `Season`, `OrderDate`, `DeliveryDate` |
+| `PODetail` | `PONumber`, `StyleNo`, `ColourCode`, `SizeCode`, `Quantity`, `CostPrice` |
+| `Season` | `SeasonCode`, `SeasonDesc`, `StartDate`, `EndDate` |
+| `ColourSize` | `StyleNo`, `ColourCode`, `ColourDesc`, `SizeCode`, `SizeDesc` |
+
+**Notes:**
+
+- Any column whose name ends with `Date` (case-insensitive) is automatically formatted using `dateFormat` via dayjs.
+- If your BlueCherry instance uses different column names, point `template` at a header-only template CSV — the adapter uses that as the definitive column order.
+- These column names are conventions; verify against your BlueCherry import documentation before running a live migration.
+
+## `bc` — Business Central REST (paid add-on)
+
+Loads to Microsoft Dynamics 365 Business Central via OData REST. Uses OAuth 2.0 client credentials for authentication and OData `$batch` for throughput.
+
+```yaml
+target:
+  adapter: bc
+  baseUrl: ${BC_BASE_URL}
+  company: ${BC_COMPANY}
+  entity: customers
+  apiVersion: v2.0
+  onConflict: upsert
+  batchEndpoint: true
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `baseUrl` | string | — | Resolved from `${ENV_VAR}`. |
+| `company` | string | — | BC company GUID or name. |
+| `entity` | string | — | OData entity name (lowercase, plural — e.g. `customers`, `salesInvoices`). |
+| `apiVersion` | string | `v2.0` | OData API version. |
+| `onConflict` | enum | `fail` | `fail` \| `upsert` \| `ignore`. With `upsert`, a `409` triggers a `PATCH`. |
+| `batchEndpoint` | boolean | `true` | Use OData `$batch` (max 100 ops per batch). |
+
+**Notes:**
+
+- OAuth 2.0 client credentials: `POST https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token`. Tokens are cached in memory and refreshed 60 seconds before expiry.
+- `$batch` endpoint: `POST {baseUrl}/api/{apiVersion}/companies({company})/$batch` with `Content-Type: multipart/mixed; boundary=batch_{uuid}`.
+- 4xx errors (other than `409` on upsert) are logged and `rowsFailed` is incremented; the run continues if `run.onError: continue`.
+
+## Custom target adapters
+
+For systems Sluice doesn't cover, implement the `TargetAdapter` interface as a Tier 2 file plugin or a Tier 3 npm package — see the [Plugin System](/sluice/guides/plugin-system/) guide.
