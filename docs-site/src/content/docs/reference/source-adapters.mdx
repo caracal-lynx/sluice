@@ -1,0 +1,214 @@
+---
+title: Source Adapters
+description: Reference for every built-in Sluice source adapter — config keys, examples, and adapter-specific notes.
+---
+
+A Sluice **source adapter** is the component that reads raw data from a system and stages it in DuckDB for downstream DQ, transform, and load. Sluice ships with five built-in source adapters covering the patterns most data migrations need: SQL Server, PostgreSQL, CSV, XLSX, and REST.
+
+This page is the reference for each adapter's `source:` configuration. For the broader pipeline structure, see [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/).
+
+## Common config
+
+Every source has the same `adapter` + at least one of `query` (for SQL adapters), `file` (for file adapters), or `endpoint` (for REST). The `adapter` value is one of:
+
+```
+mssql | pg | csv | xlsx | rest
+```
+
+ERP-specific source adapters are not built in — they are paid add-ons (`@caracal-lynx/sluice-adapter-ifs`, `@caracal-lynx/sluice-adapter-bc`, `@caracal-lynx/sluice-adapter-bluecherry`). See [Commercial Support](/sluice/commercial-support/).
+
+## `mssql` — Microsoft SQL Server
+
+Streams query results from a SQL Server database into the DuckDB staging table. Trusted authentication and SQL authentication are both supported.
+
+```yaml
+source:
+  adapter: mssql
+  connection: ${SOURCE_MSSQL}
+  query: |
+    SELECT c.CUST_CODE, c.CUST_NAME, c.POST_CODE
+    FROM dbo.Customers c
+    WHERE c.Active = 1
+```
+
+| Key | Type | Notes |
+|---|---|---|
+| `connection` | string | Connection string. Either `mssql://user:pass@host/database` or a JSON string for trusted/advanced config. Resolved from `${ENV_VAR}` at runtime. |
+| `query` | string | The full SELECT statement to stream. **Required** unless `table` is set in a future release. |
+
+**Type mapping (SQL Server → DuckDB):**
+
+| SQL Server | DuckDB |
+|---|---|
+| `varchar`, `nvarchar`, `char` | `VARCHAR` |
+| `int`, `bigint` | `BIGINT` |
+| `decimal`, `numeric`, `money` | `DOUBLE` |
+| `bit` | `BOOLEAN` |
+| `datetime`, `date` | `TIMESTAMP` |
+| `float`, `real` | `DOUBLE` |
+
+**Notes:**
+
+- Results are streamed via `request.stream = true` so memory stays bounded for large extracts.
+- Trusted connections are detected by `trustedConnection: true` in a JSON connection config.
+
+## `pg` — PostgreSQL
+
+```yaml
+source:
+  adapter: pg
+  connection: ${SOURCE_PG}
+  query: SELECT id, name, email FROM customers WHERE active = true
+```
+
+| Key | Type | Notes |
+|---|---|---|
+| `connection` | string | Standard PostgreSQL connection string. Resolved from `${ENV_VAR}` at runtime. |
+| `query` | string | The SELECT statement to stream. |
+
+## `csv` — CSV files
+
+Reads one or more CSV files into the staging table. Glob patterns are supported — multiple matching files are concatenated into a single staging table.
+
+```yaml
+source:
+  adapter: csv
+  file: ./data/customers.csv
+  delimiter: ","
+  encoding: utf-8
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `file` | string | — | Path or glob (e.g. `./data/export-*.csv`). |
+| `delimiter` | string | `,` | Field delimiter. |
+| `encoding` | string | `utf-8` | File encoding. |
+
+**Notes:**
+
+- Parse options are `{ columns: true, skip_empty_lines: true, bom: true }` — the BOM is stripped automatically, which matters for Excel-generated CSVs.
+- All columns are inferred as `VARCHAR` in DuckDB. Type coercion happens later, in the transform phase.
+
+## `xlsx` — Excel workbooks
+
+Read-only access to `.xlsx` files via SheetJS.
+
+```yaml
+source:
+  adapter: xlsx
+  file: ./data/customers.xlsx
+  sheet: "Customer Export"
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `file` | string | — | Path to the workbook. |
+| `sheet` | string \| number | `0` | Sheet name or 0-based index. |
+
+**Notes:**
+
+- Sluice converts the sheet to CSV via `xlsx.utils.sheet_to_csv` and pipes through the same parser as the `csv` adapter — every column is `VARCHAR` in staging.
+- A warning is logged if the workbook has more than one sheet and `sheet` is unset.
+- Sluice does not write XLSX. For Excel-shaped output, use the `csv` target adapter and let the consumer open it in Excel.
+
+## `rest` — HTTP REST APIs
+
+Pulls JSON payloads from an HTTP endpoint and flattens nested fields into staging columns. Three pagination modes are supported: `offset`, `cursor`, and `page`.
+
+```yaml
+source:
+  adapter: rest
+  endpoint: ${API_BASE}/customers
+  headers:
+    Authorization: Bearer ${API_TOKEN}
+    Accept: application/json
+  pagination:
+    type: offset
+    pageSize: 100
+    pageParam: skip
+    totalField: data.total
+    dataField: data.items
+```
+
+### Top-level keys
+
+| Key | Type | Notes |
+|---|---|---|
+| `endpoint` | string | Full URL. `${ENV_VAR}` tokens are resolved at runtime. |
+| `headers` | object | Optional. Added to every request. |
+| `pagination` | object | Optional. Omit for single-page responses. |
+
+### Pagination modes
+
+#### `type: offset`
+
+```yaml
+pagination:
+  type: offset
+  pageSize: 100
+  pageParam: skip          # query param name for the offset
+  totalField: data.total   # dot-path to total count in the response
+  dataField: data.items    # dot-path to the records array
+```
+
+Sluice issues `?skip=0&top=100`, `?skip=100&top=100`, … until it has fetched `data.total` records.
+
+#### `type: page`
+
+```yaml
+pagination:
+  type: page
+  pageSize: 50
+  pageParam: page          # query param name for the page number
+  totalField: meta.totalPages
+  dataField: results
+```
+
+Sluice fetches pages 1, 2, 3 … up to `meta.totalPages`.
+
+#### `type: cursor`
+
+```yaml
+pagination:
+  type: cursor
+  pageSize: 100
+  pageParam: limit
+  cursorField: nextCursor  # field in response body to read next cursor from
+  cursorParam: cursor      # query param name to send the cursor in
+  dataField: items
+```
+
+Sluice fetches until the response's `nextCursor` is absent or null.
+
+### Notes
+
+- Retries: `axios-retry` with **3 retries**, exponential backoff, retrying on `429` and `5xx`.
+- Nested JSON fields are flattened using `__` as a separator: `address.postCode` becomes a `address__postCode` column in staging.
+
+## Multi-source pipelines
+
+To consolidate data from multiple sources into one target, use the multi-source form. Each source needs an `id`, a `priority`, and (optionally) a `rename` map to harmonise column names from CSV/XLSX sources.
+
+```yaml
+sources:
+  - id: sql-server
+    priority: 1
+    adapter: mssql
+    connection: ${SOURCE_MSSQL}
+    query: SELECT STYLE_NO, STYLE_DESC, COST_PRICE FROM dbo.Styles
+  - id: excel
+    priority: 2
+    adapter: xlsx
+    file: ./data/product-data.xlsx
+    sheet: "Products"
+    rename:
+      Style Number: STYLE_NO
+      Description:  STYLE_DESC
+      Fibre:        FIBRE_CONTENT
+```
+
+Combined with the [`merge:`](/sluice/reference/pipeline-yaml/) block, sources can be joined with strategies like `coalesce`, `priority-override`, `union`, or `intersect`. See [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/) for a worked multi-source example.
+
+## Custom source adapters
+
+Need to read from a system Sluice doesn't ship a built-in adapter for? Implement the `SourceAdapter` interface as a Tier 2 file plugin or a Tier 3 npm package — see the [Plugin System](/sluice/guides/plugin-system/) guide.
