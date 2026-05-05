@@ -639,7 +639,7 @@ The Sluice core CLI is open-source and free to use. Caracal Lynx offers addition
 | **Sluice MCP Server** 🚧 | AI-assisted migration using Claude — agentic pipeline authoring, live schema inspection, automatic DQ iteration. *Coming soon — Phase 9.* |
 | **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
 
-📧 **michael.scott@caracallynx.com**
+📧 **sluice@caracallynx.com**
 🌐 **[caracallynx.com](https://caracallynx.com)**
 
 ---
