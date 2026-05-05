@@ -73,22 +73,77 @@
 	max-height: 2rem;
 }
 
-/* Hero on the splash home page: tighten the gap between the logo banner and
-   the headline so the gate-and-streams visual reads as one composition. */
-.hero {
-	gap: 2.5rem;
+/* ── Custom home-page hero (option 3 layout) ────────────────────────────────
+   The standard Starlight `splash` hero packs banner, title, tagline, and CTAs
+   into a horizontal split. With Sluice's wide 3:1 brand banner, that layout
+   competes with the page title and clipped to a square via the Astro Image
+   pipeline. The hero on the home page is therefore authored by hand in
+   index.mdx as a `<section class="sluice-hero">`: full-width banner across
+   the top, then title, tagline, and CTAs centered beneath it. */
+
+.sluice-hero {
+	max-width: 1200px;
+	margin-inline: auto;
+	margin-block: 0 4rem;
+	text-align: center;
 }
 
-/* Hero image — the canonical Sluice banner is wider than tall, so let it
-   display in full at its native aspect ratio. Starlight's default
-   `object-fit: cover` was cropping the right edge of the wordmark. */
-.hero > .hero-html img,
-.hero img {
-	object-fit: contain;
+.sluice-hero-banner {
+	display: block;
 	width: 100%;
 	height: auto;
-	max-height: none;
-	background: transparent;
+	border-radius: 0.75rem;
+	margin-bottom: 2.5rem;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.sluice-hero-copy {
+	max-width: 60rem;
+	margin-inline: auto;
+}
+
+.sluice-hero-title {
+	font-size: clamp(2rem, 5vw, 3.75rem);
+	line-height: 1.1;
+	font-weight: 700;
+	margin: 0 0 1rem;
+	letter-spacing: -0.02em;
+}
+
+.sluice-hero-tagline {
+	font-size: clamp(1.05rem, 1.6vw, 1.375rem);
+	line-height: 1.4;
+	color: var(--sl-color-gray-2);
+	margin: 0 0 2rem;
+}
+
+.sluice-hero-tagline em {
+	color: var(--sl-color-text-accent);
+	font-style: italic;
+}
+
+.sluice-hero-actions {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+/* Hide the auto-rendered Starlight page title on the home page.
+   Starlight always emits `<h1 id="_top">{title}</h1>` in its own content-panel
+   above the markdown content. Since we render the brand banner + title in our
+   custom `.sluice-hero` block, that auto-title is duplicate noise. Match the
+   first `.content-panel` whose subsequent sibling contains `.sluice-hero` and
+   hide it. */
+.content-panel:has(+ .content-panel .sluice-hero) {
+	display: none;
+}
+
+/* On a splash page Starlight constrains the markdown content to ~50rem.
+   Override that for the home page so the banner can hit its native 1200px
+   width on wide displays without clipping. */
+.sl-container:has(.sluice-hero) {
+	max-width: none;
 }
 
 /* Inline code — the embedded data values in flow. Cyan tint hints at the
