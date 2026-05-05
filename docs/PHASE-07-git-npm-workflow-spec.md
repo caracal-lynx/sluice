@@ -1,9 +1,9 @@
 # Sluice — Phase 7: git/npm Workflow (Spec)
 
-> 🔴 **Status: BLOCKED by Phase 5.** This document specifies how Phase 7 will be executed once Phase 5 (Repo Restructure & Open-Source Launch) lands. Do **not** start Phase 7 work until the public `caracal-lynx/sluice` repository exists, the package is publishing to npm, and the private repos (`sluice-enrich`, `sluice-rules`, adapter repos, client repos) are in their post-Phase-5 layout.
+> ✅ **Status: COMPLETE — shipped 5 May 2026.** First Changesets-managed release `@caracal-lynx/sluice@0.1.3` published to npm with SLSA v1 provenance. Six PRs landed: [#29](https://github.com/caracal-lynx/sluice/pull/29) · [#31](https://github.com/caracal-lynx/sluice/pull/31) · [#33](https://github.com/caracal-lynx/sluice/pull/33) · [#34](https://github.com/caracal-lynx/sluice/pull/34) · [#35](https://github.com/caracal-lynx/sluice/pull/35) · [#36](https://github.com/caracal-lynx/sluice/pull/36). See the **Closing changelog** at the bottom of this document for deviations from the original spec and known follow-ups. The body of the spec below is retained verbatim as an implementation reference.
 >
 > **Owner:** Caracal Lynx Ltd. · Michael Scott
-> **Estimated effort:** 1–2 weeks
+> **Estimated effort (planned vs. actual):** 1–2 weeks planned · ~2 hours actual (5 May 2026)
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §11](./SLUICE-IMPLEMENTATION-PLAN.md#11-phase-7--gitnpm-workflow)
 
 ---
@@ -374,6 +374,45 @@ For each of: `sluice-enrich`, `sluice-rules`, `sluice-adapter-ifs`, `sluice-adap
 ## Document inventory updates required
 
 When this spec is created, update [SLUICE-IMPLEMENTATION-PLAN.md §16 Document Inventory](./SLUICE-IMPLEMENTATION-PLAN.md#16-document-inventory) to add a row for this file. Also update §11 of the master plan to reference this spec instead of `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` (which is a placeholder and currently the only thing §11 points at).
+
+---
+
+## Closing changelog (5 May 2026 — execution notes)
+
+This section records what actually happened during execution and where reality deviated from the spec. The body above is retained as-written for traceability; the items below override or supplement it.
+
+### What shipped
+
+| PR | What | Stage |
+|---|---|---|
+| [#29](https://github.com/caracal-lynx/sluice/pull/29) | Changesets bootstrap + `@changesets/changelog-github` renderer + PR template + `CONTRIBUTING.md` update | B |
+| [#31](https://github.com/caracal-lynx/sluice/pull/31) | `docs/templates/renovate-downstream{,client}.json` reference templates | D (templates) |
+| [#33](https://github.com/caracal-lynx/sluice/pull/33) | `release.yml` initial publish workflow with `NPM_TOKEN` (later replaced — see #36) | C |
+| [#34](https://github.com/caracal-lynx/sluice/pull/34) | First doc-fix release trigger: README paid-services email change with attached `patch` changeset | E.1 |
+| [#35](https://github.com/caracal-lynx/sluice/pull/35) | Version Packages PR for `0.1.3` (opened manually — see deviation 5 below) | E.2 |
+| [#36](https://github.com/caracal-lynx/sluice/pull/36) | **Switch from `NPM_TOKEN` to npm Trusted Publishing (OIDC)** + add `workflow_dispatch:` trigger | E.3 unblock |
+
+### Deviations from the spec
+
+1. **Real client repo names instead of placeholders.** Stage 0.3 created `sluice-client-cochran` and `sluice-client-eribe` rather than the spec's `sluice-client-acme-corp` / `sluice-client-style-co`. The placeholder names exist only in the public `caracal-lynx/sluice` repo (per the 2026-05-04 client-name scrub); the private client repos use real client names. Memory: [`project_client_name_mapping.md`](../../../Users/MichaelScott/.claude/projects/C--Dev-Projects-TypeScript-sluice/memory/project_client_name_mapping.md).
+
+2. **Mend Renovate runs in Interactive mode** under the Community (Free) tier. The spec assumes Renovate auto-posts PRs; in practice updates queue on the Mend dashboard at <https://developer.mend.io/github/caracal-lynx> and require user approval before reaching GitHub. **Stage E.4 cascade verification is therefore deferred** — when the user approves the 7 pending `@caracal-lynx/sluice@^0.1.3` updates on the dashboard, the cascade fires across `sluice-enrich`, `sluice-rules`, three adapter repos, and the two client repos.
+
+3. **`NPM_TOKEN` model superseded by Trusted Publishing.** The original spec called for a Classic Automation token. npm retired Classic tokens in November 2025. Three subsequent attempts using granular access tokens (package-scoped, scope-scoped, and bypass-2FA-attempted) all returned `404 Not Found - PUT /@caracal-lynx%2fsluice` because the user's account 2FA setting is *"Enabled for authorization and publishing"* and granular tokens cannot bypass that in the current npm UI. PR #36 switched to **npm Trusted Publishing (OIDC)** — the package's [Trusted Publishers list](https://www.npmjs.com/package/@caracal-lynx/sluice/access) authorises this repo + `release.yml` directly; no stored `NPM_TOKEN` secret is referenced or required. SLSA v1 provenance is preserved.
+
+4. **`workflow_dispatch:` trigger added** to `release.yml` in PR #36 so manual reruns work via `gh workflow run release.yml -R caracal-lynx/sluice`. Useful for debug runs and out-of-cadence releases without needing an artificial commit.
+
+5. **GitHub Actions PR-creation setting still needs enabling.** The first run of the release workflow against a changeset-bearing master successfully bumped the version, generated the CHANGELOG, and pushed the `changeset-release/master` branch — but failed at the *create PR* step with `HttpError: GitHub Actions is not permitted to create or approve pull requests`. PR #35 was therefore opened manually. **Future improvement:** toggle the setting at <https://github.com/caracal-lynx/sluice/settings/actions> → Workflow permissions → "Allow GitHub Actions to create and approve pull requests" so subsequent Version PRs land without intervention. Non-blocking; one-time setting change.
+
+### Stacked-PR squash hazard (worked around)
+
+PRs #29 → #30 → #31 were originally stacked: each based on the previous branch. When #29 squash-merged, GitHub deleted the `chore/phase-7-changesets` branch, which auto-closed #30 (its base no longer existed). Recovery: rebased the dependent branches onto the new master with `git rebase --onto master <old-base>`, force-pushed, then opened a fresh PR (#33) to replace #30 (closed PRs cannot be reopened with a different base). #31 was retargetable because it was still open at the time. Lesson for future stacked work: merge stacked PRs in dependency order *back-to-front* (templates first, release.yml second, Changesets third) — or use rebase-merge instead of squash-merge to preserve branch tips.
+
+### Verification artefacts
+
+- `npm view @caracal-lynx/sluice version` → `0.1.3`
+- `npm view @caracal-lynx/sluice@0.1.3 dist.attestations` → `{ predicateType: 'https://slsa.dev/provenance/v1', url: 'https://registry.npmjs.org/-/npm/v1/attestations/@caracal-lynx%2fsluice@0.1.3' }`
+- Release workflow run [25370737188](https://github.com/caracal-lynx/sluice/actions/runs/25370737188) — completed/success on the OIDC-authenticated path
 
 ---
 

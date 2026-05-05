@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 4 May 2026 (post Phase 6 — README rewrite + PLUGINS.md)
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 5 May 2026 (post Phase 7 — git/npm workflow + Trusted Publishing)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -144,7 +144,7 @@ flowchart TD
     P4B["🔒 Phase 4b<br/>Built-in Providers<br/>vies · hmrc-vat · uk-trade-tariff"]
     P5["✅ Phase 5<br/>Repo Restructure &<br/>Open-Source Launch<br/>COMPLETE 4 May 2026"]
     P6["✅ Phase 6<br/>README & Marketing<br/>COMPLETE 4 May 2026"]
-    P7["⚙️ Phase 7<br/>git/npm Workflow<br/>(1–2 weeks)"]
+    P7["✅ Phase 7<br/>git/npm Workflow<br/>COMPLETE 5 May 2026"]
     P8["📖 Phase 8<br/>GitHub Pages Docs<br/>(6–8 weeks)"]
     P9["🤖 Phase 9<br/>Sluice MCP Server<br/>(8–12 weeks, private paid)<br/>NOW UNBLOCKED ✅"]
     P10["⚡ Phase 10<br/>Node v26 Upgrade<br/>(Oct 2026 LTS)"]
@@ -173,7 +173,7 @@ flowchart TD
     style P4B fill:#d6d8f7,stroke:#6610f2
     style P5 fill:#d4edda,stroke:#28a745
     style P6 fill:#d4edda,stroke:#28a745
-    style P7 fill:#e2e3e5,stroke:#6c757d
+    style P7 fill:#d4edda,stroke:#28a745
     style P8 fill:#e2e3e5,stroke:#6c757d
     style P9 fill:#d6d8f7,stroke:#6610f2
     style P10 fill:#cce5ff,stroke:#0d6efd
@@ -193,7 +193,7 @@ flowchart TD
 | **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
 | **Phase 5** | Restructure & launch | ✅ **COMPLETE** (4 May 2026, PRs [#18–#22](https://github.com/caracal-lynx/sluice/pulls?q=is%3Apr+is%3Amerged+phase-5)) | — |
 | **Phase 6** | README & marketing | ✅ **COMPLETE** (4 May 2026, [PR #27](https://github.com/caracal-lynx/sluice/pull/27)) | — |
-| **Phase 7** | git/npm workflow | 1–2 weeks | 🟢 **Unblocked** |
+| **Phase 7** | git/npm workflow | ✅ **COMPLETE** (5 May 2026, PRs [#29](https://github.com/caracal-lynx/sluice/pull/29) · [#31](https://github.com/caracal-lynx/sluice/pull/31) · [#33](https://github.com/caracal-lynx/sluice/pull/33) · [#34](https://github.com/caracal-lynx/sluice/pull/34) · [#35](https://github.com/caracal-lynx/sluice/pull/35) · [#36](https://github.com/caracal-lynx/sluice/pull/36)) | — |
 | **Phase 8** | GitHub Pages | 6–8 weeks | 🟢 **Unblocked** |
 | **Phase 9** | MCP Server | 8–12 weeks | **Now unblocked** (Phase 3 complete) |
 | **Phase 10** | Node v26 | 1–2 days | Oct 2026 (LTS cut) |
@@ -702,11 +702,16 @@ Caracal Lynx offers additional paid services built on top of it:
 
 ---
 
-## 11. Phase 7 — git/npm Workflow
+## 11. Phase 7 — git/npm Workflow ✅ COMPLETE
 
-**Status:** 🟢 **Unblocked** — Phase 5 shipped 4 May 2026
+**Status:** ✅ **COMPLETE** — shipped 5 May 2026.
 
-**Reference:** `docs/PHASE-07-git-npm-workflow-spec.md` — full Claude Code-ready execution plan (Changesets setup, publish workflow, Renovate config templates for every downstream repo, end-to-end cascade verification). Background detail also lives in `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` until that doc is reauthored during Phase 5.
+- **First Changesets-managed release:** [`@caracal-lynx/sluice@0.1.3`](https://www.npmjs.com/package/@caracal-lynx/sluice/v/0.1.3) live on npm with [SLSA v1 provenance attestation](https://registry.npmjs.org/-/npm/v1/attestations/@caracal-lynx%2fsluice@0.1.3).
+- **PRs landed:** [#29 Changesets bootstrap](https://github.com/caracal-lynx/sluice/pull/29) · [#31 Renovate templates](https://github.com/caracal-lynx/sluice/pull/31) · [#33 release.yml](https://github.com/caracal-lynx/sluice/pull/33) · [#34 doc-fix release trigger](https://github.com/caracal-lynx/sluice/pull/34) · [#35 Version PR](https://github.com/caracal-lynx/sluice/pull/35) · [#36 Trusted Publishing OIDC](https://github.com/caracal-lynx/sluice/pull/36).
+- **Downstream repos created (Stage 0.3):** seven private repos under `caracal-lynx/` — `sluice-enrich`, `sluice-rules` (monorepo), three adapter repos (`sluice-adapter-{ifs,bc,bluecherry}`), and two client repos using **real client names** (`sluice-client-cochran`, `sluice-client-eribe`) rather than the spec's placeholders. Renovate is **onboarded on all 7** under Mend's Community Free tier.
+- **Auth model deviation from the original spec:** the spec called for a Classic Automation token, but [npm retired Classic tokens in November 2025](https://docs.npmjs.com/about-access-tokens). Granular tokens cannot bypass account-level "authorization and writes" 2FA in the current UI, so PR #36 switched to **npm Trusted Publishing** (OIDC-based, no stored token). The package's Trusted Publishers list authorises this repo + `release.yml` directly.
+
+**Reference:** [`docs/PHASE-07-git-npm-workflow-spec.md`](PHASE-07-git-npm-workflow-spec.md) — execution plan (executed; see PRs above).
 
 ### Summary
 
@@ -742,10 +747,14 @@ flowchart LR
 
 ### Success Criteria
 
-- [ ] Changesets configured in `caracal-lynx/sluice`
-- [ ] CI publish workflow working (test with a patch release)
-- [ ] Renovate running on `sluice-enrich`, `sluice-rules`, adapter repos, and client repos
-- [ ] Test cascade: patch bump to core → Renovate PR appears in sluice-enrich within 24h
+- [x] Changesets configured in `caracal-lynx/sluice` — PR #29 (5 May 2026)
+- [x] CI publish workflow working — `0.1.3` published successfully via OIDC + provenance after the Trusted Publishing switch in PR #36
+- [x] Renovate onboarded on `sluice-enrich`, `sluice-rules`, three adapter repos, two client repos (`sluice-client-cochran`, `sluice-client-eribe`) — confirmed on the Mend dashboard, all 7 with `Renovate Status: onboarded`
+- [ ] **Cascade verification deferred** — Mend's Default Engine Setting for the org is **Interactive** (user approves each pending update on the dashboard before PRs post to GitHub). When you approve the 7 pending `@caracal-lynx/sluice@^0.1.3` updates on <https://developer.mend.io/github/caracal-lynx>, the cascade fires. Not a Phase 7 blocker — that's a one-click verification when the user is ready.
+
+### Outstanding follow-ups (non-blocking)
+
+- [ ] **Enable** "Allow GitHub Actions to create and approve pull requests" at <https://github.com/caracal-lynx/sluice/settings/actions> so future Version PRs land automatically without manual intervention. PR #35 (the first Version PR) had to be opened manually because of this default.
 
 ---
 
@@ -948,7 +957,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ✅ Good | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference. |
 | `docs/branching-strategy.md` | ✅ Good | Working branching convention for all Sluice repos: single protected `master`, short-lived `feat/`/`fix/`/`docs/`/`chore/`/`hotfix/` branches, `[<branch-name>] - ` commit prefix. Lifted out of PHASE-05 during the 2026-05-04 rewrite. |
 | `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ EXECUTED | Phase 6 shipped 4 May 2026 ([PR #27](https://github.com/caracal-lynx/sluice/pull/27)). Retained as implementation reference. |
-| `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ Good | Detailed execution plan for Phase 7 — Changesets in public sluice, publish workflow with npm provenance, Renovate config templates for all downstream repos, end-to-end cascade verification. Forward-looking; blocked by Phase 5. |
+| `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ EXECUTED | Phase 7 shipped 5 May 2026 (PRs [#29](https://github.com/caracal-lynx/sluice/pull/29), [#31](https://github.com/caracal-lynx/sluice/pull/31), [#33](https://github.com/caracal-lynx/sluice/pull/33), [#34](https://github.com/caracal-lynx/sluice/pull/34), [#35](https://github.com/caracal-lynx/sluice/pull/35), [#36](https://github.com/caracal-lynx/sluice/pull/36)). Auth model deviated from the spec: Classic Automation tokens were retired by npm in November 2025, so PR #36 switched to npm Trusted Publishing (OIDC). Spec retained as implementation reference; closing changelog notes are appended in-doc. |
 | `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
 | `docs/PHASE-11-typescript-v7-spec.md` | ✅ 11a EXECUTED | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable. |
 | `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated 4 May 2026 (post Phase 5 — open-source launch). |
