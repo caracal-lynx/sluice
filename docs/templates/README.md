@@ -15,9 +15,10 @@ Drop into the root of each **internal/intermediate** private repo:
 - `caracal-lynx/sluice-adapter-bc`
 - `caracal-lynx/sluice-adapter-bluecherry`
 
-Patch bumps of `@caracal-lynx/*` auto-merge via `automergeType: branch` (no PR
-churn for routine version bumps). Minor bumps open a PR for human review. Major
-bumps open a PR with a `major-bump` label and never auto-merge.
+Patch bumps of `@caracal-lynx/*` open a real PR (`automergeType: pr` with
+`automerge: true` — Renovate will auto-merge it once required CI checks pass).
+Minor bumps open a PR for human review. Major bumps open a PR with a
+`major-bump` label and never auto-merge.
 
 ## `renovate-downstream-client.json`
 
@@ -60,3 +61,25 @@ making each version change a tracked change.
 
 For non-`@caracal-lynx/*` packages, Renovate's default behaviour is
 unchanged.
+
+## Why `automergeType: "pr"` (not `"branch"`)
+
+Renovate supports two automerge styles. `"branch"` pushes the change to a
+hidden branch, waits for required status checks to pass, and silently merges
+to master without opening a PR — minimal noise, fast for routine patches.
+`"pr"` opens a normal PR that auto-merges on green CI; same end result, but
+visible.
+
+`"branch"` was the original Phase 7 choice, but it has a quiet trap: if the
+downstream repo has **no required status checks** (a stub repo with no
+workflows, or a repo whose CI hasn't been wired up yet), Renovate creates
+the branch and waits *forever* for checks that will never run. The cascade
+appears dead from outside.
+
+`"pr"` doesn't have this failure mode. Even on a repo with no CI, the PR
+appears, you can see it, you can click merge. When the repo later adds CI,
+PRs auto-merge on green without policy churn.
+
+Switching individual repos back to `"branch"` later is fine if you want
+zero-PR-noise patches once their CI is solid — but the global default
+should be the safe, visible option.

@@ -15,7 +15,7 @@
       "matchUpdateTypes": ["patch"],
       "matchPackagePatterns": ["^@caracal-lynx/"],
       "automerge": true,
-      "automergeType": "branch"
+      "automergeType": "pr"
     },
     {
       "matchUpdateTypes": ["major"],
