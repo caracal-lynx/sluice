@@ -129,6 +129,69 @@
 	flex-wrap: wrap;
 }
 
+/* Hero CTA buttons. Plain `<a class="sl-link-button">` doesn't inherit
+   Starlight's button styling because those styles are scoped to specific
+   Astro component instances. Roll our own here so the look survives any
+   Starlight internal restyle. */
+.sluice-cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+	border-radius: 999px;
+	font-weight: 600;
+	font-size: 1rem;
+	line-height: 1.2;
+	text-decoration: none;
+	transition:
+		background-color 150ms ease,
+		color 150ms ease,
+		border-color 150ms ease,
+		transform 150ms ease;
+}
+
+.sluice-cta:hover,
+.sluice-cta:focus-visible {
+	transform: translateY(-1px);
+	text-decoration: none;
+}
+
+.sluice-cta:focus-visible {
+	outline: 2px solid var(--sl-color-accent);
+	outline-offset: 2px;
+}
+
+.sluice-cta-primary {
+	background-color: var(--sl-color-accent);
+	color: var(--sl-color-text-invert);
+	border: 1px solid var(--sl-color-accent);
+}
+
+.sluice-cta-primary:hover,
+.sluice-cta-primary:focus-visible {
+	background-color: var(--sl-color-accent-high);
+	border-color: var(--sl-color-accent-high);
+	color: var(--sl-color-text-invert);
+}
+
+.sluice-cta-secondary {
+	background-color: transparent;
+	color: var(--sl-color-text-accent);
+	border: 1px solid var(--sl-color-hairline-light);
+}
+
+.sluice-cta-secondary:hover,
+.sluice-cta-secondary:focus-visible {
+	background-color: var(--sl-color-bg-sidebar);
+	border-color: var(--sl-color-text-accent);
+	color: var(--sl-color-text-accent);
+}
+
+.sluice-cta-icon {
+	font-size: 1.1em;
+	line-height: 1;
+}
+
 /* Hide the auto-rendered Starlight page title on the home page.
    Starlight always emits `<h1 id="_top">{title}</h1>` in its own content-panel
    above the markdown content. Since we render the brand banner + title in our
