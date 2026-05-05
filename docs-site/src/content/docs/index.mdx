@@ -4,9 +4,12 @@ description: Config-driven ETL toolkit that validates your data before it reache
 template: splash
 hero:
   tagline: Clean data flows through.
+  # Use raw HTML to skip Astro's image pipeline — it crops `image.file` to a
+  # square (Starlight's default expects mascot-style art). The banner is wide
+  # (1200×400) and must be shown at its native aspect ratio. The file in
+  # docs-site/public/ is served as-is, no processing.
   image:
-    file: ../../assets/sluice_banner.png
-    alt: Sluice — controlled passage of clean data
+    html: '<img src="/sluice/sluice_banner.png" alt="Sluice — controlled passage of clean data" width="1200" height="400" />'
   actions:
     - text: Quickstart
       link: /sluice/getting-started/quickstart/
