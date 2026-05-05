@@ -8,8 +8,9 @@ output/
 coverage/
 *.tsbuildinfo
 
-# IDE / agent / local-only
-.claude/settings.local.json
+# IDE / agent / local-only — Claude Code writes settings, scheduled-task locks,
+# and worktree state under .claude/; none of it should be tracked.
+.claude/
 
 # Stray developer artefacts (not tracked)
 npm-audit.txt
