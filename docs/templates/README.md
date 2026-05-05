@@ -43,3 +43,20 @@ label so they're not landed without explicit client engagement.
 If the policy changes, edit the template here and **re-sync each downstream
 repo manually** — there is no automated propagation. Cascading config changes
 across N repos defeats the point of having a checked-in template.
+
+## Why `rangeStrategy: "bump"` for `@caracal-lynx/*`
+
+Without it, Renovate's default `rangeStrategy` for caret-ranged dependencies
+(`^0.1.2`) is `replace` (or `widen` for peer deps), which only opens a PR
+when the new version is *outside* the current range. A patch bump like
+`0.1.2 → 0.1.3` falls *inside* `^0.1.2`, so by default no PR is created and
+consumers pick up the new version silently on their next `npm install`.
+
+For Phase 7's cascade to be visible — which is the whole point of having a
+release pipeline that emits a chain of PRs — we need every patch to actually
+open a PR in every downstream repo. `"rangeStrategy": "bump"` instructs
+Renovate to bump the range minimum (`^0.1.2 → ^0.1.3`) on every release,
+making each version change a tracked change.
+
+For non-`@caracal-lynx/*` packages, Renovate's default behaviour is
+unchanged.

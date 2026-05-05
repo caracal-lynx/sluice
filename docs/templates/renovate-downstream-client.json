@@ -8,7 +8,8 @@
     {
       "matchPackagePatterns": ["^@caracal-lynx/"],
       "groupName": "@caracal-lynx packages",
-      "automerge": false
+      "automerge": false,
+      "rangeStrategy": "bump"
     },
     {
       "matchUpdateTypes": ["patch"],
