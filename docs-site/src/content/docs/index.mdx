@@ -1,27 +1,30 @@
 ---
-title: Sluice — Clean data flows through.
+title: Sluice
 description: Config-driven ETL toolkit that validates your data before it reaches its destination — not after. Built for ERP migrations and AI data readiness.
 template: splash
-hero:
-  tagline: Clean data flows through.
-  # Use raw HTML to skip Astro's image pipeline — it crops `image.file` to a
-  # square (Starlight's default expects mascot-style art). The banner is wide
-  # (1200×400) and must be shown at its native aspect ratio. The file in
-  # docs-site/public/ is served as-is, no processing.
-  image:
-    html: '<img src="/sluice/sluice_banner.png" alt="Sluice — controlled passage of clean data" width="1200" height="400" />'
-  actions:
-    - text: Quickstart
-      link: /sluice/getting-started/quickstart/
-      icon: right-arrow
-      variant: primary
-    - text: View on GitHub
-      link: https://github.com/caracal-lynx/sluice
-      icon: external
-      variant: minimal
+tableOfContents: false
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<section class="sluice-hero not-content">
+  <img
+    src="/sluice/sluice_banner.png"
+    alt="Sluice — clean data flows through"
+    width="1200"
+    height="400"
+    class="sluice-hero-banner"
+  />
+
+  <div class="sluice-hero-copy">
+    <h1 class="sluice-hero-title">Clean data flows through.</h1>
+    <p class="sluice-hero-tagline">A config-driven ETL toolkit that validates your data <em>before</em> it reaches its destination — not after.</p>
+    <div class="sluice-hero-actions">
+      <a class="sl-link-button primary" href="/sluice/getting-started/quickstart/">Quickstart</a>
+      <a class="sl-link-button minimal" href="https://github.com/caracal-lynx/sluice">View on GitHub</a>
+    </div>
+  </div>
+</section>
 
 > **Data quality is the hidden blocker for both migrations and AI adoption.**
 >
