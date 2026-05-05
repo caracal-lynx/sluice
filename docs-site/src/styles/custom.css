@@ -79,6 +79,18 @@
 	gap: 2.5rem;
 }
 
+/* Hero image — the canonical Sluice banner is wider than tall, so let it
+   display in full at its native aspect ratio. Starlight's default
+   `object-fit: cover` was cropping the right edge of the wordmark. */
+.hero > .hero-html img,
+.hero img {
+	object-fit: contain;
+	width: 100%;
+	height: auto;
+	max-height: none;
+	background: transparent;
+}
+
 /* Inline code — the embedded data values in flow. Cyan tint hints at the
    "information in motion" idea without dominating the line. */
 :not(pre) > code {
