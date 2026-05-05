@@ -1338,18 +1338,35 @@ export interface EnrichPhaseFactory {
 ```typescript
 // private: sluice-enrich/src/index.ts
 import { registerEnrichPhase } from '@caracal-lynx/sluice';
-import { createEnrichPhase }   from './phase.js';
 
-// Called once at import time — self-registers into the open-source runner
+import { createEnrichPhase }   from './phase.js';
+import { patchStagingStore }   from './staging-patch.js';
+
+// Two side-effects run at module-load time. Order matters: the
+// StagingStore prototype must be patched BEFORE the runner ever
+// invokes the factory, so we patch first, then register.
+patchStagingStore();
 registerEnrichPhase(createEnrichPhase);
 
-export { EnrichRegistry } from './registry.js';
-export { EnrichCache }    from './cache.js';
-// ... other exports
+// Public surface — callers (notably tests in client repos) may want to
+// construct a registry / cache directly to seed fixture data, drive the
+// CLI's diagnostic surface, etc.
+export { EnrichRegistry }      from './registry.js';
+export { EnrichCache }         from './cache.js';
+export { EnrichmentRunner }    from './runner.js';
+export { loadEnrichPlugins }   from './loader.js';
+export { createEnrichPhase }   from './phase.js';
+export { patchStagingStore }   from './staging-patch.js';
 ```
 
 Clients install `sluice-enrich` and import it in their `sluice.config.yaml` plugin list,
 or add `import '@caracal-lynx/sluice-enrich'` to their entry point. No other wiring needed.
+
+> **CLI binary.** `@caracal-lynx/sluice-enrich` also installs a `sluice-enrich`
+> binary alongside the standard `sluice` binary. It's a diagnostic CLI
+> (`sluice-enrich plan <yaml>`, `sluice-enrich providers <yaml>`) that lives
+> outside the core `sluice run` flow — useful for verifying YAML wiring and
+> resolving "unknown provider" errors before a real run.
 
 ### State file shape (output/{name}-state.json)
 
