@@ -2,7 +2,7 @@
 
 > **Context:** When `sluice-core` goes public (Phase 5 of the implementation plan), GitHub Pages becomes the product's front door. This document covers what to include and a full site structure with page-by-page content outlines.
 >
-> **Status:** Planned for Phase 7. See `SLUICE-IMPLEMENTATION-PLAN.md` for sequencing.
+> **Status:** ✅ **EXECUTED** — shipped 5 May 2026. Live at <https://caracal-lynx.github.io/sluice/>. Delivered as Astro Starlight in [`docs-site/`](../docs-site) via PRs [#41](https://github.com/caracal-lynx/sluice/pull/41) (initial scaffold + 17 content pages + auto-gen pipeline) → [#42](https://github.com/caracal-lynx/sluice/pull/42)/[#43](https://github.com/caracal-lynx/sluice/pull/43) (banner-cropping fixes) → [#44](https://github.com/caracal-lynx/sluice/pull/44) (full-width hero layout) → [#45](https://github.com/caracal-lynx/sluice/pull/45) (CTA button styling). See `SLUICE-IMPLEMENTATION-PLAN.md` §12 for the closing summary.
 
 ---
 
