@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "schedule": ["before 9am on monday"],
+  "timezone": "Europe/London",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^@caracal-lynx/"],
+      "groupName": "@caracal-lynx packages",
+      "automerge": false
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "matchPackagePatterns": ["^@caracal-lynx/"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "addLabels": ["major-bump", "client-impact"]
+    }
+  ]
+}
