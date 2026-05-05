@@ -207,6 +207,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         store,
         path.dirname(path.resolve(yamlPath)),
         overrides,
+        'stg_merged',
       );
 
       const dqSummary = await this.runDQ(
