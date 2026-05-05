@@ -28,8 +28,10 @@ willing to send a PR.
    testing conventions.
 3. Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`
    locally before opening the PR.
-4. Add a `.changeset/` entry describing the change. (Once Phase 7's release
-   workflow lands; until then, summarise in the PR description.)
+4. Add a `.changeset/` entry describing your change. Run `npm run changeset`,
+   answer the prompts (patch / minor / major + a one-line summary), and commit
+   the generated `.changeset/<random-name>.md` file alongside your code changes.
+   Skip this step only for docs-only or CI-only PRs.
 5. Sign off your commits with `git commit -s -m "..."`. By signing off you
    confirm the contribution is your own and that you agree it can be released
    under the Elastic Licence 2.0.

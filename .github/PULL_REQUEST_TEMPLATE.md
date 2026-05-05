@@ -49,6 +49,17 @@ Paste the output of `npm test` if it's relevant.
 - [ ] `npm run lint` clean
 - [ ] `npm run build` clean
 
+## Changeset
+
+- [ ] I have added a `.changeset/` entry (`npm run changeset`)
+- [ ] N/A — this is a docs-only or CI-only change, no version bump needed
+
+<!--
+Sluice releases via Changesets (https://github.com/changesets/changesets). Every PR that
+changes `src/`, `dist/`, or the public API needs a changeset describing the change at
+patch / minor / major level. Docs-only and CI-only PRs can skip the changeset.
+-->
+
 ## Documentation
 
 - [ ] [CLAUDE.md](../CLAUDE.md) updated if conventions or schema changed
