@@ -1,0 +1,258 @@
+---
+title: How It Works
+description: The Sluice runtime architecture — six pipeline phases, DuckDB staging, and the dependency direction between modules.
+---
+
+This page is for the technically curious — anyone evaluating Sluice for a real migration who wants to know what's happening under the hood.
+
+The short version: every Sluice pipeline runs through **six phases**, with an embedded DuckDB instance acting as the staging store between them. The phases are sequenced by `PipelineRunner` (or `MultiSourcePipelineRunner` for pipelines with multiple sources). Adapters are pluggable; everything else is engine code with strict module boundaries.
+
+## System context
+
+Where Sluice sits between source systems and the target ERP:
+
+```mermaid
+flowchart LR
+    classDef person fill:#FFE8B2,stroke:#B88400,stroke-width:2px,color:#000
+    classDef input fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#000
+    classDef core fill:#1565C0,stroke:#0D47A1,stroke-width:2px,color:#FFF
+    classDef target fill:#C8E6C9,stroke:#2E7D32,stroke-width:1.5px,color:#000
+    classDef report fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1.5px,color:#000
+
+    Author([Pipeline Author<br/>consultant / engineer]):::person
+
+    subgraph Inputs[Inputs]
+      YAML[/Pipeline YAML<br/>config/]:::input
+      Lookups[/Lookup CSVs<br/>& SQL/]:::input
+      Env[/.env credentials/]:::input
+    end
+
+    subgraph Sluice[Sluice Toolkit]
+      CLI{{sluice CLI}}:::core
+      Runner[[PipelineRunner]]:::core
+      DuckDB[(DuckDB<br/>staging)]:::core
+    end
+
+    subgraph Sources[Legacy Sources]
+      MSSQL[(MSSQL)]
+      PG[(PostgreSQL)]
+      CSV[CSV / XLSX]
+      REST[REST APIs]
+    end
+
+    subgraph Targets[Target ERPs & Files]
+      BC[Business Central<br/>REST]:::target
+      IFS[IFS ERP<br/>CSV import]:::target
+      BlueCherry[BlueCherry ERP<br/>CSV import]:::target
+      GenericCsv[Generic CSV / PG]:::target
+    end
+
+    subgraph Outputs[Run Artifacts]
+      Rejections[/Rejection CSV/]:::report
+      Summary[/DQ summary JSON/]:::report
+      State[/Run state JSON/]:::report
+      Log[/pino JSON log/]:::report
+    end
+
+    Author --> YAML
+    Author --> Lookups
+    Author --> Env
+
+    YAML --> CLI
+    Env --> CLI
+    CLI --> Runner
+
+    Sources --> Runner
+    Lookups --> Runner
+    Runner <--> DuckDB
+    Runner --> Targets
+
+    Runner --> Rejections
+    Runner --> Summary
+    Runner --> State
+    Runner --> Log
+```
+
+## Single-source runtime
+
+For a pipeline with a single `source:` block, `PipelineRunner` walks six phases in order:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant CLI as sluice CLI
+    participant Run as PipelineRunner
+    participant Cfg as ConfigLoader
+    participant Src as SourceAdapter
+    participant Duck as DuckDB (StagingStore)
+    participant DQ as DQEngine
+    participant Tx as TransformEngine
+    participant Tgt as TargetAdapter
+    participant FS as Filesystem
+
+    User->>CLI: sluice run pipeline.yaml
+    CLI->>Cfg: load(path)
+    Cfg->>Cfg: resolve ${ENV_VAR}
+    Cfg->>Cfg: Zod validate
+    Cfg-->>CLI: Pipeline
+    CLI->>Run: new + run()
+
+    Run->>Duck: open()
+    Run->>Src: connect(config)
+    Run->>Src: extract(store, 'stg_raw')
+    Src->>Duck: createTable + insertBatch*
+    Src-->>Run: ExtractResult
+    Run->>Src: disconnect()
+
+    Run->>DQ: validate('stg_raw')
+    DQ->>Duck: query
+    DQ->>FS: write rejection CSV + summary JSON
+    alt critical & stopOnCritical
+        DQ-->>Run: throw PipelineDQError
+        Run->>FS: write state (failed)
+        Run-->>CLI: exit 2
+    end
+
+    Run->>Tx: resolveLookups()
+    Tx->>Duck: load lookup sources
+    Run->>Tx: transform('stg_raw' → 'stg_transformed')
+
+    alt dryRun OR validate-only
+        Run->>FS: write state + summary
+        Run-->>CLI: exit 0
+    else full run
+        Run->>Tgt: connect(config)
+        Run->>Tgt: load('stg_transformed')
+        Tgt->>Duck: stream rows
+        Tgt-->>Run: LoadResult
+        Run->>Tgt: disconnect()
+        Run->>FS: write state JSON
+        Run->>Duck: close()
+        Run-->>CLI: exit 0
+    end
+```
+
+Each phase is its own engine module:
+
+| Phase | Module | Responsibility |
+|---|---|---|
+| 1. Config load | `src/config/` | YAML → `${ENV_VAR}` resolution → Zod validation → composite-rule expansion |
+| 2. Extract | `src/adapters/source/` | Stream source data into DuckDB `stg_raw` |
+| 3. DQ | `src/dq/` | Run rules against `stg_raw`; write rejection CSV + summary JSON |
+| 4. Transform | `src/transform/` | Apply field mappings, lookups, cleanse ops, expressions → `stg_transformed` |
+| 5. Load | `src/adapters/target/` | Stream `stg_transformed` to the target adapter |
+| 6. Run state | `src/runner.ts` | Write `{outputDir}/{pipeline.name}-state.json` for incremental mode |
+
+## Multi-source runtime
+
+When a pipeline declares `sources[]` + `merge:`, the CLI auto-routes to `MultiSourcePipelineRunner` (a subclass of `PipelineRunner`). It runs extract + per-source DQ in priority order, then merges, then runs post-merge DQ + transform + load:
+
+```mermaid
+flowchart TB
+    classDef phase fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#000
+    classDef stage fill:#FFF9C4,stroke:#F9A825,stroke-width:1.5px,color:#000
+    classDef decision fill:#FFE0B2,stroke:#E65100,stroke-width:1.5px,color:#000
+    classDef output fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1.5px,color:#000
+
+    A[Load & validate YAML<br/>Zod refine: sources XOR source]:::phase
+    B[Load plugins<br/>file + sluice.config.yaml]:::phase
+    C[Open DuckDB]:::phase
+
+    subgraph PerSource[Per-source extract + DQ - priority-ordered]
+      direction TB
+      S1[Extract source 1]:::phase --> R1[renameColumns] --> F1{incremental?}:::decision
+      F1 -- yes & matches<br/>incrementalSource --> I1[filter by<br/>incrementalField] --> D1[DQ rules<br/>where sourceId = s1]:::phase
+      F1 -- no --> D1
+      D1 --> RW1[rewrite stg_raw_s1<br/>accepted rows only]:::stage
+
+      S2[Extract source 2]:::phase --> R2[renameColumns] --> D2[DQ rules<br/>where sourceId = s2]:::phase --> RW2[rewrite stg_raw_s2]:::stage
+      SN[Extract source N]:::phase --> RN[renameColumns] --> DN[DQ rules<br/>where sourceId = sN]:::phase --> RWN[rewrite stg_raw_sN]:::stage
+    end
+
+    M[[MergeEngine<br/>strategy: coalesce / priority-override / union / intersect]]:::phase
+    MJ[(stg_merge_joined)]:::stage
+    MG[(stg_merged)]:::stage
+    MC[(stg_merge_conflicts)]:::stage
+    CLog[/conflictLog CSV<br/>if configured/]:::output
+
+    PMDQ[Post-merge DQ<br/>rules with no sourceId]:::phase
+    TX[Transform<br/>stg_merged → stg_transformed]:::phase
+    LD[Load to target]:::phase
+    ST[/State file with<br/>per-source sources block/]:::output
+    CL[Close DuckDB]:::phase
+
+    A --> B --> C --> PerSource
+    RW1 --> M
+    RW2 --> M
+    RWN --> M
+    M --> MJ --> MG
+    M --> MC --> CLog
+    MG --> PMDQ --> TX --> LD --> ST --> CL
+```
+
+The four built-in merge strategies cover the patterns we hit most often:
+
+```mermaid
+flowchart LR
+    classDef s fill:#BBDEFB,stroke:#1565C0,color:#000
+
+    subgraph Coalesce[coalesce]
+      CA[priority 1: null<br/>priority 2: Alice<br/>priority 3: Alicia]:::s --> CR[Alice]:::s
+    end
+    subgraph PO[priority-override]
+      PA[priority 1: null<br/>priority 2: Alice<br/>priority 3: Alicia]:::s --> PR[null]:::s
+    end
+    subgraph Union[union]
+      UA[A: 100 keys<br/>B: 120 keys<br/>overlap 80]:::s --> UR[140 rows<br/>deduped by key]:::s
+    end
+    subgraph Intersect[intersect]
+      IA[A: 100 keys<br/>B: 120 keys<br/>overlap 80]:::s --> IR[80 rows]:::s
+    end
+```
+
+## Why DuckDB?
+
+DuckDB is the engine's staging layer. It's an embedded, single-file analytical database — no server, no daemon, no rebuild on Node ABI bumps. Sluice uses the official `@duckdb/node-api` package, which is Promise-native, TypeScript-first, and ABI-stable.
+
+What this gives Sluice:
+
+- **Set-based DQ.** Rules like `unique` are evaluated as a SQL `GROUP BY … HAVING COUNT(*) > 1` against the staging table. Nothing else fits in memory at scale.
+- **Set-based merge.** Multi-source merges are SQL `JOIN` + `COALESCE` over priority-ordered sources, executed by DuckDB rather than imperatively in JavaScript.
+- **Cheap dry-runs.** Pass `stagingDb: ':memory:'` (or `--dry-run`) and the whole pipeline runs without touching disk except to write the rejection CSV.
+- **Predictable type behaviour.** Source types map cleanly to DuckDB's columnar types (`VARCHAR`, `BIGINT`, `DOUBLE`, `BOOLEAN`, `TIMESTAMP`).
+
+The default staging file is `{outputDir}/{pipeline.name}.duckdb`. It's safe to delete between runs; Sluice rebuilds it from scratch every time.
+
+## Why YAML + Zod?
+
+Pipelines are described declaratively, not procedurally. The YAML schema is the contract. Zod validates the YAML at load time, and every TypeScript type in Sluice is **inferred** from the Zod schema (`z.infer<typeof PipelineSchema>`). There are no manual `interface` declarations for config types — code and config can't drift apart.
+
+`${ENV_VAR}` tokens are resolved by the loader **before** Zod validation, so secrets never appear in YAML and the schema only ever sees plain strings.
+
+## Module dependency direction
+
+The codebase follows a strict dependency direction:
+
+```
+cli.ts → runner.ts / multi-source-runner.ts
+            │
+            ├─→ adapters/ (source + target)
+            ├─→ staging/  (DuckDB wrapper)
+            ├─→ dq/       (rule engine)
+            ├─→ transform/ (field mapping engine)
+            ├─→ merge/    (multi-source merge engine)
+            ├─→ plugins/  (Tier 2/3 plugin discovery)
+            ├─→ config/   (schema + loader)
+            └─→ enrich/   (Phase 4a — types only; impl is private)
+
+utils/ ← (imported by everyone)
+```
+
+`plugins/` is imported by `runner`, `dq`, `transform`, and `merge`, but it must **not** import any of them — that's how custom rules and adapters can be registered without creating a cycle. `enrich/` is type-only in the open-source core; the runtime implementation lives in the private `@caracal-lynx/sluice-enrich` package.
+
+## See also
+
+- [Core Concepts](/sluice/getting-started/core-concepts/) — the same picture at a higher level
+- [Extension Points](/sluice/architecture/extension-points/) — where to plug into the engine
+- [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/) — the declarative contract in full

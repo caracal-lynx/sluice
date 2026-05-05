@@ -29,28 +29,28 @@ const CleanseOps = z.string().regex(/^[a-zA-Z|:0-9]+$/);
 // ── Pagination (REST source) ──────────────────────────────────────────────────
 
 const PaginationSchema = z.object({
-  type:        z.enum(['offset', 'cursor', 'page']),
-  pageSize:    z.number().int().positive().default(100),
-  pageParam:   z.string().optional(),
-  totalField:  z.string().optional(),
-  dataField:   z.string().optional(),
-  cursorField: z.string().optional(),
-  cursorParam: z.string().optional(),
+  type:        z.enum(['offset', 'cursor', 'page']).describe('Pagination strategy: `offset` (skip/take), `cursor` (next-cursor token), or `page` (1-indexed page number).'),
+  pageSize:    z.number().int().positive().default(100).describe('Records to request per page.'),
+  pageParam:   z.string().optional().describe('Query-string parameter name for the offset/page value (e.g. `skip`, `page`).'),
+  totalField:  z.string().optional().describe('Dot-path to the total record count in the response body (used by `offset` and `page`).'),
+  dataField:   z.string().optional().describe('Dot-path to the records array in the response body.'),
+  cursorField: z.string().optional().describe('Field in the response body whose value is the cursor for the next page (used by `cursor`).'),
+  cursorParam: z.string().optional().describe('Query-string parameter name to send the cursor in (used by `cursor`).'),
 });
 
 // ── Source ────────────────────────────────────────────────────────────────────
 
 const SourceBaseSchema = z.object({
-  adapter:    SourceAd,
-  connection: z.string().optional(),
-  query:      z.string().optional(),
-  file:       z.string().optional(),
-  endpoint:   z.string().optional(),
-  headers:    z.record(z.string()).optional(),
-  delimiter:  z.string().default(','),
-  encoding:   z.string().default('utf-8'),
-  sheet:      z.union([z.string(), z.number()]).optional(),
-  pagination: PaginationSchema.optional(),
+  adapter:    SourceAd.describe('Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`.'),
+  connection: z.string().optional().describe('Connection string for SQL adapters. Resolves `${ENV_VAR}` tokens at load time. Required for `mssql` and `pg`.'),
+  query:      z.string().optional().describe('SELECT statement for SQL adapters. Required for `mssql` and `pg`.'),
+  file:       z.string().optional().describe('Path or glob for file adapters. Required for `csv` and `xlsx`.'),
+  endpoint:   z.string().optional().describe('Full URL for the `rest` adapter. Required for `rest`.'),
+  headers:    z.record(z.string()).optional().describe('Optional HTTP headers, applied to every request from the `rest` adapter.'),
+  delimiter:  z.string().default(',').describe('Field delimiter for the `csv` adapter.'),
+  encoding:   z.string().default('utf-8').describe('File encoding for `csv` and `xlsx` (any Node-supported encoding).'),
+  sheet:      z.union([z.string(), z.number()]).optional().describe('Sheet name or 0-based index for the `xlsx` adapter.'),
+  pagination: PaginationSchema.optional().describe('Pagination config for the `rest` adapter. Omit for single-page responses.'),
 });
 
 export const SourceSchema = SourceBaseSchema.refine(
@@ -82,10 +82,10 @@ const DqRuleSchema = z.object({
 });
 
 export const DqSchema = z.object({
-  rulesFile:      z.string().optional(),   // Phase 2: composite rule library path
-  stopOnCritical: z.boolean().default(true),
-  rejectionFile:  z.string().optional(),
-  rules:          z.array(DqRuleSchema).default([]),
+  rulesFile:      z.string().optional().describe('Optional path to a composite rule library YAML (Tier 1 plugins). Composite-rule references in `rules[]` are expanded into built-in checks before Zod validation.'),
+  stopOnCritical: z.boolean().default(true).describe('When true, the pipeline halts (exit code 2) if any `critical` check fails. When false, critical violations are logged but the run continues.'),
+  rejectionFile:  z.string().optional().describe('Path for the per-violation rejection CSV. Defaults to `{outputDir}/{pipeline.name}-rejected.csv`.'),
+  rules:          z.array(DqRuleSchema).default([]).describe('List of DQ rules. Each entry binds a field to one or more checks.'),
 });
 
 // ── Enrich (Phase 4a) ─────────────────────────────────────────────────────────
@@ -111,9 +111,9 @@ const EnrichLookupSchema = z.object({
 });
 
 export const EnrichSchema = z.object({
-  cache:   z.union([z.boolean(), z.literal('persist')]).default(true),
-  onError: z.enum(['flag', 'skip', 'fail']).default('flag'),
-  lookups: z.array(EnrichLookupSchema).min(1),
+  cache:   z.union([z.boolean(), z.literal('persist')]).default(true).describe('Cache strategy for enrich providers. `true` = in-memory cache; `false` = no cache; `"persist"` = on-disk cache between runs.'),
+  onError: z.enum(['flag', 'skip', 'fail']).default('flag').describe('Pipeline-wide error policy when an enrich call fails. `flag` = mark row but keep it; `skip` = drop the row; `fail` = halt the pipeline.'),
+  lookups: z.array(EnrichLookupSchema).min(1).describe('At least one enrich lookup. Each binds a source field to a provider (e.g. VIES, HMRC) and writes the result into named columns.'),
 });
 
 // ── Transform ─────────────────────────────────────────────────────────────────
@@ -163,34 +163,32 @@ const FieldMappingSchema = z.object({
 );
 
 export const TransformSchema = z.object({
-  lookups: z.array(LookupSchema).default([]),
-  fields:  z.array(FieldMappingSchema).min(1),
+  lookups: z.array(LookupSchema).default([]).describe('Named lookup tables, loaded once at the start of the transform phase and cached in memory. Any source adapter (CSV, MSSQL, REST, …) is valid here.'),
+  fields:  z.array(FieldMappingSchema).min(1).describe('Field mappings — one entry per output column. Order is preserved.'),
 });
 
 // ── Target ────────────────────────────────────────────────────────────────────
 
 export const TargetSchema = z.object({
-  adapter:       TargetAd,
-  output:        z.string().optional(),
-  entity:        z.string().optional(),
-  connection:    z.string().optional(),
-  includeHeader: z.boolean().optional(),
-  columnOrder:   z.array(z.string()).optional(),
-  dateFormat:    z.string().optional(),
-  delimiter:     z.string().default(','),
-  encoding:      z.string().default('utf-8'),
-  nullValue:     z.string().default(''),
-  template:      z.string().optional(),
-  // Business Central REST:
-  baseUrl:       z.string().optional(),
-  company:       z.string().optional(),
-  apiVersion:    z.string().default('v2.0'),
-  onConflict:    z.enum(['fail', 'upsert', 'ignore']).default('fail'),
-  upsertKey:     z.array(z.string()).optional(),
-  batchEndpoint: z.boolean().default(true),
-  // PostgreSQL:
-  table:         z.string().optional(),
-  schema:        z.string().default('public'),
+  adapter:       TargetAd.describe('Target adapter id. Built-in: `csv`, `pg`. Paid add-ons: `bc`, `ifs`, `bluecherry`, `rest`.'),
+  output:        z.string().optional().describe('Output file path for file-based targets (`csv`, `ifs`, `bluecherry`).'),
+  entity:        z.string().optional().describe('Logical entity name. ERP adapters use this to resolve required-column lists; OData adapters use it as the entity-set name.'),
+  connection:    z.string().optional().describe('Connection string for the `pg` adapter. Resolves `${ENV_VAR}` at load time.'),
+  includeHeader: z.boolean().optional().describe('Whether to write a header row. Defaults: `csv` true, `ifs` false, `bluecherry` true.'),
+  columnOrder:   z.array(z.string()).optional().describe('Explicit column ordering for file-based targets. Required by ERP imports that load by position rather than by name.'),
+  dateFormat:    z.string().optional().describe('dayjs format token for date columns. Defaults: `YYYY-MM-DD` for `csv`/`ifs`, `MM/DD/YYYY` for `bluecherry`.'),
+  delimiter:     z.string().default(',').describe('Field delimiter for file-based targets.'),
+  encoding:      z.string().default('utf-8').describe('Output file encoding.'),
+  nullValue:     z.string().default('').describe('Rendered value for null/undefined cells in CSV output.'),
+  template:      z.string().optional().describe('Path to a header-only CSV template, used to override the default required-column ordering for `bluecherry`. The literal `default` selects the built-in column set.'),
+  baseUrl:       z.string().optional().describe('Base URL for the `bc` adapter. Resolves `${ENV_VAR}`.'),
+  company:       z.string().optional().describe('Company GUID or name for the `bc` adapter.'),
+  apiVersion:    z.string().default('v2.0').describe('OData API version for the `bc` adapter.'),
+  onConflict:    z.enum(['fail', 'upsert', 'ignore']).default('fail').describe('Behaviour when the target rejects an insert as a conflict. `upsert` issues a PATCH (`bc`) or INSERT … ON CONFLICT UPDATE (`pg`).'),
+  upsertKey:     z.array(z.string()).optional().describe('Conflict key for `pg` upserts. **Required** when `onConflict: upsert`.'),
+  batchEndpoint: z.boolean().default(true).describe('Use OData `$batch` for the `bc` adapter (max 100 ops per batch). Disable for adapters that don\'t support batching.'),
+  table:         z.string().optional().describe('Target table name for the `pg` adapter.'),
+  schema:        z.string().default('public').describe('Target schema for the `pg` adapter.'),
 }).refine(
   t => t.onConflict !== 'upsert' || (t.upsertKey !== undefined && t.upsertKey.length > 0),
   { message: 'upsertKey is required when onConflict is "upsert"', path: ['upsertKey'] }
@@ -199,19 +197,18 @@ export const TargetSchema = z.object({
 // ── Run ───────────────────────────────────────────────────────────────────────
 
 export const RunSchema = z.object({
-  mode:              z.enum(['full', 'incremental', 'validate-only']).default('full'),
-  batchSize:         z.number().int().positive().default(500),
-  onError:           z.enum(['continue', 'stop']).default('continue'),
-  logLevel:          z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  dryRun:            z.boolean().default(false),
-  outputDir:         z.string().default('./output'),
-  stagingDb:         z.string().default(''),
-  // Phase 4a — per-run enrich tuning (consumed by @caracal-lynx/sluice-enrich)
-  enrichConcurrency: z.number().int().positive().default(5),
-  enrichTimeoutMs:   z.number().int().positive().default(5000),
-  enrichMaxRetries:  z.number().int().min(0).max(5).default(3),
-  incrementalField:  z.string().optional(),
-  incrementalSince:  z.string().optional(),
+  mode:              z.enum(['full', 'incremental', 'validate-only']).default('full').describe('Run mode. `full` extracts and loads everything; `incremental` filters source records by `incrementalField`; `validate-only` runs DQ + transform but skips the load.'),
+  batchSize:         z.number().int().positive().default(500).describe('DuckDB insert batch size during extract and transform.'),
+  onError:           z.enum(['continue', 'stop']).default('continue').describe('Behaviour when a target adapter rejects a row. `continue` increments `rowsFailed`; `stop` aborts the load.'),
+  logLevel:          z.enum(['debug', 'info', 'warn', 'error']).default('info').describe('pino log level. `debug` adds per-row progress lines and disables the progress bar.'),
+  dryRun:            z.boolean().default(false).describe('When true, skip the load phase even if a target is configured. Equivalent to passing `--dry-run` on the command line.'),
+  outputDir:         z.string().default('./output').describe('Base directory for run artefacts (rejection CSV, DQ summary JSON, run state JSON, default DuckDB staging file).'),
+  stagingDb:         z.string().default('').describe('DuckDB staging file path. Empty string defaults to `{outputDir}/{pipeline.name}.duckdb`. Set to `:memory:` to force in-memory mode.'),
+  enrichConcurrency: z.number().int().positive().default(5).describe('Phase 4a — concurrent in-flight enrich provider requests. Consumed by `@caracal-lynx/sluice-enrich` if installed.'),
+  enrichTimeoutMs:   z.number().int().positive().default(5000).describe('Phase 4a — per-request timeout for enrich provider calls. Consumed by `@caracal-lynx/sluice-enrich` if installed.'),
+  enrichMaxRetries:  z.number().int().min(0).max(5).default(3).describe('Phase 4a — max retries for enrich provider calls. Consumed by `@caracal-lynx/sluice-enrich` if installed.'),
+  incrementalField:  z.string().optional().describe('Source column used to filter incremental runs (must be timestamp-coercible).'),
+  incrementalSince:  z.string().optional().describe('ISO datetime override for the incremental window start. If empty, the runner reads `lastRunAt` from the state file.'),
 });
 
 // ── Multi-source merge ────────────────────────────────────────────────────────
@@ -226,21 +223,21 @@ const MergeFieldStrategySchema = z.object({
 );
 
 export const MergeSchema = z.object({
-  key:               z.union([z.string(), z.array(z.string())]),
+  key:               z.union([z.string(), z.array(z.string())]).describe('Merge key — single column name or array of columns (composite key). Must exist in every source after `rename` is applied.'),
   strategy:          z.enum(['coalesce', 'priority-override', 'union', 'intersect'])
-                       .default('coalesce'),
-  onUnmatched:       z.enum(['include', 'exclude', 'warn', 'error']).default('include'),
-  fieldStrategies:   z.array(MergeFieldStrategySchema).default([]),
-  conflictLog:       z.string().optional(),
-  incrementalSource: z.string().optional(),  // source id; required when run.mode = 'incremental'
+                       .default('coalesce').describe('Merge strategy. `coalesce` = first non-null wins (priority-ordered); `priority-override` = highest-priority source always wins; `union` = all rows deduped by key; `intersect` = rows present in every source.'),
+  onUnmatched:       z.enum(['include', 'exclude', 'warn', 'error']).default('include').describe('What to do with rows present in fewer than all sources. Ignored by `intersect`.'),
+  fieldStrategies:   z.array(MergeFieldStrategySchema).default([]).describe('Per-field overrides of the top-level strategy. Use to pin a specific field to a specific source, or to override the strategy on a single field.'),
+  conflictLog:       z.string().optional().describe('Optional CSV path to log per-conflict detail (key, field, winning source, source values). Only written when at least one conflict is detected.'),
+  incrementalSource: z.string().optional().describe('Source id used for incremental filtering. Required when `run.mode: incremental`. Other sources run full each time.'),
 });
 
 export const MultiSourceEntrySchema = SourceBaseSchema.extend({
   id:       z.string().regex(/^[a-z0-9-]+$/, {
     message: 'source id must be lowercase alphanumeric with hyphens only',
-  }),
-  priority: z.number().int().positive(),
-  rename:   z.record(z.string()).optional(),  // { 'old column': 'new column' }
+  }).describe('Source id — lowercase alphanumeric with hyphens only. Must be unique across the array; used as the staging table suffix (`stg_raw_{id}`).'),
+  priority: z.number().int().positive().describe('Positive integer priority. Lower priority = higher precedence in `coalesce` and `priority-override` strategies.'),
+  rename:   z.record(z.string()).optional().describe('Optional rename map `{ "old column": "new column" }` applied in-place after extract. Useful for harmonising CSV/XLSX column headers; SQL/REST sources should rename in the query instead.'),
 }).refine(
   s => s.query || s.file || s.endpoint,
   { message: 'source must have query, file, or endpoint' },

@@ -1,0 +1,108 @@
+---
+title: Sluice — Clean data flows through.
+description: Config-driven ETL toolkit that validates your data before it reaches its destination — not after. Built for ERP migrations and AI data readiness.
+template: splash
+hero:
+  tagline: Clean data flows through.
+  image:
+    file: ../../assets/sluice_banner.png
+    alt: Sluice — controlled passage of clean data
+  actions:
+    - text: Quickstart
+      link: /sluice/getting-started/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/caracal-lynx/sluice
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+> **Data quality is the hidden blocker for both migrations and AI adoption.**
+>
+> Sluice is a data migration and data quality tool that validates your data *before* it reaches its destination — not after. You describe the entire migration as a YAML file: where the data comes from, the quality rules it has to pass, how each field maps to the target. Sluice validates the source, transforms it, and loads only the clean records — the bad rows go to a rejection report so you can fix the source.
+
+<CardGrid>
+  <Card title="Config-driven" icon="document">
+    Pipelines defined in YAML, no code required for standard migrations.
+  </Card>
+  <Card title="Source & target agnostic" icon="random">
+    Built-in adapters for **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, **REST**. ERP connectors (IFS, Business Central, BlueCherry) available as paid add-ons.
+  </Card>
+  <Card title="Data quality first" icon="approve-check-circle">
+    Validate before you load. Rejection CSVs and DQ summary reports built in.
+  </Card>
+  <Card title="AI data readiness" icon="rocket">
+    Use `sluice validate` as a pre-AI quality gate — know your data is fit for Copilot, Power BI, or any LLM tool *before* it causes damage.
+  </Card>
+</CardGrid>
+
+## A minimal pipeline
+
+Twenty lines of YAML migrate a CSV of customers, validate emails, normalise field casing, and write a clean CSV — with bad rows dropped to a rejection report.
+
+```yaml
+pipeline:
+  name: customers-quickstart
+  client: demo
+  version: "1.0"
+  entity: Customer
+
+source:
+  adapter: csv
+  file: ./data/customers.csv
+
+dq:
+  rules:
+    - field: email
+      checks:
+        - { type: notNull, severity: critical }
+        - { type: email,   severity: warning  }
+
+transform:
+  fields:
+    - { from: name,    to: Name,    type: string, cleanse: trim|titleCase }
+    - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+    - { from: country, to: Country, type: string, default: GB }
+
+target:
+  adapter: csv
+  output: ./output/customers-clean.csv
+```
+
+Run it:
+
+```sh
+sluice run customers.pipeline.yaml
+```
+
+That's the whole product. Read the [Quickstart](/sluice/getting-started/quickstart/) for the ten-minute walkthrough, or jump straight into the [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/).
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard title="Quickstart"
+            description="Working pipeline in under ten minutes"
+            href="/sluice/getting-started/quickstart/" />
+  <LinkCard title="Core Concepts"
+            description="Mental model: pipeline, source, DQ, transform, target"
+            href="/sluice/getting-started/core-concepts/" />
+  <LinkCard title="Pipeline YAML Schema"
+            description="Definitive reference for every key in a pipeline"
+            href="/sluice/reference/pipeline-yaml/" />
+  <LinkCard title="How It Works"
+            description="The runtime architecture and the six pipeline phases"
+            href="/sluice/architecture/how-it-works/" />
+  <LinkCard title="Plugin System"
+            description="Extend Sluice with custom rules, adapters, and transforms"
+            href="/sluice/guides/plugin-system/" />
+  <LinkCard title="Commercial Support"
+            description="Caracal Lynx's paid services for Sluice users"
+            href="/sluice/commercial-support/" />
+</CardGrid>
+
+---
+
+> Built and maintained by [Caracal Lynx Ltd.](https://caracallynx.com) — an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools. Open source under the [Elastic Licence 2.0](https://github.com/caracal-lynx/sluice/blob/master/LICENSE).

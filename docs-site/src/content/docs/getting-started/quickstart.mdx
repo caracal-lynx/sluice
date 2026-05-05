@@ -1,0 +1,187 @@
+---
+title: Quickstart
+description: Go from npm install to a working CSV-to-CSV pipeline with data quality validation in under ten minutes.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+This page takes you from a clean machine to a working pipeline run with data quality validation, transformation, and a rejection report — all in **under ten minutes**.
+
+By the end you will have:
+
+- A pipeline YAML that reads a CSV of customers, validates emails, normalises field casing, and writes a clean CSV.
+- A rejection CSV showing every row that failed a data quality check, with the rule and severity recorded.
+- A DQ summary JSON suitable for dropping into a CI artefact.
+
+## Before you start
+
+Install the CLI globally if you haven't already — see [Installation](/sluice/getting-started/installation/). The rest of this page assumes `sluice --version` works in your shell.
+
+> **Shell shown:** PowerShell 7 on Windows. Every command also works as-is in Bash, Zsh, and Fish — Sluice does not depend on shell-specific features.
+
+## The pipeline
+
+<Steps>
+
+1. **Make a working directory.**
+
+   ```powershell
+   New-Item -ItemType Directory -Path sluice-quickstart -Force | Out-Null
+   Set-Location sluice-quickstart
+   New-Item -ItemType Directory -Path data, output -Force | Out-Null
+   ```
+
+2. **Create a CSV with a few good rows and a few bad ones.**
+
+   Save this as `data/customers.csv`:
+
+   ```csv
+   name,email,country
+   Ada Lovelace,ada@example.com,GB
+   Grace Hopper,grace@example.com,US
+   Alan Turing,alan@example.com,GB
+   Margaret Hamilton,not-an-email,US
+   ,empty-name@example.com,GB
+   Linus Torvalds,linus@example.com,FI
+   ```
+
+   Two of those rows are deliberately broken. The fourth row's `email` is not a valid email; the fifth row has an empty `name`. We're going to ask Sluice to catch both.
+
+3. **Write the pipeline YAML.**
+
+   Save this as `customers.pipeline.yaml`:
+
+   ```yaml
+   pipeline:
+     name: customers-quickstart
+     client: demo
+     version: "1.0"
+     entity: Customer
+     description: First-pipeline walkthrough — CSV in, clean CSV out.
+
+   source:
+     adapter: csv
+     file: ./data/customers.csv
+
+   dq:
+     stopOnCritical: true
+     rejectionFile: ./output/customers-rejected.csv
+     rules:
+       - field: name
+         checks:
+           - { type: notNull, severity: critical }
+       - field: email
+         checks:
+           - { type: notNull, severity: critical }
+           - { type: email,   severity: warning  }
+       - field: country
+         checks:
+           - { type: allowedValues, value: [GB, US, FI, DE, FR, IE], severity: warning }
+
+   transform:
+     fields:
+       - { from: name,    to: Name,    type: string, cleanse: trim|titleCase }
+       - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+       - { from: country, to: Country, type: string, default: GB, cleanse: trim|uppercase }
+       - { to: Source,    type: constant, value: "quickstart" }
+
+   target:
+     adapter: csv
+     output: ./output/customers-clean.csv
+     includeHeader: true
+   ```
+
+   Take a moment to read the YAML. The four sections — `source`, `dq`, `transform`, `target` — describe the **whole** migration. There is no other code to write.
+
+4. **Validate the config.**
+
+   ```powershell
+   sluice check customers.pipeline.yaml
+   ```
+
+   `check` parses the YAML against the Zod schema and exits cleanly if everything is well-formed. If you mistype a key it tells you exactly where.
+
+5. **Do a dry run.**
+
+   ```powershell
+   sluice validate customers.pipeline.yaml
+   ```
+
+   `validate` extracts, runs DQ, and applies transforms — but **does not load** to the target. This is the safe way to iterate on rules and mappings.
+
+   You'll see a phase-by-phase progress bar end with a coloured summary line:
+
+   ```
+   ✅ Extracted 6 rows
+   ⚠️  4 passed · 2 rejected · 0 critical · 1 warning
+   ```
+
+   The two rejected rows are the broken ones from step 2.
+
+6. **Run the full pipeline.**
+
+   ```powershell
+   sluice run customers.pipeline.yaml
+   ```
+
+   `run` does everything `validate` does, then loads the clean rows to the target adapter. For our CSV target that means writing `output/customers-clean.csv`.
+
+</Steps>
+
+## Inspect the output
+
+Three files land in `./output/`:
+
+```powershell
+Get-ChildItem output
+# customers-clean.csv          ← only the clean rows, with transformed columns
+# customers-rejected.csv       ← every row that failed any DQ check
+# customers-quickstart-dq-summary.json   ← machine-readable summary
+# customers-quickstart-state.json         ← run state (for incremental mode)
+```
+
+`customers-clean.csv` should look like this:
+
+```csv
+Name,Email,Country,Source
+Ada Lovelace,ada@example.com,GB,quickstart
+Grace Hopper,grace@example.com,US,quickstart
+Alan Turing,alan@example.com,GB,quickstart
+Linus Torvalds,linus@example.com,FI,quickstart
+```
+
+Notice what changed:
+
+- `name` → `Name`, `email` → `Email`, `country` → `Country` (renamed by `to:`).
+- `Margaret Hamilton`'s row is **missing** because her email failed the `email` warning **and** her row was kept — but wait, it isn't here. That's because the warning still records a rejection in `customers-rejected.csv`; only `critical` checks remove rows from output. Look again at the rejection file:
+
+```csv
+row_index,field,value,rule,severity,message
+4,email,not-an-email,email,warning,must be a valid email address
+5,name,,notNull,critical,must not be null
+```
+
+Row 5 (the empty-name row) was **dropped** because `notNull` on `name` is `critical`. Row 4 (the bad email) was **kept** in the output because the `email` rule was `warning` — but it was logged so you can fix the source.
+
+That distinction — `critical` rejects the row, `warning` keeps it but flags it — is the heart of the data quality model. See [Data Quality Rules](/sluice/reference/dq-rules/) for the complete reference.
+
+## What just happened?
+
+Sluice ran six phases:
+
+1. **Config load** — parsed and validated the YAML against the Zod schema.
+2. **Extract** — read `data/customers.csv` into an embedded DuckDB staging table called `stg_raw`.
+3. **DQ** — ran every rule against `stg_raw` and wrote the rejection CSV.
+4. **Transform** — applied your `cleanse` ops, `default`s, and `constant` to produce `stg_transformed`.
+5. **Load** — wrote `stg_transformed` to the target CSV.
+6. **Run state** — wrote `customers-quickstart-state.json` so the next run can resume incrementally if you want.
+
+Want to see the diagram of how the phases fit together? Read [How It Works](/sluice/architecture/how-it-works/).
+
+## Where to go next
+
+- **Add more checks.** [Data Quality Rules](/sluice/reference/dq-rules/) lists every built-in rule with examples — `unique`, `pattern`, `ukPostcode`, `min`/`max`, `maxLength`, `allowedValues`.
+- **Connect a real source.** [Source Adapters](/sluice/reference/source-adapters/) covers MSSQL, PostgreSQL, XLSX, and REST.
+- **Map to an ERP target.** [Target Adapters](/sluice/reference/target-adapters/) covers IFS, Business Central, BlueCherry, generic CSV, and PostgreSQL.
+- **Write your first non-trivial pipeline.** [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/) walks through one end-to-end.
+- **Run it in CI.** [CI/CD Integration](/sluice/guides/ci-cd/) shows the GitHub Actions pattern.

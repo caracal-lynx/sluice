@@ -1,0 +1,93 @@
+/*
+ * Sluice docs site — Controlled Passage palette
+ * See docs/sluice-logo.md (in the main repo) for the full design philosophy.
+ *
+ * Dark mode (default): deep navy background with cyan accents — "constrained
+ * and released, dark and luminous, static and kinetic". Color is not applied
+ * but emitted: navy is absence, cyan is information in motion.
+ *
+ * Light mode: navy text on a near-white field, with the same cyan accent so
+ * call-to-action and links stay consistent across themes.
+ */
+
+:root {
+	/* Cyan accent — same in both light and dark modes for brand consistency */
+	--sl-color-accent-low: #003a47;
+	--sl-color-accent: #00b8d4;
+	--sl-color-accent-high: #5fe7ff;
+}
+
+/* Dark theme — the canonical look */
+:root[data-theme='dark'] {
+	--sl-color-bg: #0a1628;
+	--sl-color-bg-nav: #0a1628;
+	--sl-color-bg-sidebar: #0d1b32;
+	--sl-color-bg-inline-code: #122544;
+
+	--sl-color-text: #d8e3f3;
+	--sl-color-text-accent: #5fe7ff;
+	--sl-color-text-invert: #0a1628;
+
+	--sl-color-white: #f4f8ff;
+	--sl-color-gray-1: #d8e3f3;
+	--sl-color-gray-2: #b0bdd2;
+	--sl-color-gray-3: #7a8aa3;
+	--sl-color-gray-4: #4a5b78;
+	--sl-color-gray-5: #2c3a55;
+	--sl-color-gray-6: #1a2740;
+	--sl-color-black: #0a1628;
+
+	--sl-color-hairline-light: #1f3057;
+	--sl-color-hairline: #16243f;
+	--sl-color-hairline-shade: #0e1a30;
+}
+
+/* Light theme — navy text on near-white */
+:root[data-theme='light'] {
+	--sl-color-bg: #f8fafd;
+	--sl-color-bg-nav: #ffffff;
+	--sl-color-bg-sidebar: #f1f4f9;
+	--sl-color-bg-inline-code: #e6ecf3;
+
+	--sl-color-text: #0a1628;
+	--sl-color-text-accent: #006d80;
+	--sl-color-text-invert: #ffffff;
+
+	--sl-color-white: #0a1628;
+	--sl-color-gray-1: #182a48;
+	--sl-color-gray-2: #2c3a55;
+	--sl-color-gray-3: #4a5b78;
+	--sl-color-gray-4: #7a8aa3;
+	--sl-color-gray-5: #b0bdd2;
+	--sl-color-gray-6: #d8e3f3;
+	--sl-color-black: #f8fafd;
+
+	--sl-color-hairline-light: #d8e3f3;
+	--sl-color-hairline: #b0bdd2;
+	--sl-color-hairline-shade: #e6ecf3;
+}
+
+/* Logo treatment — sit a touch above baseline so the wordmark aligns with the
+   "Sluice" title set wide and light, never decorative. */
+.site-title img {
+	max-height: 2rem;
+}
+
+/* Hero on the splash home page: tighten the gap between the logo banner and
+   the headline so the gate-and-streams visual reads as one composition. */
+.hero {
+	gap: 2.5rem;
+}
+
+/* Inline code — the embedded data values in flow. Cyan tint hints at the
+   "information in motion" idea without dominating the line. */
+:not(pre) > code {
+	color: var(--sl-color-text-accent);
+	border: 1px solid var(--sl-color-hairline-light);
+}
+
+/* Mermaid diagrams keep their own theme; just give them breathing room. */
+.expressive-code,
+.mermaid {
+	margin-block: 1.5rem;
+}

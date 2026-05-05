@@ -8,7 +8,9 @@
 [![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.x-blue)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/license-Elastic_2.0-blue)](LICENCE-FAQ.md)
-<!-- TODO: add Docs badge once Phase 8 ships -->
+[![Docs](https://img.shields.io/badge/docs-caracal--lynx.github.io-00b8d4)](https://caracal-lynx.github.io/sluice/)
+
+📖 **Full documentation:** <https://caracal-lynx.github.io/sluice/>
 
 ---
 

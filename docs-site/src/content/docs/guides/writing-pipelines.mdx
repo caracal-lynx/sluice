@@ -1,0 +1,199 @@
+---
+title: Writing a Pipeline YAML
+description: Practical end-to-end walkthrough for someone building their first non-trivial pipeline — from source schema to working migration.
+---
+
+The [Quickstart](/sluice/getting-started/quickstart/) gets a CSV-to-CSV pipeline running in ten minutes. This page covers the next step: writing a pipeline against a real source schema, with lookups, transforms, and an ERP-shaped target. The example is deliberately like a typical day-one migration task.
+
+## The scenario
+
+You've been handed access to a legacy `Customers` table in SQL Server and asked to load it into IFS ERP. The team has done a brief discovery call; here's what you know:
+
+- **Source:** `dbo.Customers` in `LegacyDB`. Columns: `CUST_CODE`, `CUST_NAME`, `ADDR1`, `ADDR2`, `POST_CODE`, `COUNTRY`, `EMAIL`, `TEL`, `CREDIT_LIMIT`, `CURRENCY`, `ACCT_MGR_ID`, `Active`, `DELETED`.
+- **Active rows only:** `Active = 1 AND DELETED = 0`.
+- **Target:** IFS `CustomerInfo`, with the column order specified by the IFS import contract. No header row.
+- **Currency translation:** the legacy system uses three-letter internal codes; IFS uses ISO 4217. There's a CSV mapping (`legacyCode,isoCode`).
+- **Account managers:** legacy `ACCT_MGR_ID` (numeric) maps to an IFS `SalesmanCode` (alphanumeric). The mapping lives in another SQL Server table.
+- **Quality:** every customer needs a `CUST_CODE`, and codes must be unique. UK postcodes should pass `ukPostcode` (warning only — some clients have foreign addresses). Credit limits must be ≥ 0 and capped at 500,000 (warning).
+
+## Step 1 — Sketch the source
+
+Open the source query first; everything else flows from it. You're not extracting columns you can't transform, so the SELECT mirrors the IFS-bound shape.
+
+```yaml
+source:
+  adapter: mssql
+  connection: ${SOURCE_MSSQL}
+  query: |
+    SELECT
+      c.CUST_CODE, c.CUST_NAME, c.ADDR1, c.ADDR2,
+      c.POST_CODE, c.COUNTRY, c.EMAIL, c.TEL,
+      c.CREDIT_LIMIT, c.CURRENCY, c.ACCT_MGR_ID
+    FROM dbo.Customers c
+    WHERE c.Active = 1 AND c.DELETED = 0
+```
+
+`${SOURCE_MSSQL}` is resolved at runtime from `.env` — never hard-code credentials. See [Source Adapters → mssql](/sluice/reference/source-adapters/#mssql--microsoft-sql-server).
+
+## Step 2 — Add the DQ rules
+
+Sketch the DQ block before the transform. It's faster to iterate on rules with `sluice validate` than to discover problems after a load.
+
+```yaml
+dq:
+  stopOnCritical: true
+  rejectionFile: ./output/acme-corp-customers-rejected.csv
+  rules:
+    - field: CUST_CODE
+      checks:
+        - { type: notNull,   severity: critical }
+        - { type: unique,    severity: critical }
+        - { type: pattern, value: "^[A-Z0-9]{3,10}$", severity: warning }
+    - field: CUST_NAME
+      checks:
+        - { type: notNull,   severity: critical }
+        - { type: maxLength, value: 100, severity: warning }
+    - field: POST_CODE
+      checks:
+        - { type: ukPostcode, severity: warning }
+    - field: EMAIL
+      checks:
+        - { type: email, severity: warning }
+    - field: CREDIT_LIMIT
+      checks:
+        - { type: min, value: 0,      severity: critical }
+        - { type: max, value: 500000, severity: warning  }
+    - field: COUNTRY
+      checks:
+        - { type: allowedValues, value: [GB, IE, US, DE, FR], severity: warning }
+```
+
+The trick is to put `critical` only where downstream **must** have a clean value (the primary key, the credit limit floor). Everything else stays as `warning` — the row makes it through, but it lands in the rejection CSV so the source data team sees it.
+
+## Step 3 — Define the transforms and lookups
+
+Two lookups: currency map and account-manager map. The currency map is small and source-controlled, so a CSV; the account-manager map is bigger and mastered in SQL Server, so a query.
+
+```yaml
+transform:
+  lookups:
+    - name: currencyMap
+      source: { adapter: csv, file: ./lookups/currency-codes.csv }
+      key: legacyCode
+      value: isoCode
+    - name: acctMgrMap
+      source:
+        adapter: mssql
+        connection: ${SOURCE_MSSQL}
+        query: "SELECT STAFF_ID as key, IFS_USER_ID as value FROM dbo.Staff"
+      key: key
+      value: value
+
+  fields:
+    - { from: CUST_CODE,      to: CustomerNo,   type: string,  max: 20 }
+    - { from: CUST_NAME,      to: Name,         type: string,  max: 100, cleanse: trim|titleCase }
+    - { from: [ADDR1, ADDR2], to: Address1,     type: concat,  separator: ", ", cleanse: trim }
+    - { from: POST_CODE,      to: ZipCode,      type: string,  cleanse: trim|uppercase }
+    - { from: COUNTRY,        to: Country,      type: string,  default: GB }
+    - { from: CURRENCY,       to: CurrencyCode, type: lookup,  lookup: currencyMap, default: GBP }
+    - { from: ACCT_MGR_ID,    to: SalesmanCode, type: lookup,  lookup: acctMgrMap,  optional: true }
+    - { from: CREDIT_LIMIT,   to: CreditLimit,  type: decimal, precision: 2 }
+    - { from: EMAIL,          to: Email,        type: string,  cleanse: trim|lowercase }
+    - { to: CustomerGroup,    type: constant,   value: DOMESTIC }
+    - { to: SearchName,       type: expression, value: "row.CUST_NAME.toUpperCase().substring(0, 20)" }
+```
+
+Three things to notice:
+
+- **Address concat** — IFS expects a single `Address1` string, not separate lines.
+- **Currency lookup** has `default: GBP` so missing currency codes fall through gracefully.
+- **Account-manager lookup** has `optional: true` because the legacy data has gaps; missing values become `null` rather than throwing a `TransformError`.
+
+See [Transforms](/sluice/reference/transforms/) for every available type and cleanse op.
+
+## Step 4 — Configure the target
+
+```yaml
+target:
+  adapter: ifs
+  entity: CustomerInfo
+  output: ./output/acme-corp-customers-ifs.csv
+  includeHeader: false
+  columnOrder:
+    - CustomerNo
+    - Name
+    - Address1
+    - ZipCode
+    - Country
+    - CurrencyCode
+    - SalesmanCode
+    - CreditLimit
+    - Email
+    - CustomerGroup
+    - SearchName
+```
+
+The `columnOrder` mirrors the IFS import contract. Get one column wrong and IFS rejects the file, so this list is the most important thing to verify before a live run. See [Target Adapters → ifs](/sluice/reference/target-adapters/#ifs--ifs-erp-csv-import-paid-add-on).
+
+## Step 5 — Run state
+
+```yaml
+run:
+  mode: full
+  batchSize: 500
+  logLevel: info
+  dryRun: false
+```
+
+For your first run, set `dryRun: true` (or use the `--dry-run` flag). Sluice does everything **except** the load step, so you can verify the rejection CSV and the staged transform output without touching IFS.
+
+## The full pipeline
+
+Stick the five sections together, top with a `pipeline:` block, and you have a complete migration:
+
+```yaml
+pipeline:
+  name: acme-corp-customers
+  client: acme-corp
+  version: "1.0"
+  entity: CustomerInfo
+  description: Customer master — legacy SQL to IFS ERP
+
+source: { ... }     # Step 1
+dq:     { ... }     # Step 2
+transform: { ... }  # Step 3
+target: { ... }     # Step 4
+run:    { ... }     # Step 5
+```
+
+## Iterating
+
+The development loop:
+
+```powershell
+# 1. Validate the YAML (no DB access)
+sluice check  customers.pipeline.yaml
+
+# 2. Extract + DQ + transform, no load
+sluice validate customers.pipeline.yaml --dry-run
+
+# 3. Inspect the rejection CSV and DQ summary
+Get-Content output\acme-corp-customers-rejected.csv | Select-Object -First 20
+Get-Content output\acme-corp-customers-dq-summary.json | ConvertFrom-Json
+
+# 4. When happy, the live run
+sluice run customers.pipeline.yaml
+```
+
+## Common pitfalls
+
+- **Forgetting `notNull` on a foreign-key column.** Downstream targets reject loads where required FKs are missing — catch it in DQ.
+- **Date format assumptions.** Source dates often arrive as strings without a clear format. Prefer `type: date` with an explicit `format:` rather than letting dayjs guess.
+- **Encoding.** Source CSVs from European clients are often Latin-1 or Windows-1252, not UTF-8. Set `source.encoding` accordingly.
+- **`unique` and incremental mode.** `unique` checks the whole **extracted** dataset, not the union of past runs. If you incrementally extract daily, duplicates that span days won't be caught — handle uniqueness at the target instead.
+
+## Next steps
+
+- Run it in CI: see [CI/CD Integration](/sluice/guides/ci-cd/).
+- Need to consolidate from multiple sources? See the multi-source examples in [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/).
+- Need a custom rule or transform? See the [Plugin System](/sluice/guides/plugin-system/) guide.

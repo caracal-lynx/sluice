@@ -1,0 +1,201 @@
+---
+title: Data Quality Rules
+description: Complete reference for every built-in Sluice DQ rule — config syntax, severity behaviour, and rejection-CSV format.
+---
+
+Sluice's data quality engine runs a configurable set of rules against the raw, staged source data **before** the transform phase. Rows that fail are written to a rejection CSV with the violating field, value, rule, severity, and message recorded. The same data is summarised in a machine-readable JSON file that you can drop into a CI artefact.
+
+This page is the reference for every built-in rule. To wire DQ into a pipeline, see [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/).
+
+## Severity levels
+
+Every check declares a `severity`. Severity decides what happens when a row fails:
+
+| Severity | Effect on the row | Effect on the run |
+|---|---|---|
+| `critical` | **Removed** from the output. | Halts the pipeline if `dq.stopOnCritical: true` (the default). |
+| `warning` | **Kept** in the output, but logged in the rejection CSV. | Run continues. |
+| `info` | Kept in the output. | Recorded in the DQ summary JSON only — not in the rejection CSV. |
+
+The default `dq.stopOnCritical: true` makes Sluice fail loud on any critical violation, so a failing pipeline never silently drops half its data. Set it to `false` in pipelines where you'd rather emit the clean rows and inspect rejections out-of-band.
+
+## Rule reference
+
+Each rule is configured as a `check` under a `dq.rules[].field` entry:
+
+```yaml
+dq:
+  rules:
+    - field: EMAIL
+      checks:
+        - type: notNull
+          severity: critical
+        - type: email
+          severity: warning
+```
+
+### `notNull`
+
+Fails when the value is `null`, `undefined`, an empty string, or whitespace-only.
+
+```yaml
+- type: notNull
+  severity: critical
+```
+
+No `value`. Use this on every field that downstream systems treat as required — `bc`, `ifs`, and `bluecherry` adapters all reject loads with null required columns.
+
+### `unique`
+
+Fails when the value appears more than once across the full source dataset. Detects duplicates by exact string match.
+
+```yaml
+- type: unique
+  severity: critical
+```
+
+No `value`. Common pairing: `notNull` + `unique` on a primary-key column.
+
+### `pattern`
+
+Fails when the value does not match the supplied ECMAScript regex. The pattern is compiled with `new RegExp(value)` and tested with `.test()` — anchor it with `^…$` if you mean the whole string.
+
+```yaml
+- type: pattern
+  value: "^[A-Z0-9]{3,10}$"
+  severity: warning
+  message: "Must be 3-10 uppercase alphanumeric characters"
+```
+
+`message` is optional; if omitted, Sluice uses a sensible default.
+
+### `email`
+
+Fails when the value does not match an RFC 5322-flavoured email regex. Whitespace is trimmed before matching.
+
+```yaml
+- type: email
+  severity: warning
+```
+
+No `value`.
+
+### `ukPostcode`
+
+Fails when the value is not a recognisable UK postcode (current outward + inward formats including `SW1A 1AA`, `EC1A 1BB`, `M1 1AE`, `B33 8TH`, `CR2 6XH`, `DN55 1PT`). Spaces are stripped before testing, so both `SW1A1AA` and `SW1A 1AA` validate.
+
+```yaml
+- type: ukPostcode
+  severity: warning
+```
+
+No `value`. For non-UK postcodes, use `pattern` with a country-specific regex.
+
+### `maxLength`
+
+Fails when the string length exceeds `value`.
+
+```yaml
+- type: maxLength
+  value: 100
+  severity: warning
+```
+
+`value` is an integer.
+
+### `min`
+
+Fails when the numeric value of the field is less than `value`. The field value is coerced to `Number()`; non-numeric strings fail with a coercion error.
+
+```yaml
+- type: min
+  value: 0
+  severity: critical
+```
+
+### `max`
+
+Fails when the numeric value of the field is greater than `value`. Same coercion rules as `min`.
+
+```yaml
+- type: max
+  value: 500000
+  severity: warning
+```
+
+### `allowedValues`
+
+Fails when the value is not in the array. Comparison is **case-sensitive** — normalise upstream with a `cleanse: uppercase` transform if you want to compare regardless of case.
+
+```yaml
+- type: allowedValues
+  value: [GB, IE, US, DE, FR]
+  severity: warning
+```
+
+`value` is an array of strings.
+
+## Rejection CSV format
+
+When DQ runs, Sluice writes a rejection CSV at `dq.rejectionFile` (default: `./output/{pipeline.name}-rejected.csv`). One row per violation — a single source row that fails three checks produces three lines in the rejection CSV.
+
+```csv
+row_index,field,value,rule,severity,message
+4,EMAIL,not-an-email,email,warning,must be a valid email address
+5,CUST_CODE,,notNull,critical,must not be null
+5,CUST_NAME,,notNull,critical,must not be null
+12,POST_CODE,12345,ukPostcode,warning,must be a valid UK postcode
+```
+
+Hand the rejection CSV back to whoever owns the source data; it's the actionable output from a Sluice run.
+
+## DQ summary JSON
+
+Alongside the rejection CSV, Sluice writes `{outputDir}/{pipeline.name}-dq-summary.json`:
+
+```json
+{
+  "pipeline": "acme-corp-customers",
+  "runAt": "2026-04-15T09:30:00Z",
+  "rowsChecked": 1842,
+  "rowsPassed": 1801,
+  "rowsRejected": 41,
+  "violations": { "critical": 0, "warning": 38, "info": 3 },
+  "byField": {
+    "POST_CODE": { "critical": 0, "warning": 22 },
+    "EMAIL":     { "critical": 0, "warning": 16 }
+  }
+}
+```
+
+Drop this into a GitHub Actions artefact step and it becomes a per-PR data-quality report.
+
+## Multi-source DQ rules
+
+In a multi-source pipeline (with `sources` + `merge`), each rule can be scoped to a specific pre-merge source by adding `sourceId`:
+
+```yaml
+dq:
+  rules:
+    - field: STYLE_NO            # Pre-merge: runs against stg_raw_sql-server only.
+      sourceId: sql-server
+      checks:
+        - { type: notNull, severity: critical }
+        - { type: unique,  severity: critical }
+    - field: STYLE_DESC          # Post-merge: runs against stg_merged.
+      checks:
+        - { type: notNull,   severity: critical }
+        - { type: maxLength, value: 255, severity: warning }
+```
+
+Rules without `sourceId` run **post-merge** against the merged staging table. Per-source rejection files are auto-named by appending `-{sourceId}` to the configured `rejectionFile`. Rows failing a critical pre-merge rule are filtered out of that source's staging table **before** the merge phase.
+
+## Custom DQ rules
+
+Sluice ships with the nine built-in rules above. For domain-specific validation (e.g. "must be a valid IBAN", "must match an existing customer in the target") you can add custom rules via the [Plugin System](/sluice/guides/plugin-system/):
+
+- **Tier 1 — Composite rules** (YAML) — group built-in checks into a named rule. Zero code.
+- **Tier 2 — File plugins** (TypeScript) — drop a `*.rule.ts` file in your `plugins/` directory.
+- **Tier 3 — npm packages** — publish a reusable rule package as `@caracal-lynx/etl-rules-*`.
+
+Caracal Lynx maintains private rule packages for **UK compliance** (`@caracal-lynx/etl-rules-uk`) and **fashion/retail data standards** (`@caracal-lynx/etl-rules-fashion`); see [Commercial Support](/sluice/commercial-support/).
