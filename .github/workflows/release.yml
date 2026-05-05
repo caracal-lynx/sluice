@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
@@ -40,5 +41,11 @@ jobs:
           title: 'chore(release): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+          # Authentication via npm Trusted Publishing (OIDC).
+          # NO NPM_TOKEN — Classic Automation tokens were retired in Nov 2025;
+          # Trusted Publishing is now the recommended path for CI publishing.
+          # The package's Trusted Publishers list (configured at
+          # npmjs.com/package/@caracal-lynx/sluice/access) authorises this
+          # workflow by org + repo + filename, and `id-token: write` provides
+          # the OIDC token at publish time.
