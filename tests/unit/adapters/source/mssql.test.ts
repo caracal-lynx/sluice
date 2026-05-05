@@ -21,7 +21,7 @@ vi.mock('mssql', () => {
     request: () => request,
   };
 
-  const connectionPool = vi.fn(() => pool);
+  const connectionPool = vi.fn(function () { return pool; });
 
   return {
     default: {
