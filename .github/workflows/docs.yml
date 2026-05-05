@@ -44,9 +44,17 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: docs-site/package-lock.json
+          # Cache against both lockfiles — the parent install is needed so
+          # docs-site/scripts/generate-schema-reference.ts can resolve `zod`
+          # from src/config/schema.ts at the repo root.
+          cache-dependency-path: |
+            package-lock.json
+            docs-site/package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies (zod for schema generator)
+        run: npm ci --ignore-scripts
+
+      - name: Install docs-site dependencies
         run: npm ci
         working-directory: docs-site
 
