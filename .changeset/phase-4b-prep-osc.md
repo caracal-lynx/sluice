@@ -21,6 +21,11 @@ plumbs a `sourceTable` argument:
 - `Logger` (from pino) is now re-exported from the public barrel so downstream
   consumers can import the type via `@caracal-lynx/sluice` without taking a
   direct dependency on pino.
+- `EnrichError` is now re-exported alongside the other public error classes.
+  It's already used internally by the CLI to map onto exit code 4, but
+  downstream packages (notably `@caracal-lynx/sluice-enrich`) need to be able
+  to throw an `instanceof EnrichError` for that mapping to fire — so it has to
+  be reachable via the public path.
 
 The upcoming `@caracal-lynx/sluice-enrich@0.1.0` will require this version as
 its peer dependency lower bound.
