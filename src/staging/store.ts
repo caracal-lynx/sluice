@@ -242,19 +242,25 @@ export class StagingStore {
   // The private `@caracal-lynx/sluice-enrich` package overwrites these three
   // methods on `StagingStore.prototype` at import time via a `patchStagingStore()`
   // helper. Until that package is installed and imported, the methods throw.
+  //
+  // The `table` parameter is the staging table the enrich runner operates on:
+  // `'stg_raw'` for single-source pipelines, `'stg_merged'` for multi-source
+  // (post-merge, pre-DQ) — selected by `PipelineRunner.runEnrich()` via the
+  // `sourceTable` argument it passes to `EnrichPhaseFactory`.
 
   /**
-   * Returns distinct non-null, non-empty values for a column in stg_raw.
+   * Returns distinct non-null, non-empty values for a column in `table`.
    * Used by the Phase 4a enrich runner to deduplicate API calls.
    */
-  async selectDistinct(_field: string): Promise<string[]> {
+  async selectDistinct(_table: string, _field: string): Promise<string[]> {
     throw new StagingError(
       'StagingStore.selectDistinct: not yet implemented — install @caracal-lynx/sluice-enrich',
     );
   }
 
-  /** Adds a column to stg_raw if it does not already exist. */
+  /** Adds a column to `table` if it does not already exist. */
   async addColumnIfNotExists(
+    _table: string,
     _column: string,
     _type: 'BOOLEAN' | 'VARCHAR',
   ): Promise<void> {
@@ -264,11 +270,12 @@ export class StagingStore {
   }
 
   /**
-   * Batch-updates stg_raw. `updates` is keyed by rowid and maps each row to a
-   * partial column-value record to UPDATE.
+   * Batch-updates `table`. `updates` is keyed by DuckDB `rowid` (BigInt or
+   * number) and maps each row to a partial column-value record to UPDATE.
    */
   async batchUpdateColumns(
-    _updates: Map<number, Record<string, unknown>>,
+    _table: string,
+    _updates: Map<number | bigint, Record<string, unknown>>,
   ): Promise<void> {
     throw new StagingError(
       'StagingStore.batchUpdateColumns: not yet implemented — install @caracal-lynx/sluice-enrich',

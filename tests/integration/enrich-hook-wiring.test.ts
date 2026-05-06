@@ -43,6 +43,7 @@ interface FactoryCall {
   staging: StagingStore;
   pluginDir: string;
   logger: Logger;
+  sourceTable: string;
 }
 
 interface StubFactoryHandle {
@@ -65,8 +66,15 @@ function makeStubFactory(opts?: { throwInside?: boolean }): StubFactoryHandle {
   };
   const summary: EnrichSummary = { lookups: [lookupStub] };
 
-  const factory: EnrichPhaseFactory = (config, runConfig, staging, pluginDir, logger) => {
-    calls.push({ config, runConfig, staging, pluginDir, logger });
+  const factory: EnrichPhaseFactory = (
+    config,
+    runConfig,
+    staging,
+    pluginDir,
+    logger,
+    sourceTable,
+  ) => {
+    calls.push({ config, runConfig, staging, pluginDir, logger, sourceTable });
     return {
       async run() {
         if (opts?.throwInside) {
@@ -267,6 +275,7 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
     expect(call.pluginDir).toBe(path.dirname(path.resolve(yamlPath)));
     expect(call.runConfig.enrichTimeoutMs).toBe(5000);
     expect(call.staging).toBeDefined();
+    expect(call.sourceTable).toBe('stg_raw');
     expect(result.enrichSummary).toEqual(handle.summary);
 
     const state = await readStateFile(tmpDir, 'enrich-hook-test');
@@ -340,6 +349,8 @@ describe('MultiSourcePipelineRunner — Phase 4a enrich hook (post-merge)', () =
     const result = await runner.run(yamlPath);
 
     expect(handle.calls).toHaveLength(1);
+    const call = handle.calls[0]!;
+    expect(call.sourceTable).toBe('stg_merged');
     expect(result.enrichSummary).toEqual(handle.summary);
 
     const state = await readStateFile(tmpDir, 'enrich-hook-multi-test');

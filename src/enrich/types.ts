@@ -94,6 +94,10 @@ export interface EnrichSummary {
  * stores this factory and invokes it for every pipeline run that has an
  * `enrich:` block. If the factory is never registered (i.e. the private
  * package is not installed), the open-source runner skips the phase.
+ *
+ * `sourceTable` is the staging table the enrich runner operates on:
+ * `'stg_raw'` for single-source pipelines, `'stg_merged'` for multi-source
+ * (post-merge, pre-DQ).
  */
 export type EnrichPhaseFactory = (
   config: EnrichConfig,
@@ -101,6 +105,7 @@ export type EnrichPhaseFactory = (
   staging: StagingStore,
   pluginDir: string,
   logger: Logger,
+  sourceTable: string,
 ) => { run(): Promise<EnrichSummary> };
 
 // Re-export the schema-derived config types alongside the public interfaces

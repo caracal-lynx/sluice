@@ -34,3 +34,8 @@ export type {
   LookupSummary,
   EnrichPhaseFactory,
 } from './enrich/types.js';
+
+// Re-export the pino Logger type so downstream packages (e.g.
+// `@caracal-lynx/sluice-enrich`) can import it via the public path
+// without taking a direct dependency on `pino`.
+export type { Logger } from 'pino';
