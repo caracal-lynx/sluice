@@ -8,7 +8,7 @@ vi.mock('pg', () => {
     end: vi.fn().mockResolvedValue(undefined),
     query,
   };
-  const Pool = vi.fn(() => pool);
+  const Pool = vi.fn(function () { return pool; });
   return { default: { Pool, __pool: pool, __query: query } };
 });
 

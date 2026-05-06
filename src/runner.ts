@@ -210,6 +210,7 @@ export class PipelineRunner {
         store,
         path.dirname(path.resolve(yamlPath)),
         overrides,
+        extractResult.tableName,
       );
 
       const dqSummary = await this.runDQ(config, store, extractResult.tableName);
@@ -395,6 +396,7 @@ export class PipelineRunner {
     store: StagingStore,
     pluginDir: string,
     overrides: RunOverrides,
+    sourceTable: string,
   ): Promise<EnrichSummary | undefined> {
     if (!config.enrich) return undefined;
     if (overrides.skipEnrich) {
@@ -427,6 +429,7 @@ export class PipelineRunner {
         store,
         pluginDir,
         logger,
+        sourceTable,
       );
       const summary = await phase.run();
       logger.info(
