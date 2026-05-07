@@ -20,7 +20,9 @@
  */
 
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { ConfigLoader } from './config/loader.js';
 import { isMultiSource, type Pipeline } from './config/types.js';
@@ -44,6 +46,30 @@ interface GlobalOpts {
   dryRun?: boolean;
   plugins?: string[];
   silent?: boolean;
+}
+
+/**
+ * Read the package's own version from its `package.json` at runtime.
+ * Reading dynamically (rather than hardcoding the string in this file)
+ * means `sluice --version` always matches whatever version is actually
+ * installed — no risk of the CLI reporting a stale number after a
+ * release that didn't think to update a literal here.
+ *
+ * `dist/cli.js` lives at `<package-root>/dist/cli.js`, so the parent
+ * directory's `package.json` is the package's own. Falls back to
+ * `'0.0.0'` if the file can't be read (defensive — should never happen
+ * for an installed package).
+ */
+function readPackageVersion(): string {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const candidate = path.resolve(here, '..', 'package.json');
+  try {
+    const raw = readFileSync(candidate, 'utf8');
+    const pkg = JSON.parse(raw) as { version?: string };
+    return pkg.version ?? '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
 }
 
 export function resolvePluginDirs(cwd: string, pluginDirs: string[] = []): string[] {
@@ -350,7 +376,7 @@ export function buildProgram(): Command {
   program
     .name('sluice')
     .description('Config-driven ETL toolkit for ERP data migrations')
-    .version('0.1.0')
+    .version(readPackageVersion())
     .option('--log-level <level>', 'debug | info | warn | error')
     .option('--env <file>', 'Path to .env file', './.env')
     .option('--output <dir>', 'Override run.outputDir')
