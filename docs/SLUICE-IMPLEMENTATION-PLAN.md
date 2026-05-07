@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 5 May 2026 (post Phase 7 — git/npm workflow + Trusted Publishing)
+> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 7 May 2026 (post Phase 4 ✅ COMPLETE — `@caracal-lynx/sluice-enrich@1.0.0` + `@caracal-lynx/sluice@0.2.1` published)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -15,7 +15,7 @@
 5. [Phase 1 — Node v24 + DuckDB Neo Upgrade ✅ COMPLETE](#5-phase-1--node-v24--duckdb-neo-upgrade)
 6. [Phase 2 — TypeScript v6 Upgrade ✅ COMPLETE](#6-phase-2--typescript-v6-upgrade--complete)
 7. [Phase 3 — Plugin System ✅ COMPLETE](#7-phase-3--plugin-system--complete)
-8. [Phase 4 — Enrich Phase (Private)](#8-phase-4--enrich-phase-private)
+8. [Phase 4 — Enrich Phase (Private) ✅ COMPLETE](#8-phase-4--enrich-phase-private--complete)
 9. [Phase 5 — Repo Restructure & Open-Source Launch ✅ COMPLETE](#9-phase-5--repo-restructure--open-source-launch)
 10. [Phase 6 — README & Marketing ✅ COMPLETE](#10-phase-6--readme--marketing)
 11. [Phase 7 — git/npm Workflow ✅ COMPLETE](#11-phase-7--gitnpm-workflow)
@@ -189,8 +189,8 @@ flowchart TD
 | **Phase 1** | Node v24 + DuckDB Neo | ✅ **COMPLETE** (3 May 2026, PR #8) | — |
 | **Phase 2** | TypeScript v6 | ✅ **COMPLETE** (4 May 2026, PR #13) | — |
 | **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
-| **Phase 4a** | Enrich framework — OSC scaffolding | 🟦 **OSC done** (this commit); private repo work next | — |
-| **Phase 4b** | Built-in providers (private) | 3–4 weeks | After Phase 4a |
+| **Phase 4a** | Enrich framework (OSC scaffolding + private framework) | ✅ **COMPLETE** (5–6 May 2026, OSC commit `3ccfd8e` + `@caracal-lynx/sluice-enrich@0.1.0` / `0.1.1`) | — |
+| **Phase 4b** | Built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`) | ✅ **COMPLETE** (7 May 2026, `@caracal-lynx/sluice-enrich@1.0.0` published; sluice-enrich PRs #19, #21, #22, #23, #25) | — |
 | **Phase 5** | Restructure & launch | ✅ **COMPLETE** (4 May 2026, PRs [#18–#22](https://github.com/caracal-lynx/sluice/pulls?q=is%3Apr+is%3Amerged+phase-5)) | — |
 | **Phase 6** | README & marketing | ✅ **COMPLETE** (4 May 2026, [PR #27](https://github.com/caracal-lynx/sluice/pull/27)) | — |
 | **Phase 7** | git/npm workflow | ✅ **COMPLETE** (5 May 2026, PRs [#29](https://github.com/caracal-lynx/sluice/pull/29) · [#31](https://github.com/caracal-lynx/sluice/pull/31) · [#33](https://github.com/caracal-lynx/sluice/pull/33) · [#34](https://github.com/caracal-lynx/sluice/pull/34) · [#35](https://github.com/caracal-lynx/sluice/pull/35) · [#36](https://github.com/caracal-lynx/sluice/pull/36)) | — |
@@ -217,17 +217,17 @@ gantt
     Phase 11a — tsgo Parallel Type-check   :done, p11a, 2026-05-04, 1d
 
     section Enrich Service (Private)
-    Phase 4a — Enrich Framework            :p4a, after p2, 28d
-    Phase 4b — Built-in Providers          :p4b, after p4a, 28d
+    Phase 4a — Enrich Framework            :done, p4a, 2026-05-05, 2d
+    Phase 4b — Built-in Providers          :done, p4b, 2026-05-07, 1d
 
     section Open-Source Launch
-    Phase 5 — Repo Restructure and Launch  :p5, after p4a, 21d
-    Phase 6 — README and Marketing         :p6, after p5, 7d
-    Phase 7 — git/npm Workflow             :p7, after p5, 14d
-    Phase 8 — GitHub Pages Docs            :p8, after p5, 56d
+    Phase 5 — Repo Restructure and Launch  :done, p5, 2026-05-04, 1d
+    Phase 6 — README and Marketing         :done, p6, 2026-05-04, 1d
+    Phase 7 — git/npm Workflow             :done, p7, 2026-05-05, 1d
+    Phase 8 — GitHub Pages Docs            :done, p8, 2026-05-06, 1d
 
     section MCP Server (Private)
-    Phase 9 — Sluice MCP Server            :p9, 2026-05-04, 84d
+    Phase 9 — Sluice MCP Server            :p9, 2026-05-08, 84d
 
     section Future Upgrades
     Phase 10 — Node v26 (Oct LTS)          :p10, 2026-10-01, 2d
@@ -966,7 +966,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/archive/PHASE2-EXTENSIONS.md` | 📦 Archived | Full plugin system spec — implemented in Phase 3. `PLUGINS.md` is the canonical author guide. |
 | `docs/archive/phase1-3-release-packaging.md`, `docs/archive/phase3-multi-source-merge.md`, `docs/archive/phase3-prep-phase{1,2}.md` | 📦 Archived | Old phase-numbering design notes; technical content retained for reference. Multi-source merge has shipped. |
 | `docs/PHASE-02-typescript-v6-upgrade.md` | ✅ EXECUTED | Comprehensive. Phase 2 shipped on 4 May 2026 ([PR #13](https://github.com/BCGubbins/sluice/pull/13)). Retained as implementation reference. (Renamed from `typescript6-upgrade-plan.md`.) |
-| `docs/PHASE-04-enrich-phase.md` | ✅ Good | Reflects fully private architecture (open-source core: interface types + Zod stubs + `registerEnrichPhase()` hook only; everything else in private `@caracal-lynx/sluice-enrich`). Last updated 2026-05-01. (Renamed from `PHASE2.5-ENRICH.md`.) |
+| `docs/PHASE-04-enrich-phase.md` | ✅ EXECUTED | Phase 4 shipped 5–7 May 2026. OSC scaffolding in `@caracal-lynx/sluice@0.2.0`/`0.2.1`; private framework + three built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`) in `@caracal-lynx/sluice-enrich@1.0.0`. Spec retained as implementation reference. |
 | `docs/elevator-pitch.md` | ✅ Good | Canonical home for the elevator pitch and positioning copy (one-liner, 30-second pitch, hero block, value props, AI angle, audience-specific framings). Sourced from previously-scattered fragments in Context.md, open-sourcing-sluice.md, PHASE-08, and README.md. Referenced by Phase 6 and Phase 8. |
 | `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ✅ Good | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference. |
 | `docs/branching-strategy.md` | ✅ Good | Working branching convention for all Sluice repos: single protected `master`, short-lived `feat/`/`fix/`/`docs/`/`chore/`/`hotfix/` branches, `[<branch-name>] - ` commit prefix. Lifted out of PHASE-05 during the 2026-05-04 rewrite. |
