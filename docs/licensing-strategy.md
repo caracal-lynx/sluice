@@ -112,7 +112,7 @@ No licence is a guarantee. The goal is to make violation clearly wrong in writin
 
 ELv2 is one page, plain English, widely understood, and its restriction maps almost exactly to the stated intent. The decision has been made — this is no longer a recommendation, it is the chosen licence for the Sluice open-source core.
 
-Companion document `LICENCE-FAQ.md` is already written and ready for the repo root. It provides the plain-English explanation that most users will read instead of the licence itself.
+Companion document [`docs/licensing-faq.md`](licensing-faq.md) provides the plain-English explanation that most users will read instead of the licence itself. _(Originally placed at the repo root as `LICENCE-FAQ.md`; relocated to `docs/` post-Phase 4 because the `LICEN[CS]E*` filename pattern caused GitHub's licensee tool to flag it as a spurious second "Unknown licence" alongside `LICENSE`.)_
 
 If Sluice grows a meaningful contributor community and a commercial licence revenue stream becomes attractive, revisit dual licensing at that point. For now, ELv2 is the right balance of clarity, simplicity, and protection.
 
@@ -123,7 +123,7 @@ If Sluice grows a meaningful contributor community and a commercial licence reve
 These steps are completed during Phase 5 (repo restructure and open-source launch). See `SLUICE-IMPLEMENTATION-PLAN.md` for full context.
 
 1. Download the [ELv2 licence text](https://www.elastic.co/licensing/elastic-license) and save as `LICENSE` in the repo root
-2. Add `LICENCE-FAQ.md` to the repo root (already written — see companion document)
+2. Add the licensing-FAQ companion document at `docs/licensing-faq.md` (already written — see above). _(For Phase 5 itself, this was placed at the repo root as `LICENCE-FAQ.md`; relocated post-Phase 4.)_
 3. Add licence header to all source files in `packages/core/src/`:
    ```typescript
    // SPDX-License-Identifier: Elastic-2.0

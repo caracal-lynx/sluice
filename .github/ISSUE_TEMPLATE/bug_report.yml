@@ -9,7 +9,7 @@ body:
         Thanks for filing a bug. Before submitting, please:
 
         - Check existing issues to avoid duplicates
-        - Read the [LICENCE FAQ](../../blob/master/LICENCE-FAQ.md) if your question is about commercial use
+        - Read the [Licensing FAQ](../../blob/master/docs/licensing-faq.md) if your question is about commercial use
         - For security vulnerabilities, **do not** file a public issue — see [SECURITY.md](../../blob/master/SECURITY.md)
 
   - type: input

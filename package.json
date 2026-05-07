@@ -33,7 +33,7 @@
     "dist",
     "README.md",
     "LICENSE",
-    "LICENCE-FAQ.md",
+    "docs/licensing-faq.md",
     "CLAUDE.md",
     "PLUGINS.md"
   ],

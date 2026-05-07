@@ -135,7 +135,7 @@ Confirm that `@caracal-lynx` is registered to you on [npmjs.com](https://www.npm
 
 ### Licence: Elastic Licence 2.0 (ELv2) ✅ Decided
 
-ELv2 is one page, plain English, and its core restriction maps exactly to the intent: businesses can use Sluice freely for their own migrations; other consultancies cannot resell it as a service without a commercial licence from Caracal Lynx. See `licensing-strategy.md` and `LICENCE-FAQ.md` for full detail.
+ELv2 is one page, plain English, and its core restriction maps exactly to the intent: businesses can use Sluice freely for their own migrations; other consultancies cannot resell it as a service without a commercial licence from Caracal Lynx. See [`licensing-strategy.md`](licensing-strategy.md) and [`licensing-faq.md`](licensing-faq.md) for full detail.
 
 ### What is open-source vs private
 
