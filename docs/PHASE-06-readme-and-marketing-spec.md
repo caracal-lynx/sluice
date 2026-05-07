@@ -51,7 +51,7 @@ The "& Marketing" half is deliberately small in scope: this phase covers the REA
 | 4 | `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` committed | Phase 5 | `ls CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md` |
 | 5 | Every `.ts` file in `src/` carries the `SPDX-License-Identifier: Elastic-2.0` header | Phase 5 | `grep -L "SPDX-License-Identifier: Elastic-2.0" src/**/*.ts` (must return empty) |
 | 6 | `package.json` `"license"` field is `"Elastic-2.0"` | Phase 5 | `jq -r .license package.json` |
-| 7 | Canonical elevator-pitch text exists at `docs/elevator-pitch.md` | **Michael (this phase)** | `test -f docs/elevator-pitch.md` |
+| 7 | _Historical: canonical elevator-pitch text was at `docs/elevator-pitch.md` (now removed; positioning copy lives directly in `README.md`)._ | Phase 5 / Phase 6 | n/a — completed |
 | 8 | Banner and logo images render on github.com | Pre-existing | Open `README.md` on github.com and visually confirm |
 
 If any prerequisite is missing when this phase begins, **stop and resolve it before editing the README**.
@@ -78,7 +78,7 @@ The current `README.md` is in good shape. The Phase 6 changes are largely **addi
 | Section | Action | Detail |
 |---|---|---|
 | Badge row (lines ~7–9) | **Modify** | Remove the `License: private` badge. Add `License: Elastic-2.0` badge linking to `LICENCE-FAQ.md`. Add npm-version badge (`https://img.shields.io/npm/v/@caracal-lynx/sluice`). Conditionally add a `Docs` badge once Phase 8 ships (TODO marker until then). |
-| Above "🤔 What is this thing?" | **Add** | Elevator-pitch hero block sourced from `docs/elevator-pitch.md` — see §"Elevator pitch handling" below. |
+| Above "🤔 What is this thing?" | **Add** | Elevator-pitch hero block. _(Originally sourced from `docs/elevator-pitch.md`; that file was retired post-Phase 6. The pitch text now lives directly in `README.md`.)_ |
 | Banner / tagline | Keep | No change. |
 | "🤔 What is this thing?" | Keep | No change. |
 | "✨ What it does" | Keep | No change. |
@@ -92,19 +92,13 @@ The current `README.md` is in good shape. The Phase 6 changes are largely **addi
 
 ---
 
-## Elevator pitch handling
+## Elevator pitch handling — historical
 
-The elevator-pitch text is a **shared asset** referenced by both Phase 6 (README) and Phase 8 (GitHub Pages site landing page). Its canonical home is `docs/elevator-pitch.md`, which **must exist before Phase 6 starts** (prerequisite #7).
+> _Phase 6 is ✅ COMPLETE. This section is retained as a historical record of how the pitch was sourced during the README rewrite._
 
-In this spec we deliberately do **not** invent or finalise the pitch wording. The README will use a placeholder until the canonical file lands:
+During Phase 6 the elevator-pitch text was a **shared asset** referenced by both Phase 6 (README) and Phase 8 (GitHub Pages site landing page). Its canonical home was `docs/elevator-pitch.md`, with reference fragments in [docs/Context.md](./Context.md), [docs/open-sourcing-sluice.md](./open-sourcing-sluice.md), and [docs/PHASE-08-github-pages-plan.md §Home](./PHASE-08-github-pages-plan.md).
 
-```markdown
-> [TODO: insert elevator pitch from docs/elevator-pitch.md]
->
-> Until that file exists, this block stays as a comment so the rest of the README can be reviewed.
-```
-
-The pitch should cover, at minimum: the problem (data quality is the hidden blocker for migrations and AI adoption); the solution (validate before load, not after); the value proposition ("Clean data flows through"); and the AI-readiness angle. Reference fragments are already in [docs/Context.md](./Context.md), [docs/open-sourcing-sluice.md](./open-sourcing-sluice.md), and [docs/PHASE-08-github-pages-plan.md §Home](./PHASE-08-github-pages-plan.md) — but the canonical text lives in `docs/elevator-pitch.md` once it's authored.
+Post-Phase 6, `docs/elevator-pitch.md` was retired and the canonical pitch text now lives directly in `README.md`. The docs site sources its hero copy from the same place.
 
 ---
 
@@ -247,13 +241,13 @@ Beyond the README itself, Phase 6 owns the following one-off setup tasks:
 > Run these in order. Stop at any step that doesn't pass its verification.
 
 1. **Verify prerequisites #1–#8** in the table above. If any fail, halt and escalate to Michael — do not proceed.
-2. **Confirm `docs/elevator-pitch.md` exists.** If it doesn't, **stop and request the canonical pitch text from Michael** before any README edits.
+2. _Historical: at the time Phase 6 ran, the canonical pitch text was in `docs/elevator-pitch.md`. That file has since been retired; the pitch now lives directly in `README.md`._
 3. **Edit the badge row** in `README.md` (lines ~7–9):
    - Remove `License: private` badge.
    - Add `License: Elastic-2.0` badge linking to `LICENCE-FAQ.md`.
    - Add `npm` version badge (`https://img.shields.io/npm/v/@caracal-lynx/sluice`).
    - Add `Docs` badge **only if** Phase 8 site is live; otherwise insert a `<!-- TODO: add Docs badge once Phase 8 ships -->` comment.
-4. **Insert the elevator-pitch hero block** above "🤔 What is this thing?" — text sourced from `docs/elevator-pitch.md` (or placeholder per §"Elevator pitch handling").
+4. **Insert the elevator-pitch hero block** above "🤔 What is this thing?" — text sourced from `docs/elevator-pitch.md` _(file retired post-Phase 6; canonical text now lives directly in `README.md`)_.
 5. **Insert the "🧩 Extension model" section** between "🧰 Tech Stack" and "🚀 Quick Start". Three-tier framing + table linking to [PLUGINS.md](../PLUGINS.md).
 6. **Insert the minimal Quickstart YAML snippet** at the top of "🚀 Quick Start", above the existing CLI command list. Snippet must satisfy the constraints in §"Quickstart YAML snippet" and reference a real file in `examples/`.
 7. **Append "🏢 Sluice + Caracal Lynx Professional Services"** at the end of the README (before the new Community section), copy verbatim from §"Paid services section" above.
@@ -300,7 +294,7 @@ A reviewer should be able to tick every box below before Phase 6 closes.
 | Q1 | Quickstart `Docs` badge target | Phase 8 may not be live when Phase 6 runs — there's no docs site to link to | Insert `<!-- TODO -->` HTML comment instead of a broken badge; add the badge in a follow-up PR when Phase 8 ships |
 | Q2 | Logo / banner asset paths on npmjs.com | npm uses a CDN image proxy that occasionally fails on relative paths | Verify M11 with `npm pack --dry-run` *and* a real publish to a scratch package name first if uncertain |
 | Q3 | Paid-services copy not legally reviewed | Phase 0 covered open-sourcing decisions, not marketing copy. Risk of claiming services that aren't yet contractually deliverable (e.g. "Sluice MCP Server" before Phase 9 ships) | Get Michael to sign off on the table specifically before merge. Consider adding a "🚧 Coming soon" tag against MCP Server until Phase 9 is in beta |
-| Q4 | Elevator-pitch ownership | `docs/elevator-pitch.md` doesn't exist yet; multiple downstream docs reference it | This spec lists the file as Prerequisite #7. Phase 6 cannot start until Michael authors it |
+| Q4 | Elevator-pitch ownership | _(Resolved during Phase 6 — `docs/elevator-pitch.md` was authored as part of the rewrite, then retired post-phase. Canonical pitch now lives directly in `README.md`.)_ | n/a — closed |
 | Q5 | "Phase 6.5 — Launch Announcement" not yet specced | Phase 6 closes with the README live but no amplification (HN, Reddit, blog) | Out of scope for this doc; flagged here so it's tracked. A separate `PHASE-06.5-launch-announcement-spec.md` should be authored when Phase 6 nears completion |
 
 ---
