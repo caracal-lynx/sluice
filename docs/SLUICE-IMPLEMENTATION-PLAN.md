@@ -466,9 +466,13 @@ flowchart TB
 
 ---
 
-## 8. Phase 4 — Enrich Phase (Private)
+## 8. Phase 4 — Enrich Phase (Private) ✅ COMPLETE
 
-**Status:** 🟦 **Phase 4a — open-source-core scaffolding shipped** (this commit). The `EnrichPlugin` interface types, Zod `EnrichSchema`, three `RunSchema` tuning fields, the `registerEnrichPhase()` injection hook, the `runEnrich` slot in both `PipelineRunner` and `MultiSourcePipelineRunner`, the `--no-enrich` CLI flag, the `EnrichError` class with exit code 4, and three throwing `StagingStore` stubs are all in place behind 27 new tests. **Next:** scaffold the private `caracal-lynx/sluice-enrich` repository and implement the framework (registry, cache, runner, plugin loader, prototype patcher) against the now-stable public API. **Phase 4b (built-in providers) deferred.**
+**Status:** ✅ **COMPLETE** — Phase 4a shipped 2026-05-05/06; Phase 4b shipped 2026-05-06.
+
+**OSC side (`@caracal-lynx/sluice@0.2.0`):** `EnrichPlugin` / `EnrichResult` / `EnrichOptions` / `EnrichPhaseFactory` interface types, Zod `EnrichSchema` with `enrich:` block + lookup-level `cache: false` override, three `RunSchema` tuning fields (`enrichConcurrency`, `enrichTimeoutMs`, `enrichMaxRetries`), the `registerEnrichPhase()` injection hook, the `runEnrich` slot in both `PipelineRunner` and `MultiSourcePipelineRunner` (single-source uses `'stg_raw'`, multi-source uses `'stg_merged'`), the `--no-enrich` CLI flag, the `EnrichError` class with exit code 4, and three `StagingStore` stub methods. Public re-exports of `Logger` (pino type) and `EnrichError`.
+
+**Private side (`@caracal-lynx/sluice-enrich@1.0.0`):** Full framework — `EnrichRegistry`, `EnrichCache` (in-memory + DuckDB-persisted), `loadEnrichPlugins`, `EnrichmentRunner`, `createEnrichPhase`, `patchStagingStore`, plus the `sluice-enrich` diagnostic CLI (`plan`, `providers`). Three built-in providers — **`vies`** (EU VAT), **`hmrc-vat`** (UK VAT + consultation reference for audit trail), **`uk-trade-tariff`** (HS / commodity codes). Sandbox-readiness integration tests gated on `RUN_LIVE_TESTS=1` / `HMRC_SANDBOX_BEARER_TOKEN`.
 
 **Reference:** `docs/PHASE-04-enrich-phase.md` — full specification (updated: private architecture)
 
@@ -535,19 +539,19 @@ The three built-in providers are a **separate development phase** within the pri
 
 All three providers are behind the `@caracal-lynx/sluice-enrich` paywall. They are not open-source.
 
-### Success Criteria (Phase 4a)
+### Success Criteria (Phase 4a) ✅
 
-- [ ] `EnrichRegistry`, `EnrichmentRunner`, `EnrichCache` implemented and tested
-- [ ] `registerEnrichPhase()` hook wiring verified end-to-end
-- [ ] Three `StagingStore` stubs from Phase 1 implemented
-- [ ] CLI enrich commands working
-- [ ] Private npm package published to `@caracal-lynx/sluice-enrich`
+- [x] `EnrichRegistry`, `EnrichmentRunner`, `EnrichCache` implemented and tested
+- [x] `registerEnrichPhase()` hook wiring verified end-to-end (full `PipelineRunner.run()` integration test with `consultationRefs` round-tripping into `state.json`)
+- [x] Three `StagingStore` stubs from Phase 1 implemented (against real `:memory:` DuckDB)
+- [x] CLI enrich commands working (`sluice-enrich plan` + `providers`)
+- [x] Private npm package published to `@caracal-lynx/sluice-enrich` (`0.1.0` 2026-05-06; `0.1.1` post-publish cleanup)
 
-### Success Criteria (Phase 4b)
+### Success Criteria (Phase 4b) ✅
 
-- [ ] All three built-in providers implemented and tested
-- [ ] Integration tests against VIES sandbox, HMRC sandbox, UK Tariff staging
-- [ ] Published as part of `@caracal-lynx/sluice-enrich`
+- [x] All three built-in providers implemented and tested (`vies`, `hmrc-vat`, `uk-trade-tariff` — 50+ unit tests via `axios-mock-adapter`)
+- [x] Integration tests against VIES production, HMRC sandbox, UK Tariff production (env-gated; default-skipped in CI)
+- [x] Published as part of `@caracal-lynx/sluice-enrich` (`1.0.0`)
 
 ---
 
