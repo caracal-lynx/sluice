@@ -93,6 +93,47 @@ Don't squash-merge if a feature branch contains a deliberate sequence of well-cr
 
 ---
 
+## Stacked PRs — the protocol (and why we mostly avoid them)
+
+A "stacked PR" is one whose base branch is another open PR's head, not `master`. Visually clean diffs are the appeal: each PR shows only its own delta. The cost is **cascade-class failure modes** at merge time.
+
+### Default — branch every feature off `master`
+
+This is the working rule. The Phase 4b provider PRs taught us why: branching `feat/phase-4b2-hmrc` off `feat/phase-4b1-vies` (instead of `master`) meant that when the parent merged with `--delete-branch`, GitHub **closed the child PR** rather than auto-retargeting it. See [git-workflow-lessons.md](./git-workflow-lessons.md#1-stacked-pr-auto-close-cascade--the-worst-incident-of-the-week) for the full incident.
+
+The cost of branching off `master` directly is occasional small merge-conflicts at PR time. The cost of stacking is the entire cascade-failure class. Pay the small cost.
+
+### When stacking is genuinely necessary
+
+Only when a child PR cannot exist without its parent's code — e.g. PR-2 imports a symbol that PR-1 introduces, with no sensible way to land them in either order. In that case:
+
+1. **Pre-retarget every child PR to `master` BEFORE merging the parent.** Even if you intend `--delete-branch`. Run:
+   ```powershell
+   gh pr edit <child-pr> --base master
+   ```
+2. Merge the parent normally (squash + `--delete-branch` is fine — children are now retargeted, so they don't care about the deletion).
+3. Rebase each child against the new `master` and force-push:
+   ```powershell
+   git checkout <child-branch>
+   git rebase origin/master
+   git push --force-with-lease origin <child-branch>
+   ```
+4. Continue merging the chain.
+
+### If the cascade fires anyway (recovery)
+
+If a child PR auto-closed because you forgot step 1: **don't try `gh pr reopen` or `gh pr edit --base`.** Both fail on closed PRs. Path B is faster:
+
+```powershell
+# The head branch still exists locally and on origin
+git push origin <child-head-branch>   # idempotent; ensures origin has it
+gh pr create --base master --head <child-head-branch> ...
+```
+
+The original PR stays closed in history; the replacement carries the same commits forward and goes through merge normally. The full recipe is in [git-workflow-lessons.md → Recipe A](./git-workflow-lessons.md#recipe-a--restore-a-stacked-pr-that-auto-closed).
+
+---
+
 ## Hotfix flow
 
 Same as a normal PR — branch from `master`, fix, PR, merge, delete branch. The `hotfix/` prefix is purely a signal (to the reviewer, to anyone watching CI) that "this should ship today, please prioritise review." It does not bypass branch protection. CI still runs.
