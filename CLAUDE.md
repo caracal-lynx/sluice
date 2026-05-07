@@ -147,10 +147,10 @@ sluice/
 │   │   ├── registry.ts              ← RuleRegistry, TransformRegistry (custom plugin holders)
 │   │   └── loader.ts                ← loadPlugins (file-based), loadNpmPlugins (sluice.config.yaml)
 │   │
-│   ├── enrich/                      ← Phase 4a public surface (types only)
+│   ├── enrich/                      ← Phase 4 public surface (types only)
 │   │   └── types.ts                 ← EnrichPlugin, EnrichResult, EnrichOptions, EnrichSummary,
-│   │                                  EnrichPhaseFactory (implementation lives in private
-│   │                                  @caracal-lynx/sluice-enrich package)
+│   │                                  EnrichPhaseFactory (implementation lives in the private
+│   │                                  @caracal-lynx/sluice-enrich@^1.0.0 package)
 │   │
 │   └── utils/
 │       ├── index.ts
@@ -275,7 +275,7 @@ target:     { ... }   # where to write to
 run:        { ... }   # execution options (all fields optional; all have defaults)
 ```
 
-> **Phase 4a — Enrich Phase (private):** the `enrich:` block, when present, runs after Extract (and after Merge for multi-source pipelines) and before DQ. The framework that drives it lives in the **private** `@caracal-lynx/sluice-enrich` package — the open-source core only ships the Zod schema, the public `EnrichPlugin` interface (`src/enrich/types.ts`), and the `registerEnrichPhase()` injection hook on `PipelineRunner`. With `sluice-enrich` not installed, an `enrich:` block is parsed and validated but the phase is skipped with a `WARN` log. See [docs/PHASE-04-enrich-phase.md](docs/PHASE-04-enrich-phase.md) for the full spec.
+> **Phase 4 — Enrich Phase (private) ✅ COMPLETE.** The `enrich:` block, when present, runs after Extract (and after Merge for multi-source pipelines) and before DQ. The framework that drives it lives in the **private** [`@caracal-lynx/sluice-enrich@^1.0.0`](https://github.com/caracal-lynx/sluice-enrich) package — the open-source core only ships the Zod schema, the public `EnrichPlugin` interface (`src/enrich/types.ts`), and the `registerEnrichPhase()` injection hook on `PipelineRunner`. With `sluice-enrich` not installed, an `enrich:` block is parsed and validated but the phase is skipped with a `WARN` log. The private package bundles three built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`); paid clients can also write their own `*.enrich.ts` plugins. See [docs/PHASE-04-enrich-phase.md](docs/PHASE-04-enrich-phase.md) for the full spec.
 
 ---
 
