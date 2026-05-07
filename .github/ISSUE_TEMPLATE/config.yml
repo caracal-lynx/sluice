@@ -13,10 +13,10 @@ contact_links:
       Do not file public issues for security vulnerabilities. Email
       security@caracallynx.com — see SECURITY.md for the disclosure process.
   - name: ❓ Question or licensing query
-    url: https://github.com/caracal-lynx/sluice/blob/master/LICENCE-FAQ.md
+    url: https://github.com/caracal-lynx/sluice/blob/master/docs/licensing-faq.md
     about: |
       Questions about whether your use case is permitted under the Elastic
-      Licence 2.0? Read the plain-English LICENCE FAQ first; if it doesn't
+      Licence 2.0? Read the plain-English Licensing FAQ first; if it doesn't
       cover your situation, email michael.scott@caracallynx.com.
   - name: 💬 Discussions (community Q&A)
     url: https://github.com/caracal-lynx/sluice/discussions

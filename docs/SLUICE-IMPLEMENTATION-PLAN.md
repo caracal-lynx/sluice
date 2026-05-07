@@ -956,7 +956,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 |----------|--------|-------|
 | `open-sourcing-sluice.md` | ✅ Good | Decision confirmed (ELv2). |
 | `licensing-strategy.md` | ✅ Good | ELv2 confirmed as decision. |
-| `LICENCE-FAQ.md` | ✅ Good | Minor clarification on what's in the open-source core. |
+| `docs/licensing-faq.md` | ✅ Good | Minor clarification on what's in the open-source core. _(Originally at repo root as `LICENCE-FAQ.md`; relocated to `docs/` so GitHub's licensee tool stops reporting a spurious second "Unknown licence found" detection.)_ |
 | `docs/PHASE-08-github-pages-plan.md` | ✅ Good | Enrich Service mention to add when updating. (Renamed from `github-pages-plan.md`.) |
 | `docs/PHASE-09-sluice-mcp-spec.md` | ✅ Good | Private paid service note added prominently. (Renamed from `SLUICE-MCP-SPEC.md`.) |
 | `docs/Context.md` | ✅ Good | Open-source decision, Node 24, TS upgrade path, MCP plans. |
@@ -976,7 +976,7 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 | `docs/PHASE-11-typescript-v7-spec.md` | ✅ 11a EXECUTED | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable. |
 | `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated 4 May 2026 (post Phase 5 — open-source launch). |
 | `LICENSE` | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)) | ELv2 text verbatim from elastic.co |
-| `LICENCE-FAQ.md` (root) | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)) | Lifted from `docs/` for github.com visibility |
+| `docs/licensing-faq.md` | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)); relocated from repo root post-Phase 4 | Plain-English ELv2 explainer. _Originally at repo root as `LICENCE-FAQ.md`; the `LICEN[CS]E*`-pattern filename triggered GitHub's licensee tool to report it as a second "Unknown licence found" file alongside `LICENSE`, hence the move._ |
 | `CONTRIBUTING.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | PR process + branching ref + sign-off |
 | `CODE_OF_CONDUCT.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | Contributor Covenant v2.1 verbatim; reporting → conduct@caracallynx.com |
 | `SECURITY.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | security@caracallynx.com; 48 hr ack / 90-day SLA |

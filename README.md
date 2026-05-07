@@ -7,7 +7,7 @@
 [![npm](https://img.shields.io/npm/v/@caracal-lynx/sluice)](https://www.npmjs.com/package/@caracal-lynx/sluice)
 [![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.x-blue)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/license-Elastic_2.0-blue)](LICENCE-FAQ.md)
+[![License](https://img.shields.io/badge/license-Elastic_2.0-blue)](docs/licensing-faq.md)
 [![Docs](https://img.shields.io/badge/docs-caracal--lynx.github.io-00b8d4)](https://caracal-lynx.github.io/sluice/)
 
 📖 **Full documentation:** <https://caracal-lynx.github.io/sluice/>
@@ -663,7 +663,7 @@ Found a vulnerability? Please **do not** open a public issue. See [SECURITY.md](
 
 ## ⚖️ Licence
 
-Sluice is licensed under the [Elastic Licence 2.0](LICENSE). See [LICENCE-FAQ.md](LICENCE-FAQ.md) for a plain-English explainer of what you can and can't do with it. Short version: use it freely for your own data migrations; don't resell it as a hosted service or strip the licence headers.
+Sluice is licensed under the [Elastic Licence 2.0](LICENSE). See [docs/licensing-faq.md](docs/licensing-faq.md) for a plain-English explainer of what you can and can't do with it. Short version: use it freely for your own data migrations; don't resell it as a hosted service or strip the licence headers.
 
 ---
 
