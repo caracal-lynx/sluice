@@ -14,7 +14,10 @@ export default defineConfig({
 			logo: {
 				src: './public/sluice-logo.png',
 				alt: 'Sluice',
-				replacesTitle: false,
+				// The logo image already shows the wordmark "SLUICE" inside it,
+				// so let it stand in for the site title in the header. Without
+				// this Starlight renders the logo + a duplicate "Sluice" text.
+				replacesTitle: true,
 			},
 			favicon: '/favicon.svg',
 			social: [
