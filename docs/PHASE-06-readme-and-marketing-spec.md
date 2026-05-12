@@ -2,7 +2,7 @@
 
 > 🔴 **Status: BLOCKED by Phase 5.** This document specifies how Phase 6 will be executed once Phase 5 (Repo Restructure & Open-Source Launch) lands. Do **not** start Phase 6 work until the public `caracal-lynx/sluice` repository exists, ELv2 is applied, and the hygiene files (`LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `LICENCE-FAQ.md`) are committed at the repo root.
 >
-> **Owner:** Caracal Lynx Ltd. · Michael Scott
+> **Owner:** Caracal Lynx Limited · Michael Scott
 > **Estimated effort:** 1 week
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §10](./SLUICE-IMPLEMENTATION-PLAN.md#10-phase-6--readme--marketing)
 
@@ -210,7 +210,7 @@ Sluice is licensed under the [Elastic License 2.0](LICENSE). See [LICENCE-FAQ.md
 ### 🏷️ About
 
 ```markdown
-Built and maintained by [Caracal Lynx Ltd.](https://caracallynx.com) (SC826823) — Gretna, Scotland.
+Built and maintained by [Caracal Lynx Limited](https://caracallynx.com) (SC826823) — Gretna, Scotland.
 *Clean data flows through.*
 ```
 
@@ -305,5 +305,5 @@ When this spec is created, [SLUICE-IMPLEMENTATION-PLAN.md §16 Document Inventor
 
 ---
 
-*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
+*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

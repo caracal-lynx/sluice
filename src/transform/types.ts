@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Ltd.
+// Copyright (c) 2026 Caracal Lynx Limited
 
 /**
  * Transform engine result. Phase 4 runner emits a trivial pass-through count;

@@ -24,7 +24,7 @@ Sluice is published under the **Elastic Licence 2.0 (ELv2)**. This page explains
 
 ## Can I use Sluice to deliver a data migration project for a client?
 
-**No.** Using Sluice as the basis of a commercial service delivered to third parties — for example, running Sluice pipelines on behalf of a paying client as part of a consultancy engagement — requires a commercial licence from Caracal Lynx Ltd.
+**No.** Using Sluice as the basis of a commercial service delivered to third parties — for example, running Sluice pipelines on behalf of a paying client as part of a consultancy engagement — requires a commercial licence from Caracal Lynx Limited.
 
 This restriction exists because Sluice is the core product of Caracal Lynx's data migration practice. We are happy for businesses to use it for themselves; we are not able to allow other consultancies to compete directly using our tool without an agreement in place.
 
@@ -52,7 +52,7 @@ If you are unsure whether your situation requires a commercial licence, please c
 
 ## Can I contribute to the Sluice codebase?
 
-**Yes, and thank you.** Pull requests are welcome. By submitting a contribution you agree that your code is licenced under the same ELv2 terms as the rest of the project, and that Caracal Lynx Ltd. retains the right to include it in future releases (including any future commercial releases).
+**Yes, and thank you.** Pull requests are welcome. By submitting a contribution you agree that your code is licenced under the same ELv2 terms as the rest of the project, and that Caracal Lynx Limited retains the right to include it in future releases (including any future commercial releases).
 
 ---
 
@@ -61,7 +61,7 @@ If you are unsure whether your situation requires a commercial licence, please c
 Contact us. We offer commercial licences for consultancies and service providers who want to use Sluice as part of a paid offering. Pricing is by arrangement and depends on the nature and scale of use.
 
 📧 **michael.scott@caracallynx.com**
-🌐 **Caracal Lynx Ltd.** — registered in Scotland, SC826823
+🌐 **Caracal Lynx Limited** — registered in Scotland, SC826823
 
 ---
 

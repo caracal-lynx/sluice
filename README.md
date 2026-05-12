@@ -2,7 +2,7 @@
 
 > *"A sluice is a channel that controls the flow of water. Sluice is a toolkit that controls the flow of data. Except data doesn't flood your basement. Usually."*
 
-**`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Ltd.](https://caracallynx.com).
+**`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Limited](https://caracallynx.com).
 
 [![npm](https://img.shields.io/npm/v/@caracal-lynx/sluice)](https://www.npmjs.com/package/@caracal-lynx/sluice)
 [![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
@@ -669,11 +669,11 @@ Sluice is licensed under the [Elastic Licence 2.0](LICENSE). See [docs/licensing
 
 ## 🏷️ About
 
-Built and maintained by [Caracal Lynx Ltd.](https://caracallynx.com) (SC826823) — Gretna, Scotland.
+Built and maintained by [Caracal Lynx Limited](https://caracallynx.com) (SC826823) — Gretna, Scotland.
 
 ```
 npm package:  @caracal-lynx/sluice
-owner:        Caracal Lynx Ltd. (SC826823)
+owner:        Caracal Lynx Limited (SC826823)
 author:       Michael Scott
 maintainers:  Michael Scott, Carolyn Scott, Andrew Scott, Duncan Scott
 ```

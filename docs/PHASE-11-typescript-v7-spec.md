@@ -4,7 +4,7 @@
 >
 > **Phase 11b is deferred** until `tsgo` emit output is byte-stable (estimated mid/late 2026).
 >
-> **Owner:** Caracal Lynx Ltd. · Michael Scott
+> **Owner:** Caracal Lynx Limited · Michael Scott
 > **Estimated effort:** Phase 11a ≈ 1 hour (delivered). Phase 11b ≈ 1–2 hours.
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §15](./SLUICE-IMPLEMENTATION-PLAN.md#15-phase-11--typescript-v7)
 
@@ -231,5 +231,5 @@ When this spec is created, update [SLUICE-IMPLEMENTATION-PLAN.md §16 Document I
 
 ---
 
-*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
+*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

@@ -70,10 +70,10 @@ GitHub issues.
 
 By contributing, you agree that your contributions will be licensed under the
 [Elastic Licence 2.0](LICENSE), the same licence as the rest of the project.
-You also agree that Caracal Lynx Ltd. retains the right to include your
+You also agree that Caracal Lynx Limited retains the right to include your
 contribution in future releases, including any future commercial licences.
 
 If you are unsure about anything, open an issue or email us before doing the
 work — we'd rather discuss upfront than reject after.
 
-— Caracal Lynx Ltd.
+— Caracal Lynx Limited

@@ -2,7 +2,7 @@
 
 > Working convention for the public `caracal-lynx/sluice` repo and its private siblings (`sluice-enrich`, `sluice-rules`, adapter repos, client repos). Lifted out of [PHASE-05-DEVELOPMENT-WORKFLOW.md](./PHASE-05-DEVELOPMENT-WORKFLOW.md) so the Phase 5 spec can stay focused on the open-source launch.
 
-**Owner:** Caracal Lynx Ltd. · Michael Scott
+**Owner:** Caracal Lynx Limited · Michael Scott
 
 ---
 
@@ -160,4 +160,4 @@ The model above is closest to **trunk-based-without-flags**, with short-lived br
 
 ---
 
-*Document maintained by Caracal Lynx Ltd. If this convention changes — e.g. a `develop` branch is reintroduced for a coordinated multi-week effort — update this file before opening the first branch under the new shape.*
+*Document maintained by Caracal Lynx Limited. If this convention changes — e.g. a `develop` branch is reintroduced for a coordinated multi-week effort — update this file before opening the first branch under the new shape.*
