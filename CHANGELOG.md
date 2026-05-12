@@ -1,5 +1,38 @@
 # @caracal-lynx/sluice
 
+## 0.3.0
+
+### Minor Changes
+
+- [#65](https://github.com/caracal-lynx/sluice/pull/65) [`90d50a7`](https://github.com/caracal-lynx/sluice/commit/90d50a75e08608a3d48b03b233fd02210a4ea88d) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - ✨ Add Phase 12 — Prep Phase (pre-enrich data fixup).
+
+  A new optional `prep:` block on the pipeline YAML lets you mutate the staging
+  table in place between Extract and Enrich, so external API lookups and DQ both
+  see already-fixed data. Each rule applies a `cleanse:` pipe chain (with the
+  new `padEnd:<len>:<char>` op), an `expression:`, or a `lookup:` to one column,
+  with an optional `when:` row predicate. Multi-source pipelines support both
+  pre-merge per-source firings (`sourceId:` scoped) and a post-merge firing
+  against `stg_merged`.
+
+  Companion CLI: `sluice run --no-prep` and `sluice validate --no-prep` skip the
+  phase. New exit code 5 surfaces `PrepError`. Aggregated per-firing results are
+  written to `{outputDir}/{name}-prep-summary.json` (override via
+  `prep.summaryFile`).
+
+  Backwards compatible: pipelines without a `prep:` block are unaffected; no
+  existing schema, plugin interface, or test changes in a breaking way. See
+  `docs/PHASE-12-prep-phase-spec.md` for the full specification.
+
+### Patch Changes
+
+- [#62](https://github.com/caracal-lynx/sluice/pull/62) [`5f4f04c`](https://github.com/caracal-lynx/sluice/commit/5f4f04c5e58f9dfb39321ce4b0be473ecbc27083) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - 📝 Correct company legal name in copyright headers and docs.
+
+  The legal entity registered with Companies House (SC826823) is **Caracal Lynx Limited**, not "Caracal Lynx Ltd.". An earlier sweep had standardised the codebase on the abbreviated form. This change corrects every copyright header, sign-off, `author` field in `package.json`, and prose reference across the repo (112 occurrences in 90 files) back to the legal name. No runtime behaviour changes — comments and metadata only.
+
+- [#64](https://github.com/caracal-lynx/sluice/pull/64) [`dc57822`](https://github.com/caracal-lynx/sluice/commit/dc57822beee048924f4726b9ea1450fc2872ec0c) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - 📧 Standardise commercial-enquiry contact on `sluice@caracallynx.com`.
+
+  Replaces 12 references to `michael.scott@caracallynx.com` across docs, GitHub issue templates, `CONTRIBUTING.md`, and the `package.json` author field with the dedicated `sluice@caracallynx.com` mailbox. The README and doc-site had already moved to `sluice@…` (PR [#34](https://github.com/caracal-lynx/sluice/issues/34)); this cleans up the remaining files so every public-facing contact point routes through the same inbox. No code changes.
+
 ## 0.2.1
 
 ### Patch Changes
