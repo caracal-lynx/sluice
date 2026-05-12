@@ -125,6 +125,33 @@ const LookupSchema = z.object({
   value:  z.string(),
 });
 
+// ── Prep (Phase 12) ──────────────────────────────────────────────────────────
+//
+// Pre-enrich data fixup. Mutates a staging table in place so Enrich and DQ
+// both see already-fixed data. See docs/PHASE-12-prep-phase-spec.md.
+
+const PrepRuleSchema = z.object({
+  field:      z.string().describe('Existing column to mutate in place.'),
+  sourceId:   z.string().optional().describe('Multi-source only — scopes this rule to one pre-merge source. Rules with no sourceId run post-merge against stg_merged.'),
+  when:       z.string().optional().describe('Optional row predicate (expr-eval; `js:` prefix for the vm sandbox). Falsy → rule skipped for that row.'),
+  cleanse:    CleanseOps.optional().describe('Pipe-separated cleanse op chain — same syntax as transform.fields.cleanse. Exactly one of cleanse / expression / lookup must be set.'),
+  expression: z.string().optional().describe('expr-eval expression, or `js:` prefix for the vm sandbox. Exactly one of cleanse / expression / lookup must be set.'),
+  lookup:     z.string().optional().describe('Name of a prep.lookups entry. Exactly one of cleanse / expression / lookup must be set.'),
+  onMiss:     z.enum(['keep', 'null', 'error']).default('keep').describe('Lookup miss behaviour. `keep` leaves the existing value untouched; `null` overwrites with SQL NULL; `error` throws PrepError (halts the run, ignores run.onError).'),
+}).refine(
+  r => [r.cleanse, r.expression, r.lookup].filter(v => v !== undefined && v !== '').length === 1,
+  { message: 'prep rule must specify exactly one of cleanse, expression, lookup' },
+).refine(
+  r => r.onMiss === 'keep' || r.lookup !== undefined,
+  { message: 'onMiss is only valid when lookup is set', path: ['onMiss'] },
+);
+
+export const PrepSchema = z.object({
+  lookups:     z.array(LookupSchema).default([]).describe('Named lookup tables consumed by prep.rules[].lookup. Loaded once at the start of the prep phase. Cache is separate from transform.lookups in v1.'),
+  rules:       z.array(PrepRuleSchema).min(1).describe('Prep rules — applied top-to-bottom against the staging table. Later rules see earlier rules’ mutations.'),
+  summaryFile: z.string().optional().describe('Optional path for the prep summary JSON. Defaults to `{outputDir}/{pipeline.name}-prep-summary.json`.'),
+});
+
 const FieldType = z.enum([
   'string', 'number', 'decimal', 'boolean', 'date',
   'lookup', 'concat', 'constant', 'expression',
@@ -258,6 +285,7 @@ export const PipelineSchema = z.object({
   source:    SourceSchema.optional(),
   sources:   z.array(MultiSourceEntrySchema).min(2).optional(),
   merge:     MergeSchema.optional(),
+  prep:      PrepSchema.optional(),     // Phase 12 — runs between Extract (+rename/merge) and Enrich
   enrich:    EnrichSchema.optional(),   // Phase 4a — runs between Extract/Merge and DQ
   dq:        DqSchema,
   transform: TransformSchema,
@@ -286,6 +314,16 @@ export const PipelineSchema = z.object({
     return ids.has(p.merge.incrementalSource);
   },
   { message: 'merge.incrementalSource must match one of the source ids in sources' },
+).refine(
+  p => !p.prep || !!p.sources || p.prep.rules.every(r => r.sourceId === undefined),
+  { message: 'prep.rules[].sourceId is only valid in multi-source pipelines' },
+).refine(
+  p => {
+    if (!p.prep || !p.sources) return true;
+    const ids = new Set(p.sources.map(s => s.id));
+    return p.prep.rules.every(r => r.sourceId === undefined || ids.has(r.sourceId));
+  },
+  { message: 'prep.rules[].sourceId must match a declared source id' },
 );
 
 // ── Phase 2: toolkit-level config (sluice.config.yaml) ───────────────────────
@@ -336,6 +374,8 @@ export type MultiSourceEntry     = z.infer<typeof MultiSourceEntrySchema>;
 export type EnrichConfig         = z.infer<typeof EnrichSchema>;
 export type EnrichLookupConfig   = z.infer<typeof EnrichLookupSchema>;
 export type EnrichWriteColumns   = z.infer<typeof EnrichWriteColumnsSchema>;
+export type PrepConfig           = z.infer<typeof PrepSchema>;
+export type PrepRule             = z.infer<typeof PrepRuleSchema>;
 
 // ── Type guards ───────────────────────────────────────────────────────────────
 
