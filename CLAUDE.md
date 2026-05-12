@@ -86,6 +86,7 @@ sluice/
 │   │   │   ├── mssql.ts
 │   │   │   ├── pg.ts
 │   │   │   ├── csv.ts
+│   │   │   ├── odoo-csv.ts          ← Odoo CSV (continuation-row merge + Key:value pivot)
 │   │   │   ├── xlsx.ts
 │   │   │   └── rest.ts
 │   │   └── target/
@@ -311,7 +312,8 @@ Exactly one of `query`, `file`, or `endpoint` must be present.
 
 ```yaml
 source:
-  adapter: mssql                   # REQUIRED. One of: mssql | pg | csv | xlsx | rest
+  adapter: mssql                   # REQUIRED. One of:
+                                   #   mssql | pg | csv | xlsx | rest | odoo-csv
 
   # ── SQL adapters (mssql, pg) ──────────────────────────────
   connection: ${SOURCE_MSSQL}     # Connection string from .env.
@@ -331,6 +333,23 @@ source:
   file: ./data/customers.xlsx
   sheet: "Customer Export"         # Sheet name or 0-based index. Default: 0.
 
+  # ── Odoo CSV adapter ──────────────────────────────────────
+  # Handles Odoo's continuation-row quirk (multi-axis variants emit a
+  # row per axis beyond the first, with every other column blank).
+  # Merges continuation rows into their parent and pivots `Key: value`
+  # cells into new columns named after the keys.
+  adapter: odoo-csv
+  file: ./data/odoo-products.csv
+  pivot:                           # Optional. Without `pivot:`, the adapter
+                                   # behaves identically to `csv`.
+    column: "Variant Values"       # Source column carrying `Key: value` entries.
+    keys:                          # Declared output columns.
+      - Size
+      - "Colours Pioneer"
+      - COLOUR_YARN
+    onUnknownKey: warn             # `warn` (default) drops + logs; `error` halts.
+    dropOriginal: true             # Default: true. Drop `column` from output.
+
   # ── REST adapter ──────────────────────────────────────────
   endpoint: ${API_BASE}/customers  # Full URL. ${ENV_VAR} resolved at runtime.
   headers:                         # Optional. Added to every request.
@@ -345,6 +364,15 @@ source:
     cursorField: nextCursor        # For cursor pagination: field in response body.
     cursorParam: cursor            # For cursor pagination: query param name.
 ```
+
+**odoo-csv semantics.** A *continuation row* is one where every column
+except `pivot.column` is blank or whitespace-only — its `pivot.column`
+value contributes one more `Key: value` entry to the preceding parent
+row. Output schema is fixed: declared `pivot.keys` are the only new
+columns. In `onUnknownKey: warn` mode, unknown keys are logged and
+dropped (kept out of the output schema). Same-key collision in one
+logical row warns and last-wins. Orphan continuation rows (no preceding
+parent) abort the run.
 
 ---
 

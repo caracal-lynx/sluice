@@ -22,7 +22,7 @@ import { z } from 'zod';
 // ── Primitives ────────────────────────────────────────────────────────────────
 
 const Severity   = z.enum(['critical', 'warning', 'info']);
-const SourceAd   = z.enum(['mssql', 'pg', 'csv', 'xlsx', 'rest']);
+const SourceAd   = z.enum(['mssql', 'pg', 'csv', 'xlsx', 'rest', 'odoo-csv']);
 const TargetAd   = z.enum(['bc', 'ifs', 'bluecherry', 'csv', 'pg', 'rest']);
 const CleanseOps = z.string().regex(/^[a-zA-Z|:0-9]+$/);
 
@@ -40,17 +40,29 @@ const PaginationSchema = z.object({
 
 // ── Source ────────────────────────────────────────────────────────────────────
 
+// odoo-csv: declares one column that carries "Key: value" entries (Odoo's
+// "Variant Values" being the canonical case). Continuation-row merging is
+// driven by `column` — rows where every column except `column` is empty are
+// treated as additional key:value contributions to the preceding parent row.
+const OdooPivotSchema = z.object({
+  column:       z.string().describe('Source column carrying "Key: value" entries. Continuation rows are detected as rows where every column except this one is empty.'),
+  keys:         z.array(z.string()).min(1).describe('Expected key names. Each becomes a new output column populated with the value for that key.'),
+  onUnknownKey: z.enum(['warn', 'error']).default('warn').describe('How to handle a key not in `keys`. `warn` adds a column named after the unknown key and logs a warning; `error` halts the run.'),
+  dropOriginal: z.boolean().default(true).describe('When true (default), the pivot column is removed from the output. When false, it carries the parent row\'s raw value through.'),
+});
+
 const SourceBaseSchema = z.object({
-  adapter:    SourceAd.describe('Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`.'),
+  adapter:    SourceAd.describe('Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`.'),
   connection: z.string().optional().describe('Connection string for SQL adapters. Resolves `${ENV_VAR}` tokens at load time. Required for `mssql` and `pg`.'),
   query:      z.string().optional().describe('SELECT statement for SQL adapters. Required for `mssql` and `pg`.'),
-  file:       z.string().optional().describe('Path or glob for file adapters. Required for `csv` and `xlsx`.'),
+  file:       z.string().optional().describe('Path or glob for file adapters. Required for `csv`, `xlsx`, and `odoo-csv`.'),
   endpoint:   z.string().optional().describe('Full URL for the `rest` adapter. Required for `rest`.'),
   headers:    z.record(z.string()).optional().describe('Optional HTTP headers, applied to every request from the `rest` adapter.'),
-  delimiter:  z.string().default(',').describe('Field delimiter for the `csv` adapter.'),
-  encoding:   z.string().default('utf-8').describe('File encoding for `csv` and `xlsx` (any Node-supported encoding).'),
+  delimiter:  z.string().default(',').describe('Field delimiter for the `csv` and `odoo-csv` adapters.'),
+  encoding:   z.string().default('utf-8').describe('File encoding for `csv`, `xlsx`, and `odoo-csv` (any Node-supported encoding).'),
   sheet:      z.union([z.string(), z.number()]).optional().describe('Sheet name or 0-based index for the `xlsx` adapter.'),
   pagination: PaginationSchema.optional().describe('Pagination config for the `rest` adapter. Omit for single-page responses.'),
+  pivot:      OdooPivotSchema.optional().describe('Used by the `odoo-csv` adapter only. Declares one column whose `Key: value` cells should be pivoted into new columns named after the keys.'),
 });
 
 export const SourceSchema = SourceBaseSchema.refine(
