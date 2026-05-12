@@ -2,7 +2,7 @@
 
 > Post-mortem record of git/GitHub incidents during the May 2026 push to ship Phases 1–8 of Sluice plus the private `@caracal-lynx/sluice-enrich@1.0.0` package. Captures what went wrong, why, and what to do next time. Companion to [`branching-strategy.md`](./branching-strategy.md) — that doc is the convention; this doc is the lived experience.
 >
-> **Owner:** Caracal Lynx Ltd. · Michael Scott
+> **Owner:** Caracal Lynx Limited · Michael Scott
 > **Last updated:** 2026-05-07
 
 ---

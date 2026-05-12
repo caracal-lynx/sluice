@@ -6,7 +6,7 @@
 
 \## Project summary
 
-Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migrations, built and maintained by Caracal Lynx Ltd. (Michael Scott). The engine is written once in TypeScript; each client engagement is delivered as a folder of YAML pipeline configs. It replaces one-off migration scripts with a reusable, testable, CLI-driven pipeline that covers extract, data quality, transform, and load — with no UI, no server, and no cloud dependency. Sluice is general-purpose: any data migration from any source to any target. Caracal Lynx's paid adapter packages add ERP-specific connectors (IFS, Business Central, BlueCherry) on top of the open-source core.
+Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migrations, built and maintained by Caracal Lynx Limited (Michael Scott). The engine is written once in TypeScript; each client engagement is delivered as a folder of YAML pipeline configs. It replaces one-off migration scripts with a reusable, testable, CLI-driven pipeline that covers extract, data quality, transform, and load — with no UI, no server, and no cloud dependency. Sluice is general-purpose: any data migration from any source to any target. Caracal Lynx's paid adapter packages add ERP-specific connectors (IFS, Business Central, BlueCherry) on top of the open-source core.
 
 
 
@@ -52,7 +52,7 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \## Facts \& constraints
 
-\- \*\*Owner:\*\* Michael Scott, Caracal Lynx Ltd. (SC826823), Gretna, Scotland
+\- \*\*Owner:\*\* Michael Scott, Caracal Lynx Limited (SC826823), Gretna, Scotland
 
 \- \*\*Known clients:\*\* Acme Corp — IFS ERP (note: Acme Corp does NOT use Business Central and has no plans to); Style Co — BlueCherry ERP
 

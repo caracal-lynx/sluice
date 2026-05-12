@@ -1,6 +1,6 @@
 # Sluice — Vision Implementation Plan
 
-> **Caracal Lynx Ltd.** | Owner: Michael Scott | Last updated: 7 May 2026 (post Phase 4 ✅ COMPLETE — `@caracal-lynx/sluice-enrich@1.0.0` + `@caracal-lynx/sluice@0.2.1` published)
+> **Caracal Lynx Limited** | Owner: Michael Scott | Last updated: 7 May 2026 (post Phase 4 ✅ COMPLETE — `@caracal-lynx/sluice-enrich@1.0.0` + `@caracal-lynx/sluice@0.2.1` published)
 >
 > This document is the master implementation plan for realising the Sluice strategic vision: open-sourcing the core CLI, keeping paid services private, upgrading the runtime and language, and launching the Sluice MCP server as a commercial offering.
 
@@ -476,7 +476,7 @@ flowchart TB
 
 **Reference:** `docs/PHASE-04-enrich-phase.md` — full specification (updated: private architecture)
 
-> ⚠️ **The entire enrich subsystem is a private, commercial offering from Caracal Lynx Ltd.** It is not part of the open-source core and is not published to the public npm registry. The open-source `@caracal-lynx/sluice` core includes only the `EnrichPlugin` interface type, Zod schema stubs, and the `registerEnrichPhase()` injection hook — no implementation.
+> ⚠️ **The entire enrich subsystem is a private, commercial offering from Caracal Lynx Limited** It is not part of the open-source core and is not published to the public npm registry. The open-source `@caracal-lynx/sluice` core includes only the `EnrichPlugin` interface type, Zod schema stubs, and the `registerEnrichPhase()` injection hook — no implementation.
 
 ### 8.1 Package Architecture
 
@@ -607,7 +607,7 @@ AFTER (separate repos):
 
 ```typescript
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Ltd.
+// Copyright (c) 2026 Caracal Lynx Limited
 ```
 
 Add to the top of every `.ts` file in `packages/core/src/`.
@@ -845,7 +845,7 @@ docs.sluice.dev (or sluice.caracallynx.com)
 
 **Reference:** `docs/PHASE-09-sluice-mcp-spec.md` — full Claude Code-ready specification (1,168 lines)
 
-> ⚠️ The Sluice MCP Server is a **private, commercial offering from Caracal Lynx Ltd.**. It is not part of the open-source core and is not published to the public npm registry. It is provided to clients as part of a paid Sluice-assisted migration engagement.
+> ⚠️ The Sluice MCP Server is a **private, commercial offering from Caracal Lynx Limited**. It is not part of the open-source core and is not published to the public npm registry. It is provided to clients as part of a paid Sluice-assisted migration engagement.
 
 ### What it delivers
 
@@ -1012,5 +1012,5 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 
 ---
 
-*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
+*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

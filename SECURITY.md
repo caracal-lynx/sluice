@@ -55,4 +55,4 @@ Out of scope (these are private commercial packages — report directly to
   controls what configs they run)
 - Issues that require physical access to the operator's machine
 
-— Caracal Lynx Ltd.
+— Caracal Lynx Limited

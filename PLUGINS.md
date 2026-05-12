@@ -291,4 +291,4 @@ The one exception to Rule 1 is the **enrich phase** (Phase 4) — `EnrichPlugin`
 
 Questions, gaps, or contributions to this guide? Open a Discussion or send a PR.
 
-— Caracal Lynx Ltd.
+— Caracal Lynx Limited
