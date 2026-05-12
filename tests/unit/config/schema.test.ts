@@ -200,7 +200,33 @@ describe('PipelineSchema', () => {
         PipelineSchema.parse(withFields([{ to: 'Foo', type: 'custom', customOp: 'myOp' }])),
       ).not.toThrow();
     });
+
+    it('allows type: string without "from" when unmapped: true', () => {
+      expect(() =>
+        PipelineSchema.parse(withFields([{ to: 'Foo', type: 'string', unmapped: true }])),
+      ).not.toThrow();
+    });
   });
+
+  describe('TransformSchema.unmappedPlaceholder', () => {
+    it('defaults to "*** TBC ***" when omitted', () => {
+      const result = PipelineSchema.parse(minimal);
+      expect(result.transform.unmappedPlaceholder).toBe('*** TBC ***');
+    });
+
+    it('accepts a custom placeholder string', () => {
+      const raw = {
+        ...minimal,
+        transform: {
+          fields: [{ from: 'id', to: 'Id', type: 'string' }],
+          unmappedPlaceholder: '<UNMAPPED>',
+        },
+      };
+      const result = PipelineSchema.parse(raw);
+      expect(result.transform.unmappedPlaceholder).toBe('<UNMAPPED>');
+    });
+  });
+
 });
 
 describe('CompositeRuleSchema', () => {
