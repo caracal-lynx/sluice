@@ -26,7 +26,10 @@ import type { Pipeline } from './config/types.js';
 import { DQEngine, type DQSummary } from './dq/index.js';
 import type { EnrichPhaseFactory, EnrichSummary } from './enrich/types.js';
 import { MergeStrategyRegistry } from './merge/index.js';
+import { PrepEngine, PrepLookupResolver } from './prep/index.js';
+import type { PrepFiringResult, PrepSummary } from './prep/index.js';
 import { StagingStore, quoteIdent } from './staging/index.js';
+import { ExpressionEvaluator } from './transform/expression.js';
 import { TransformEngine, type TransformResult } from './transform/index.js';
 import { RuleRegistry, TransformRegistry } from './plugins/registry.js';
 import { loadPlugins, loadNpmPlugins } from './plugins/loader.js';
@@ -67,6 +70,10 @@ export interface RunResult {
   merge?: { rowsMerged: number; conflicts: number; unmatched: number };
   /** Phase 4a — populated when an `enrich:` block ran. */
   enrichSummary?: EnrichSummary;
+  /** Phase 12 — populated when a `prep:` block ran (one or more firings). */
+  prepSummary?: PrepSummary;
+  /** Phase 12 — path to the prep summary JSON, when written. */
+  prepSummaryPath?: string;
   /** Path to the state JSON written at the end of a successful run. */
   stateFilePath?: string;
   /** Set by `sluice profile`; absent for other commands. */
@@ -81,6 +88,8 @@ export interface RunOverrides {
   pluginDirs?: string[];
   /** Set by `sluice run --no-enrich` to skip the Phase 4a enrich phase. */
   skipEnrich?: boolean;
+  /** Set by `sluice run --no-prep` / `sluice validate --no-prep` to skip the Phase 12 prep phase. */
+  skipPrep?: boolean;
   /**
    * Optional progress reporter. CLI callers pass a live reporter; library
    * callers (and tests) can omit it to get a silent no-op.
@@ -96,6 +105,10 @@ export class PipelineRunner {
   protected progress: ProgressReporter = createSilentProgress();
   private pluginsLoaded = false;
   private incrementalSinceUsed = '';
+  /** Per-run prep state — reset at the top of every run/profile call. */
+  protected prepResolver: PrepLookupResolver | undefined;
+  protected prepEngine: PrepEngine | undefined;
+  protected prepFirings: PrepFiringResult[] = [];
 
   constructor(
     ruleRegistry?: RuleRegistry,
@@ -148,6 +161,9 @@ export class PipelineRunner {
 
   async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
     this.incrementalSinceUsed = '';
+    this.prepResolver = undefined;
+    this.prepEngine = undefined;
+    this.prepFirings = [];
     if (overrides.progress) this.progress = overrides.progress;
 
     const runStartMs = Date.now();
@@ -205,6 +221,11 @@ export class PipelineRunner {
         }
       }
 
+      // Phase 12 — Prep mutates stg_raw in place before Enrich and DQ.
+      // Single-source pipelines have at most one firing (sourceId === undefined).
+      await this.runPrep(config, store, overrides, extractResult.tableName, undefined);
+      const prepSummary = await this.finalisePrepSummary(config);
+
       const enrichSummary = await this.runEnrich(
         config,
         store,
@@ -252,6 +273,7 @@ export class PipelineRunner {
           transformResult,
           null,
           enrichSummary,
+          prepSummary,
         );
       }
 
@@ -290,6 +312,7 @@ export class PipelineRunner {
           transformResult,
           loadResult,
           enrichSummary,
+          prepSummary,
         ),
         stateFilePath,
       };
@@ -553,6 +576,9 @@ export class PipelineRunner {
    * Never writes an output CSV, never runs DQ or transforms.
    */
   async profile(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    this.prepResolver = undefined;
+    this.prepEngine = undefined;
+    this.prepFirings = [];
     if (overrides.progress) this.progress = overrides.progress;
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
@@ -781,6 +807,7 @@ export class PipelineRunner {
     transform: TransformResult | null,
     load: LoadResult | null,
     enrichSummary?: EnrichSummary,
+    prepSummary?: PrepSummary,
   ): RunResult {
     const result: RunResult = {
       pipeline: config.pipeline.name,
@@ -791,7 +818,94 @@ export class PipelineRunner {
       load,
     };
     if (enrichSummary !== undefined) result.enrichSummary = enrichSummary;
+    if (prepSummary !== undefined) result.prepSummary = prepSummary;
     return result;
+  }
+
+  // ── Phase 12 — Prep phase ─────────────────────────────────────────────
+
+  /**
+   * Run the prep phase once against `table` for `sourceId` (or against
+   * `stg_raw` / `stg_merged` with `sourceId === undefined`). Subsequent calls
+   * reuse the lazily-constructed PrepLookupResolver and PrepEngine, so prep
+   * lookups are loaded at most once per pipeline run.
+   *
+   * No-ops when the pipeline has no `prep:` block or `--no-prep` was set.
+   * Records the per-firing result on `this.prepFirings` for the summary file.
+   * Unlike Enrich, Prep DOES run in dryRun and validate-only modes because DQ
+   * depends on its output.
+   */
+  protected async runPrep(
+    config: Pipeline,
+    store: StagingStore,
+    overrides: RunOverrides,
+    table: string,
+    sourceId: string | undefined,
+  ): Promise<PrepFiringResult | undefined> {
+    if (!config.prep) return undefined;
+    if (overrides.skipPrep) {
+      logger.info(
+        { pipeline: config.pipeline.name, table, sourceId: sourceId ?? null },
+        'pipeline: prep skipped (--no-prep)',
+      );
+      return undefined;
+    }
+
+    if (!this.prepResolver) {
+      this.prepResolver = new PrepLookupResolver();
+      if (config.prep.lookups.length > 0) {
+        await this.prepResolver.loadAll(config.prep.lookups, config.run);
+      }
+    }
+    if (!this.prepEngine) {
+      this.prepEngine = new PrepEngine(
+        store,
+        this.prepResolver,
+        new ExpressionEvaluator(),
+        logger,
+      );
+    }
+
+    const phaseLabel = sourceId ? `Prep (${sourceId})` : 'Prep';
+    this.progress.startPhase('prep', phaseLabel);
+    try {
+      const firing = await this.prepEngine.run(table, config.prep, sourceId, config.run);
+      this.prepFirings.push(firing);
+      const failed = firing.rules.reduce((n, r) => n + r.rowsFailed, 0);
+      this.progress.endPhase({ state: failed > 0 ? 'warn' : 'success' });
+      return firing;
+    } catch (err) {
+      this.progress.endPhase({ state: 'fail' });
+      throw err;
+    }
+  }
+
+  /**
+   * Aggregate any captured prep firings into a PrepSummary and write the JSON
+   * file (default `{outputDir}/{name}-prep-summary.json`, override via
+   * `prep.summaryFile`). Returns `undefined` if prep didn't run.
+   */
+  protected async finalisePrepSummary(config: Pipeline): Promise<PrepSummary | undefined> {
+    if (this.prepFirings.length === 0) return undefined;
+    const summary: PrepSummary = {
+      pipeline: config.pipeline.name,
+      runAt: new Date().toISOString(),
+      firings: this.prepFirings,
+    };
+    const defaultPath = path.join(
+      path.resolve(config.run.outputDir),
+      `${config.pipeline.name}-prep-summary.json`,
+    );
+    const summaryPath = config.prep?.summaryFile
+      ? path.resolve(config.prep.summaryFile)
+      : defaultPath;
+    await fs.mkdir(path.dirname(summaryPath), { recursive: true });
+    await fs.writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, 'utf-8');
+    logger.info(
+      { pipeline: config.pipeline.name, firings: summary.firings.length, summaryPath },
+      'pipeline: prep summary written',
+    );
+    return summary;
   }
 }
 

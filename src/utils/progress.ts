@@ -25,7 +25,7 @@
 import cliProgress from 'cli-progress';
 import pc from 'picocolors';
 
-export type PhaseKind = 'extract' | 'dq' | 'merge' | 'enrich' | 'transform' | 'load';
+export type PhaseKind = 'extract' | 'prep' | 'dq' | 'merge' | 'enrich' | 'transform' | 'load';
 
 export type PhaseEndState = 'success' | 'warn' | 'fail';
 
@@ -71,6 +71,7 @@ interface PhaseState {
 
 const PHASE_ICON_EMOJI: Record<PhaseKind, string> = {
   extract: '🔎',
+  prep: '🧽',
   dq: '🛡️ ',
   merge: '🔀',
   enrich: '🌐',
@@ -81,6 +82,7 @@ const PHASE_ICON_EMOJI: Record<PhaseKind, string> = {
 // Plain-ASCII fallbacks used when the stream is not a TTY.
 const PHASE_ICON_ASCII: Record<PhaseKind, string> = {
   extract: '[EX]',
+  prep: '[PR]',
   dq: '[DQ]',
   merge: '[MG]',
   enrich: '[EN]',
@@ -90,6 +92,7 @@ const PHASE_ICON_ASCII: Record<PhaseKind, string> = {
 
 const PHASE_COLOUR: Record<PhaseKind, (s: string) => string> = {
   extract: pc.cyan,
+  prep: pc.magenta,
   dq: pc.yellow,
   merge: pc.magenta,
   enrich: pc.cyan,

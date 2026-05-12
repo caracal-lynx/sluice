@@ -21,6 +21,9 @@ export {
 } from './transform/index.js';
 export type { TransformResult } from './transform/index.js';
 
+export { PrepEngine, PrepLookupResolver } from './prep/index.js';
+export type { PrepRuleResult, PrepFiringResult, PrepSummary } from './prep/index.js';
+
 export { PipelineRunner, registerEnrichPhase } from './runner.js';
 export type { RunResult, RunOverrides } from './runner.js';
 export { MultiSourcePipelineRunner } from './multi-source-runner.js';

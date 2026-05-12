@@ -31,6 +31,25 @@ describe('applyCleanse', () => {
     expect(applyCleanse('42', 'padStart:6:0')).toBe('000042');
   });
 
+  it('padEnd:10:0 — appends pad char to short strings', () => {
+    expect(applyCleanse('12345678', 'padEnd:10:0')).toBe('1234567800');
+    expect(applyCleanse('42', 'padEnd:6:_')).toBe('42____');
+  });
+
+  it('padEnd leaves already-long strings unchanged', () => {
+    expect(applyCleanse('1234567890', 'padEnd:10:0')).toBe('1234567890');
+    expect(applyCleanse('hello world', 'padEnd:5:x')).toBe('hello world');
+  });
+
+  it('padEnd coerces non-string input', () => {
+    // Number input is String()-coerced first, matching the rest of the pipeline.
+    expect(applyCleanse(42, 'padEnd:6:0')).toBe('420000');
+  });
+
+  it('padEnd in a chain runs after earlier ops', () => {
+    expect(applyCleanse('  ab  ', 'trim|padEnd:5:x')).toBe('abxxx');
+  });
+
   it('truncate:20', () => {
     const input = 'x'.repeat(21);
     const out = applyCleanse(input, 'truncate:20');
@@ -62,5 +81,9 @@ describe('applyCleanse', () => {
 
   it('throws TransformError for malformed padStart arg', () => {
     expect(() => applyCleanse('x', 'padStart:abc:0')).toThrow(TransformError);
+  });
+
+  it('throws TransformError for malformed padEnd arg', () => {
+    expect(() => applyCleanse('x', 'padEnd:abc:0')).toThrow(TransformError);
   });
 });
