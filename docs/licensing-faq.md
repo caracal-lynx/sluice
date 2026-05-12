@@ -60,7 +60,7 @@ If you are unsure whether your situation requires a commercial licence, please c
 
 Contact us. We offer commercial licences for consultancies and service providers who want to use Sluice as part of a paid offering. Pricing is by arrangement and depends on the nature and scale of use.
 
-📧 **michael.scott@caracallynx.com**
+📧 **sluice@caracallynx.com**
 🌐 **Caracal Lynx Limited** — registered in Scotland, SC826823
 
 ---
