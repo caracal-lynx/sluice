@@ -23,7 +23,11 @@ function makePipeline(overrides: Partial<Pipeline> = {}): Pipeline {
       stopOnCritical: true,
       rules: [],
     },
-    transform: { lookups: [], fields: [{ to: 'x', type: 'constant', value: 'y', optional: false }] },
+    transform: {
+      lookups: [],
+      fields: [{ to: 'x', type: 'constant', value: 'y', optional: false }],
+      unmappedPlaceholder: '*** TBC ***',
+    },
     target: {
       adapter: 'csv',
       delimiter: ',',

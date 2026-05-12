@@ -17,7 +17,7 @@ function pipeline(
     pipeline: { name: 'tx-test', client: 't', version: '1.0', entity: 'T' },
     source: { adapter: 'csv', file: 'unused', delimiter: ',', encoding: 'utf-8' },
     dq: { stopOnCritical: false, rules: [] },
-    transform: { lookups: [], fields },
+    transform: { lookups: [], fields, unmappedPlaceholder: '*** TBC ***' },
     target: {
       adapter: 'csv',
       delimiter: ',',
@@ -283,6 +283,45 @@ describe('TransformEngine', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+
+  it('unmapped: true emits the default placeholder for every row, ignoring from/type', async () => {
+    await seed([{ X: '1' }, { X: '2' }]);
+    const config = pipeline([
+      { to: 'Division', type: 'string', unmapped: true, optional: false },
+    ]);
+    await engine.run(config, store);
+    const out = await store.query<{ Division: string }>('SELECT * FROM stg_transformed');
+    expect(out.map((r) => r.Division)).toEqual(['*** TBC ***', '*** TBC ***']);
+  });
+
+  it('unmapped: true honours a custom unmappedPlaceholder', async () => {
+    await seed([{ X: '1' }]);
+    const config = pipeline([
+      { to: 'Division', type: 'string', unmapped: true, optional: false },
+    ]);
+    config.transform.unmappedPlaceholder = '<UNMAPPED>';
+    await engine.run(config, store);
+    const out = await store.query<{ Division: string }>('SELECT * FROM stg_transformed');
+    expect(out[0]!.Division).toBe('<UNMAPPED>');
+  });
+
+  it('unmapped: true bypasses cleanse, max, and lookup', async () => {
+    await seed([{ X: '1' }]);
+    const config = pipeline([
+      {
+        to: 'Division',
+        type: 'string',
+        unmapped: true,
+        cleanse: 'uppercase',
+        max: 3,
+        optional: false,
+      },
+    ]);
+    await engine.run(config, store);
+    const out = await store.query<{ Division: string }>('SELECT * FROM stg_transformed');
+    // Placeholder is emitted verbatim — no cleanse, no truncation.
+    expect(out[0]!.Division).toBe('*** TBC ***');
   });
 
   it('honours custom sourceTable and targetTable (Phase 3 prep Change 4)', async () => {
