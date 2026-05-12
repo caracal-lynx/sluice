@@ -227,6 +227,47 @@ describe('PipelineSchema', () => {
     });
   });
 
+  describe('SourceSchema.adapter: odoo-csv', () => {
+    it('accepts the new "odoo-csv" adapter id', () => {
+      const raw = {
+        ...minimal,
+        source: { adapter: 'odoo-csv', file: './data/odoo.csv' },
+      };
+      expect(() => PipelineSchema.parse(raw)).not.toThrow();
+    });
+
+    it('accepts an odoo-csv source with a pivot block', () => {
+      const raw = {
+        ...minimal,
+        source: {
+          adapter: 'odoo-csv',
+          file: './data/odoo.csv',
+          pivot: {
+            column: 'Variant Values',
+            keys: ['Size', 'Colours Pioneer'],
+          },
+        },
+      };
+      const result = PipelineSchema.parse(raw);
+      expect(result.source.pivot?.column).toBe('Variant Values');
+      expect(result.source.pivot?.keys).toEqual(['Size', 'Colours Pioneer']);
+      // Defaults
+      expect(result.source.pivot?.onUnknownKey).toBe('warn');
+      expect(result.source.pivot?.dropOriginal).toBe(true);
+    });
+
+    it('rejects an odoo-csv pivot block with empty keys array', () => {
+      const raw = {
+        ...minimal,
+        source: {
+          adapter: 'odoo-csv',
+          file: './data/odoo.csv',
+          pivot: { column: 'Variant Values', keys: [] },
+        },
+      };
+      expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
+    });
+  });
 });
 
 describe('CompositeRuleSchema', () => {
