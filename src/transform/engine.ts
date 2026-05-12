@@ -61,6 +61,8 @@ export class TransformEngine {
     const outputDateFormat = config.target.dateFormat;
     let rowsFailed = 0;
 
+    const unmappedPlaceholder = config.transform.unmappedPlaceholder;
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]!;
       try {
@@ -73,6 +75,7 @@ export class TransformEngine {
             expressionEval,
             this.transforms,
             outputDateFormat,
+            unmappedPlaceholder,
           );
         }
         outputBatch.push(outRow);
@@ -112,7 +115,14 @@ function applyFieldMapping(
   expr: ExpressionEvaluator,
   transforms: TransformRegistry,
   outputDateFormat: string | undefined,
+  unmappedPlaceholder: string,
 ): unknown {
+  // Iterative-mapping placeholder: short-circuit everything else. Used to
+  // land draft pipelines end-to-end before source fields are identified.
+  if (field.unmapped) {
+    return unmappedPlaceholder;
+  }
+
   // ── Types that do not read `from` directly ──────────────────────────────
   if (field.type === 'constant') {
     return field.value ?? null;

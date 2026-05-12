@@ -546,10 +546,25 @@ transform:
       # For logic beyond expr-eval, prefix with js:
       # value: "js: row.PRICE * (1 - row.DISCOUNT / 100)"
 
+    # unmapped: true — iterative-mapping placeholder.
+    # Emits transform.unmappedPlaceholder (default "*** TBC ***") for
+    # every row, regardless of `from`/`type`/`cleanse`/`max`. Used
+    # during early iterations of a client migration so a draft pipeline
+    # runs end-to-end before its source fields have been identified.
+    - to: Division
+      type: string
+      unmapped: true
+
+  # Override the placeholder string. Optional.
+  unmappedPlaceholder: "*** TBC ***"
+
 # Common optional field properties:
 #   optional: true    null result does not cause a pipeline error
 #   default: <val>    fallback value if source is null/empty
 #   max: <n>          truncate string to n chars AFTER cleanse
+#   unmapped: true    emit `transform.unmappedPlaceholder` for every row
+#                     (bypasses `from`/`type`/`cleanse`/`max`). For draft
+#                     pipelines whose source mappings are not yet known.
 ```
 
 #### Cleanse operations reference

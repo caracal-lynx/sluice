@@ -15,7 +15,7 @@ function pipeline(
     pipeline: { name: 'tx-test', client: 't', version: '1.0', entity: 'T' },
     source: { adapter: 'csv', file: 'unused', delimiter: ',', encoding: 'utf-8' },
     dq: { stopOnCritical: false, rules: [] },
-    transform: { lookups: [], fields },
+    transform: { lookups: [], fields, unmappedPlaceholder: '*** TBC ***' },
     target: {
       adapter: 'csv',
       delimiter: ',',

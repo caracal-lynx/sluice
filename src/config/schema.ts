@@ -178,6 +178,11 @@ const FieldMappingSchema = z.object({
   value:     z.union([z.string(), z.number(), z.boolean()]).optional(),
   default:   z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
   optional:  z.boolean().default(false),
+  // Iterative-mapping placeholder: when true, the engine emits
+  // `transform.unmappedPlaceholder` (default `*** TBC ***`) for every row
+  // regardless of `from`/`type`. Used to land draft pipelines end-to-end
+  // before source fields are identified.
+  unmapped:  z.boolean().optional().describe('When true, the engine emits `transform.unmappedPlaceholder` for every row and ignores `from`/`type`. Use during iterative mapping when the target field has no identified source yet.'),
   // Phase 2:
   customOp:  z.string().optional(),
   options:   z.record(z.unknown()).optional(),
@@ -185,13 +190,14 @@ const FieldMappingSchema = z.object({
   m => m.type !== 'custom' || !!m.customOp,
   { message: 'type: custom requires customOp to be set', path: ['customOp'] }
 ).refine(
-  m => !TYPES_REQUIRING_FROM.has(m.type) || m.from !== undefined,
-  { message: 'this field type requires "from" to be set', path: ['from'] }
+  m => m.unmapped === true || !TYPES_REQUIRING_FROM.has(m.type) || m.from !== undefined,
+  { message: 'this field type requires "from" to be set (or `unmapped: true`)', path: ['from'] }
 );
 
 export const TransformSchema = z.object({
-  lookups: z.array(LookupSchema).default([]).describe('Named lookup tables, loaded once at the start of the transform phase and cached in memory. Any source adapter (CSV, MSSQL, REST, …) is valid here.'),
-  fields:  z.array(FieldMappingSchema).min(1).describe('Field mappings — one entry per output column. Order is preserved.'),
+  lookups:             z.array(LookupSchema).default([]).describe('Named lookup tables, loaded once at the start of the transform phase and cached in memory. Any source adapter (CSV, MSSQL, REST, …) is valid here.'),
+  fields:              z.array(FieldMappingSchema).min(1).describe('Field mappings — one entry per output column. Order is preserved.'),
+  unmappedPlaceholder: z.string().default('*** TBC ***').describe('Value emitted by field mappings with `unmapped: true`. Used during iterative mapping so draft pipelines run end-to-end before source fields are identified.'),
 });
 
 // ── Target ────────────────────────────────────────────────────────────────────
