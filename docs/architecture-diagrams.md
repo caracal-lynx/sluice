@@ -186,6 +186,7 @@ sequenceDiagram
     participant Cfg as ConfigLoader
     participant Src as SourceAdapter
     participant Duck as DuckDB (StagingStore)
+    participant Prep as PrepEngine
     participant DQ as DQEngine
     participant Tx as TransformEngine
     participant Tgt as TargetAdapter
@@ -204,6 +205,13 @@ sequenceDiagram
     Src->>Duck: createTable + insertBatch*
     Src-->>Run: ExtractResult
     Run->>Src: disconnect()
+
+    opt prep: block configured and --no-prep not set
+        Run->>Prep: run('stg_raw', prep, undefined, runCfg)
+        Prep->>Duck: query + DROP + CREATE OR REPLACE + insertBatch
+        Prep-->>Run: PrepFiringResult
+        Run->>FS: write {name}-prep-summary.json
+    end
 
     Run->>DQ: validate('stg_raw')
     DQ->>Duck: query
@@ -251,15 +259,16 @@ flowchart TB
     B[Load plugins<br/>file + sluice.config.yaml]:::phase
     C[Open DuckDB]:::phase
 
-    subgraph PerSource[Per-source extract + DQ - priority-ordered]
+    subgraph PerSource[Per-source extract + prep + DQ - priority-ordered]
       direction TB
       S1[Extract source 1]:::phase --> R1[renameColumns] --> F1{incremental?}:::decision
-      F1 -- yes & matches<br/>incrementalSource --> I1[filter by<br/>incrementalField] --> D1[DQ rules<br/>where sourceId = s1]:::phase
-      F1 -- no --> D1
+      F1 -- yes & matches<br/>incrementalSource --> I1[filter by<br/>incrementalField] --> P1[🧽 Prep pre-merge<br/>rules where sourceId = s1]:::phase
+      F1 -- no --> P1
+      P1 --> D1[DQ rules<br/>where sourceId = s1]:::phase
       D1 --> RW1[rewrite stg_raw_s1<br/>accepted rows only]:::stage
 
-      S2[Extract source 2]:::phase --> R2[renameColumns] --> D2[DQ rules<br/>where sourceId = s2]:::phase --> RW2[rewrite stg_raw_s2]:::stage
-      SN[Extract source N]:::phase --> RN[renameColumns] --> DN[DQ rules<br/>where sourceId = sN]:::phase --> RWN[rewrite stg_raw_sN]:::stage
+      S2[Extract source 2]:::phase --> R2[renameColumns] --> P2[🧽 Prep<br/>where sourceId = s2]:::phase --> D2[DQ rules<br/>where sourceId = s2]:::phase --> RW2[rewrite stg_raw_s2]:::stage
+      SN[Extract source N]:::phase --> RN[renameColumns] --> PN[🧽 Prep<br/>where sourceId = sN]:::phase --> DN[DQ rules<br/>where sourceId = sN]:::phase --> RWN[rewrite stg_raw_sN]:::stage
     end
 
     M[[MergeEngine<br/>strategy: coalesce / priority-override / union / intersect]]:::phase
@@ -268,6 +277,8 @@ flowchart TB
     MC[(stg_merge_conflicts)]:::stage
     CLog[/conflictLog CSV<br/>if configured/]:::output
 
+    PMP[🧽 Prep post-merge<br/>rules with no sourceId]:::phase
+    PSum[/prep-summary.json<br/>aggregates all firings/]:::output
     PMDQ[Post-merge DQ<br/>rules with no sourceId]:::phase
     TX[Transform<br/>stg_merged → stg_transformed]:::phase
     LD[Load to target]:::phase
@@ -280,7 +291,8 @@ flowchart TB
     RWN --> M
     M --> MJ --> MG
     M --> MC --> CLog
-    MG --> PMDQ --> TX --> LD --> ST --> CL
+    MG --> PMP --> PSum
+    PMP --> PMDQ --> TX --> LD --> ST --> CL
 ```
 
 **Merge strategies at a glance:**
@@ -578,13 +590,18 @@ flowchart TB
     E1[exit 1<br/>pipeline error]:::err
     E2[exit 2<br/>DQ critical]:::warn
     E3[exit 3<br/>config error]:::err
+    E4[exit 4<br/>enrich error]:::err
+    E5[exit 5<br/>prep error]:::err
 
     CLI --> Run --> E0
     Run --> E1
     Run --> E2
     Run --> E3
+    Run --> E4
+    Run --> E5
     CLI --> Val --> E0
     Val --> E3
+    Val --> E5
     CLI --> Prof --> E0
     CLI --> Chk --> E0
     Chk --> E3
@@ -614,6 +631,8 @@ classDiagram
     class TransformError
     class ExpressionError
     class LoadError
+    class EnrichError
+    class PrepError
 
     Error <|-- PipelineError
     PipelineError <|-- ConfigError
@@ -622,6 +641,8 @@ classDiagram
     PipelineError <|-- DQError
     PipelineError <|-- TransformError
     PipelineError <|-- LoadError
+    PipelineError <|-- EnrichError
+    PipelineError <|-- PrepError
     DQError <|-- PipelineDQError
     TransformError <|-- ExpressionError
 ```
