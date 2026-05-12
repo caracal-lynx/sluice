@@ -152,6 +152,12 @@ sluice/
 │   │                                  EnrichPhaseFactory (implementation lives in the private
 │   │                                  @caracal-lynx/sluice-enrich@^1.0.0 package)
 │   │
+│   ├── prep/                        ← Phase 12 — pre-enrich data fixup
+│   │   ├── index.ts                 ← barrel
+│   │   ├── engine.ts                ← PrepEngine (cleanse/expression/lookup in-place mutation)
+│   │   ├── lookup.ts                ← PrepLookupResolver (separate cache from transform.lookups)
+│   │   └── types.ts                 ← PrepRuleResult, PrepFiringResult, PrepSummary
+│   │
 │   └── utils/
 │       ├── index.ts
 │       ├── logger.ts                ← pino singleton
@@ -268,6 +274,7 @@ Every pipeline is a single YAML file. One file = one migrated entity
 ```yaml
 pipeline:   { ... }   # identity and metadata
 source:     { ... }   # where to read from
+prep:       { ... }   # OPTIONAL — Phase 12; pre-enrich data fixup (cleanse/expression/lookup)
 enrich:     { ... }   # OPTIONAL — Phase 4a; external API lookups (private)
 dq:         { ... }   # data quality rules
 transform:  { ... }   # field mappings and lookups
@@ -276,6 +283,8 @@ run:        { ... }   # execution options (all fields optional; all have default
 ```
 
 > **Phase 4 — Enrich Phase (private) ✅ COMPLETE.** The `enrich:` block, when present, runs after Extract (and after Merge for multi-source pipelines) and before DQ. The framework that drives it lives in the **private** [`@caracal-lynx/sluice-enrich@^1.0.0`](https://github.com/caracal-lynx/sluice-enrich) package — the open-source core only ships the Zod schema, the public `EnrichPlugin` interface (`src/enrich/types.ts`), and the `registerEnrichPhase()` injection hook on `PipelineRunner`. With `sluice-enrich` not installed, an `enrich:` block is parsed and validated but the phase is skipped with a `WARN` log. The private package bundles three built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`); paid clients can also write their own `*.enrich.ts` plugins. See [docs/PHASE-04-enrich-phase.md](docs/PHASE-04-enrich-phase.md) for the full spec.
+
+> **Phase 12 — Prep Phase ✅ COMPLETE.** The `prep:` block, when present, runs after Extract (and after Merge for multi-source pipelines) and **before** Enrich and DQ. It mutates the staging table in place using a top-to-bottom list of rules — each rule applies a `cleanse:` pipe chain, an `expression:`, or a `lookup:` to one column. Useful for normalising values that the enrichment APIs need (e.g. padding legacy 8-char HC codes to 10 chars before calling the UK Trade Tariff API) or for swapping known-bad values for predetermined replacements before DQ sees them. See [docs/PHASE-12-prep-phase-spec.md](docs/PHASE-12-prep-phase-spec.md) for the full specification.
 
 ---
 
@@ -336,6 +345,55 @@ source:
     cursorField: nextCursor        # For cursor pagination: field in response body.
     cursorParam: cursor            # For cursor pagination: query param name.
 ```
+
+---
+
+### `prep` section
+
+Optional. Runs between Extract and Enrich; mutates the staging table in place
+so Enrich and DQ both see fixed data. Rules apply top-to-bottom — later rules
+see earlier rules' mutations.
+
+```yaml
+prep:
+  # ── Lookups (loaded once into a prep-only cache) ─────────
+  lookups:
+    - name: hcCodeFixups
+      source: { adapter: csv, file: ./lookups/hc-code-fixups.csv }
+      key: invalid_code
+      value: valid_code
+
+  # ── Rules (top-to-bottom; one op per rule) ───────────────
+  rules:
+    # Cleanse op — pipe chain, same syntax as transform.fields.cleanse
+    - field: HC_CODE
+      when: "row.HC_CODE.length === 8"   # Optional row predicate
+      cleanse: padEnd:10:0
+
+    # Expression — expr-eval, or 'js:' prefix for the vm sandbox
+    - field: STYLE_NO
+      expression: "row.STYLE_NO.trim().toUpperCase()"
+
+    # Lookup — swap known-bad values for predetermined replacements
+    - field: HC_CODE
+      lookup: hcCodeFixups
+      onMiss: keep                     # keep | null | error  (default: keep)
+
+  summaryFile: ./output/prep-summary.json   # OPTIONAL. Default:
+                                            # {outputDir}/{name}-prep-summary.json
+```
+
+**Multi-source scoping.** In multi-source pipelines, a rule's optional
+`sourceId:` scopes it to one pre-merge source. Rules without `sourceId` run
+once post-merge against `stg_merged`. Single-source pipelines must NOT set
+`sourceId` (rejected at config-parse time).
+
+**`onMiss` semantics.** `keep` leaves the value untouched on a lookup miss;
+`null` overwrites with SQL NULL; `error` throws `PrepError` and halts the run
+even when `run.onError === 'continue'`.
+
+**Skip flag.** `sluice run --no-prep` (also valid on `sluice validate`) skips
+the prep phase entirely regardless of config. `sluice profile` never runs prep.
 
 ---
 
@@ -508,6 +566,7 @@ Applied left-to-right in the pipe chain. Defined in `src/transform/cleanse.ts`.
 | `stripNonNumeric` | `"AB-12!"` | `"12"` |
 | `stripWhitespace` | `"h e l l o"` | `"hello"` |
 | `padStart:6:0` | `"42"` | `"000042"` |
+| `padEnd:10:0` | `"12345678"` | `"1234567800"` |
 | `truncate:20` | 21-char string | 20-char string |
 | `nullIfEmpty` | `""` | `null` |
 | `normaliseQuotes` | `"it\u2019s"` | `"it's"` |
@@ -1353,6 +1412,12 @@ The CLI entry point must call `loadEnv()` before invoking the loader. This keeps
 4.  Connect source adapter
 5.  Extract → 'stg_raw'            log: rows extracted
 5a. Disconnect source adapter      always in finally
+5a½. Phase 12 Prep (optional)      runs only when:
+                                     - `prep:` block configured
+                                     - --no-prep NOT set
+                                   Mutates 'stg_raw' in place; runs in dryRun
+                                   and validate-only too (DQ depends on it).
+                                   Writes {outputDir}/{name}-prep-summary.json.
 5b. Phase 4a Enrich (optional)     runs only when:
                                      - `enrich:` block configured
                                      - --no-enrich NOT set
@@ -1411,13 +1476,21 @@ For a pipeline with `sources` + `merge`, the CLI selects
     b. If source.rename is set    StagingStore.renameColumns(...)
     c. If mode: incremental AND source.id === merge.incrementalSource:
        apply TRY_CAST(... AS TIMESTAMP) >= since filter
+    c½. Phase 12 Prep (pre-merge, optional) — fires only when there is at
+        least one prep.rules[] entry with sourceId === current source id.
+        Runs AFTER rename and incremental filter (rules reference renamed
+        columns) and BEFORE per-source DQ.
     d. Filter dq.rules by sourceId; runDQ against 'stg_raw_{sourceId}'
        (writes per-source rejection CSV, stops on critical)
     e. Rewrite 'stg_raw_{sourceId}' to only the accepted rows
 5.  MergeEngine.run(store, sources, merge)
     → creates 'stg_merge_joined', 'stg_merged', 'stg_merge_conflicts'
     → writes conflictLog CSV if configured
-5a. Phase 4a Enrich (optional)     runs once against 'stg_merged' if
+5a. Phase 12 Prep (post-merge, optional) — fires only when there is at
+    least one prep.rules[] entry without a sourceId. Runs once against
+    'stg_merged'. After this firing, the per-firing summaries are
+    aggregated and the prep-summary.json file is written.
+5b. Phase 4a Enrich (optional)     runs once against 'stg_merged' if
                                    `enrich:` block is present and the four
                                    gating conditions hold (see single-source
                                    step 5b above). Single post-merge pass —
@@ -1573,6 +1646,7 @@ export class TransformError  extends PipelineError {}
 export class ExpressionError extends TransformError {}
 export class LoadError       extends PipelineError {}
 export class EnrichError     extends PipelineError {}   // Phase 4a — exit code 4
+export class PrepError       extends PipelineError {}   // Phase 12 — exit code 5
 ```
 
 All error subclasses inherit `this.name = this.constructor.name` from
@@ -1606,21 +1680,26 @@ Global options:
 `sluice run` options:
   --no-enrich           Skip the Phase 4a enrich phase even if `enrich:` is configured.
                         (validate / profile / check do not run enrich at all, by design.)
+  --no-prep             Skip the Phase 12 prep phase even if `prep:` is configured.
+
+`sluice validate` options:
+  --no-prep             Skip the Phase 12 prep phase even if `prep:` is configured.
+                        (DQ then sees raw source values; rejection counts may differ.)
 ```
 
 **Progress feedback:** `sluice run`, `sluice validate`, and `sluice profile`
 render a phase-by-phase progress bar to stdout via
 `src/utils/progress.ts → ProgressReporter`, with per-phase emoji icons
-(🔎 extract · 🛡️ DQ · 🔀 merge · 🌐 enrich · 🔧 transform · 📤 load), an ETA for
-determinate phases, and a coloured ✅/⚠️/❌ run-summary line. The bar
-degrades gracefully:
+(🔎 extract · 🧽 prep · 🛡️ DQ · 🔀 merge · 🌐 enrich · 🔧 transform · 📤 load),
+an ETA for determinate phases, and a coloured ✅/⚠️/❌ run-summary line.
+The bar degrades gracefully:
   - `--silent`                → no stdout output at all
   - `--log-level debug`       → bar disabled; per-row debug lines are used instead
   - `process.stdout.isTTY`    → false: plain-ASCII lines (one per phase),
                                 no emojis, no ANSI escapes — log-file friendly
   - `NO_COLOR` env var        → ANSI colour dropped (handled by `picocolors`)
 
-**Exit codes:** `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error · `4` enrich error (Phase 4a)
+**Exit codes:** `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error · `4` enrich error (Phase 4a) · `5` prep error (Phase 12)
 
 ---
 

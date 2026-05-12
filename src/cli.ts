@@ -17,6 +17,7 @@
  *   2  DQ critical violations
  *   3  config error
  *   4  enrich error (Phase 4)
+ *   5  prep error (Phase 12)
  */
 
 import { Command } from 'commander';
@@ -35,7 +36,13 @@ import {
 import { RuleRegistry, TransformRegistry, loadPlugins, loadNpmPlugins } from './plugins/index.js';
 import { MergeStrategyRegistry } from './merge/index.js';
 import { loadEnv } from './utils/env.js';
-import { ConfigError, EnrichError, PipelineDQError, PipelineError } from './utils/errors.js';
+import {
+  ConfigError,
+  EnrichError,
+  PipelineDQError,
+  PipelineError,
+  PrepError,
+} from './utils/errors.js';
 import { logger } from './utils/logger.js';
 import { ProgressReporter, type ProgressLogLevel } from './utils/progress.js';
 
@@ -83,6 +90,7 @@ export function exitCodeFor(err: unknown): number {
   if (err instanceof PipelineDQError) return 2;
   if (err instanceof ConfigError) return 3;
   if (err instanceof EnrichError) return 4;
+  if (err instanceof PrepError) return 5;
   if (err instanceof PipelineError) return 1;
   return 1;
 }
@@ -101,7 +109,11 @@ function applyGlobals(opts: GlobalOpts): RunOverrides {
   return overrides;
 }
 
-function phaseCountForRun(config: Pipeline, skipEnrich: boolean): number {
+function phaseCountForRun(
+  config: Pipeline,
+  skipEnrich: boolean,
+  skipPrep: boolean,
+): number {
   const willLoad = !(config.run.dryRun || config.run.mode === 'validate-only');
   // Enrich runs only when: enrich block configured, run isn't validate/dry-run,
   // --no-enrich wasn't passed, and the private package has registered a factory.
@@ -112,13 +124,28 @@ function phaseCountForRun(config: Pipeline, skipEnrich: boolean): number {
     _isEnrichPhaseRegistered();
   const enrichPhases = willEnrich ? 1 : 0;
 
+  // Prep runs whenever a prep: block is configured and --no-prep wasn't set.
+  // Unlike Enrich, prep DOES run in dryRun and validate-only modes because DQ
+  // depends on its output.
+  const willPrep = Boolean(config.prep) && !skipPrep;
+
   if (isMultiSource(config)) {
     const sourcesWithPreMergeRules = new Set(
       config.dq.rules.filter((r) => r.sourceId).map((r) => r.sourceId as string),
     );
-    // Extract per source + DQ per source with rules + Merge [+ Enrich] + post-merge DQ + Transform [+ Load]
+    let prepPhases = 0;
+    if (willPrep && config.prep) {
+      const sourcesWithPrePrepRules = new Set(
+        config.prep.rules.filter((r) => r.sourceId).map((r) => r.sourceId as string),
+      );
+      const hasPostMergeRules = config.prep.rules.some((r) => r.sourceId === undefined);
+      prepPhases = sourcesWithPrePrepRules.size + (hasPostMergeRules ? 1 : 0);
+    }
+    // Per-source extracts + per-source pre-merge prep firings + per-source DQ
+    // + merge + post-merge prep firing + enrich + post-merge DQ + transform + [load]
     return (
       config.sources.length +
+      prepPhases +
       sourcesWithPreMergeRules.size +
       1 + // merge
       enrichPhases +
@@ -127,18 +154,19 @@ function phaseCountForRun(config: Pipeline, skipEnrich: boolean): number {
       (willLoad ? 1 : 0)
     );
   }
-  // Single source: Extract [+ Enrich] + DQ + Transform [+ Load]
-  return 3 + enrichPhases + (willLoad ? 1 : 0);
+  // Single source: Extract [+ Prep] [+ Enrich] + DQ + Transform [+ Load]
+  return 3 + (willPrep ? 1 : 0) + enrichPhases + (willLoad ? 1 : 0);
 }
 
 function buildProgressReporter(
   opts: GlobalOpts,
   config: Pipeline,
   skipEnrich = false,
+  skipPrep = false,
 ): ProgressReporter {
   return new ProgressReporter({
     silent: opts.silent ?? false,
-    totalPhases: phaseCountForRun(config, skipEnrich),
+    totalPhases: phaseCountForRun(config, skipEnrich, skipPrep),
     logLevel: (opts.logLevel ?? 'info') as ProgressLogLevel,
   });
 }
@@ -154,6 +182,7 @@ export async function createRunnerForPipeline(
 
 interface RunCmdOpts {
   enrich?: boolean;
+  prep?: boolean;
 }
 
 async function cmdRun(
@@ -164,11 +193,17 @@ async function cmdRun(
   const opts = program.opts<GlobalOpts>();
   const overrides = applyGlobals(opts);
   if (cmdOpts.enrich === false) overrides.skipEnrich = true;
+  if (cmdOpts.prep === false) overrides.skipPrep = true;
   let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
     const config = await ConfigLoader.load(yaml);
-    progress = buildProgressReporter(opts, config, overrides.skipEnrich ?? false);
+    progress = buildProgressReporter(
+      opts,
+      config,
+      overrides.skipEnrich ?? false,
+      overrides.skipPrep ?? false,
+    );
     overrides.progress = progress;
     const result = await runner.run(yaml, overrides);
     logger.info(
@@ -192,15 +227,29 @@ async function cmdRun(
   }
 }
 
-async function cmdValidate(yaml: string, program: Command): Promise<never> {
+interface ValidateCmdOpts {
+  prep?: boolean;
+}
+
+async function cmdValidate(
+  yaml: string,
+  program: Command,
+  cmdOpts: ValidateCmdOpts = {},
+): Promise<never> {
   const opts = program.opts<GlobalOpts>();
   const overrides = applyGlobals(opts);
   overrides.mode = 'validate-only';
+  if (cmdOpts.prep === false) overrides.skipPrep = true;
   let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
     const config = await ConfigLoader.load(yaml);
-    progress = buildProgressReporter(opts, { ...config, run: { ...config.run, mode: 'validate-only' } });
+    progress = buildProgressReporter(
+      opts,
+      { ...config, run: { ...config.run, mode: 'validate-only' } },
+      false,
+      overrides.skipPrep ?? false,
+    );
     overrides.progress = progress;
     const result = await runner.run(yaml, overrides);
     logger.info(
@@ -388,14 +437,16 @@ export function buildProgram(): Command {
     .command('run <pipeline>')
     .description('Execute a full pipeline run')
     .option('--no-enrich', 'Skip the Phase 4a enrich phase even if enrich: is configured')
+    .option('--no-prep', 'Skip the Phase 12 prep phase even if prep: is configured')
     .action((yaml: string, cmdOpts: RunCmdOpts) => {
       void cmdRun(yaml, program, cmdOpts);
     });
   program
     .command('validate <pipeline>')
     .description('DQ + transform only; no load')
-    .action((yaml: string) => {
-      void cmdValidate(yaml, program);
+    .option('--no-prep', 'Skip the Phase 12 prep phase even if prep: is configured')
+    .action((yaml: string, cmdOpts: ValidateCmdOpts) => {
+      void cmdValidate(yaml, program, cmdOpts);
     });
   program
     .command('profile <pipeline>')

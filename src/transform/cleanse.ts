@@ -47,6 +47,15 @@ export function applyCleanse(value: unknown, spec: string): unknown {
       current = current.padStart(width, pad);
       continue;
     }
+    if (name === 'padEnd') {
+      const width = Number.parseInt(args[0] ?? '0', 10);
+      const pad = args[1] ?? ' ';
+      if (!Number.isFinite(width) || width < 0) {
+        throw new TransformError(`padEnd requires a non-negative width, got "${args[0]}"`);
+      }
+      current = current.padEnd(width, pad);
+      continue;
+    }
     if (name === 'truncate') {
       const len = Number.parseInt(args[0] ?? '0', 10);
       if (!Number.isFinite(len) || len < 0) {

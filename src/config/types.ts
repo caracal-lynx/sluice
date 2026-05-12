@@ -18,6 +18,8 @@ export type {
   EnrichConfig,
   EnrichLookupConfig,
   EnrichWriteColumns,
+  PrepConfig,
+  PrepRule,
 } from './schema.js';
 
 export { isSingleSource, isMultiSource } from './schema.js';

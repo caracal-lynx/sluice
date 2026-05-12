@@ -25,4 +25,5 @@ export {
   ExpressionError,
   LoadError,
   EnrichError,
+  PrepError,
 } from './errors.js';

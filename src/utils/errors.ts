@@ -26,3 +26,4 @@ export class TransformError extends PipelineError {}
 export class ExpressionError extends TransformError {}
 export class LoadError extends PipelineError {}
 export class EnrichError extends PipelineError {}
+export class PrepError extends PipelineError {}

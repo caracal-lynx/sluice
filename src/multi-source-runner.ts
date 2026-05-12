@@ -51,6 +51,9 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
   }
 
   override async profile(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    this.prepResolver = undefined;
+    this.prepEngine = undefined;
+    this.prepFirings = [];
     if (overrides.progress) this.progress = overrides.progress;
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
@@ -78,7 +81,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       this.sourceExtracts = [];
       const sortedSources = this.sortSourcesForMerge(config.sources);
       for (const sourceEntry of sortedSources) {
-        await this.extractOneSource(config, store, sourceEntry, false);
+        await this.extractOneSource(config, store, sourceEntry, overrides, false);
       }
 
       const mergeResult = await this.mergeEngine.run(
@@ -127,6 +130,9 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
   }
 
   override async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
+    this.prepResolver = undefined;
+    this.prepEngine = undefined;
+    this.prepFirings = [];
     if (overrides.progress) this.progress = overrides.progress;
     const runStartMs = Date.now();
 
@@ -174,6 +180,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           config,
           store,
           sourceEntry,
+          overrides,
           true,
           incrementalSourceId === sourceEntry.id ? incrementalSince : undefined,
         );
@@ -201,6 +208,15 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       }
 
       const postMergeConfig = this.buildPostMergeConfig(config);
+
+      // Phase 12 — post-merge prep firing: applies only rules with no
+      // sourceId. Runs once against stg_merged, between merge and enrich.
+      const hasPostMergePrepRules =
+        config.prep?.rules.some((r) => r.sourceId === undefined) ?? false;
+      if (hasPostMergePrepRules) {
+        await this.runPrep(postMergeConfig, store, overrides, 'stg_merged', undefined);
+      }
+      const prepSummary = await this.finalisePrepSummary(postMergeConfig);
 
       const enrichSummary = await this.runEnrich(
         postMergeConfig,
@@ -249,6 +265,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         transformResult,
         null,
         enrichSummary,
+        prepSummary,
       );
       const mergeSummary = {
         rowsMerged: mergeResult.rowsMerged,
@@ -309,6 +326,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           transformResult,
           loadResult,
           enrichSummary,
+          prepSummary,
         ),
         merge: mergeSummary,
         stateFilePath,
@@ -364,7 +382,8 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     config: Pipeline,
     store: StagingStore,
     sourceEntry: MultiSourceEntry,
-    runSourceDq = true,
+    overrides: RunOverrides,
+    runSourceDqAndPrep = true,
     incrementalSince?: string,
   ): Promise<void> {
     const tableName = `stg_raw_${sourceEntry.id}`;
@@ -408,7 +427,16 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       );
     }
 
-    if (!runSourceDq) return;
+    if (!runSourceDqAndPrep) return;
+
+    // Phase 12 — pre-merge prep firing: applies only rules scoped to this source.
+    // Runs AFTER rename and incremental filter (rules reference renamed columns)
+    // and BEFORE per-source DQ (so per-source DQ sees fixed data).
+    const hasPrepRulesForThisSource =
+      config.prep?.rules.some((r) => r.sourceId === sourceEntry.id) ?? false;
+    if (hasPrepRulesForThisSource) {
+      await this.runPrep(sourceScopedConfig, store, overrides, tableName, sourceEntry.id);
+    }
 
     const sourceRules = config.dq.rules.filter((r) => r.sourceId === sourceEntry.id);
     if (sourceRules.length === 0) return;
