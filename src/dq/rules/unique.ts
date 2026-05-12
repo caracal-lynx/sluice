@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Ltd.
+// Copyright (c) 2026 Caracal Lynx Limited
 
 /**
  * Unique is handled specially by DQEngine: the engine runs a GROUP BY

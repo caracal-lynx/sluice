@@ -1,9 +1,9 @@
 ---
 title: Commercial Support
-description: Sluice is built and maintained by Caracal Lynx Ltd. Paid services include AI Data Readiness Audits, ERP adapters, the Enrich service, the MCP server, and full migration delivery.
+description: Sluice is built and maintained by Caracal Lynx Limited. Paid services include AI Data Readiness Audits, ERP adapters, the Enrich service, the MCP server, and full migration delivery.
 ---
 
-Sluice is open source and free under the [Elastic Licence 2.0](https://github.com/caracal-lynx/sluice/blob/master/LICENSE). It is built and maintained by **Caracal Lynx Ltd.** (Scottish company SC826823) — an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools.
+Sluice is open source and free under the [Elastic Licence 2.0](https://github.com/caracal-lynx/sluice/blob/master/LICENSE). It is built and maintained by **Caracal Lynx Limited** (Scottish company SC826823) — an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools.
 
 The CLI engine, the built-in adapters (MSSQL, PostgreSQL, CSV, XLSX, REST, generic CSV target, generic PostgreSQL target), the DQ engine, the transform engine, the merge engine, and the plugin system are all in the open-source core. There are no feature gates and no licence checks — anything you find in this documentation works in the open core unless it's explicitly tagged as a paid add-on.
 

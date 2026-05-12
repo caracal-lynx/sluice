@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Ltd.
+// Copyright (c) 2026 Caracal Lynx Limited
 
 export * from './config/index.js';
 export * from './utils/index.js';

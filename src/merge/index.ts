@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Ltd.
+// Copyright (c) 2026 Caracal Lynx Limited
 
 import type { MergeStrategyPlugin } from './types.js';
 import { ConfigError } from '../utils/errors.js';

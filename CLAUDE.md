@@ -2,15 +2,15 @@
 # Project specification for Claude Code
 # Sluice: config-driven ETL toolkit for ERP data migrations
 # npm package: @caracal-lynx/sluice
-# Owner: Michael Scott, Caracal Lynx Ltd. (SC826823)
-# Last updated: 2026-04-20
+# Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+# Last updated: 2026-05-12
 
 ---
 
 ## Project overview
 
 **Sluice** is a config-driven ETL toolkit for ERP data migrations, developed and
-maintained by Caracal Lynx Ltd. The engine is written once; each client
+maintained by Caracal Lynx Limited. The engine is written once; each client
 engagement is delivered as a folder of YAML pipeline configs. There is no UI, no
 server, and no cloud dependency — just the `sluice` CLI and a set of TypeScript
 modules that can be imported by other tools (e.g. n8n custom nodes, GitHub Actions).

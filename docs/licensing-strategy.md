@@ -127,7 +127,7 @@ These steps are completed during Phase 5 (repo restructure and open-source launc
 3. Add licence header to all source files in `packages/core/src/`:
    ```typescript
    // SPDX-License-Identifier: Elastic-2.0
-   // Copyright (c) 2026 Caracal Lynx Ltd.
+   // Copyright (c) 2026 Caracal Lynx Limited
    ```
 4. Update `package.json`: `"license": "Elastic-2.0"`
 5. Minute the licensing decision as a Caracal Lynx board resolution (Phase 0)

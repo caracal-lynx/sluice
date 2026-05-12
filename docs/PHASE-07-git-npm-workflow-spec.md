@@ -2,7 +2,7 @@
 
 > ✅ **Status: COMPLETE — shipped 5 May 2026.** First Changesets-managed release `@caracal-lynx/sluice@0.1.3` published to npm with SLSA v1 provenance. Six PRs landed: [#29](https://github.com/caracal-lynx/sluice/pull/29) · [#31](https://github.com/caracal-lynx/sluice/pull/31) · [#33](https://github.com/caracal-lynx/sluice/pull/33) · [#34](https://github.com/caracal-lynx/sluice/pull/34) · [#35](https://github.com/caracal-lynx/sluice/pull/35) · [#36](https://github.com/caracal-lynx/sluice/pull/36). See the **Closing changelog** at the bottom of this document for deviations from the original spec and known follow-ups. The body of the spec below is retained verbatim as an implementation reference.
 >
-> **Owner:** Caracal Lynx Ltd. · Michael Scott
+> **Owner:** Caracal Lynx Limited · Michael Scott
 > **Estimated effort (planned vs. actual):** 1–2 weeks planned · ~2 hours actual (5 May 2026)
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §11](./SLUICE-IMPLEMENTATION-PLAN.md#11-phase-7--gitnpm-workflow)
 
@@ -416,5 +416,5 @@ PRs #29 → #30 → #31 were originally stacked: each based on the previous bran
 
 ---
 
-*Caracal Lynx Ltd. — SC826823 — Gretna, Scotland*
+*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
 *"Clean data flows through."*

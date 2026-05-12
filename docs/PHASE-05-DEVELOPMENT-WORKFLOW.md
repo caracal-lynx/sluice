@@ -2,7 +2,7 @@
 
 > 🔴 **Status: BLOCKED by Phase 4a + Phase 0.** This document specifies how Phase 5 will be executed once the private `caracal-lynx/sluice-enrich` repo exists (Phase 4a) and the Phase 0 governance audits are confirmed clean. Do **not** start Phase 5 work until both gates are green — the post-launch topology assumes `sluice-enrich` is already a separate private repo, and the public flip is irreversible without legal cover.
 >
-> **Owner:** Caracal Lynx Ltd. · Michael Scott
+> **Owner:** Caracal Lynx Limited · Michael Scott
 > **Estimated effort:** 2–3 weeks
 > **Master plan reference:** [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch)
 
@@ -254,13 +254,13 @@ Every TypeScript file in `src/` must carry the SPDX header:
 
 ```typescript
 // SPDX-License-Identifier: Elastic-2.0
-// Copyright (c) 2026 Caracal Lynx Ltd.
+// Copyright (c) 2026 Caracal Lynx Limited
 ```
 
 Application script (one-off, idempotent — safe to re-run):
 
 ```bash
-HEADER=$'// SPDX-License-Identifier: Elastic-2.0\n// Copyright (c) 2026 Caracal Lynx Ltd.\n\n'
+HEADER=$'// SPDX-License-Identifier: Elastic-2.0\n// Copyright (c) 2026 Caracal Lynx Limited\n\n'
 find src -name "*.ts" -type f | while read -r f; do
   if ! grep -q "SPDX-License-Identifier: Elastic-2.0" "$f"; then
     printf '%s' "$HEADER" | cat - "$f" > "$f.tmp" && mv "$f.tmp" "$f"
@@ -749,4 +749,4 @@ flowchart TD
 
 ---
 
-*Document maintained by Caracal Lynx Ltd. Update this file when Phase 5 sub-tasks complete, when the post-launch topology changes, or when client setup steps shift. The matching master-plan section is [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch).*
+*Document maintained by Caracal Lynx Limited. Update this file when Phase 5 sub-tasks complete, when the post-launch topology changes, or when client setup steps shift. The matching master-plan section is [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch).*

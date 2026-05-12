@@ -2,7 +2,7 @@
 
 > ✅ **STATUS: EXECUTED** — Phase 2 (TypeScript 5.7 → 6.0) shipped on 4 May 2026 in [PR #13](https://github.com/BCGubbins/sluice/pull/13). Retained as the implementation reference; the TypeScript 6 portion of this document has been delivered. For TypeScript 7 (Phase 11), see [PHASE-11-typescript-v7-spec.md](PHASE-11-typescript-v7-spec.md) and the tsgo sections below — Phase 11a is now unblocked and can start immediately.
 
-**Prepared for:** Caracal Lynx Ltd. / Michael Scott  
+**Prepared for:** Caracal Lynx Limited / Michael Scott  
 **Date:** 2026-04-22  
 **Prerequisite:** Node.js 24 upgrade complete — Phase 1 shipped (see `docs/archive/node24-upgrade-plan.md`)  
 **Audience:** Claude Code — use this document to plan and implement the upgrade  
