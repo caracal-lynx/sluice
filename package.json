@@ -3,7 +3,7 @@
   "version": "0.2.1",
   "description": "Config-driven ETL toolkit for ERP data migrations",
   "license": "Elastic-2.0",
-  "author": "Caracal Lynx Limited <michael.scott@caracallynx.com> (https://caracallynx.com)",
+  "author": "Caracal Lynx Limited <sluice@caracallynx.com> (https://caracallynx.com)",
   "homepage": "https://github.com/caracal-lynx/sluice#readme",
   "repository": {
     "type": "git",
