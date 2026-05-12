@@ -10,7 +10,7 @@ body:
 
         - Check whether the feature already exists as a Tier 2 / Tier 3 plugin in the [PLUGINS.md](../../blob/master/PLUGINS.md) docs
         - Check existing issues for similar requests
-        - For commercial features (paid enrich providers, ERP adapters, MCP server, etc.) email **michael.scott@caracallynx.com** rather than filing here
+        - For commercial features (paid enrich providers, ERP adapters, MCP server, etc.) email **sluice@caracallynx.com** rather than filing here
 
   - type: textarea
     id: use-case

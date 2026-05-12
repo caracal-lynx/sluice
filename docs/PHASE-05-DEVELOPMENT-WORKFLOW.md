@@ -194,7 +194,7 @@ Author and commit these at the repo root before flipping public.
 | `SECURITY.md` | New — author per template below | Reporting channel: `security@caracallynx.com`; SLA: 48-hour acknowledgement, 90-day disclosure |
 | `.github/ISSUE_TEMPLATE/bug_report.yml` | GitHub form schema | Captures: Sluice version, Node version, OS, pipeline YAML excerpt, expected vs actual |
 | `.github/ISSUE_TEMPLATE/feature_request.yml` | GitHub form schema | Captures: use case, proposed YAML / API shape, willingness to PR |
-| `.github/ISSUE_TEMPLATE/config.yml` | Routing config | Disables blank issues; routes commercial enquiries to `michael.scott@caracallynx.com` |
+| `.github/ISSUE_TEMPLATE/config.yml` | Routing config | Disables blank issues; routes commercial enquiries to `sluice@caracallynx.com` |
 | `.github/PULL_REQUEST_TEMPLATE.md` | New — short checklist | Covers: tests added, CHANGELOG updated, breaks public API? |
 
 `CONTRIBUTING.md` skeleton:
@@ -224,7 +224,7 @@ reproduces the issue.
 ## Commercial questions
 
 For paid services (enrichment, ERP adapters, domain rule packages, MCP server,
-or migration delivery) email michael.scott@caracallynx.com — these are not
+or migration delivery) email sluice@caracallynx.com — these are not
 handled via GitHub issues.
 ```
 

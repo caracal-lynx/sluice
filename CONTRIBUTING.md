@@ -63,7 +63,7 @@ willing to send a PR.
 
 For paid services — enrichment service, ERP adapters (IFS, Business Central,
 BlueCherry), domain rule packages, the Sluice MCP server, or full migration
-delivery — email **michael.scott@caracallynx.com**. These are not handled via
+delivery — email **sluice@caracallynx.com**. These are not handled via
 GitHub issues.
 
 ## Licence

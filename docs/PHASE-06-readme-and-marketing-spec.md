@@ -174,7 +174,7 @@ Insert as a top-level `##` section at the end of the README, between "📄 Pipel
 **Contact block (under the table):**
 
 ```
-📧 michael.scott@caracallynx.com
+📧 sluice@caracallynx.com
 🌐 caracallynx.com
 ```
 

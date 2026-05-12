@@ -379,7 +379,7 @@ Each use case: 2–3 sentences describing the problem, and which Sluice features
   - **Sluice MCP Server** — AI-assisted migration using Claude: agentic pipeline authoring, live schema inspection, automatic DQ iteration (premium paid service)
   - **Migration Delivery** — full end-to-end data migration delivered by Caracal Lynx, including ERP implementations
   - **Custom Plugin Development** — bespoke rules and adapters for your source system
-- Contact: michael.scott@caracallynx.com
+- Contact: sluice@caracallynx.com
 - No hard sell — let the quality of the docs do the work
 
 ---

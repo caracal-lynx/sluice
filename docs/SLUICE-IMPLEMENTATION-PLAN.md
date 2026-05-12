@@ -689,7 +689,7 @@ Caracal Lynx offers additional paid services built on top of it:
 |                         | live schema inspection, automatic DQ iteration |
 | **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
 
-📧 michael.scott@caracallynx.com
+📧 sluice@caracallynx.com
 🌐 caracallynx.com
 ```
 
