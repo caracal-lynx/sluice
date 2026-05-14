@@ -1914,7 +1914,7 @@ jobs:
   column names against actual BlueCherry import documentation first.
 - Do not use `dayjs` plugins without importing them explicitly at the call site.
 - **Do not bump dependencies by hand.** Renovate owns dependency PRs across
-  all 7 caracal-lynx/sluice* repos. Do not run `npm update`,
+  all 8 caracal-lynx/sluice* repos. Do not run `npm update`,
   `npm install <pkg>@latest`, `npm-check-updates`, or hand-edit version
   specifiers in `package.json` / `package-lock.json`. Wait for the Renovate
   PR — non-major dev deps and GH Actions auto-merge after CI; majors land as
