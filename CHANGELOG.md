@@ -1,5 +1,23 @@
 # @caracal-lynx/sluice
 
+## 0.5.0
+
+### Minor Changes
+
+- [#114](https://github.com/caracal-lynx/sluice/pull/114) [`1e4d3ce`](https://github.com/caracal-lynx/sluice/commit/1e4d3cef1cad029abee4a6a41bcc40ddc384b24f) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Add `stagingDb?: string` to `RunOverrides`. Library callers (notably `@caracal-lynx/sluice-mcp`'s `dry_run_pipeline` tool) can now force a specific DuckDB staging path — typically `':memory:'` — for a single invocation without rewriting the YAML on disk. CLI behaviour is unchanged: when the override is omitted, `run.stagingDb` continues to come from the loaded config.
+
+### Patch Changes
+
+- [#111](https://github.com/caracal-lynx/sluice/pull/111) [`cb6273f`](https://github.com/caracal-lynx/sluice/commit/cb6273fd258cf3403cbbe9a9e505c9e4717620d6) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - **Security**: replace `expr-eval@2.0.2` with `expr-eval-fork@^3.0.3` to remediate two HIGH severity vulnerabilities ([GHSA-rpw9-cf2g-5q7g](https://github.com/advisories/GHSA-rpw9-cf2g-5q7g) prototype pollution and the unrestricted function-evaluation advisory). The fork is a community-maintained drop-in replacement — same Parser API, same expression syntax — that ships the patches the original maintainer never released to npm.
+
+  No user-visible behaviour change: pipeline YAML files using `type: expression` continue to work without modification.
+
+- [#113](https://github.com/caracal-lynx/sluice/pull/113) [`c1bc6e4`](https://github.com/caracal-lynx/sluice/commit/c1bc6e4bdf78d97cd48c69f0eaabe34b50841027) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - **Security**: replace `xlsx@0.18.5` (SheetJS) with `exceljs@^4.4.0` to remediate two HIGH severity vulnerabilities — [GHSA-4r6h-8v6p-xvw6](https://github.com/advisories/GHSA-4r6h-8v6p-xvw6) (prototype pollution) and [GHSA-5pgg-2g8v-p4x9](https://github.com/advisories/GHSA-5pgg-2g8v-p4x9) (ReDoS). Both advisories have `fix: null` on npm because SheetJS publishes patches only via their CDN tarball, not to the public registry.
+
+  The `xlsx` source adapter is rewritten on top of ExcelJS. The pipeline YAML `adapter: xlsx` identifier and all its options (`file`, `sheet`) remain unchanged — pipelines using the adapter continue to work without modification.
+
+  Together with the earlier `expr-eval-fork` swap this run, `npm audit` now reports **zero vulnerabilities** on the public sluice repo.
+
 ## 0.4.0
 
 ### Minor Changes
