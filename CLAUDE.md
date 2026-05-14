@@ -226,7 +226,7 @@ sluice/
 | SQL Server | `mssql` | Trusted + SQL auth both supported |
 | PostgreSQL | `pg` + `@types/pg` | |
 | CSV | `csv-parse` + `csv-stringify` | Streaming |
-| Excel | `xlsx` (SheetJS) | Read-only |
+| Excel | `exceljs` | Read-only. Replaced `xlsx`/SheetJS in 2026-05 to remediate two unpatched HIGH-severity advisories (ReDoS + prototype pollution); SheetJS's maintainer publishes patches only via their CDN tarball, not to npm. |
 | HTTP | `axios` + `axios-retry` | 3 retries, exponential backoff |
 | Dates | `dayjs` | All date parsing and formatting |
 | Staging | `@duckdb/node-api` | Embedded; no server. Replaces deprecated `duckdb` package — ABI-stable (no `npm rebuild` after Node ABI bumps). |
@@ -1358,7 +1358,7 @@ Built-in strategies: `coalesce`, `priority-override`, `union`, `intersect`
 
 ### xlsx source
 
-- SheetJS: convert to CSV via `xlsx.utils.sheet_to_csv`, then pipe through csv-parse.
+- ExcelJS: load the workbook, pick the named/indexed sheet (or first), iterate rows directly into `Record<string, string>` keyed by the header row. All columns staged as VARCHAR.
 - Log a warning if workbook has more than one sheet and `source.sheet` is unset.
 
 ### rest source
