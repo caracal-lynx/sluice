@@ -108,7 +108,7 @@ flowchart LR
 | 🗄️ SQL Server | `mssql` | Because the legacy DB is always SQL Server |
 | 📊 Staging | `@duckdb/node-api` (embedded) | Promise-native, ABI-stable — no server, no `npm rebuild` after Node version bumps |
 | 📁 CSV | `csv-parse` + `csv-stringify` | Streaming, handles BOM, the works |
-| 📈 Excel | `xlsx` (SheetJS) | Read-only — we're migrating away from it, after all |
+| 📈 Excel | `exceljs` | Read-only — we're migrating away from it, after all |
 | 🌐 HTTP | `axios` + `axios-retry` | 3 retries, exponential backoff, rate limit respect |
 | 📅 Dates | `dayjs` | Because time zones are already somebody else's problem |
 | 🖥️ CLI | `commander` v12 | Clean commands, sane flags |
