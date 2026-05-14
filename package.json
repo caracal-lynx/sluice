@@ -68,13 +68,13 @@
     "csv-stringify": "^6.7.0",
     "dayjs": "^1.11.20",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "expr-eval-fork": "^3.0.3",
     "js-yaml": "^4.1.1",
     "mssql": "^12.5.2",
     "pg": "^8.20.0",
     "picocolors": "^1.1.1",
     "pino": "^10.3.1",
-    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
