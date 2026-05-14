@@ -8,6 +8,11 @@
   "platformAutomerge": false,
   "prConcurrentLimit": 10,
   "prHourlyLimit": 3,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "vulnerability"],
+    "schedule": ["at any time"]
+  },
   "packageRules": [
     {
       "matchPackageNames": ["zod"],
