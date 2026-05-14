@@ -82,7 +82,7 @@
     "@changesets/cli": "^2.31.0",
     "@types/cli-progress": "^3.11.6",
     "@types/js-yaml": "^4.0.9",
-    "@types/mssql": "^9.1.5",
+    "@types/mssql": "^9.1.11",
     "@types/node": "^24.12.2",
     "@types/pg": "^8.11.10",
     "@typescript/native-preview": "^7.0.0-dev.20260504.1",
