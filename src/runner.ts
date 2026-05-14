@@ -91,6 +91,13 @@ export interface RunOverrides {
   /** Set by `sluice run --no-prep` / `sluice validate --no-prep` to skip the Phase 12 prep phase. */
   skipPrep?: boolean;
   /**
+   * Override `run.stagingDb`. Pass `':memory:'` to force in-memory DuckDB
+   * for a single invocation without rewriting the YAML on disk. Used by
+   * the MCP server's `dry_run_pipeline` tool; CLI callers can leave it
+   * undefined and rely on `run.stagingDb` from the config.
+   */
+  stagingDb?: string;
+  /**
    * Optional progress reporter. CLI callers pass a live reporter; library
    * callers (and tests) can omit it to get a silent no-op.
    */
@@ -688,6 +695,7 @@ export class PipelineRunner {
     if (overrides.outputDir !== undefined) run.outputDir = overrides.outputDir;
     if (overrides.dryRun !== undefined) run.dryRun = overrides.dryRun;
     if (overrides.mode !== undefined) run.mode = overrides.mode;
+    if (overrides.stagingDb !== undefined) run.stagingDb = overrides.stagingDb;
     return { ...config, run };
   }
 

@@ -9,7 +9,7 @@ import { TargetAdapterRegistry } from '../../src/adapters/target/index.js';
 import { ConfigLoader } from '../../src/config/loader.js';
 import type { Pipeline } from '../../src/config/types.js';
 import type { DQSummary } from '../../src/dq/index.js';
-import { PipelineRunner } from '../../src/runner.js';
+import { PipelineRunner, type RunOverrides } from '../../src/runner.js';
 import { StagingStore, type ColumnMeta } from '../../src/staging/index.js';
 import type { TransformResult } from '../../src/transform/index.js';
 import { ConfigError, PipelineDQError } from '../../src/utils/errors.js';
@@ -426,5 +426,22 @@ describe('PipelineRunner.run() orchestration', () => {
       expect.any(String),
       ['./extra-plugins'],
     );
+  });
+
+  it('stagingDb override wins over the YAML run.stagingDb value', () => {
+    const runner = new PipelineRunner();
+    const yamlConfig = makePipeline(workDir, {
+      run: { ...makePipeline(workDir).run, stagingDb: '/disk/from-yaml.duckdb' },
+    });
+
+    const applyOverrides = (runner as unknown as {
+      applyOverrides: (config: Pipeline, overrides: RunOverrides) => Pipeline;
+    }).applyOverrides.bind(runner);
+
+    const result = applyOverrides(yamlConfig, { stagingDb: ':memory:' });
+    expect(result.run.stagingDb).toBe(':memory:');
+
+    const noOverride = applyOverrides(yamlConfig, {});
+    expect(noOverride.run.stagingDb).toBe('/disk/from-yaml.duckdb');
   });
 });
