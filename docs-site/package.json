@@ -13,7 +13,7 @@
     "gen": "tsx scripts/sync-changelog.ts && tsx scripts/generate-schema-reference.ts"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.38.4",
+    "@astrojs/starlight": "^0.39.2",
     "astro": "^6.1.9",
     "sharp": "^0.34.5"
   },
