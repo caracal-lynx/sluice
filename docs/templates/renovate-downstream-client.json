@@ -8,6 +8,13 @@
   "platformAutomerge": false,
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
+  "hostRules": [
+    {
+      "matchHost": "registry.npmjs.org",
+      "hostType": "npm",
+      "token": "{{ secrets.NPM_TOKEN }}"
+    }
+  ],
   "packageRules": [
     {
       "matchPackagePatterns": ["^@caracal-lynx/"],
