@@ -78,7 +78,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
     "@types/cli-progress": "^3.11.6",
     "@types/js-yaml": "^4.0.9",
