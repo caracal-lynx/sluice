@@ -17,13 +17,6 @@
     },
     {
       "matchUpdateTypes": ["patch", "minor"],
-      "matchDepTypes": ["devDependencies"],
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
       "automergeType": "pr"
     }

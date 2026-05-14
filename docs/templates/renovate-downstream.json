@@ -11,14 +11,7 @@
   "packageRules": [
     {
       "matchPackagePatterns": ["^@caracal-lynx/"],
-      "groupName": "@caracal-lynx packages",
-      "automerge": false
-    },
-    {
-      "matchUpdateTypes": ["patch"],
-      "matchPackagePatterns": ["^@caracal-lynx/"],
-      "automerge": true,
-      "automergeType": "pr"
+      "groupName": "@caracal-lynx packages"
     },
     {
       "matchUpdateTypes": ["major"],
@@ -27,13 +20,6 @@
       "schedule": ["before 8am on monday"]
     },
     {
-      "matchUpdateTypes": ["patch", "minor"],
-      "matchDepTypes": ["devDependencies"],
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
       "automergeType": "pr"
