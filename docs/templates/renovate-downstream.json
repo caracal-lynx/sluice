@@ -1,15 +1,18 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":semanticCommits"],
-  "schedule": ["before 9am on monday"],
+  "schedule": ["before 8am every weekday"],
   "timezone": "Europe/London",
   "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "platformAutomerge": false,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 3,
   "packageRules": [
     {
       "matchPackagePatterns": ["^@caracal-lynx/"],
       "groupName": "@caracal-lynx packages",
-      "automerge": false,
-      "rangeStrategy": "bump"
+      "automerge": false
     },
     {
       "matchUpdateTypes": ["patch"],
@@ -20,7 +23,20 @@
     {
       "matchUpdateTypes": ["major"],
       "automerge": false,
-      "addLabels": ["major-bump"]
+      "addLabels": ["major-bump"],
+      "schedule": ["before 8am on monday"]
+    },
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr"
     }
   ]
 }
