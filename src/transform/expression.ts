@@ -13,7 +13,7 @@
 
 import { runInNewContext } from 'node:vm';
 
-import { Parser, type Value } from 'expr-eval';
+import { Parser, type Value } from 'expr-eval-fork';
 
 import { ExpressionError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
