@@ -10,6 +10,11 @@
   "prHourlyLimit": 3,
   "packageRules": [
     {
+      "matchPackageNames": ["zod"],
+      "allowedVersions": "<4",
+      "description": "Pinned to v3 until the engine's src/config/schema.ts is migrated to the v4 API"
+    },
+    {
       "matchPackagePatterns": ["^@caracal-lynx/"],
       "groupName": "@caracal-lynx packages"
     },
