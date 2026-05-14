@@ -236,7 +236,7 @@ sluice/
 | Env vars | `dotenv` | Loaded once at CLI entry |
 | Linting | `eslint` + `@typescript-eslint` | |
 | Formatting | `prettier` | 2-space, single quotes, trailing commas |
-| Expressions | `expr-eval` | Safe expression parser; no eval() |
+| Expressions | `expr-eval-fork` | Safe expression parser; no eval(). Community fork of unmaintained `expr-eval` — same API, ships the prototype-pollution + function-injection security patches the original never released. |
 
 ---
 
@@ -1902,7 +1902,7 @@ jobs:
 - Do not use `jest` — use `vitest`.
 - Do not use `console.log` in `src/` — use the pino logger.
 - Do not write manual TypeScript interfaces for config types — use `z.infer<>`.
-- Do not use `eval()` or `new Function()` — use `expr-eval` or `vm.runInNewContext`.
+- Do not use `eval()` or `new Function()` — use `expr-eval-fork` or `vm.runInNewContext`.
 - Do not hard-code connection strings, credentials, or client-specific values.
 - Do not import from `@duckdb/node-api` directly outside `src/staging/store.ts`.
 - Do not create `StagingStore` instances outside `PipelineRunner`.
