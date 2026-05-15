@@ -15,11 +15,12 @@ export { DQEngine, writeRejectionCsv, writeSummaryJson, BUILT_IN_RULES } from '.
 export type { Rule, DQSummary, ViolationCounts } from './dq/index.js';
 export {
   applyCleanse,
+  BUILTIN_CLEANSE_OPS,
   TransformEngine,
   ExpressionEvaluator,
   LookupResolver,
 } from './transform/index.js';
-export type { TransformResult } from './transform/index.js';
+export type { BuiltinCleanseOpInfo, TransformResult } from './transform/index.js';
 
 export { PrepEngine, PrepLookupResolver } from './prep/index.js';
 export type { PrepRuleResult, PrepFiringResult, PrepSummary } from './prep/index.js';

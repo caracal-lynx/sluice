@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyCleanse } from '../../../src/transform/cleanse.js';
+import { applyCleanse, BUILTIN_CLEANSE_OPS } from '../../../src/transform/cleanse.js';
 import { TransformError } from '../../../src/utils/errors.js';
 
 describe('applyCleanse', () => {
@@ -85,5 +85,56 @@ describe('applyCleanse', () => {
 
   it('throws TransformError for malformed padEnd arg', () => {
     expect(() => applyCleanse('x', 'padEnd:abc:0')).toThrow(TransformError);
+  });
+});
+
+describe('BUILTIN_CLEANSE_OPS', () => {
+  it('lists every op accepted by applyCleanse exactly once', () => {
+    const ids = BUILTIN_CLEANSE_OPS.map((op) => op.id);
+    // Trip-wire: changing `applyCleanse`'s OPS table without updating this
+    // metadata array will fail this test. Keep the two in sync.
+    expect(ids).toEqual([
+      'trim',
+      'uppercase',
+      'lowercase',
+      'titleCase',
+      'stripNonAlpha',
+      'stripNonNumeric',
+      'stripWhitespace',
+      'nullIfEmpty',
+      'normaliseQuotes',
+      'normaliseUnicode',
+      'padStart',
+      'padEnd',
+      'truncate',
+    ]);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('every entry has a non-empty description', () => {
+    for (const op of BUILTIN_CLEANSE_OPS) {
+      expect(typeof op.description).toBe('string');
+      expect(op.description.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('parameterised ops carry an argSpec', () => {
+    const byId = new Map(BUILTIN_CLEANSE_OPS.map((op) => [op.id, op]));
+    expect(byId.get('padStart')?.argSpec).toContain('padStart:<width>');
+    expect(byId.get('padEnd')?.argSpec).toContain('padEnd:<width>');
+    expect(byId.get('truncate')?.argSpec).toContain('truncate:<length>');
+    expect(byId.get('trim')?.argSpec).toBeUndefined();
+  });
+
+  it('is immutable', () => {
+    expect(Object.isFrozen(BUILTIN_CLEANSE_OPS)).toBe(true);
+  });
+
+  it('every advertised op is actually applied by applyCleanse', () => {
+    // For the pure ops, the value `'X'` must not throw and must return a string.
+    const pureOps = BUILTIN_CLEANSE_OPS.filter((op) => op.argSpec === undefined);
+    for (const op of pureOps) {
+      expect(() => applyCleanse('X', op.id)).not.toThrow();
+    }
   });
 });
