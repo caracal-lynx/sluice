@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.6.0
+
+### Minor Changes
+
+- [#118](https://github.com/caracal-lynx/sluice/pull/118) [`ccf1c3d`](https://github.com/caracal-lynx/sluice/commit/ccf1c3d30f393a3af4773af2b7b6ce0bcf304f90) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Export `BUILTIN_CLEANSE_OPS` from the package root — an immutable, ordered array of `{ id, description, argSpec? }` records describing every built-in cleanse op accepted by `applyCleanse` (`trim`, `uppercase`, `lowercase`, `titleCase`, `stripNonAlpha`, `stripNonNumeric`, `stripWhitespace`, `nullIfEmpty`, `normaliseQuotes`, `normaliseUnicode`, `padStart`, `padEnd`, `truncate`). Lets external tooling — `@caracal-lynx/sluice-mcp`'s `list_transform_ops` tool, doc generators, IDE autocomplete helpers — enumerate the supported ops without duplicating the list. The corresponding `BuiltinCleanseOpInfo` type is also exported.
+
 ## 0.5.0
 
 ### Minor Changes
