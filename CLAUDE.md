@@ -9,7 +9,7 @@
 
 ## Project overview
 
-**Sluice** is a config-driven ETL toolkit for ERP data migrations, developed and
+**Sluice** is a config-driven ETL toolkit for data migrations, developed and
 maintained by Caracal Lynx Limited. The engine is written once; each client
 engagement is delivered as a folder of YAML pipeline configs. There is no UI, no
 server, and no cloud dependency — just the `sluice` CLI and a set of TypeScript
