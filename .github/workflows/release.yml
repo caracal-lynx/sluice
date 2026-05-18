@@ -18,8 +18,22 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      - name: Check App token prerequisites
+        id: preflight
+        run: |
+          if [[ -n "$APP_ID" && -n "$PRIVATE_KEY" ]]; then
+            echo "use_app_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "use_app_token=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::RELEASER_APP_ID or RELEASER_PRIVATE_KEY is not configured — falling back to GITHUB_TOKEN. Release PRs may require manual approval."
+          fi
+        env:
+          APP_ID: ${{ vars.RELEASER_APP_ID }}
+          PRIVATE_KEY: ${{ secrets.RELEASER_PRIVATE_KEY }}
+
       - name: Mint caracal-lynx-releaser App token
         id: app-token
+        if: steps.preflight.outputs.use_app_token == 'true'
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.RELEASER_APP_ID }}
@@ -28,7 +42,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
+          token: ${{ steps.app-token.outputs.token || github.token }}
 
       - uses: actions/setup-node@v6
         with:
@@ -48,7 +62,7 @@ jobs:
           commit: '[master] - chore(release): version packages'
           title: 'chore(release): version packages'
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
           NPM_CONFIG_PROVENANCE: true
           # Authentication via npm Trusted Publishing (OIDC).
           # NO NPM_TOKEN — Classic Automation tokens were retired in Nov 2025;
