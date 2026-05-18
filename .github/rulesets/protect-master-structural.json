@@ -31,6 +31,13 @@
         ],
         "strict_required_status_checks_policy": false
       }
+    },
+    {
+      "type": "copilot_code_review",
+      "parameters": {
+        "review_draft_pull_requests": false,
+        "review_on_push": false
+      }
     }
   ]
 }
