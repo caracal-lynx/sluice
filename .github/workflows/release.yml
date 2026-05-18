@@ -25,7 +25,7 @@ jobs:
             echo "use_app_token=true" >> "$GITHUB_OUTPUT"
           else
             echo "use_app_token=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::RELEASER_APP_ID or RELEASER_PRIVATE_KEY is not configured — falling back to GITHUB_TOKEN. Release PRs may require manual approval."
+            echo "::warning::RELEASER_APP_ID or RELEASER_PRIVATE_KEY are not configured — falling back to GITHUB_TOKEN. Release PRs may require manual approval."
           fi
         env:
           APP_ID: ${{ vars.RELEASER_APP_ID }}
