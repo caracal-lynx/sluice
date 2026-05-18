@@ -85,11 +85,11 @@ Emojis at the start of the summary are fine but optional. They function as a qui
 - **One PR per branch.** Don't pile multiple unrelated changes onto one branch.
 - **Title** = the short summary, no `[<branch-name>]` prefix (the PR UI shows the branch name separately).
 - **Description** = what changed and why; a short test plan; closes-issue references where applicable.
-- **CI must pass before merge.** Required checks: `lint`, `typecheck`, `test`. (Phase 7 adds the publish workflow on top — that runs *after* merge, not as a gate.)
-- **Approval:** at least one reviewer must approve; for solo work that's often Claude, which is acceptable as a gate against accidental scope.
-- **Squash-merge by default.** Keeps `master` history linear. The branch's per-commit history is preserved on the branch itself in the PR record.
+- **Squash-merge by default.** Keeps `master` history linear (enforced by Ruleset A — see [`pr-workflow.md`](./pr-workflow.md)). The branch's per-commit history is preserved on the branch itself in the PR record.
 
 Don't squash-merge if a feature branch contains a deliberate sequence of well-crafted commits (e.g. an upgrade with checkpoints) that you want preserved on `master`. In that case, rebase-merge.
+
+The mechanics of what's required to merge — CI status checks, approval requirements, admin/bot bypass paths — are documented in [`pr-workflow.md`](./pr-workflow.md). That doc tracks the live branch-ruleset state; this section intentionally avoids restating it to prevent drift.
 
 ---
 
