@@ -1,6 +1,7 @@
 @c:/repos/standards/company.md
-@c:/repos/standards/programmes/data-gubbins.md
-@c:/repos/standards/git/workflow.md
+
+@c:/repos/standards/coding/typescript-standards.md
+
 
 # Sluice — CLAUDE.md
 
