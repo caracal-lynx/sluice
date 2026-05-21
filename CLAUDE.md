@@ -1,6 +1,6 @@
-@c:\repos\standards\company.md
-@c:\repos\standards\programmes\data-gubbins.md
-@c:\repos\standards\git\git.md
+@c:/repos/standards/company.md
+@c:/repos/standards/programmes/data-gubbins.md
+@c:/repos/standards/git/workflow.md
 
 # Sluice — CLAUDE.md
 
