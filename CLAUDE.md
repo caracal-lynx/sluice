@@ -1,14 +1,11 @@
-# Sluice — CLAUDE.md
-
-Config-driven ETL toolkit for data migrations. npm: `@caracal-lynx/sluice`.
-Owner: Caracal Lynx Limited (SC826823). Last updated: 2026-05-17.
-
-## Inherited context
 @c:\repos\standards\company.md
 @c:\repos\standards\programmes\data-gubbins.md
 @c:\repos\standards\git\git.md
 
----
+# Sluice — CLAUDE.md
+
+Config-driven ETL toolkit for data migrations. npm: `@caracal-lynx/sluice`.
+Owner: Caracal Lynx Limited (SC826823). Last updated: 2026-05-17.
 
 ## Sluice in one paragraph
 
