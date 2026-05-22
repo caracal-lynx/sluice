@@ -42,7 +42,7 @@ jobs:
       - name: Set up Node.js 24
         uses: actions/setup-node@v6
         with:
-          node-version: '24.15.0'
+          node-version: '24.16.0'
           cache: npm
           # Cache against both lockfiles — the parent install is needed so
           # docs-site/scripts/generate-schema-reference.ts can resolve `zod`
