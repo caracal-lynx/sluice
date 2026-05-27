@@ -43,6 +43,9 @@
   "engines": {
     "node": ">=24.16.0"
   },
+  "overrides": {
+    "tmp": ">=0.2.6"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/cli.ts",

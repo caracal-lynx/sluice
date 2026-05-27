@@ -70,6 +70,30 @@ not listed here follows the programme stack.
 - **BlueCherry** — CSV import (`src/adapters/target/bluecherry.ts`)
 - **Generic** — `csv`, `pg`
 
+## CI / Release
+
+Sluice consumes the org-wide reusable workflows from
+[`caracal-lynx/.github`](https://github.com/caracal-lynx/.github). The local
+`.github/workflows/` files are thin consumer wrappers — don't add custom CI
+steps here unless they're genuinely Sluice-specific (like `ci-tsgo.yml` or
+`docs.yml`).
+
+- `.github/workflows/ci.yml` — calls `caracal-lynx/.github/.github/workflows/node-ci.yml@main` (lint / typecheck / test / build / audit)
+- `.github/workflows/release.yml` — calls `caracal-lynx/.github/.github/workflows/node-release.yml@main` (Changesets PR-flow + npm Trusted Publishing)
+- `.github/workflows/ci-tsgo.yml` — **Sluice-specific.** Non-blocking parallel tsgo typecheck, ahead of the planned TypeScript 7 upgrade. Drop when TS 7 stable.
+- `.github/workflows/docs.yml` — **Sluice-specific.** Astro docs-site build + GitHub Pages deploy. Stays local.
+
+Want to change CI behaviour across the fleet (different Node version, add a
+job, etc.)? Open a PR on `caracal-lynx/.github`, not on Sluice. Sluice's
+consumer just passes inputs.
+
+### Transitive vuln override
+
+`package.json` carries an `"overrides": { "tmp": ">=0.2.6" }` to remediate
+[GHSA-ph9p-34f9-6g65](https://github.com/advisories/GHSA-ph9p-34f9-6g65)
+(Path Traversal via `tmp` < 0.2.6, pulled transitively by `exceljs`). Drop the
+override once `exceljs` ships a release that depends on `tmp@>=0.2.6` directly.
+
 ## Related docs
 
 - [README.md](c:/repos/sluice/README.md) — install, quick-start, composite rules (Tier 1)
