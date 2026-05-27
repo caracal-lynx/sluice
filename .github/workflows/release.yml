@@ -11,6 +11,14 @@ on:
     branches: [master]
   workflow_dispatch:
 
+# Permissions must be declared in the caller — the called node-release.yml
+# can only request permissions the caller has granted. See its own
+# permissions block for the rationale on each.
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   release:
     uses: caracal-lynx/.github/.github/workflows/node-release.yml@main

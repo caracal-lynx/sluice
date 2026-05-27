@@ -9,6 +9,9 @@ on:
     branches: [master, main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   ci:
     uses: caracal-lynx/.github/.github/workflows/node-ci.yml@main
