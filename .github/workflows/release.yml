@@ -1,73 +1,20 @@
 name: Release
 
+# Consumes the org-wide reusable Node release workflow defined in
+# caracal-lynx/.github/.github/workflows/node-release.yml. Implements the
+# Changesets PR-flow + npm Trusted Publishing (OIDC). The previous
+# hand-rolled release pipeline is the source of the central workflow's shape.
+# See DAG-73 for the migration rationale.
+
 on:
   push:
     branches: [master]
   workflow_dispatch:
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   release:
-    name: Release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Check App token prerequisites
-        id: preflight
-        run: |
-          if [[ -n "$APP_ID" && -n "$PRIVATE_KEY" ]]; then
-            echo "use_app_token=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "use_app_token=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::RELEASER_APP_ID or RELEASER_PRIVATE_KEY are not configured — falling back to GITHUB_TOKEN. Release PRs may require manual approval."
-          fi
-        env:
-          APP_ID: ${{ vars.RELEASER_APP_ID }}
-          PRIVATE_KEY: ${{ secrets.RELEASER_PRIVATE_KEY }}
-
-      - name: Mint caracal-lynx-releaser App token
-        id: app-token
-        if: steps.preflight.outputs.use_app_token == 'true'
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.RELEASER_APP_ID }}
-          private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
-
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token || github.token }}
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24.16.0'
-          cache: npm
-          registry-url: https://registry.npmjs.org
-
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
-
-      - name: Create release PR or publish
-        uses: changesets/action@v1
-        with:
-          publish: npm run release
-          version: npm run version
-          commit: '[master] - chore(release): version packages'
-          title: 'chore(release): version packages'
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
-          NPM_CONFIG_PROVENANCE: true
-          # Authentication via npm Trusted Publishing (OIDC).
-          # NO NPM_TOKEN — Classic Automation tokens were retired in Nov 2025;
-          # Trusted Publishing is now the recommended path for CI publishing.
-          # The package's Trusted Publishers list (configured at
-          # npmjs.com/package/@caracal-lynx/sluice/access) authorises this
-          # workflow by org + repo + filename, and `id-token: write` provides
-          # the OIDC token at publish time.
+    uses: caracal-lynx/.github/.github/workflows/node-release.yml@main
+    with:
+      node-version: "24.16.0"
+      package-manager: npm
+    secrets: inherit

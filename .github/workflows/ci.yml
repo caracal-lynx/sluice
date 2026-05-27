@@ -1,29 +1,22 @@
 name: CI
 
+# Consumes the org-wide reusable Node CI workflow defined in
+# caracal-lynx/.github/.github/workflows/node-ci.yml. Hand-rolled CI
+# previously lived here; see DAG-73 for the migration rationale.
+
 on:
   push:
     branches: [master, main]
   pull_request:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24.16.0'
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
-      - run: npm run test:cov
-      - name: Type-check (tsgo, parallel)
-        run: npm run typecheck:tsgo
-        continue-on-error: true
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: coverage
-          path: coverage/
+  ci:
+    uses: caracal-lynx/.github/.github/workflows/node-ci.yml@main
+    with:
+      node-version: "24.16.0"
+      # Single-OS for now — Windows matrix is a deliberate follow-up; today's
+      # Sluice CI has never run on Windows so adding it here would conflate
+      # the pilot migration with a behaviour change.
+      os-matrix: '["ubuntu-latest"]'
+      package-manager: npm
+      coverage: true
