@@ -78,8 +78,8 @@ Sluice consumes the org-wide reusable workflows from
 steps here unless they're genuinely Sluice-specific (like `ci-tsgo.yml` or
 `docs.yml`).
 
-- `.github/workflows/ci.yml` — calls `caracal-lynx/.github/.github/workflows/node-ci.yml@main` (lint / typecheck / test / build / audit)
-- `.github/workflows/release.yml` — calls `caracal-lynx/.github/.github/workflows/node-release.yml@main` (Changesets PR-flow + npm Trusted Publishing)
+- `.github/workflows/ci.yml` — calls `caracal-lynx/.github/.github/workflows/node-ci.yml@master` (lint / typecheck / test / build / audit)
+- `.github/workflows/release.yml` — calls `caracal-lynx/.github/.github/workflows/node-release.yml@master` (Changesets PR-flow + npm Trusted Publishing)
 - `.github/workflows/ci-tsgo.yml` — **Sluice-specific.** Non-blocking parallel tsgo typecheck, ahead of the planned TypeScript 7 upgrade. Drop when TS 7 stable.
 - `.github/workflows/docs.yml` — **Sluice-specific.** Astro docs-site build + GitHub Pages deploy. Stays local.
 
