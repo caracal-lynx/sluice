@@ -16,7 +16,9 @@ export class PatternRule implements Rule {
   ): RuleViolation | null {
     if (value === null || value === undefined || value === '') return null;
     if (typeof config.value !== 'string') {
-      throw new DQError(`pattern rule on field "${field}" requires a string value (the regex)`);
+      throw new DQError(
+        `pattern rule on field "${field}" requires a string \`value:\` key holding the regex (e.g. value: "^[A-Z0-9]+$")`,
+      );
     }
     let regex: RegExp;
     try {

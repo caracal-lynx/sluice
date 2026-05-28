@@ -77,6 +77,19 @@ describe('PatternRule', () => {
   it('throws DQError when config.value is missing', () => {
     expect(() => rule.validate('x', cfg('pattern'), 0, 'f')).toThrow(DQError);
   });
+
+  it('missing-value error names the `value:` key and shows a regex example', () => {
+    try {
+      rule.validate('x', cfg('pattern'), 0, 'CUST_CODE');
+      expect.fail('expected DQError to be thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DQError);
+      const msg = (err as DQError).message;
+      expect(msg).toContain('CUST_CODE');
+      expect(msg).toContain('`value:`');
+      expect(msg).toMatch(/value: "\^/);
+    }
+  });
 });
 
 describe('EmailRule', () => {
