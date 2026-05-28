@@ -1,6 +1,6 @@
 {
   "name": "@caracal-lynx/sluice",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Config-driven ETL toolkit for ERP data migrations",
   "license": "Elastic-2.0",
   "author": "Caracal Lynx Limited <sluice@caracallynx.com> (https://caracallynx.com)",
