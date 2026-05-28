@@ -88,7 +88,7 @@
     "@types/mssql": "^12.3.0",
     "@types/node": "^24.12.4",
     "@types/pg": "^8.20.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260526.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260527.2",
     "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^10.4.0",
     "pino-pretty": "^13.1.3",
