@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   release:
-    uses: caracal-lynx/.github/.github/workflows/node-release.yml@main
+    uses: caracal-lynx/.github/.github/workflows/node-release.yml@master
     with:
       node-version: "24.16.0"
       package-manager: npm
