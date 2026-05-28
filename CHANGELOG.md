@@ -1,5 +1,18 @@
 # @caracal-lynx/sluice
 
+## 0.6.2
+
+### Patch Changes
+
+- [#156](https://github.com/caracal-lynx/sluice/pull/156) [`61d5970`](https://github.com/caracal-lynx/sluice/commit/61d5970195305454f35c79854d098d19b9cbd9b0) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - 🐛 DQ: clearer `pattern` rule error when `value:` is missing.
+
+  The `pattern` rule's missing-value error now names the `value:` key explicitly
+  and shows a regex example, so pipeline authors who hit it know which YAML key
+  to set and roughly what shape it should take.
+
+  Before: `pattern rule on field "X" requires a string value (the regex)`
+  After: `pattern rule on field "X" requires a string \`value:\` key holding the regex (e.g. value: "^[A-Z0-9]+$")`
+
 ## 0.6.1
 
 ### Patch Changes
