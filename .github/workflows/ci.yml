@@ -23,3 +23,31 @@ jobs:
       os-matrix: '["ubuntu-latest"]'
       package-manager: npm
       coverage: true
+
+  # Sluice ships to npm. Per standards [PUB-06], every src/ change needs a
+  # changeset so the next release version-bumps correctly. This job is the
+  # DAG-76 prototype; once green it gets promoted into the central
+  # node-ci.yml as a require-changeset input (DAG-63 follow-up).
+  changeset-required:
+    name: Changeset required
+    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.16.0"
+          cache: npm
+      - run: npm ci
+      - name: Verify changeset present when src/ touched
+        run: |
+          if git diff --name-only origin/master...HEAD | grep -qE '^src/'; then
+            echo "src/ files modified — checking for changeset..."
+            npx changeset status --since=origin/master --verbose
+          else
+            echo "No src/ changes — changeset not required."
+          fi
