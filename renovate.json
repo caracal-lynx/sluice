@@ -1,34 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":semanticCommits"],
-  "schedule": ["before 8am every weekday"],
-  "timezone": "Europe/London",
-  "labels": ["dependencies"],
-  "rangeStrategy": "bump",
-  "platformAutomerge": false,
-  "prConcurrentLimit": 10,
-  "prHourlyLimit": 3,
-  "vulnerabilityAlerts": {
-    "enabled": true,
-    "labels": ["security", "vulnerability"],
-    "schedule": ["at any time"]
-  },
+  "extends": ["local>caracal-lynx/.github:renovate-config"],
   "packageRules": [
     {
       "matchPackageNames": ["zod"],
       "allowedVersions": "<4",
-      "description": "Pinned to v3 until src/config/schema.ts is migrated to the v4 API (see closed PR for context)"
-    },
-    {
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "addLabels": ["major-bump"],
-      "schedule": ["before 8am on monday"]
-    },
-    {
-      "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true,
-      "automergeType": "pr"
+      "description": "Pinned to v3 until src/config/schema.ts is migrated to the v4 API"
     }
   ]
 }
