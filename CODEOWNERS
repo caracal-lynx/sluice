@@ -1,0 +1,11 @@
+# CODEOWNERS for caracal-lynx/sluice
+#
+# Default reviewer assignment for PRs. Added as part of DAG-67
+# (branch-protection rollout). GitHub does not support org-wide
+# CODEOWNERS — see caracal-lynx/.github/CODEOWNERS for the central
+# convention this file follows.
+#
+# Syntax: <pattern> <owner-1> <owner-2> ...
+# Last matching rule wins.
+
+* @michaelscott-1963
