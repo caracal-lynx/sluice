@@ -167,30 +167,38 @@ export class MssqlSourceAdapter implements SourceAdapter {
     let columns: ColumnMeta[] | null = null;
     let pendingBatch: Record<string, unknown>[] = [];
     let totalRows = 0;
+    // The `recordset` handler creates the staging table asynchronously, but
+    // `row`/`done` can fire before that promise resolves. Awaiting this gate
+    // before every insert prevents the insert racing ahead of the CREATE TABLE
+    // (DuckDB "Table ... does not exist" — see PR #170 CI run #503).
+    let tableReady: Promise<void> | null = null;
 
     return new Promise<ExtractResult>((resolve, reject) => {
       let settled = false;
       const fail = (err: unknown): void => {
         if (settled) return;
         settled = true;
-        reject(err instanceof SourceError ? err : new SourceError(`mssql query failed: ${String(err)}`, err));
+        reject(
+          err instanceof SourceError
+            ? err
+            : new SourceError(`mssql query failed: ${String(err)}`, err),
+        );
       };
 
       request.on('recordset', (meta: Record<string, { type?: unknown }>) => {
-        (async () => {
-          try {
-            columns = Object.entries(meta).map(([name, info]) => ({
-              name,
-              duckDbType: mapMssqlType(info?.type),
-            }));
-            if (columns.length === 0) {
-              throw new SourceError('mssql query produced no columns');
-            }
-            await store.createTable(targetTable, columns);
-          } catch (err) {
-            fail(err);
+        try {
+          columns = Object.entries(meta).map(([name, info]) => ({
+            name,
+            duckDbType: mapMssqlType(info?.type),
+          }));
+          if (columns.length === 0) {
+            throw new SourceError('mssql query produced no columns');
           }
-        })();
+          tableReady = store.createTable(targetTable, columns);
+          tableReady.catch(fail);
+        } catch (err) {
+          fail(err);
+        }
       });
 
       request.on('row', (row: Record<string, unknown>) => {
@@ -203,8 +211,8 @@ export class MssqlSourceAdapter implements SourceAdapter {
           } catch {
             /* older mssql may not support pause */
           }
-          store
-            .insertBatch(targetTable, toInsert)
+          Promise.resolve(tableReady)
+            .then(() => store.insertBatch(targetTable, toInsert))
             .then(() => {
               totalRows += toInsert.length;
               onProgress(totalRows);
@@ -225,6 +233,7 @@ export class MssqlSourceAdapter implements SourceAdapter {
       request.on('done', () => {
         (async () => {
           try {
+            await tableReady;
             if (pendingBatch.length > 0) {
               await store.insertBatch(targetTable, pendingBatch);
               totalRows += pendingBatch.length;
