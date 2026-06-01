@@ -233,8 +233,8 @@ export class MssqlSourceAdapter implements SourceAdapter {
       request.on('done', () => {
         (async () => {
           try {
+            await tableReady;
             if (pendingBatch.length > 0) {
-              await tableReady;
               await store.insertBatch(targetTable, pendingBatch);
               totalRows += pendingBatch.length;
               onProgress(totalRows);
