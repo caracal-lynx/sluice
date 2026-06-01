@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.6.3
+
+### Patch Changes
+
+- [#171](https://github.com/caracal-lynx/sluice/pull/171) [`e248b95`](https://github.com/caracal-lynx/sluice/commit/e248b953a244f9b95ed8d57f394e4e1a1a006076) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Fix a race in the mssql source adapter where a streamed `INSERT` could run before its `CREATE TABLE` resolved, producing a spurious DuckDB "Table does not exist" error on small/fast result sets. The adapter now awaits table creation before every batch insert.
+
 ## 0.6.2
 
 ### Patch Changes
