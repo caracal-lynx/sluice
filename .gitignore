@@ -15,8 +15,9 @@ run.log
 # Astro/Starlight build cache (docs-site/)
 .astro/
 
-# Claude Code - keep team config, ignore personal/secret
-.claude/settings.local.json
+# Claude Code — private context never belongs in this public repo.
+# Ignore the whole .claude/ tree; a lefthook pre-commit job
+# (scripts/check-no-private-context.ps1) backstops any `git add -f`.
+.claude/
 CLAUDE.local.md
-.claude/memory/        # only if you're storing project memory locally
 ./standards
