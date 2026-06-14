@@ -21,7 +21,7 @@ jobs:
       # Sluice CI has never run on Windows so adding it here would conflate
       # the pilot migration with a behaviour change.
       os-matrix: '["ubuntu-latest"]'
-      package-manager: npm
+      package-manager: pnpm
       coverage: true
 
   # Sluice ships to npm. Per standards [PUB-06], every src/ change needs a
@@ -38,16 +38,17 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version: "24.16.0"
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Verify changeset present when src/ touched
         run: |
           if git diff --name-only origin/master...HEAD | grep -qE '^src/'; then
             echo "src/ files modified — checking for changeset..."
-            npx changeset status --since=origin/master --verbose
+            pnpm exec changeset status --since=origin/master --verbose
           else
             echo "No src/ changes — changeset not required."
           fi

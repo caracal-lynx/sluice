@@ -1,12 +1,13 @@
 {
   "name": "docs-site",
+  "private": true,
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "predev": "npm run gen",
+    "predev": "pnpm gen",
     "dev": "astro dev",
     "start": "astro dev",
-    "prebuild": "npm run gen",
+    "prebuild": "pnpm gen",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -21,8 +22,5 @@
     "tsx": "^4.22.4",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.25.2"
-  },
-  "overrides": {
-    "devalue": ">=5.8.1"
   }
 }
