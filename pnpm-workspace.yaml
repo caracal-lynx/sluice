@@ -1,0 +1,8 @@
+# pnpm workspace. The repo root (@caracal-lynx/sluice) is the published
+# package; docs-site is the Astro docs build. One pnpm-lock.yaml covers both.
+#
+# Note: dependency `overrides` and `onlyBuiltDependencies` are only honoured
+# from the workspace-root package.json `pnpm` field — see ./package.json.
+# docs-site's old `devalue` override therefore lives in the root pnpm.overrides.
+packages:
+  - "docs-site"

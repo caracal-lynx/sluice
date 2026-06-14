@@ -590,9 +590,9 @@ A full working example lives at [tests/fixtures/style-co-products-merged.pipelin
 ## 🧪 Testing
 
 ```bash
-npm test           # run tests once
-npm run test:watch # watch mode (great for TDD)
-npm run test:cov   # with coverage report
+pnpm test           # run tests once
+pnpm test:watch     # watch mode (great for TDD)
+pnpm test:cov       # with coverage report
 ```
 
 - **Unit tests** mock all I/O with `vi.mock` — no live databases required
@@ -605,15 +605,17 @@ npm run test:cov   # with coverage report
 ## 🏗️ Development
 
 ```bash
-npm run build      # tsc compile
-npm run dev        # tsx watch src/cli.ts (live reload)
-npm run lint       # eslint
-npm run format     # prettier
+pnpm build         # tsc compile
+pnpm dev           # tsx watch src/cli.ts (live reload)
+pnpm lint          # eslint
+pnpm format        # prettier
 
 # Pretty logs in dev:
-npm run dev -- run customers.pipeline.yaml | npx pino-pretty
+pnpm dev run customers.pipeline.yaml | pnpm exec pino-pretty
 ```
 
+> **Note:** Sluice develops with **pnpm** (activated via corepack — see [CLAUDE.md](CLAUDE.md)). Published to npm, so end users can still install with any package manager.
+>
 > **Note:** Uses `tsx`, not `ts-node`. Path aliases work correctly on Windows without extra configuration. 🪟
 
 ---

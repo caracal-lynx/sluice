@@ -39,28 +39,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js 24
         uses: actions/setup-node@v6
         with:
           node-version: '24.16.0'
-          cache: npm
-          # Cache against both lockfiles — the parent install is needed so
-          # docs-site/scripts/generate-schema-reference.ts can resolve `zod`
-          # from src/config/schema.ts at the repo root.
-          cache-dependency-path: |
-            package-lock.json
-            docs-site/package-lock.json
+          cache: pnpm
 
-      - name: Install root dependencies (zod for schema generator)
-        run: npm ci --ignore-scripts
-
-      - name: Install docs-site dependencies
-        run: npm ci
-        working-directory: docs-site
+      # One workspace install covers both the root package and docs-site, so
+      # docs-site/scripts/generate-schema-reference.ts can resolve `zod` from
+      # src/config/schema.ts at the repo root. Build scripts are gated by
+      # pnpm.onlyBuiltDependencies in the root package.json.
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build site (runs prebuild = sync changelog + generate schema reference)
-        run: npm run build
-        working-directory: docs-site
+        run: pnpm --filter docs-site build
 
       - name: Configure Pages
         if: github.ref == 'refs/heads/master'
