@@ -1,7 +1,7 @@
 # Lefthook hooks for Sluice. https://lefthook.dev/configuration/
 #
 # Activated by `lefthook install`, which is wired into the package.json
-# `prepare` script so a fresh `npm install` is enough. CI is naturally exempt
+# `prepare` script so a fresh `pnpm install` is enough. CI is naturally exempt
 # (GitHub Actions doesn't `git commit`); local emergency skip is
 # `LEFTHOOK=0 git commit ...` or `git commit --no-verify`.
 
@@ -13,15 +13,15 @@ pre-commit:
 
     - name: format
       glob: '*.{ts,js,mjs,cjs,md,json,yml,yaml}'
-      run: npx prettier --write {staged_files}
+      run: pnpm exec prettier --write {staged_files}
       stage_fixed: true
 
     - name: lint
       glob: '*.{ts,js,mjs,cjs}'
-      run: npx eslint --fix {staged_files}
+      run: pnpm exec eslint --fix {staged_files}
       stage_fixed: true
 
 pre-push:
   jobs:
     - name: typecheck
-      run: npm run typecheck
+      run: pnpm typecheck

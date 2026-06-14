@@ -29,9 +29,10 @@ jobs:
     continue-on-error: true   # tsgo failures don't block merge — they signal future risk
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version: "24.16.0"
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck:tsgo
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck:tsgo

@@ -26,9 +26,10 @@ willing to send a PR.
 2. Add tests for any new behaviour. Sluice maintains 80% line coverage in
    `src/dq/` and `src/transform/` — see [CLAUDE.md](CLAUDE.md) for the full
    testing conventions.
-3. Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`
-   locally before opening the PR.
-4. Add a `.changeset/` entry describing your change. Run `npm run changeset`,
+3. Run `pnpm test`, `pnpm typecheck`, `pnpm lint`, and `pnpm build`
+   locally before opening the PR. (Sluice uses **pnpm**, activated via corepack —
+   see [CLAUDE.md](CLAUDE.md). No global install needed.)
+4. Add a `.changeset/` entry describing your change. Run `pnpm changeset`,
    answer the prompts (patch / minor / major + a one-line summary), and commit
    the generated `.changeset/<random-name>.md` file alongside your code changes.
    Skip this step only for docs-only or CI-only PRs.

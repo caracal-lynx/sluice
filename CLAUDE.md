@@ -6,7 +6,7 @@
 # Sluice — CLAUDE.md
 
 Config-driven ETL toolkit for data migrations. npm: `@caracal-lynx/sluice`.
-Owner: Caracal Lynx Limited (SC826823). Last updated: 2026-05-17.
+Owner: Caracal Lynx Limited (SC826823). Last updated: 2026-06-14.
 
 ## Sluice in one paragraph
 
@@ -27,6 +27,27 @@ Business Central, BlueCherry, or generic CSV/JSON.
 - DuckDB is staging only — never a warehouse, never a server
 - Single-tenant consultant's toolkit; not a SaaS product
 - Must run from Windows PowerShell 7 *and* unattended in GitHub Actions
+
+## Package manager — pnpm (deviation from baseline)
+
+**Sluice uses pnpm, not npm** (DAG-61, 2026-06-14). It's the Data Gubbins
+pnpm pilot — the other `sluice-*` repos remain on npm until the fleet rollout,
+so the org standards doc still says npm and is **not** changed by this work.
+This section is the explicit override required by `[SCOPE-02]`.
+
+Superseded rule IDs (replace npm with pnpm for this repo only):
+
+- `[STACK-01]` package manager is **pnpm** (`pnpm-lock.yaml` committed, not `package-lock.json`).
+- `[SEC-06]` CI installs with **`pnpm install --frozen-lockfile`**, not `npm ci`.
+- `[CORE-10]` / `[DONE-01]` pre-review gate is **`pnpm typecheck && pnpm lint && pnpm test`**.
+- `[LINT-04]` lefthook is activated by a fresh **`pnpm install`** (via `prepare`).
+- `[DEP-01]` Renovate still owns version bumps; it also auto-bumps `packageManager`.
+
+Operational notes:
+
+- **Activate via corepack** — `packageManager` is pinned in `package.json`; no global pnpm install needed. On Windows, `corepack enable` needs elevation to write shims to `C:\Program Files\nodejs`; `corepack pnpm@10 …` works without it.
+- **Workspace** — root (the published package) + `docs-site` (Astro docs) share one `pnpm-lock.yaml` via `pnpm-workspace.yaml`. Build docs with `pnpm --filter docs-site build`.
+- **End users are unaffected** — consumers still `npm install @caracal-lynx/sluice` (or any PM); pnpm is an internal dev/CI choice only.
 
 ## Sluice-specific stack
 
@@ -87,12 +108,26 @@ Want to change CI behaviour across the fleet (different Node version, add a
 job, etc.)? Open a PR on `caracal-lynx/.github`, not on Sluice. Sluice's
 consumer just passes inputs.
 
-### Transitive vuln override
+### Transitive vuln overrides (`pnpm.overrides`)
 
-`package.json` carries an `"overrides": { "tmp": ">=0.2.6" }` to remediate
-[GHSA-ph9p-34f9-6g65](https://github.com/advisories/GHSA-ph9p-34f9-6g65)
-(Path Traversal via `tmp` < 0.2.6, pulled transitively by `exceljs`). Drop the
-override once `exceljs` ships a release that depends on `tmp@>=0.2.6` directly.
+These live under **`pnpm.overrides`** in `package.json` — pnpm ignores npm's
+top-level `overrides` field, and in a workspace only the **root** package.json's
+`pnpm.overrides` is honoured (so docs-site's `devalue` override lives here too).
+Renovate does not manage these; review and drop each when its parent ships a
+patched release.
+
+- **`tmp >=0.2.7`** — [GHSA-ph9p-34f9-6g65](https://github.com/advisories/GHSA-ph9p-34f9-6g65) (Path Traversal, via `exceljs`).
+- **`uuid >=11.1.1`** — [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) (buffer bounds check, via `exceljs`, which still pins `uuid@^8`). Safe here: exceljs uses only `uuid.v4` on a write path, and Sluice reads Excel only.
+- **`esbuild >=0.28.1`** — [GHSA-gv7w-rqvm-qjhr](https://github.com/advisories/GHSA-gv7w-rqvm-qjhr) (binary integrity, dev-only via `tsx`/`vitest`/`astro`). Surfaced by pnpm's workspace-wide audit.
+- **`devalue >=5.8.1`** — docs-site (`astro`) transitive.
+
+### pnpm build-script allowlist (`pnpm.onlyBuiltDependencies`)
+
+pnpm 10 does **not** run dependency install/build scripts unless allowlisted.
+`pnpm.onlyBuiltDependencies` lists `esbuild`, `lefthook`, `sharp`. Note
+`@duckdb/node-api` is **not** listed — it has no build script (it ships
+platform-specific prebuilt binaries as optional deps). If an install warns
+about a newly-ignored build script, add it here (or run `pnpm approve-builds`).
 
 ## Related docs
 
