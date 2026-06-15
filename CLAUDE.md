@@ -2,7 +2,6 @@
 
 @c:/repos/standards/coding/typescript-standards.md
 
-
 # Sluice — CLAUDE.md
 
 Config-driven ETL toolkit for data migrations. npm: `@caracal-lynx/sluice`.
@@ -18,7 +17,7 @@ legacy SQL / CSV / Excel / REST sources, validate against configurable DQ
 rules, transform via mappings + lookups + expressions, and load to IFS,
 Business Central, BlueCherry, or generic CSV/JSON.
 
-*Clean data flows through.*
+_Clean data flows through._
 
 ## Non-negotiables
 
@@ -26,7 +25,7 @@ Business Central, BlueCherry, or generic CSV/JSON.
 - No streaming / real-time ingestion
 - DuckDB is staging only — never a warehouse, never a server
 - Single-tenant consultant's toolkit; not a SaaS product
-- Must run from Windows PowerShell 7 *and* unattended in GitHub Actions
+- Must run from Windows PowerShell 7 _and_ unattended in GitHub Actions
 
 ## Package manager — pnpm (deviation from baseline)
 
@@ -47,6 +46,8 @@ Operational notes:
 
 - **Activate via corepack** — `packageManager` is pinned in `package.json`; no global pnpm install needed. On Windows, `corepack enable` needs elevation to write shims to `C:\Program Files\nodejs`; `corepack pnpm@10 …` works without it.
 - **Workspace** — root (the published package) + `docs-site` (Astro docs) share one `pnpm-lock.yaml` via `pnpm-workspace.yaml`. Build docs with `pnpm --filter docs-site build`.
+- **Renovate `rangeStrategy: update-lockfile`** (`renovate.json`) — overrides the shared preset's `bump`. With `bump`, in-range caret updates desync the lockfile importer specifier for non-root workspace members (`docs-site`), failing `--frozen-lockfile` in CI. Don't revert to `bump` while this stays a pnpm repo.
+- **Never let `pnpm install` re-emit `pnpm-lock.yaml` for a one-line fix** — pnpm 10's YAML serializer rewrites `resolution:` blocks (compact → expanded), churning thousands of lines. To sync a stale specifier, edit the single line directly; reserve a full `pnpm install --lockfile-only` for genuine dependency changes.
 - **End users are unaffected** — consumers still `npm install @caracal-lynx/sluice` (or any PM); pnpm is an internal dev/CI choice only.
 
 ## Sluice-specific stack
@@ -55,14 +56,14 @@ Additions and deviations from the programme baseline in
 [data-gubbins.md](c:/repos/standards/programmes/data-gubbins.md) — anything
 not listed here follows the programme stack.
 
-| Concern     | Package                          | Notes |
-|-------------|----------------------------------|-------|
-| SQL Server  | `mssql`                          | Trusted + SQL auth both supported |
-| PostgreSQL  | `pg` + `@types/pg`               | |
-| CSV         | `csv-parse` + `csv-stringify`    | Streaming |
-| Excel       | `exceljs`                        | Read-only. Replaced `xlsx`/SheetJS in 2026-05 to remediate two unpatched HIGH-severity advisories (ReDoS + prototype pollution); SheetJS's maintainer publishes patches only via their CDN tarball, not to npm. |
-| HTTP retry  | `axios-retry`                    | 3 retries, exponential backoff |
-| Env vars    | `dotenv`                         | Loaded once at CLI entry |
+| Concern    | Package                       | Notes                                                                                                                                                                                                           |
+| ---------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SQL Server | `mssql`                       | Trusted + SQL auth both supported                                                                                                                                                                               |
+| PostgreSQL | `pg` + `@types/pg`            |                                                                                                                                                                                                                 |
+| CSV        | `csv-parse` + `csv-stringify` | Streaming                                                                                                                                                                                                       |
+| Excel      | `exceljs`                     | Read-only. Replaced `xlsx`/SheetJS in 2026-05 to remediate two unpatched HIGH-severity advisories (ReDoS + prototype pollution); SheetJS's maintainer publishes patches only via their CDN tarball, not to npm. |
+| HTTP retry | `axios-retry`                 | 3 retries, exponential backoff                                                                                                                                                                                  |
+| Env vars   | `dotenv`                      | Loaded once at CLI entry                                                                                                                                                                                        |
 
 ## Invariants
 
