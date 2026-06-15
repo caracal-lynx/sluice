@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["local>caracal-lynx/.github:renovate-config"],
+  "description": [
+    "rangeStrategy override: the shared preset uses 'bump', which rewrites caret floors in package.json even for in-range updates. On this pnpm pilot repo that desyncs the importer specifier in pnpm-lock.yaml (Renovate updates the root importer but not non-root workspace members like docs-site), so CI's `pnpm install --frozen-lockfile` fails with ERR_PNPM_OUTDATED_LOCKFILE. 'update-lockfile' keeps package.json ranges fixed and only updates the lock file, eliminating that failure class. Drop this override if the fleet preset moves off 'bump' or once the workspace-importer behaviour is fixed upstream."
+  ],
+  "rangeStrategy": "update-lockfile",
   "packageRules": [
     {
       "matchPackageNames": ["zod"],
