@@ -125,6 +125,24 @@ describe('PipelineSchema', () => {
     });
   });
 
+  describe('strict top-level keys', () => {
+    it('rejects an unknown top-level key (regression: customChecks silently stripped)', () => {
+      // F7 / DAG-43: `customChecks:` was accepted by the validator then vanished
+      // at runtime with valid: true. The schema must now reject unknown keys.
+      const raw = { ...minimal, customChecks: [] };
+      expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
+    });
+
+    it('names the offending key in the Zod issue', () => {
+      const raw = { ...minimal, customChecks: [] };
+      const res = PipelineSchema.safeParse(raw);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(JSON.stringify(res.error.issues)).toContain('customChecks');
+      }
+    });
+  });
+
   describe('TargetSchema.onConflict / upsertKey', () => {
     it('throws ZodError when onConflict is "upsert" but upsertKey is missing', () => {
       const raw = {
@@ -168,7 +186,9 @@ describe('PipelineSchema', () => {
     const withFields = (fields: unknown[]) => ({ ...minimal, transform: { fields } });
 
     it('throws ZodError when type: string omits "from"', () => {
-      expect(() => PipelineSchema.parse(withFields([{ to: 'Foo', type: 'string' }]))).toThrow(ZodError);
+      expect(() => PipelineSchema.parse(withFields([{ to: 'Foo', type: 'string' }]))).toThrow(
+        ZodError,
+      );
     });
 
     it('throws ZodError when type: lookup omits "from"', () => {

@@ -5,7 +5,13 @@
 # package.json is no longer read — `overrides` and build-script allowlisting
 # moved to this file. See https://pnpm.io/settings. Only the workspace-root
 # file is honoured, so docs-site's `devalue` override lives here too.
+#
+# The repo root ('.') must be listed so Changesets discovers @caracal-lynx/sluice
+# (the published package) — without it, `changeset status`/`version` error with
+# "package ... not in the workspace" and both the changeset-required CI gate and
+# the release flow break (DAG-48).
 packages:
+  - '.'
   - 'docs-site'
 
 # Transitive-vuln pins (see CLAUDE.md for the advisory behind each). Renovate
