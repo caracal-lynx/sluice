@@ -1,0 +1,8 @@
+# Prettier ignores. The lefthook pre-commit `format` job globs *.yaml, which
+# would otherwise let Prettier reformat tool-generated lockfiles.
+
+# pnpm and Prettier disagree on YAML style (flow vs. block mappings, trailing
+# commas, quoting). Letting the hook reformat pnpm-lock.yaml produces thousands
+# of lines of churn on every commit that touches it and risks a specifier
+# desync against package.json. The lockfile is owned by pnpm — leave it alone.
+pnpm-lock.yaml
