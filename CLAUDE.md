@@ -44,7 +44,7 @@ Superseded rule IDs (replace npm with pnpm for this repo only):
 
 Operational notes:
 
-- **Activate via corepack** — `packageManager` is pinned in `package.json`; no global pnpm install needed. On Windows, `corepack enable` needs elevation to write shims to `C:\Program Files\nodejs`; `corepack pnpm@10 …` works without it.
+- **Activate via corepack** — `packageManager` is pinned in `package.json`; no global pnpm install needed. On Windows, `corepack enable` needs elevation to write shims to `C:\Program Files\nodejs`; `corepack pnpm@11 …` works without it.
 - **Workspace** — root (the published package) + `docs-site` (Astro docs) share one `pnpm-lock.yaml` via `pnpm-workspace.yaml`. Build docs with `pnpm --filter docs-site build`.
 - **Renovate `rangeStrategy: update-lockfile`** (`renovate.json`) — overrides the shared preset's `bump`. With `bump`, in-range caret updates desync the lockfile importer specifier for non-root workspace members (`docs-site`), failing `--frozen-lockfile` in CI. Don't revert to `bump` while this stays a pnpm repo.
 - **Never let `pnpm install` re-emit `pnpm-lock.yaml` for a one-line fix** — pnpm 10's YAML serializer rewrites `resolution:` blocks (compact → expanded), churning thousands of lines. To sync a stale specifier, edit the single line directly; reserve a full `pnpm install --lockfile-only` for genuine dependency changes.
@@ -109,26 +109,28 @@ Want to change CI behaviour across the fleet (different Node version, add a
 job, etc.)? Open a PR on `caracal-lynx/.github`, not on Sluice. Sluice's
 consumer just passes inputs.
 
-### Transitive vuln overrides (`pnpm.overrides`)
+### Transitive vuln overrides (`overrides`)
 
-These live under **`pnpm.overrides`** in `package.json` — pnpm ignores npm's
-top-level `overrides` field, and in a workspace only the **root** package.json's
-`pnpm.overrides` is honoured (so docs-site's `devalue` override lives here too).
-Renovate does not manage these; review and drop each when its parent ships a
-patched release.
+These live under **`overrides`** in `pnpm-workspace.yaml` — since pnpm 11 the
+`pnpm` field in `package.json` is no longer read, so settings moved to the
+workspace file (see https://pnpm.io/settings). Only the workspace-root file is
+honoured (so docs-site's `devalue` override lives here too). Renovate does not
+manage these; review and drop each when its parent ships a patched release.
 
 - **`tmp >=0.2.7`** — [GHSA-ph9p-34f9-6g65](https://github.com/advisories/GHSA-ph9p-34f9-6g65) (Path Traversal, via `exceljs`).
 - **`uuid >=11.1.1`** — [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) (buffer bounds check, via `exceljs`, which still pins `uuid@^8`). Safe here: exceljs uses only `uuid.v4` on a write path, and Sluice reads Excel only.
 - **`esbuild >=0.28.1`** — [GHSA-gv7w-rqvm-qjhr](https://github.com/advisories/GHSA-gv7w-rqvm-qjhr) (binary integrity, dev-only via `tsx`/`vitest`/`astro`). Surfaced by pnpm's workspace-wide audit.
 - **`devalue >=5.8.1`** — docs-site (`astro`) transitive.
 
-### pnpm build-script allowlist (`pnpm.onlyBuiltDependencies`)
+### pnpm build-script allowlist (`allowBuilds`)
 
-pnpm 10 does **not** run dependency install/build scripts unless allowlisted.
-`pnpm.onlyBuiltDependencies` lists `esbuild`, `lefthook`, `sharp`. Note
+pnpm does **not** run dependency install/build scripts unless allowlisted. The
+`allowBuilds` map in `pnpm-workspace.yaml` lists `esbuild`, `lefthook`, `sharp`
+(pnpm 11 renamed this from the `onlyBuiltDependencies` array). Note
 `@duckdb/node-api` is **not** listed — it has no build script (it ships
-platform-specific prebuilt binaries as optional deps). If an install warns
-about a newly-ignored build script, add it here (or run `pnpm approve-builds`).
+platform-specific prebuilt binaries as optional deps). pnpm 11 **fails** the
+install (`ERR_PNPM_IGNORED_BUILDS`) on a non-allowlisted build script rather
+than just warning, so add it here (or run `pnpm approve-builds`).
 
 ## Related docs
 
