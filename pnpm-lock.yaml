@@ -124,7 +124,7 @@ importers:
         specifier: ^0.40.0
         version: 0.40.0(astro@6.4.6(@azure/identity@4.13.1)(@types/node@24.13.1)(rollup@4.62.0)(tsx@4.22.4))(typescript@6.0.3)
       astro:
-        specifier: ^6.4.5
+        specifier: ^6.4.6
         version: 6.4.6(@azure/identity@4.13.1)(@types/node@24.13.1)(rollup@4.62.0)(tsx@4.22.4)
       sharp:
         specifier: ^0.34.5
