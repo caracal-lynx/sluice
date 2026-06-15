@@ -2,14 +2,22 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["local>caracal-lynx/.github:renovate-config"],
   "description": [
-    "rangeStrategy override: the shared preset uses 'bump', which rewrites caret floors in package.json even for in-range updates. On this pnpm pilot repo that desyncs the importer specifier in pnpm-lock.yaml (Renovate updates the root importer but not non-root workspace members like docs-site), so CI's `pnpm install --frozen-lockfile` fails with ERR_PNPM_OUTDATED_LOCKFILE. 'update-lockfile' keeps package.json ranges fixed and only updates the lock file, eliminating that failure class. Drop this override if the fleet preset moves off 'bump' or once the workspace-importer behaviour is fixed upstream."
+    "rangeStrategy override: the shared preset uses 'bump', which rewrites caret floors in package.json even for in-range updates. On this pnpm pilot repo that desyncs the importer specifier in pnpm-lock.yaml (Renovate updates the root importer but not non-root workspace members like docs-site), so CI's `pnpm install --frozen-lockfile` fails with ERR_PNPM_OUTDATED_LOCKFILE. 'update-lockfile' keeps package.json ranges fixed and only updates the lock file, eliminating that failure class. Drop this override if the fleet preset moves off 'bump' or once the workspace-importer behaviour is fixed upstream.",
+    "minimumReleaseAge: pnpm 11 enables a 1-day minimumReleaseAge by default and re-validates it on `pnpm install --frozen-lockfile`, so Renovate PRs raised the instant a release drops fail CI with ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION until the version ages out. Holding Renovate's own PRs for 3 days (> pnpm's 24h, with margin for CI timing) means a PR only opens once it can actually pass — without weakening pnpm's gate. Use minimumReleaseAgeExclude for urgent security patches."
   ],
   "rangeStrategy": "update-lockfile",
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "matchPackageNames": ["zod"],
       "allowedVersions": "<4",
       "description": "Pinned to v3 until src/config/schema.ts is migrated to the v4 API"
+    },
+    {
+      "description": "Transitive-vuln override pins live in pnpm-workspace.yaml and are managed by hand, not Renovate. Disable them so Renovate stops attempting the override-entry lookups that raise the 'failed to look up npm package tmp: no-result' dependency-lookup warning.",
+      "matchFileNames": ["pnpm-workspace.yaml"],
+      "matchPackageNames": ["tmp", "devalue", "uuid", "esbuild"],
+      "enabled": false
     }
   ]
 }
