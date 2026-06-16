@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   ci:
-    uses: caracal-lynx/.github/.github/workflows/node-ci.yml@v1.0.0
+    uses: caracal-lynx/.github/.github/workflows/node-ci.yml@v1.5.0
     with:
       node-version: "24.16.0"
       # Single-OS for now — Windows matrix is a deliberate follow-up; today's
@@ -23,32 +23,8 @@ jobs:
       os-matrix: '["ubuntu-latest"]'
       package-manager: pnpm
       coverage: true
-
-  # Sluice ships to npm. Per standards [PUB-06], every src/ change needs a
-  # changeset so the next release version-bumps correctly. This job is the
-  # DAG-76 prototype; once green it gets promoted into the central
-  # node-ci.yml as a require-changeset input (DAG-63 follow-up).
-  changeset-required:
-    name: Changeset required
-    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24.16.0"
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Verify changeset present when src/ touched
-        run: |
-          if git diff --name-only origin/master...HEAD | grep -qE '^src/'; then
-            echo "src/ files modified — checking for changeset..."
-            pnpm exec changeset status --since=origin/master --verbose
-          else
-            echo "No src/ changes — changeset not required."
-          fi
+      # PUB-06: every src/ change needs a changeset. The bespoke job that used to
+      # live here (DAG-76 prototype) is now centralised in node-ci.yml (DAG-63)
+      # and folded into the single ci / CI success check.
+      require-changeset: true
+    secrets: inherit
