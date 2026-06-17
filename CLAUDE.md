@@ -27,14 +27,15 @@ _Clean data flows through._
 - Single-tenant consultant's toolkit; not a SaaS product
 - Must run from Windows PowerShell 7 _and_ unattended in GitHub Actions
 
-## Package manager — pnpm (deviation from baseline)
+## Package manager — pnpm
 
-**Sluice uses pnpm, not npm** (DAG-61, 2026-06-14). It's the Data Gubbins
-pnpm pilot — the other `sluice-*` repos remain on npm until the fleet rollout,
-so the org standards doc still says npm and is **not** changed by this work.
-This section is the explicit override required by `[SCOPE-02]`.
+**Sluice uses pnpm.** It was the Data Gubbins pnpm pilot (DAG-61, 2026-06-14)
+that led the fleet migration; as of **DAG-145 (2026-06-17) pnpm is the realised
+`[STACK-01]` baseline** across every `sluice-*` repo, so this is no longer a
+deviation/override — the standards doc now says pnpm too. The notes below are
+sluice-specific operational detail, not a `[SCOPE-02]` exception.
 
-Superseded rule IDs (replace npm with pnpm for this repo only):
+Rule specifics worth restating for this repo:
 
 - `[STACK-01]` package manager is **pnpm** (`pnpm-lock.yaml` committed, not `package-lock.json`).
 - `[SEC-06]` CI installs with **`pnpm install --frozen-lockfile`**, not `npm ci`.
