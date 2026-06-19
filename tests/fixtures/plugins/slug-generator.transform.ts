@@ -12,17 +12,17 @@
  *       lowercase: true
  */
 
-import type { TransformPlugin } from '../../../src/plugins/types.js';
+import type { TransformPlugin } from "../../../src/plugins/types.js";
 
 export const transform: TransformPlugin = {
-  id: 'slug-generator',
+  id: "slug-generator",
   apply: async (value: unknown, options?: Record<string, unknown>): Promise<unknown> => {
     if (value === null || value === undefined) return null;
 
     const str = String(value).trim();
-    if (str === '') return null;
+    if (str === "") return null;
 
-    const separator = (options?.separator as string) ?? '-';
+    const separator = (options?.separator as string) ?? "-";
     const lowercase = (options?.lowercase as boolean) ?? true;
 
     // Convert to lowercase if requested
@@ -32,13 +32,16 @@ export const transform: TransformPlugin = {
     slug = slug.replace(/[\s_]+/g, separator);
 
     // Remove non-alphanumeric characters (except separator and hyphens)
-    slug = slug.replace(new RegExp(`[^a-z0-9${separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}]`, 'g'), '');
+    slug = slug.replace(
+      new RegExp(`[^a-z0-9${separator.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}]`, "g"),
+      "",
+    );
 
     // Remove leading/trailing separators
-    slug = slug.replace(new RegExp(`^${separator}+|${separator}+$`, 'g'), '');
+    slug = slug.replace(new RegExp(`^${separator}+|${separator}+$`, "g"), "");
 
     // Collapse multiple consecutive separators
-    slug = slug.replace(new RegExp(`${separator}{2,}`, 'g'), separator);
+    slug = slug.replace(new RegExp(`${separator}{2,}`, "g"), separator);
 
     return slug || null;
   },

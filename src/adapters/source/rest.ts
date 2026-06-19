@@ -10,22 +10,23 @@
  * - `targetTable` defaults to 'stg_raw'.
  */
 
-import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
-import axiosRetry from 'axios-retry';
+import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import axiosRetry from "axios-retry";
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
-import { SourceError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { ExtractResult, SourceAdapter } from './types.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
+import { SourceError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import { stringifyValue } from "../../utils/stringify.js";
+import type { ExtractResult, SourceAdapter } from "./types.js";
 
 type Source = SourceConfig;
-type PaginationConfig = NonNullable<SourceConfig['pagination']>;
+type PaginationConfig = NonNullable<SourceConfig["pagination"]>;
 
 function getPath(obj: unknown, dotPath: string): unknown {
   let cur: unknown = obj;
-  for (const key of dotPath.split('.')) {
-    if (cur === null || cur === undefined || typeof cur !== 'object') return undefined;
+  for (const key of dotPath.split(".")) {
+    if (cur === null || cur === undefined || typeof cur !== "object") return undefined;
     cur = (cur as Record<string, unknown>)[key];
   }
   return cur;
@@ -33,12 +34,12 @@ function getPath(obj: unknown, dotPath: string): unknown {
 
 function flatten(
   obj: Record<string, unknown>,
-  prefix = '',
+  prefix = "",
   out: Record<string, unknown> = {},
 ): Record<string, unknown> {
   for (const [k, v] of Object.entries(obj)) {
     const key = prefix ? `${prefix}__${k}` : k;
-    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
       flatten(v as Record<string, unknown>, key, out);
     } else {
       out[key] = Array.isArray(v) ? JSON.stringify(v) : v;
@@ -48,19 +49,23 @@ function flatten(
 }
 
 export class RestSourceAdapter implements SourceAdapter {
-  readonly id = 'rest';
+  readonly id = "rest";
   private client: AxiosInstance | null = null;
 
   async connect(config: Source): Promise<void> {
+    // No I/O on connect (the client is created lazily-free here), but the
+    // SourceAdapter contract is async and validation errors must surface as a
+    // rejected promise — keep the method genuinely async.
+    await Promise.resolve();
     if (!config.endpoint) {
-      throw new SourceError('rest source requires `endpoint`');
+      throw new SourceError("rest source requires `endpoint`");
     }
     const axiosCfg: AxiosRequestConfig = { timeout: 30000 };
     if (config.headers) axiosCfg.headers = config.headers;
     const client = axios.create(axiosCfg);
     axiosRetry(client, {
       retries: 3,
-      retryDelay: axiosRetry.exponentialDelay,
+      retryDelay: (retryCount, err) => axiosRetry.exponentialDelay(retryCount, err),
       retryCondition: (err) => {
         const status = err.response?.status;
         return (
@@ -74,6 +79,7 @@ export class RestSourceAdapter implements SourceAdapter {
   }
 
   async disconnect(): Promise<void> {
+    await Promise.resolve();
     this.client = null;
   }
 
@@ -82,10 +88,10 @@ export class RestSourceAdapter implements SourceAdapter {
     store: StagingStore,
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
-    targetTable = 'stg_raw',
+    targetTable = "stg_raw",
   ): Promise<ExtractResult> {
-    if (!config.endpoint) throw new SourceError('rest source requires `endpoint`');
-    if (!this.client) throw new SourceError('rest: not connected');
+    if (!config.endpoint) throw new SourceError("rest source requires `endpoint`");
+    if (!this.client) throw new SourceError("rest: not connected");
 
     const pagination = config.pagination;
     let allRecords: Record<string, unknown>[] = [];
@@ -123,7 +129,7 @@ export class RestSourceAdapter implements SourceAdapter {
     const data = dataField ? getPath(body, dataField) : body;
     if (!Array.isArray(data)) {
       throw new SourceError(
-        `rest: expected an array at dataField "${dataField ?? '(root)'}", got ${typeof data}`,
+        `rest: expected an array at dataField "${dataField ?? "(root)"}", got ${typeof data}`,
       );
     }
     return data as Record<string, unknown>[];
@@ -135,8 +141,8 @@ export class RestSourceAdapter implements SourceAdapter {
     pagination: PaginationConfig,
   ): Promise<Record<string, unknown>[]> {
     const pageSize = pagination.pageSize;
-    const dataField = pagination.dataField ?? 'data';
-    const pageParam = pagination.pageParam ?? 'page';
+    const dataField = pagination.dataField ?? "data";
+    const pageParam = pagination.pageParam ?? "page";
     const totalField = pagination.totalField;
 
     const all: Record<string, unknown>[] = [];
@@ -147,15 +153,15 @@ export class RestSourceAdapter implements SourceAdapter {
 
     while (true) {
       const params: Record<string, unknown> = {};
-      if (pagination.type === 'offset') {
+      if (pagination.type === "offset") {
         params[pageParam] = offset;
-        params['limit'] = pageSize;
-      } else if (pagination.type === 'page') {
+        params["limit"] = pageSize;
+      } else if (pagination.type === "page") {
         params[pageParam] = page + 1;
-        params['pageSize'] = pageSize;
+        params["pageSize"] = pageSize;
       } else {
         if (cursor !== undefined) {
-          const cursorParam = pagination.cursorParam ?? 'cursor';
+          const cursorParam = pagination.cursorParam ?? "cursor";
           params[cursorParam] = cursor;
         }
       }
@@ -169,37 +175,34 @@ export class RestSourceAdapter implements SourceAdapter {
 
       if (total === undefined && totalField) {
         const t = getPath(body, totalField);
-        if (typeof t === 'number') total = t;
+        if (typeof t === "number") total = t;
       }
 
       if (chunk.length === 0) break;
-      if (pagination.type === 'offset') {
+      if (pagination.type === "offset") {
         offset += chunk.length;
         if (total !== undefined && offset >= total) break;
         if (chunk.length < pageSize) break;
-      } else if (pagination.type === 'page') {
+      } else if (pagination.type === "page") {
         page += 1;
         if (total !== undefined && all.length >= total) break;
         if (chunk.length < pageSize) break;
       } else {
         const cursorField = pagination.cursorField;
         if (!cursorField) {
-          throw new SourceError('rest: cursor pagination requires `pagination.cursorField`');
+          throw new SourceError("rest: cursor pagination requires `pagination.cursorField`");
         }
         const next = getPath(body, cursorField);
-        if (next === null || next === undefined || next === '') break;
-        cursor = String(next);
+        if (next === null || next === undefined || next === "") break;
+        cursor = stringifyValue(next);
       }
     }
 
-    logger.debug({ total: all.length, pagination: pagination.type }, 'rest: paged fetch complete');
+    logger.debug({ total: all.length, pagination: pagination.type }, "rest: paged fetch complete");
     return all;
   }
 
-  private async get(
-    url: string,
-    params: Record<string, unknown> | undefined,
-  ): Promise<unknown> {
+  private async get(url: string, params: Record<string, unknown> | undefined): Promise<unknown> {
     try {
       const res = await this.client!.get(url, { params });
       return res.data;
@@ -217,5 +220,5 @@ function collectColumns(rows: Record<string, unknown>[]): ColumnMeta[] {
   for (const r of rows) {
     for (const k of Object.keys(r)) names.add(k);
   }
-  return [...names].map((n) => ({ name: n, duckDbType: 'VARCHAR' }));
+  return [...names].map((n) => ({ name: n, duckDbType: "VARCHAR" }));
 }

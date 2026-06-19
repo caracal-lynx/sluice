@@ -12,16 +12,17 @@
  * this engine.
  */
 
-import * as path from 'node:path';
+import * as path from "node:path";
 
-import type { Pipeline } from '../config/types.js';
-import type { RuleRegistry } from '../plugins/registry.js';
-import { StagingStore, quoteIdent } from '../staging/index.js';
-import { ConfigError } from '../utils/errors.js';
-import { writeRejectionCsv, writeSummaryJson } from './reporter.js';
-import { BUILT_IN_RULES } from './rules/index.js';
-import type { Rule, RuleViolation } from './rules/types.js';
-import type { DQSummary, ViolationCounts } from './types.js';
+import type { Pipeline } from "../config/types.js";
+import type { RuleRegistry } from "../plugins/registry.js";
+import { StagingStore, quoteIdent } from "../staging/index.js";
+import { ConfigError } from "../utils/errors.js";
+import { stringifyValue } from "../utils/stringify.js";
+import { writeRejectionCsv, writeSummaryJson } from "./reporter.js";
+import { BUILT_IN_RULES } from "./rules/index.js";
+import type { Rule, RuleViolation } from "./rules/types.js";
+import type { DQSummary, ViolationCounts } from "./types.js";
 
 export class DQEngine {
   constructor(private readonly ruleRegistry?: RuleRegistry) {}
@@ -29,7 +30,7 @@ export class DQEngine {
   async run(
     config: Pipeline,
     store: StagingStore,
-    tableName = 'stg_raw',
+    tableName = "stg_raw",
     onProgress?: (rows: number) => void,
   ): Promise<DQSummary> {
     const rules = config.dq.rules;
@@ -43,16 +44,13 @@ export class DQEngine {
     // ── Pre-pass: compute duplicate sets for every field carrying a `unique` check ──
     const duplicatesByField = new Map<string, Set<string>>();
     for (const rule of rules) {
-      const hasUnique = rule.checks.some((c) => c.type === 'unique');
+      const hasUnique = rule.checks.some((c) => c.type === "unique");
       if (!hasUnique || duplicatesByField.has(rule.field)) continue;
       const qField = quoteIdent(rule.field);
       const dupRows = await store.query<{ v: unknown; n: unknown }>(
         `SELECT ${qField} AS v, count(*) AS n FROM ${quoteIdent(tableName)} WHERE ${qField} IS NOT NULL GROUP BY v HAVING count(*) > 1`,
       );
-      duplicatesByField.set(
-        rule.field,
-        new Set(dupRows.map((r) => String(r.v))),
-      );
+      duplicatesByField.set(rule.field, new Set(dupRows.map((r) => String(r.v))));
     }
 
     // ── Main pass: validate every (row, rule, check) combination ──
@@ -62,26 +60,26 @@ export class DQEngine {
       if (onProgress && rowIndex > 0 && rowIndex % progressEvery === 0) {
         onProgress(rowIndex);
       }
-      const row = rows[rowIndex]!;
+      const row = rows[rowIndex];
       for (const rule of rules) {
         const value = row[rule.field];
         for (const check of rule.checks) {
-          if (check.type === 'unique') {
+          if (check.type === "unique") {
             const dups = duplicatesByField.get(rule.field);
             if (
               value !== null &&
               value !== undefined &&
-              value !== '' &&
-              dups?.has(String(value))
+              value !== "" &&
+              dups?.has(stringifyValue(value))
             ) {
               violations.push({
                 field: rule.field,
                 rowIndex,
                 value,
-                rule: 'unique',
+                rule: "unique",
                 severity: check.severity,
                 message:
-                  check.message ?? `${rule.field} value "${String(value)}" is not unique`,
+                  check.message ?? `${rule.field} value "${stringifyValue(value)}" is not unique`,
               });
             }
             continue;
@@ -89,10 +87,10 @@ export class DQEngine {
           const impl: Rule | undefined =
             (BUILT_IN_RULES as Record<string, Rule>)[check.type] ??
             this.ruleRegistry?.get(check.type);
-          if (!impl) {
+          if (impl === undefined) {
             throw new ConfigError(
               `Unknown DQ rule type "${String(check.type)}". ` +
-                `Built-in types: ${Object.keys(BUILT_IN_RULES).join(', ')}`,
+                `Built-in types: ${Object.keys(BUILT_IN_RULES).join(", ")}`,
             );
           }
           const violation = impl.validate(value, check, rowIndex, rule.field);
@@ -107,7 +105,7 @@ export class DQEngine {
     const criticalRows = new Set<number>();
     for (const v of violations) {
       counts[v.severity]++;
-      if (v.severity === 'critical') criticalRows.add(v.rowIndex);
+      if (v.severity === "critical") criticalRows.add(v.rowIndex);
       const bf = (byField[v.field] ??= { critical: 0, warning: 0, info: 0 });
       bf[v.severity]++;
     }

@@ -16,10 +16,10 @@
  * Unmatched rows are always excluded regardless of config.onUnmatched.
  */
 
-import type { MergeStrategyPlugin } from '../types.js';
-import type { StagingStore } from '../../staging/index.js';
-import { quoteIdent } from '../../staging/index.js';
-import { logger } from '../../utils/logger.js';
+import type { MergeStrategyPlugin } from "../types.js";
+import type { StagingStore } from "../../staging/index.js";
+import { quoteIdent } from "../../staging/index.js";
+import { logger } from "../../utils/logger.js";
 
 import {
   buildJoinedTableSql,
@@ -27,15 +27,16 @@ import {
   buildPresentCountExpr,
   normalizeKeyColumns,
   type BuildMergeContext,
-} from '../sql-builder.js';
-import { buildConflictLog } from '../conflict-log.js';
-import type { MergeSourceMeta, MergeResult } from '../types.js';
-import type { MergeConfig } from '../../config/types.js';
-import { ConfigError } from '../../utils/errors.js';
+} from "../sql-builder.js";
+import { buildConflictLog } from "../conflict-log.js";
+import type { MergeSourceMeta, MergeResult } from "../types.js";
+import type { MergeConfig } from "../../config/types.js";
+import { ConfigError } from "../../utils/errors.js";
 
 export const intersectStrategy: MergeStrategyPlugin = {
-  id: 'intersect',
-  description: 'Only common rows. Includes only rows present in ALL sources; useful for intersection and reconciliation scenarios.',
+  id: "intersect",
+  description:
+    "Only common rows. Includes only rows present in ALL sources; useful for intersection and reconciliation scenarios.",
 
   async merge(
     store: StagingStore,
@@ -43,7 +44,7 @@ export const intersectStrategy: MergeStrategyPlugin = {
     config: MergeConfig,
   ): Promise<MergeResult> {
     if (rawSources.length < 2) {
-      throw new ConfigError('merge requires at least 2 sources');
+      throw new ConfigError("merge requires at least 2 sources");
     }
 
     const sources = [...rawSources].sort((a, b) => a.priority - b.priority);
@@ -53,7 +54,7 @@ export const intersectStrategy: MergeStrategyPlugin = {
     for (const source of sources) {
       sourceColumns[source.id] = await store.columnNames(source.tableName);
       for (const key of keyColumns) {
-        if (!sourceColumns[source.id]!.includes(key)) {
+        if (!sourceColumns[source.id].includes(key)) {
           throw new ConfigError(
             `merge key column '${key}' is missing from source '${source.id}' table '${source.tableName}'`,
           );
@@ -64,7 +65,7 @@ export const intersectStrategy: MergeStrategyPlugin = {
     const context: BuildMergeContext = { sources, keyColumns, sourceColumns };
 
     // Build the joined table (FULL OUTER JOIN on keys)
-    const joinedTable = 'stg_merge_joined';
+    const joinedTable = "stg_merge_joined";
     await store.query(buildJoinedTableSql(joinedTable, context));
 
     // Count unmatched rows (informational only; intersect always excludes them)
@@ -75,7 +76,7 @@ export const intersectStrategy: MergeStrategyPlugin = {
     const unmatched = Number(unmatchedRows[0]?.n ?? 0);
 
     if (unmatched > 0) {
-      logger.info({ unmatched }, 'merge: intersect strategy excludes unmatched rows');
+      logger.info({ unmatched }, "merge: intersect strategy excludes unmatched rows");
     }
 
     // Build output columns in order: keys first, then all non-key columns
@@ -97,8 +98,8 @@ export const intersectStrategy: MergeStrategyPlugin = {
     }
 
     // Merge: intersect only includes rows present in all sources, coalesce field values
-    const mergedTable = 'stg_merged';
-    const cfgOverride: MergeConfig = { ...config, strategy: 'intersect' };
+    const mergedTable = "stg_merged";
+    const cfgOverride: MergeConfig = { ...config, strategy: "intersect" };
     await store.query(
       buildMergedTableSql(mergedTable, joinedTable, context, cfgOverride, outputColumns),
     );
@@ -110,18 +111,18 @@ export const intersectStrategy: MergeStrategyPlugin = {
       context,
       cfgOverride,
       outputColumns,
-      'stg_merge_conflicts',
+      "stg_merge_conflicts",
     );
 
     logger.info(
       {
-        strategy: 'intersect',
+        strategy: "intersect",
         sources: sources.length,
         rowsMerged,
         conflicts: conflictLog.count,
         unmatched,
       },
-      'merge: complete',
+      "merge: complete",
     );
 
     return {

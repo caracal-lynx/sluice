@@ -19,14 +19,10 @@
  * It is the only plugin interface in Sluice that may perform I/O.
  */
 
-import type { Logger } from 'pino';
+import type { Logger } from "pino";
 
-import type {
-  EnrichConfig,
-  EnrichLookupConfig,
-  RunConfig,
-} from '../config/schema.js';
-import type { StagingStore } from '../staging/store.js';
+import type { EnrichConfig, EnrichLookupConfig, RunConfig } from "../config/schema.js";
+import type { StagingStore } from "../staging/store.js";
 
 export interface EnrichOptions extends Record<string, unknown> {
   /** Per-call timeout in milliseconds. Inherited from RunConfig.enrichTimeoutMs. */

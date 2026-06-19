@@ -13,19 +13,19 @@
  *       truncate: 16
  */
 
-import { createHash } from 'node:crypto';
-import type { TransformPlugin } from '../../../src/plugins/types.js';
+import { createHash } from "node:crypto";
+import type { TransformPlugin } from "../../../src/plugins/types.js";
 
 export const transform: TransformPlugin = {
-  id: 'hash-value',
+  id: "hash-value",
   apply: async (value: unknown, options?: Record<string, unknown>): Promise<unknown> => {
     if (value === null || value === undefined) return null;
 
     const str = String(value).trim();
-    if (str === '') return null;
+    if (str === "") return null;
 
-    const algorithm = (options?.algorithm as string) ?? 'sha256';
-    const encoding = (options?.encoding as string) ?? 'hex';
+    const algorithm = (options?.algorithm as string) ?? "sha256";
+    const encoding = (options?.encoding as string) ?? "hex";
     const truncate = (options?.truncate as number) ?? 0;
 
     try {

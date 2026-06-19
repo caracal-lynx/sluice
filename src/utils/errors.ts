@@ -2,10 +2,13 @@
 // Copyright (c) 2026 Caracal Lynx Limited
 
 export class PipelineError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message);
     this.name = this.constructor.name;
-    if (Error.captureStackTrace) {
+    if (typeof Error.captureStackTrace === "function") {
       Error.captureStackTrace(this, this.constructor);
     }
   }

@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { MergeStrategyRegistry } from '../../../src/merge/index.js';
-import type { MergeStrategyPlugin } from '../../../src/merge/index.js';
-import { ConfigError } from '../../../src/utils/errors.js';
+import { MergeStrategyRegistry } from "../../../src/merge/index.js";
+import type { MergeStrategyPlugin } from "../../../src/merge/index.js";
+import { ConfigError } from "../../../src/utils/errors.js";
 
 // Isolate each test — the registry module holds a module-level Map that persists
 // across tests in the same file. We clean up by tracking what we register.
@@ -34,59 +34,59 @@ function makePlugin(id: string): MergeStrategyPlugin {
       rowsMerged: 0,
       conflicts: 0,
       unmatched: 0,
-      tableName: 'stg_merged' as const,
+      tableName: "stg_merged" as const,
     }),
   };
 }
 
-describe('MergeStrategyRegistry', () => {
-  it('registers and retrieves a merge strategy plugin by id', () => {
-    const plugin = makePlugin('test-coalesce');
+describe("MergeStrategyRegistry", () => {
+  it("registers and retrieves a merge strategy plugin by id", () => {
+    const plugin = makePlugin("test-coalesce");
     registered.push(plugin.id);
 
     MergeStrategyRegistry.register(plugin);
 
-    expect(MergeStrategyRegistry.get('test-coalesce')).toBe(plugin);
+    expect(MergeStrategyRegistry.get("test-coalesce")).toBe(plugin);
   });
 
-  it('has() returns true after registration', () => {
-    const plugin = makePlugin('test-has-check');
+  it("has() returns true after registration", () => {
+    const plugin = makePlugin("test-has-check");
     registered.push(plugin.id);
 
-    expect(MergeStrategyRegistry.has('test-has-check')).toBe(false);
+    expect(MergeStrategyRegistry.has("test-has-check")).toBe(false);
     MergeStrategyRegistry.register(plugin);
-    expect(MergeStrategyRegistry.has('test-has-check')).toBe(true);
+    expect(MergeStrategyRegistry.has("test-has-check")).toBe(true);
   });
 
-  it('throws ConfigError for an unknown strategy id', () => {
-    expect(() => MergeStrategyRegistry.get('definitely-not-registered')).toThrow(ConfigError);
+  it("throws ConfigError for an unknown strategy id", () => {
+    expect(() => MergeStrategyRegistry.get("definitely-not-registered")).toThrow(ConfigError);
   });
 
-  it('ConfigError message mentions built-in strategy names', () => {
-    let message = '';
+  it("ConfigError message mentions built-in strategy names", () => {
+    let message = "";
     try {
-      MergeStrategyRegistry.get('definitely-not-registered-2');
+      MergeStrategyRegistry.get("definitely-not-registered-2");
     } catch (err) {
       message = (err as Error).message;
     }
-    expect(message).toContain('coalesce');
-    expect(message).toContain('priority-override');
-    expect(message).toContain('union');
-    expect(message).toContain('intersect');
+    expect(message).toContain("coalesce");
+    expect(message).toContain("priority-override");
+    expect(message).toContain("union");
+    expect(message).toContain("intersect");
   });
 
-  it('has() returns false for an id that was never registered', () => {
-    expect(MergeStrategyRegistry.has('never-registered')).toBe(false);
+  it("has() returns false for an id that was never registered", () => {
+    expect(MergeStrategyRegistry.has("never-registered")).toBe(false);
   });
 
-  it('overwriting an existing id replaces the plugin (last-write-wins)', () => {
-    const first  = makePlugin('test-overwrite');
-    const second = makePlugin('test-overwrite');
-    registered.push('test-overwrite');
+  it("overwriting an existing id replaces the plugin (last-write-wins)", () => {
+    const first = makePlugin("test-overwrite");
+    const second = makePlugin("test-overwrite");
+    registered.push("test-overwrite");
 
     MergeStrategyRegistry.register(first);
     MergeStrategyRegistry.register(second);
 
-    expect(MergeStrategyRegistry.get('test-overwrite')).toBe(second);
+    expect(MergeStrategyRegistry.get("test-overwrite")).toBe(second);
   });
 });

@@ -20,6 +20,6 @@ export type {
   EnrichWriteColumns,
   PrepConfig,
   PrepRule,
-} from './schema.js';
+} from "./schema.js";
 
-export { isSingleSource, isMultiSource } from './schema.js';
+export { isSingleSource, isMultiSource } from "./schema.js";

@@ -6,4 +6,4 @@
  * Keeping the shapes aligned means the engine can look up rules uniformly.
  */
 
-export type { RulePlugin as Rule, RuleViolation } from '../../plugins/types.js';
+export type { RulePlugin as Rule, RuleViolation } from "../../plugins/types.js";

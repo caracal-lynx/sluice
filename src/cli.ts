@@ -20,35 +20,31 @@
  *   5  prep error (Phase 12)
  */
 
-import { Command } from 'commander';
-import { readFileSync } from 'node:fs';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { Command } from "commander";
+import { readFileSync } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { ConfigLoader } from './config/loader.js';
-import { isMultiSource, type Pipeline } from './config/types.js';
-import { MultiSourcePipelineRunner } from './multi-source-runner.js';
-import {
-  PipelineRunner,
-  _isEnrichPhaseRegistered,
-  type RunOverrides,
-} from './runner.js';
-import { RuleRegistry, TransformRegistry, loadPlugins, loadNpmPlugins } from './plugins/index.js';
-import { MergeStrategyRegistry } from './merge/index.js';
-import { loadEnv } from './utils/env.js';
+import { ConfigLoader } from "./config/loader.js";
+import { isMultiSource, type Pipeline } from "./config/types.js";
+import { MultiSourcePipelineRunner } from "./multi-source-runner.js";
+import { PipelineRunner, _isEnrichPhaseRegistered, type RunOverrides } from "./runner.js";
+import { RuleRegistry, TransformRegistry, loadPlugins, loadNpmPlugins } from "./plugins/index.js";
+import { MergeStrategyRegistry } from "./merge/index.js";
+import { loadEnv } from "./utils/env.js";
 import {
   ConfigError,
   EnrichError,
   PipelineDQError,
   PipelineError,
   PrepError,
-} from './utils/errors.js';
-import { logger } from './utils/logger.js';
-import { ProgressReporter, type ProgressLogLevel } from './utils/progress.js';
+} from "./utils/errors.js";
+import { logger } from "./utils/logger.js";
+import { ProgressReporter } from "./utils/progress.js";
 
 interface GlobalOpts {
   env: string;
-  logLevel?: 'debug' | 'info' | 'warn' | 'error';
+  logLevel?: "debug" | "info" | "warn" | "error";
   output?: string;
   dryRun?: boolean;
   plugins?: string[];
@@ -69,21 +65,20 @@ interface GlobalOpts {
  */
 function readPackageVersion(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  const candidate = path.resolve(here, '..', 'package.json');
+  const candidate = path.resolve(here, "..", "package.json");
   try {
-    const raw = readFileSync(candidate, 'utf8');
+    const raw = readFileSync(candidate, "utf8");
     const pkg = JSON.parse(raw) as { version?: string };
-    return pkg.version ?? '0.0.0';
+    return pkg.version ?? "0.0.0";
   } catch {
-    return '0.0.0';
+    return "0.0.0";
   }
 }
 
 export function resolvePluginDirs(cwd: string, pluginDirs: string[] = []): string[] {
-  return Array.from(new Set([
-    path.resolve(cwd, 'plugins'),
-    ...pluginDirs.map((dir) => path.resolve(cwd, dir)),
-  ]));
+  return Array.from(
+    new Set([path.resolve(cwd, "plugins"), ...pluginDirs.map((dir) => path.resolve(cwd, dir))]),
+  );
 }
 
 export function exitCodeFor(err: unknown): number {
@@ -100,7 +95,7 @@ function applyGlobals(opts: GlobalOpts): RunOverrides {
   if (opts.logLevel) logger.level = opts.logLevel;
   if (opts.silent) {
     // Errors still reach stderr via the logger's multistream; info/warn are dropped.
-    logger.level = 'error';
+    logger.level = "error";
   }
   const overrides: RunOverrides = {};
   if (opts.output !== undefined) overrides.outputDir = opts.output;
@@ -109,19 +104,12 @@ function applyGlobals(opts: GlobalOpts): RunOverrides {
   return overrides;
 }
 
-function phaseCountForRun(
-  config: Pipeline,
-  skipEnrich: boolean,
-  skipPrep: boolean,
-): number {
-  const willLoad = !(config.run.dryRun || config.run.mode === 'validate-only');
+function phaseCountForRun(config: Pipeline, skipEnrich: boolean, skipPrep: boolean): number {
+  const willLoad = !(config.run.dryRun || config.run.mode === "validate-only");
   // Enrich runs only when: enrich block configured, run isn't validate/dry-run,
   // --no-enrich wasn't passed, and the private package has registered a factory.
   const willEnrich =
-    Boolean(config.enrich) &&
-    willLoad &&
-    !skipEnrich &&
-    _isEnrichPhaseRegistered();
+    Boolean(config.enrich) && willLoad && !skipEnrich && _isEnrichPhaseRegistered();
   const enrichPhases = willEnrich ? 1 : 0;
 
   // Prep runs whenever a prep: block is configured and --no-prep wasn't set.
@@ -167,7 +155,7 @@ function buildProgressReporter(
   return new ProgressReporter({
     silent: opts.silent ?? false,
     totalPhases: phaseCountForRun(config, skipEnrich, skipPrep),
-    logLevel: (opts.logLevel ?? 'info') as ProgressLogLevel,
+    logLevel: opts.logLevel ?? "info",
   });
 }
 
@@ -175,9 +163,7 @@ export async function createRunnerForPipeline(
   yaml: string,
 ): Promise<PipelineRunner | MultiSourcePipelineRunner> {
   const config = await ConfigLoader.load(yaml);
-  return isMultiSource(config)
-    ? new MultiSourcePipelineRunner()
-    : new PipelineRunner();
+  return isMultiSource(config) ? new MultiSourcePipelineRunner() : new PipelineRunner();
 }
 
 interface RunCmdOpts {
@@ -185,11 +171,7 @@ interface RunCmdOpts {
   prep?: boolean;
 }
 
-async function cmdRun(
-  yaml: string,
-  program: Command,
-  cmdOpts: RunCmdOpts = {},
-): Promise<never> {
+async function cmdRun(yaml: string, program: Command, cmdOpts: RunCmdOpts = {}): Promise<never> {
   const opts = program.opts<GlobalOpts>();
   const overrides = applyGlobals(opts);
   if (cmdOpts.enrich === false) overrides.skipEnrich = true;
@@ -217,12 +199,12 @@ async function cmdRun(
         rowsLoaded: result.load?.rowsLoaded ?? 0,
         stateFile: result.stateFilePath,
       },
-      'sluice run: complete',
+      "sluice run: complete",
     );
     process.exit(0);
   } catch (err) {
     progress?.stop();
-    logger.error({ err }, 'sluice run: failed');
+    logger.error({ err }, "sluice run: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -238,7 +220,7 @@ async function cmdValidate(
 ): Promise<never> {
   const opts = program.opts<GlobalOpts>();
   const overrides = applyGlobals(opts);
-  overrides.mode = 'validate-only';
+  overrides.mode = "validate-only";
   if (cmdOpts.prep === false) overrides.skipPrep = true;
   let progress: ProgressReporter | undefined;
   try {
@@ -246,7 +228,7 @@ async function cmdValidate(
     const config = await ConfigLoader.load(yaml);
     progress = buildProgressReporter(
       opts,
-      { ...config, run: { ...config.run, mode: 'validate-only' } },
+      { ...config, run: { ...config.run, mode: "validate-only" } },
       false,
       overrides.skipPrep ?? false,
     );
@@ -260,12 +242,12 @@ async function cmdValidate(
         critical: result.dq.violations.critical,
         warnings: result.dq.violations.warning,
       },
-      'sluice validate: complete',
+      "sluice validate: complete",
     );
     process.exit(0);
   } catch (err) {
     progress?.stop();
-    logger.error({ err }, 'sluice validate: failed');
+    logger.error({ err }, "sluice validate: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -281,18 +263,22 @@ async function cmdProfile(yaml: string, program: Command): Promise<never> {
     progress = new ProgressReporter({
       silent: opts.silent ?? false,
       totalPhases: isMultiSource(config) ? config.sources.length + 1 : 1,
-      logLevel: (opts.logLevel ?? 'info') as ProgressLogLevel,
+      logLevel: opts.logLevel ?? "info",
     });
     overrides.progress = progress;
     const result = await runner.profile(yaml, overrides);
     logger.info(
-      { pipeline: result.pipeline, rowsExtracted: result.extract.rowsExtracted, profilePath: result.profilePath },
-      'sluice profile: complete',
+      {
+        pipeline: result.pipeline,
+        rowsExtracted: result.extract.rowsExtracted,
+        profilePath: result.profilePath,
+      },
+      "sluice profile: complete",
     );
     process.exit(0);
   } catch (err) {
     progress?.stop();
-    logger.error({ err }, 'sluice profile: failed');
+    logger.error({ err }, "sluice profile: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -305,18 +291,18 @@ async function cmdCheck(yaml: string, program: Command): Promise<never> {
     logger.info(
       {
         pipeline: config.pipeline.name,
-        source: config.source?.adapter ?? 'multi',
+        source: config.source?.adapter ?? "multi",
         sourceCount: isMulti ? config.sources.length : 1,
         mergeStrategy: isMulti ? config.merge.strategy : undefined,
         target: config.target.adapter,
         rules: config.dq.rules.length,
         fields: config.transform.fields.length,
       },
-      'sluice check: config is valid',
+      "sluice check: config is valid",
     );
     process.exit(0);
   } catch (err) {
-    logger.error({ err }, 'sluice check: failed');
+    logger.error({ err }, "sluice check: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -336,7 +322,7 @@ async function cmdPlugins(program: Command): Promise<never> {
       await loadPlugins(dir, ruleRegistry, transformRegistry, MergeStrategyRegistry);
     }
 
-    const configPath = path.join(cwd, 'sluice.config.yaml');
+    const configPath = path.join(cwd, "sluice.config.yaml");
     await loadNpmPlugins(configPath, ruleRegistry, transformRegistry, MergeStrategyRegistry);
 
     const ruleIds = ruleRegistry.list();
@@ -349,11 +335,11 @@ async function cmdPlugins(program: Command): Promise<never> {
         transforms: transformIds,
         mergeStrategies: mergeStrategyIds,
       },
-      'sluice plugins: loaded',
+      "sluice plugins: loaded",
     );
     process.exit(0);
   } catch (err) {
-    logger.error({ err }, 'sluice plugins: failed');
+    logger.error({ err }, "sluice plugins: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -370,7 +356,7 @@ async function cmdMergeListStrategies(program: Command): Promise<never> {
       await loadPlugins(dir, ruleRegistry, transformRegistry, MergeStrategyRegistry);
     }
 
-    const configPath = path.join(cwd, 'sluice.config.yaml');
+    const configPath = path.join(cwd, "sluice.config.yaml");
     await loadNpmPlugins(configPath, ruleRegistry, transformRegistry, MergeStrategyRegistry);
 
     const strategyIds = MergeStrategyRegistry.list();
@@ -378,13 +364,10 @@ async function cmdMergeListStrategies(program: Command): Promise<never> {
       const strategy = MergeStrategyRegistry.get(id);
       return { id: strategy.id, description: strategy.description ?? strategy.id };
     });
-    logger.info(
-      { count: strategies.length, strategies },
-      'sluice merge list-strategies: loaded',
-    );
+    logger.info({ count: strategies.length, strategies }, "sluice merge list-strategies: loaded");
     process.exit(0);
   } catch (err) {
-    logger.error({ err }, 'sluice merge list-strategies: failed');
+    logger.error({ err }, "sluice merge list-strategies: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -401,7 +384,7 @@ async function cmdMergeInfo(strategyId: string, program: Command): Promise<never
       await loadPlugins(dir, ruleRegistry, transformRegistry, MergeStrategyRegistry);
     }
 
-    const configPath = path.join(cwd, 'sluice.config.yaml');
+    const configPath = path.join(cwd, "sluice.config.yaml");
     await loadNpmPlugins(configPath, ruleRegistry, transformRegistry, MergeStrategyRegistry);
 
     const strategy = MergeStrategyRegistry.get(strategyId);
@@ -411,11 +394,11 @@ async function cmdMergeInfo(strategyId: string, program: Command): Promise<never
         strategy: strategy.id,
         description: strategy.description ?? strategy.id,
       },
-      'sluice merge info: complete',
+      "sluice merge info: complete",
     );
     process.exit(0);
   } catch (err) {
-    logger.error({ err, strategyId }, 'sluice merge info: failed');
+    logger.error({ err, strategyId }, "sluice merge info: failed");
     process.exit(exitCodeFor(err));
   }
 }
@@ -423,65 +406,63 @@ async function cmdMergeInfo(strategyId: string, program: Command): Promise<never
 export function buildProgram(): Command {
   const program = new Command();
   program
-    .name('sluice')
-    .description('Config-driven ETL toolkit for ERP data migrations')
+    .name("sluice")
+    .description("Config-driven ETL toolkit for ERP data migrations")
     .version(readPackageVersion())
-    .option('--log-level <level>', 'debug | info | warn | error')
-    .option('--env <file>', 'Path to .env file', './.env')
-    .option('--output <dir>', 'Override run.outputDir')
-    .option('--plugins <dir...>', 'Additional plugin directory/directories to load')
-    .option('--dry-run', 'Force run.dryRun = true')
-    .option('--silent', 'Suppress the progress bar on stdout (logs still go to stderr)');
+    .option("--log-level <level>", "debug | info | warn | error")
+    .option("--env <file>", "Path to .env file", "./.env")
+    .option("--output <dir>", "Override run.outputDir")
+    .option("--plugins <dir...>", "Additional plugin directory/directories to load")
+    .option("--dry-run", "Force run.dryRun = true")
+    .option("--silent", "Suppress the progress bar on stdout (logs still go to stderr)");
 
   program
-    .command('run <pipeline>')
-    .description('Execute a full pipeline run')
-    .option('--no-enrich', 'Skip the Phase 4a enrich phase even if enrich: is configured')
-    .option('--no-prep', 'Skip the Phase 12 prep phase even if prep: is configured')
+    .command("run <pipeline>")
+    .description("Execute a full pipeline run")
+    .option("--no-enrich", "Skip the Phase 4a enrich phase even if enrich: is configured")
+    .option("--no-prep", "Skip the Phase 12 prep phase even if prep: is configured")
     .action((yaml: string, cmdOpts: RunCmdOpts) => {
       void cmdRun(yaml, program, cmdOpts);
     });
   program
-    .command('validate <pipeline>')
-    .description('DQ + transform only; no load')
-    .option('--no-prep', 'Skip the Phase 12 prep phase even if prep: is configured')
+    .command("validate <pipeline>")
+    .description("DQ + transform only; no load")
+    .option("--no-prep", "Skip the Phase 12 prep phase even if prep: is configured")
     .action((yaml: string, cmdOpts: ValidateCmdOpts) => {
       void cmdValidate(yaml, program, cmdOpts);
     });
   program
-    .command('profile <pipeline>')
-    .description('Extract + column profiling; no DQ')
+    .command("profile <pipeline>")
+    .description("Extract + column profiling; no DQ")
     .action((yaml: string) => {
       void cmdProfile(yaml, program);
     });
   program
-    .command('check <pipeline>')
-    .description('Validate config only; no execution')
+    .command("check <pipeline>")
+    .description("Validate config only; no execution")
     .action((yaml: string) => {
       void cmdCheck(yaml, program);
     });
 
   program
-    .command('plugins')
-    .description('List all loaded plugins (Tier 2 and Tier 3)')
+    .command("plugins")
+    .description("List all loaded plugins (Tier 2 and Tier 3)")
     .action(() => {
       void cmdPlugins(program);
     });
 
-  const mergeCmd = program
-    .command('merge')
-    .description('Merge strategy operations');
+  const mergeCmd = program.command("merge").description("Merge strategy operations");
 
   mergeCmd
-    .command('list-strategies')
-    .description('List all available merge strategies')
+    .command("list-strategies")
+    .description("List all available merge strategies")
     .action(() => {
       void cmdMergeListStrategies(program);
     });
 
   mergeCmd
-    .command('info <strategy>')
-    .description('Show details about a specific merge strategy')
+    .command("info <strategy>")
+    .description("Show details about a specific merge strategy")
     .action((strategyId: string) => {
       void cmdMergeInfo(strategyId, program);
     });
@@ -490,17 +471,17 @@ export function buildProgram(): Command {
 }
 
 // Only parse when invoked as the entry point (not when imported from tests).
-const invoked = process.argv[1] ?? '';
+const invoked = process.argv[1] ?? "";
 if (
-  invoked.endsWith('cli.ts') ||
-  invoked.endsWith('cli.js') ||
-  invoked.endsWith('sluice') ||
-  invoked.endsWith('sluice.cmd')
+  invoked.endsWith("cli.ts") ||
+  invoked.endsWith("cli.js") ||
+  invoked.endsWith("sluice") ||
+  invoked.endsWith("sluice.cmd")
 ) {
   buildProgram()
     .parseAsync(process.argv)
     .catch((err) => {
-      logger.error({ err }, 'sluice CLI: unexpected error');
+      logger.error({ err }, "sluice CLI: unexpected error");
       process.exit(1);
     });
 }

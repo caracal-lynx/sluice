@@ -4,20 +4,20 @@ rules:
   - id: styleCoStyleNo
     description: Internal style number — two uppercase letters + four digits
     checks:
-      - { type: notNull,   severity: critical }
-      - { type: pattern,   value: "^[A-Z]{2}[0-9]{4}$", severity: critical }
+      - { type: notNull, severity: critical }
+      - { type: pattern, value: "^[A-Z]{2}[0-9]{4}$", severity: critical }
       - { type: maxLength, value: 6, severity: critical }
 
   - id: positivePrice
     description: Price must be a non-negative number
     checks:
       - { type: notNull, severity: critical }
-      - { type: min,     value: 0,       severity: critical }
-      - { type: max,     value: 99999.99, severity: warning }
+      - { type: min, value: 0, severity: critical }
+      - { type: max, value: 99999.99, severity: warning }
 
   - id: ifsCustomerNo
     description: IFS customer number — 3-10 uppercase alphanumeric
     checks:
-      - { type: notNull,  severity: critical }
-      - { type: unique,   severity: critical }
-      - { type: pattern,  value: "^[A-Z0-9]{3,10}$", severity: warning }
+      - { type: notNull, severity: critical }
+      - { type: unique, severity: critical }
+      - { type: pattern, value: "^[A-Z0-9]{3,10}$", severity: warning }

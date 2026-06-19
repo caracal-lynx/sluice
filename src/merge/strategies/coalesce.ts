@@ -16,10 +16,10 @@
  * Unmatched rows (present in only one source) are included by default.
  */
 
-import type { MergeStrategyPlugin } from '../types.js';
-import type { StagingStore } from '../../staging/index.js';
-import { quoteIdent } from '../../staging/index.js';
-import { logger } from '../../utils/logger.js';
+import type { MergeStrategyPlugin } from "../types.js";
+import type { StagingStore } from "../../staging/index.js";
+import { quoteIdent } from "../../staging/index.js";
+import { logger } from "../../utils/logger.js";
 
 import {
   buildJoinedTableSql,
@@ -27,15 +27,16 @@ import {
   buildPresentCountExpr,
   normalizeKeyColumns,
   type BuildMergeContext,
-} from '../sql-builder.js';
-import { buildConflictLog } from '../conflict-log.js';
-import type { MergeSourceMeta, MergeResult } from '../types.js';
-import type { MergeConfig } from '../../config/types.js';
-import { ConfigError, PipelineError } from '../../utils/errors.js';
+} from "../sql-builder.js";
+import { buildConflictLog } from "../conflict-log.js";
+import type { MergeSourceMeta, MergeResult } from "../types.js";
+import type { MergeConfig } from "../../config/types.js";
+import { ConfigError, PipelineError } from "../../utils/errors.js";
 
 export const coalesceStrategy: MergeStrategyPlugin = {
-  id: 'coalesce',
-  description: 'First non-null value wins. Coalesces each field across sources in priority order; includes unmatched rows by default.',
+  id: "coalesce",
+  description:
+    "First non-null value wins. Coalesces each field across sources in priority order; includes unmatched rows by default.",
 
   async merge(
     store: StagingStore,
@@ -43,7 +44,7 @@ export const coalesceStrategy: MergeStrategyPlugin = {
     config: MergeConfig,
   ): Promise<MergeResult> {
     if (rawSources.length < 2) {
-      throw new ConfigError('merge requires at least 2 sources');
+      throw new ConfigError("merge requires at least 2 sources");
     }
 
     const sources = [...rawSources].sort((a, b) => a.priority - b.priority);
@@ -53,7 +54,7 @@ export const coalesceStrategy: MergeStrategyPlugin = {
     for (const source of sources) {
       sourceColumns[source.id] = await store.columnNames(source.tableName);
       for (const key of keyColumns) {
-        if (!sourceColumns[source.id]!.includes(key)) {
+        if (!sourceColumns[source.id].includes(key)) {
           throw new ConfigError(
             `merge key column '${key}' is missing from source '${source.id}' table '${source.tableName}'`,
           );
@@ -64,7 +65,7 @@ export const coalesceStrategy: MergeStrategyPlugin = {
     const context: BuildMergeContext = { sources, keyColumns, sourceColumns };
 
     // Build the joined table (FULL OUTER JOIN on keys)
-    const joinedTable = 'stg_merge_joined';
+    const joinedTable = "stg_merge_joined";
     await store.query(buildJoinedTableSql(joinedTable, context));
 
     // Check for unmatched rows and handle per config
@@ -74,13 +75,13 @@ export const coalesceStrategy: MergeStrategyPlugin = {
     );
     const unmatched = Number(unmatchedRows[0]?.n ?? 0);
 
-    if (config.onUnmatched === 'error' && unmatched > 0) {
+    if (config.onUnmatched === "error" && unmatched > 0) {
       throw new PipelineError(
         `merge halted: ${unmatched} unmatched row(s) encountered with onUnmatched=error`,
       );
     }
-    if (config.onUnmatched === 'warn' && unmatched > 0) {
-      logger.warn({ unmatched }, 'merge: unmatched rows present');
+    if (config.onUnmatched === "warn" && unmatched > 0) {
+      logger.warn({ unmatched }, "merge: unmatched rows present");
     }
 
     // Build output columns in order: keys first, then all non-key columns
@@ -102,7 +103,7 @@ export const coalesceStrategy: MergeStrategyPlugin = {
     }
 
     // Merge: coalesce picks first non-null value respecting priority
-    const mergedTable = 'stg_merged';
+    const mergedTable = "stg_merged";
     await store.query(
       buildMergedTableSql(mergedTable, joinedTable, context, config, outputColumns),
     );
@@ -114,18 +115,18 @@ export const coalesceStrategy: MergeStrategyPlugin = {
       context,
       config,
       outputColumns,
-      'stg_merge_conflicts',
+      "stg_merge_conflicts",
     );
 
     logger.info(
       {
-        strategy: 'coalesce',
+        strategy: "coalesce",
         sources: sources.length,
         rowsMerged,
         conflicts: conflictLog.count,
         unmatched,
       },
-      'merge: complete',
+      "merge: complete",
     );
 
     return {

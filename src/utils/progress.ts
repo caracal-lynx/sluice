@@ -22,14 +22,14 @@
  *   stop()                    // always — put in try/finally
  */
 
-import cliProgress from 'cli-progress';
-import pc from 'picocolors';
+import cliProgress from "cli-progress";
+import pc from "picocolors";
 
-export type PhaseKind = 'extract' | 'prep' | 'dq' | 'merge' | 'enrich' | 'transform' | 'load';
+export type PhaseKind = "extract" | "prep" | "dq" | "merge" | "enrich" | "transform" | "load";
 
-export type PhaseEndState = 'success' | 'warn' | 'fail';
+export type PhaseEndState = "success" | "warn" | "fail";
 
-export type ProgressLogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type ProgressLogLevel = "debug" | "info" | "warn" | "error";
 
 export interface StartPhaseOpts {
   total?: number;
@@ -70,24 +70,24 @@ interface PhaseState {
 }
 
 const PHASE_ICON_EMOJI: Record<PhaseKind, string> = {
-  extract: '🔎',
-  prep: '🧽',
-  dq: '🛡️ ',
-  merge: '🔀',
-  enrich: '🌐',
-  transform: '🔧',
-  load: '📤',
+  extract: "🔎",
+  prep: "🧽",
+  dq: "🛡️ ",
+  merge: "🔀",
+  enrich: "🌐",
+  transform: "🔧",
+  load: "📤",
 };
 
 // Plain-ASCII fallbacks used when the stream is not a TTY.
 const PHASE_ICON_ASCII: Record<PhaseKind, string> = {
-  extract: '[EX]',
-  prep: '[PR]',
-  dq: '[DQ]',
-  merge: '[MG]',
-  enrich: '[EN]',
-  transform: '[TX]',
-  load: '[LD]',
+  extract: "[EX]",
+  prep: "[PR]",
+  dq: "[DQ]",
+  merge: "[MG]",
+  enrich: "[EN]",
+  transform: "[TX]",
+  load: "[LD]",
 };
 
 const PHASE_COLOUR: Record<PhaseKind, (s: string) => string> = {
@@ -100,11 +100,11 @@ const PHASE_COLOUR: Record<PhaseKind, (s: string) => string> = {
   load: pc.green,
 };
 
-const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const INDETERMINATE_TICK_MS = 100;
 
 function formatRows(n: number): string {
-  return n.toLocaleString('en-US');
+  return n.toLocaleString("en-US");
 }
 
 function formatElapsed(ms: number): string {
@@ -133,7 +133,7 @@ export class ProgressReporter {
     this.isTTY = opts.isTTY ?? Boolean((this.stdout as NodeJS.WriteStream).isTTY);
     this.now = opts.now ?? (() => Date.now());
 
-    const barDisabled = opts.logLevel === 'debug';
+    const barDisabled = opts.logLevel === "debug";
     this.useBar = !this.silent && this.isTTY && !barDisabled;
   }
 
@@ -141,7 +141,7 @@ export class ProgressReporter {
     if (this.stopped) return;
 
     // If a previous phase was left open, close it quietly so we never leak a bar.
-    if (this.phase) this.endPhase({ state: 'success' });
+    if (this.phase) this.endPhase({ state: "success" });
 
     this.phaseIndex++;
     this.phase = {
@@ -178,7 +178,7 @@ export class ProgressReporter {
 
   endPhase(opts: EndPhaseOpts = {}): void {
     if (this.stopped || !this.phase) return;
-    const state = opts.state ?? 'success';
+    const state = opts.state ?? "success";
     const rows = this.phase.lastRows;
     const elapsedMs = this.now() - this.phase.startMs;
 
@@ -197,7 +197,7 @@ export class ProgressReporter {
   /** Final run summary banner. Safe to call when silent — no-ops. */
   summary(opts: SummaryOpts): void {
     if (this.silent) return;
-    const state = opts.state ?? 'success';
+    const state = opts.state ?? "success";
     const marker = this.stateMarker(state);
     const bits: string[] = [];
     bits.push(marker);
@@ -212,7 +212,7 @@ export class ProgressReporter {
       bits.push(`${formatRows(opts.rowsLoaded)} loaded`);
     }
     bits.push(pc.dim(formatElapsed(opts.elapsedMs)));
-    this.writeLine(bits.join(pc.dim(' · ')));
+    this.writeLine(bits.join(pc.dim(" · ")));
   }
 
   stop(): void {
@@ -220,7 +220,7 @@ export class ProgressReporter {
     if (this.phase) {
       // Caller aborted mid-phase (e.g. thrown error). Close with failure state.
       // Set `stopped` after endPhase so the close line renders.
-      this.endPhase({ state: 'fail' });
+      this.endPhase({ state: "fail" });
     }
     this.stopped = true;
     this.stopBar();
@@ -232,12 +232,12 @@ export class ProgressReporter {
     const bar = new cliProgress.SingleBar(
       {
         format: this.formatDeterminate(),
-        barCompleteChar: '█',
-        barIncompleteChar: '░',
+        barCompleteChar: "█",
+        barIncompleteChar: "░",
         hideCursor: true,
         clearOnComplete: false,
         stopOnComplete: false,
-        stream: this.stdout as NodeJS.WriteStream,
+        stream: this.stdout,
         fps: 10,
         noTTYOutput: false,
         forceRedraw: false,
@@ -255,14 +255,14 @@ export class ProgressReporter {
       this.indeterminateFrame++;
       this.renderIndeterminate();
     }, INDETERMINATE_TICK_MS);
-    if (typeof this.indeterminateTimer.unref === 'function') {
+    if (typeof this.indeterminateTimer.unref === "function") {
       this.indeterminateTimer.unref();
     }
   }
 
   private renderIndeterminate(): void {
     if (!this.phase) return;
-    const spin = SPINNER_FRAMES[this.indeterminateFrame % SPINNER_FRAMES.length] ?? '.';
+    const spin = SPINNER_FRAMES[this.indeterminateFrame % SPINNER_FRAMES.length] ?? ".";
     const label = this.renderPhaseLabel();
     const rows = formatRows(this.phase.lastRows);
     const elapsed = formatElapsed(this.now() - this.phase.startMs);
@@ -280,7 +280,7 @@ export class ProgressReporter {
       clearInterval(this.indeterminateTimer);
       this.indeterminateTimer = null;
       // Erase the in-flight indeterminate line.
-      if (this.isTTY) this.stdout.write('\r\x1b[K');
+      if (this.isTTY) this.stdout.write("\r\x1b[K");
     }
   }
 
@@ -301,11 +301,11 @@ export class ProgressReporter {
     if (rows > 0) parts.push(`${formatRows(rows)} rows`);
     parts.push(pc.dim(formatElapsed(elapsedMs)));
     if (message) parts.push(pc.dim(message));
-    return parts.join('  ');
+    return parts.join("  ");
   }
 
   private renderPhaseLabel(): string {
-    if (!this.phase) return '';
+    if (!this.phase) return "";
     const counter = pc.dim(`[${this.phaseIndex}/${this.totalPhases}]`);
     const icon = this.phaseIcon(this.phase.kind);
     const colourise = PHASE_COLOUR[this.phase.kind];
@@ -320,24 +320,30 @@ export class ProgressReporter {
   private stateMarker(state: PhaseEndState): string {
     if (this.isTTY) {
       switch (state) {
-        case 'success': return pc.bold(pc.green('✅'));
-        case 'warn':    return pc.yellow('⚠️ ');
-        case 'fail':    return pc.bold(pc.red('❌'));
+        case "success":
+          return pc.bold(pc.green("✅"));
+        case "warn":
+          return pc.yellow("⚠️ ");
+        case "fail":
+          return pc.bold(pc.red("❌"));
       }
     }
     switch (state) {
-      case 'success': return '[ok]';
-      case 'warn':    return '[warn]';
-      case 'fail':    return '[fail]';
+      case "success":
+        return "[ok]";
+      case "warn":
+        return "[warn]";
+      case "fail":
+        return "[fail]";
     }
   }
 
   private formatDeterminate(): string {
-    if (!this.phase) return '';
+    if (!this.phase) return "";
     const label = this.renderPhaseLabel();
     const colourise = PHASE_COLOUR[this.phase.kind];
     // cli-progress tokens: {bar} {value} {total} {eta_formatted} {duration_formatted}
-    const bar = `${colourise('{bar}')}`;
+    const bar = `${colourise("{bar}")}`;
     const counts = `{value}/{total} rows`;
     const eta = pc.dim(`ETA {eta_formatted}`);
     return `${label}  ${bar}  ${counts} · ${eta}`;

@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import type { MergeConfig } from '../config/types.js';
-import type { StagingStore } from '../staging/index.js';
-import { quoteIdent } from '../staging/index.js';
+import type { MergeConfig } from "../config/types.js";
+import type { StagingStore } from "../staging/index.js";
+import { quoteIdent } from "../staging/index.js";
 
-import {
-  type BuildMergeContext,
-  buildConflictFieldSelectSql,
-} from './sql-builder.js';
+import { type BuildMergeContext, buildConflictFieldSelectSql } from "./sql-builder.js";
 
 export interface ConflictLogResult {
   count: number;
@@ -16,10 +13,8 @@ export interface ConflictLogResult {
 }
 
 function buildEmptyConflictTableSql(tableName: string, keyColumns: string[]): string {
-  const keyCols = keyColumns
-    .map((k) => `CAST(NULL AS VARCHAR) AS ${quoteIdent(k)}`)
-    .join(', ');
-  const leading = keyCols.length > 0 ? `${keyCols}, ` : '';
+  const keyCols = keyColumns.map((k) => `CAST(NULL AS VARCHAR) AS ${quoteIdent(k)}`).join(", ");
+  const leading = keyCols.length > 0 ? `${keyCols}, ` : "";
   return `CREATE OR REPLACE TABLE ${quoteIdent(tableName)} AS SELECT ${leading}CAST(NULL AS VARCHAR) AS field, CAST(NULL AS VARCHAR) AS winning_source, CAST(NULL AS VARCHAR) AS winning_value, CAST(NULL AS VARCHAR) AS source_values WHERE FALSE`;
 }
 
@@ -29,7 +24,7 @@ export async function buildConflictLog(
   context: BuildMergeContext,
   config: MergeConfig,
   outputColumns: string[],
-  conflictTableName = 'stg_merge_conflicts',
+  conflictTableName = "stg_merge_conflicts",
 ): Promise<ConflictLogResult> {
   const selects = outputColumns
     .map((field) => buildConflictFieldSelectSql(joinedTable, context, field, config))
@@ -39,7 +34,7 @@ export async function buildConflictLog(
     await store.query(buildEmptyConflictTableSql(conflictTableName, context.keyColumns));
   } else {
     await store.query(
-      `CREATE OR REPLACE TABLE ${quoteIdent(conflictTableName)} AS ${selects.join(' UNION ALL ')}`,
+      `CREATE OR REPLACE TABLE ${quoteIdent(conflictTableName)} AS ${selects.join(" UNION ALL ")}`,
     );
   }
 

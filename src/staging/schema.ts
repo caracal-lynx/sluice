@@ -11,7 +11,7 @@
  */
 
 /** DuckDB primitive types produced by the source adapters. */
-export type DuckDbType = 'VARCHAR' | 'BIGINT' | 'DOUBLE' | 'BOOLEAN' | 'TIMESTAMP';
+export type DuckDbType = "VARCHAR" | "BIGINT" | "DOUBLE" | "BOOLEAN" | "TIMESTAMP";
 
 export interface ColumnMeta {
   name: string;
@@ -28,6 +28,6 @@ export function buildCreateTableSql(tableName: string, columns: ColumnMeta[]): s
   if (columns.length === 0) {
     throw new Error(`cannot create table ${tableName} with no columns`);
   }
-  const colsSql = columns.map((c) => `${quoteIdent(c.name)} ${c.duckDbType}`).join(', ');
+  const colsSql = columns.map((c) => `${quoteIdent(c.name)} ${c.duckDbType}`).join(", ");
   return `CREATE TABLE IF NOT EXISTS ${quoteIdent(tableName)} (${colsSql})`;
 }

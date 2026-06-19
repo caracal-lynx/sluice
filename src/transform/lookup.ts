@@ -11,11 +11,12 @@
  * key/value pairs into the cache.
  */
 
-import { SourceAdapterRegistry } from '../adapters/source/index.js';
-import type { Pipeline, RunConfig } from '../config/types.js';
-import { StagingStore, quoteIdent } from '../staging/index.js';
-import { TransformError } from '../utils/errors.js';
-import { logger } from '../utils/logger.js';
+import { SourceAdapterRegistry } from "../adapters/source/index.js";
+import type { Pipeline, RunConfig } from "../config/types.js";
+import { StagingStore, quoteIdent } from "../staging/index.js";
+import { TransformError } from "../utils/errors.js";
+import { logger } from "../utils/logger.js";
+import { stringifyValue } from "../utils/stringify.js";
 
 export class LookupResolver {
   private readonly tables = new Map<string, Map<string, string>>();
@@ -27,18 +28,12 @@ export class LookupResolver {
       }
 
       const adapter = SourceAdapterRegistry.get(lookup.source.adapter);
-      const tempStore = new StagingStore(':memory:');
+      const tempStore = new StagingStore(":memory:");
       await tempStore.open();
       try {
         await adapter.connect(lookup.source);
         try {
-          await adapter.extract(
-            lookup.source,
-            tempStore,
-            runConfig,
-            () => {},
-            'stg_lookup',
-          );
+          await adapter.extract(lookup.source, tempStore, runConfig, () => {}, "stg_lookup");
         } finally {
           await adapter.disconnect();
         }
@@ -48,13 +43,13 @@ export class LookupResolver {
         );
         const map = new Map<string, string>();
         for (const row of rows) {
-          const k = row['k'];
-          const v = row['v'];
+          const k = row["k"];
+          const v = row["v"];
           if (k === null || k === undefined) continue;
-          map.set(String(k), v === null || v === undefined ? '' : String(v));
+          map.set(stringifyValue(k), v === null || v === undefined ? "" : stringifyValue(v));
         }
         this.tables.set(lookup.name, map);
-        logger.debug({ lookup: lookup.name, entries: map.size }, 'lookup: loaded');
+        logger.debug({ lookup: lookup.name, entries: map.size }, "lookup: loaded");
       } finally {
         await tempStore.close();
       }
@@ -67,8 +62,8 @@ export class LookupResolver {
     if (!table) {
       throw new TransformError(`Unknown lookup: "${lookupName}"`);
     }
-    if (key === null || key === undefined || key === '') return undefined;
-    return table.get(String(key));
+    if (key === null || key === undefined || key === "") return undefined;
+    return table.get(stringifyValue(key));
   }
 
   /** Primarily for tests. */

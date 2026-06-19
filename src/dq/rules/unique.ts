@@ -9,11 +9,11 @@
  * null because per-cell validation can't determine uniqueness in isolation.
  */
 
-import type { CheckConfig } from '../../config/types.js';
-import type { Rule, RuleViolation } from './types.js';
+import type { CheckConfig } from "../../config/types.js";
+import type { Rule, RuleViolation } from "./types.js";
 
 export class UniqueRule implements Rule {
-  readonly id = 'unique';
+  readonly id = "unique";
 
   validate(
     _value: unknown,

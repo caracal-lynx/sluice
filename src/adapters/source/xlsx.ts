@@ -10,18 +10,19 @@
  * `targetTable` defaults to 'stg_raw'.
  */
 
-import { readFile as readFileAsync } from 'node:fs/promises';
+import { readFile as readFileAsync } from "node:fs/promises";
 
-import ExcelJS from 'exceljs';
+import ExcelJS from "exceljs";
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
-import { SourceError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { ExtractResult, SourceAdapter } from './types.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
+import { SourceError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import { stringifyValue } from "../../utils/stringify.js";
+import type { ExtractResult, SourceAdapter } from "./types.js";
 
 export class XlsxSourceAdapter implements SourceAdapter {
-  readonly id = 'xlsx';
+  readonly id = "xlsx";
 
   async connect(_config: SourceConfig): Promise<void> {
     // File-based; nothing to establish.
@@ -36,10 +37,10 @@ export class XlsxSourceAdapter implements SourceAdapter {
     store: StagingStore,
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
-    targetTable = 'stg_raw',
+    targetTable = "stg_raw",
   ): Promise<ExtractResult> {
     if (!config.file) {
-      throw new SourceError('xlsx source requires `file`');
+      throw new SourceError("xlsx source requires `file`");
     }
 
     let buf: Buffer;
@@ -77,16 +78,16 @@ export class XlsxSourceAdapter implements SourceAdapter {
         {
           file: config.file,
           sheets: worksheets.map((w) => w.name),
-          using: worksheets[0]!.name,
+          using: worksheets[0].name,
         },
-        'xlsx: multiple sheets found and `source.sheet` is unset — using first sheet',
+        "xlsx: multiple sheets found and `source.sheet` is unset — using first sheet",
       );
     }
 
     const worksheet =
       config.sheet === undefined
         ? worksheets[0]
-        : typeof config.sheet === 'number'
+        : typeof config.sheet === "number"
           ? worksheets[config.sheet]
           : workbook.getWorksheet(config.sheet);
 
@@ -115,7 +116,7 @@ export class XlsxSourceAdapter implements SourceAdapter {
       if (!row.hasValues) continue;
       const record: Record<string, string> = {};
       for (let c = 1; c <= headers.length; c++) {
-        record[headers[c - 1]!] = cellToString(row.getCell(c));
+        record[headers[c - 1]] = cellToString(row.getCell(c));
       }
       records.push(record);
     }
@@ -126,7 +127,7 @@ export class XlsxSourceAdapter implements SourceAdapter {
 
     const columns: ColumnMeta[] = headers.map((n) => ({
       name: n,
-      duckDbType: 'VARCHAR',
+      duckDbType: "VARCHAR",
     }));
     await store.createTable(targetTable, columns);
 
@@ -148,33 +149,33 @@ export class XlsxSourceAdapter implements SourceAdapter {
  */
 function cellToString(cell: ExcelJS.Cell): string {
   const v = cell.value;
-  if (v == null) return '';
-  if (typeof v === 'string') return v;
-  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
   if (v instanceof Date) return v.toISOString();
-  if (typeof v === 'object') {
+  if (typeof v === "object") {
     // Formula: { formula, result }
-    if ('result' in v && v.result !== undefined) {
+    if ("result" in v && v.result !== undefined) {
       const r = v.result;
-      if (r == null) return '';
-      if (typeof r === 'object' && 'error' in r) return `#${(r as { error: string }).error}`;
+      if (r === null || r === undefined) return "";
+      if (typeof r === "object" && "error" in r) return `#${(r as { error: string }).error}`;
       if (r instanceof Date) return r.toISOString();
       return String(r);
     }
     // Rich text: { richText: [{ text }] }
-    if ('richText' in v && Array.isArray((v as { richText?: unknown }).richText)) {
+    if ("richText" in v && Array.isArray((v as { richText?: unknown }).richText)) {
       return (v as { richText: Array<{ text?: string }> }).richText
-        .map((part) => part.text ?? '')
-        .join('');
+        .map((part) => part.text ?? "")
+        .join("");
     }
     // Hyperlink: { text, hyperlink }
-    if ('text' in v) {
-      return String((v as { text: unknown }).text ?? '');
+    if ("text" in v) {
+      return stringifyValue((v as { text: unknown }).text ?? "");
     }
     // Error: { error: '#NULL!' }
-    if ('error' in v) {
+    if ("error" in v) {
       return `#${(v as { error: string }).error}`;
     }
   }
-  return String(v);
+  return stringifyValue(v);
 }

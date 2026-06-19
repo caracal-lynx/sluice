@@ -5,4 +5,4 @@
  */
 
 // Intentionally does NOT export 'rule'
-export const notAPlugin = { description: 'This file is missing the rule export' };
+export const notAPlugin = { description: "This file is missing the rule export" };

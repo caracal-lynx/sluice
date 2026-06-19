@@ -9,33 +9,33 @@
  * Uses a no-op stub factory — no real DuckDB column writes happen.
  */
 
-import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
-import * as path from 'node:path';
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { MultiSourcePipelineRunner } from '../../src/multi-source-runner.js';
+import { MultiSourcePipelineRunner } from "../../src/multi-source-runner.js";
 import {
   PipelineRunner,
   _resetEnrichPhaseForTesting,
   registerEnrichPhase,
   type RunResult,
-} from '../../src/runner.js';
+} from "../../src/runner.js";
 import type {
   EnrichConfig,
   EnrichPhaseFactory,
   EnrichSummary,
   LookupSummary,
-} from '../../src/enrich/types.js';
-import type { RunConfig } from '../../src/config/schema.js';
-import type { StagingStore } from '../../src/staging/store.js';
-import type { Logger } from 'pino';
+} from "../../src/enrich/types.js";
+import type { RunConfig } from "../../src/config/schema.js";
+import type { StagingStore } from "../../src/staging/store.js";
+import type { Logger } from "pino";
 
 // Use the OS temp dir, NOT a `.tmp` folder inside the repo. Other test files
 // use `.tmp` and recursively rm it in afterEach — that race-condition wipes
 // our working files when tests run concurrently across files.
-const tmpRoot = path.join(os.tmpdir(), 'sluice-enrich-hook');
+const tmpRoot = path.join(os.tmpdir(), "sluice-enrich-hook");
 
 interface FactoryCall {
   config: EnrichConfig;
@@ -55,8 +55,8 @@ interface StubFactoryHandle {
 function makeStubFactory(opts?: { throwInside?: boolean }): StubFactoryHandle {
   const calls: FactoryCall[] = [];
   const lookupStub: LookupSummary = {
-    provider: 'mock',
-    field: 'X',
+    provider: "mock",
+    field: "X",
     totalRows: 0,
     validCount: 0,
     errorCount: 0,
@@ -78,7 +78,7 @@ function makeStubFactory(opts?: { throwInside?: boolean }): StubFactoryHandle {
     return {
       async run() {
         if (opts?.throwInside) {
-          throw new Error('stub factory: should not have been called');
+          throw new Error("stub factory: should not have been called");
         }
         return summary;
       },
@@ -88,7 +88,10 @@ function makeStubFactory(opts?: { throwInside?: boolean }): StubFactoryHandle {
 }
 
 async function makeUniqueTmpDir(prefix: string): Promise<string> {
-  const dir = path.join(tmpRoot, `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const dir = path.join(
+    tmpRoot,
+    `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  );
   await fs.mkdir(dir, { recursive: true });
   return dir;
 }
@@ -96,13 +99,13 @@ async function makeUniqueTmpDir(prefix: string): Promise<string> {
 async function writeSingleSourcePipeline(
   tmpDir: string,
   withEnrich: boolean,
-  extras: { mode?: 'full' | 'validate-only'; dryRun?: boolean } = {},
+  extras: { mode?: "full" | "validate-only"; dryRun?: boolean } = {},
 ): Promise<string> {
-  const inputCsv = path.join(tmpDir, 'input.csv');
-  const outputCsv = path.join(tmpDir, 'output.csv');
-  await fs.writeFile(inputCsv, 'id\n1\n2\n3', 'utf-8');
+  const inputCsv = path.join(tmpDir, "input.csv");
+  const outputCsv = path.join(tmpDir, "output.csv");
+  await fs.writeFile(inputCsv, "id\n1\n2\n3", "utf-8");
 
-  const yamlPath = path.join(tmpDir, 'test.pipeline.yaml');
+  const yamlPath = path.join(tmpDir, "test.pipeline.yaml");
   const enrichBlock = withEnrich
     ? `
 enrich:
@@ -112,8 +115,8 @@ enrich:
       writeColumns:
         valid: id_valid
 `
-    : '';
-  const mode = extras.mode ?? 'full';
+    : "";
+  const mode = extras.mode ?? "full";
   const dryRun = extras.dryRun ?? false;
   const yaml = `
 pipeline:
@@ -124,7 +127,7 @@ pipeline:
 
 source:
   adapter: csv
-  file: ${inputCsv.replace(/\\/g, '/')}
+  file: ${inputCsv.replace(/\\/g, "/")}
 ${enrichBlock}
 dq:
   stopOnCritical: false
@@ -138,25 +141,25 @@ transform:
 
 target:
   adapter: csv
-  output: ${outputCsv.replace(/\\/g, '/')}
+  output: ${outputCsv.replace(/\\/g, "/")}
 
 run:
-  outputDir: ${tmpDir.replace(/\\/g, '/')}
+  outputDir: ${tmpDir.replace(/\\/g, "/")}
   mode: ${mode}
   dryRun: ${dryRun}
 `;
-  await fs.writeFile(yamlPath, yaml, 'utf-8');
+  await fs.writeFile(yamlPath, yaml, "utf-8");
   return yamlPath;
 }
 
 async function writeMultiSourcePipeline(tmpDir: string, withEnrich: boolean): Promise<string> {
-  const inputA = path.join(tmpDir, 'a.csv');
-  const inputB = path.join(tmpDir, 'b.csv');
-  const outputCsv = path.join(tmpDir, 'output.csv');
-  await fs.writeFile(inputA, 'id,name\n1,Alice\n2,Bob', 'utf-8');
-  await fs.writeFile(inputB, 'id,name\n2,Bobby\n3,Carol', 'utf-8');
+  const inputA = path.join(tmpDir, "a.csv");
+  const inputB = path.join(tmpDir, "b.csv");
+  const outputCsv = path.join(tmpDir, "output.csv");
+  await fs.writeFile(inputA, "id,name\n1,Alice\n2,Bob", "utf-8");
+  await fs.writeFile(inputB, "id,name\n2,Bobby\n3,Carol", "utf-8");
 
-  const yamlPath = path.join(tmpDir, 'multi.pipeline.yaml');
+  const yamlPath = path.join(tmpDir, "multi.pipeline.yaml");
   const enrichBlock = withEnrich
     ? `
 enrich:
@@ -166,7 +169,7 @@ enrich:
       writeColumns:
         valid: id_valid
 `
-    : '';
+    : "";
   const yaml = `
 pipeline:
   name: enrich-hook-multi-test
@@ -178,11 +181,11 @@ sources:
   - id: src-a
     priority: 1
     adapter: csv
-    file: ${inputA.replace(/\\/g, '/')}
+    file: ${inputA.replace(/\\/g, "/")}
   - id: src-b
     priority: 2
     adapter: csv
-    file: ${inputB.replace(/\\/g, '/')}
+    file: ${inputB.replace(/\\/g, "/")}
 
 merge:
   key: id
@@ -200,29 +203,32 @@ transform:
 
 target:
   adapter: csv
-  output: ${outputCsv.replace(/\\/g, '/')}
+  output: ${outputCsv.replace(/\\/g, "/")}
 
 run:
-  outputDir: ${tmpDir.replace(/\\/g, '/')}
+  outputDir: ${tmpDir.replace(/\\/g, "/")}
 `;
-  await fs.writeFile(yamlPath, yaml, 'utf-8');
+  await fs.writeFile(yamlPath, yaml, "utf-8");
   return yamlPath;
 }
 
-async function readStateFile(outputDir: string, pipelineName: string): Promise<Record<string, unknown>> {
+async function readStateFile(
+  outputDir: string,
+  pipelineName: string,
+): Promise<Record<string, unknown>> {
   const stateFilePath = path.join(outputDir, `${pipelineName}-state.json`);
-  const raw = await fs.readFile(stateFilePath, 'utf-8');
+  const raw = await fs.readFile(stateFilePath, "utf-8");
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
+describe("PipelineRunner — Phase 4a enrich hook (single source)", () => {
   let tmpDir: string;
 
   beforeEach(async () => {
     await fs.mkdir(tmpRoot, { recursive: true });
-    tmpDir = await makeUniqueTmpDir('enrich-single');
+    tmpDir = await makeUniqueTmpDir("enrich-single");
   });
 
   afterEach(async () => {
@@ -234,7 +240,7 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
     }
   });
 
-  it('skips the phase silently when no enrich: block is configured', async () => {
+  it("skips the phase silently when no enrich: block is configured", async () => {
     const yamlPath = await writeSingleSourcePipeline(tmpDir, /* withEnrich */ false);
     const handle = makeStubFactory({ throwInside: true });
     registerEnrichPhase(handle.factory);
@@ -246,7 +252,7 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
     expect(result.enrichSummary).toBeUndefined();
   });
 
-  it('skips the phase with a WARN when enrich: is configured but no factory is registered', async () => {
+  it("skips the phase with a WARN when enrich: is configured but no factory is registered", async () => {
     _resetEnrichPhaseForTesting();
     const yamlPath = await writeSingleSourcePipeline(tmpDir, /* withEnrich */ true);
 
@@ -257,11 +263,11 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
     // pipeline still completes; load happened
     expect(result.load?.rowsLoaded).toBe(3);
     // state file written without an enrichSummary key
-    const state = await readStateFile(tmpDir, 'enrich-hook-test');
-    expect(state['enrichSummary']).toBeUndefined();
+    const state = await readStateFile(tmpDir, "enrich-hook-test");
+    expect(state["enrichSummary"]).toBeUndefined();
   });
 
-  it('invokes the registered factory exactly once with the expected args', async () => {
+  it("invokes the registered factory exactly once with the expected args", async () => {
     const yamlPath = await writeSingleSourcePipeline(tmpDir, /* withEnrich */ true);
     const handle = makeStubFactory();
     registerEnrichPhase(handle.factory);
@@ -271,18 +277,18 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
 
     expect(handle.calls).toHaveLength(1);
     const call = handle.calls[0]!;
-    expect(call.config.lookups[0]?.field).toBe('id');
+    expect(call.config.lookups[0]?.field).toBe("id");
     expect(call.pluginDir).toBe(path.dirname(path.resolve(yamlPath)));
     expect(call.runConfig.enrichTimeoutMs).toBe(5000);
     expect(call.staging).toBeDefined();
-    expect(call.sourceTable).toBe('stg_raw');
+    expect(call.sourceTable).toBe("stg_raw");
     expect(result.enrichSummary).toEqual(handle.summary);
 
-    const state = await readStateFile(tmpDir, 'enrich-hook-test');
-    expect(state['enrichSummary']).toEqual(handle.summary);
+    const state = await readStateFile(tmpDir, "enrich-hook-test");
+    expect(state["enrichSummary"]).toEqual(handle.summary);
   });
 
-  it('--no-enrich (overrides.skipEnrich=true) bypasses the factory', async () => {
+  it("--no-enrich (overrides.skipEnrich=true) bypasses the factory", async () => {
     const yamlPath = await writeSingleSourcePipeline(tmpDir, /* withEnrich */ true);
     const handle = makeStubFactory({ throwInside: true });
     registerEnrichPhase(handle.factory);
@@ -294,9 +300,9 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
     expect(result.enrichSummary).toBeUndefined();
   });
 
-  it('validate-only mode bypasses the factory even when registered', async () => {
+  it("validate-only mode bypasses the factory even when registered", async () => {
     const yamlPath = await writeSingleSourcePipeline(tmpDir, /* withEnrich */ true, {
-      mode: 'validate-only',
+      mode: "validate-only",
     });
     const handle = makeStubFactory({ throwInside: true });
     registerEnrichPhase(handle.factory);
@@ -308,7 +314,7 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
     expect(result.enrichSummary).toBeUndefined();
   });
 
-  it('dryRun bypasses the factory even when registered', async () => {
+  it("dryRun bypasses the factory even when registered", async () => {
     const yamlPath = await writeSingleSourcePipeline(tmpDir, /* withEnrich */ true, {
       dryRun: true,
     });
@@ -323,12 +329,12 @@ describe('PipelineRunner — Phase 4a enrich hook (single source)', () => {
   });
 });
 
-describe('MultiSourcePipelineRunner — Phase 4a enrich hook (post-merge)', () => {
+describe("MultiSourcePipelineRunner — Phase 4a enrich hook (post-merge)", () => {
   let tmpDir: string;
 
   beforeEach(async () => {
     await fs.mkdir(tmpRoot, { recursive: true });
-    tmpDir = await makeUniqueTmpDir('enrich-multi');
+    tmpDir = await makeUniqueTmpDir("enrich-multi");
   });
 
   afterEach(async () => {
@@ -340,7 +346,7 @@ describe('MultiSourcePipelineRunner — Phase 4a enrich hook (post-merge)', () =
     }
   });
 
-  it('invokes the factory exactly once after merge, before post-merge DQ', async () => {
+  it("invokes the factory exactly once after merge, before post-merge DQ", async () => {
     const yamlPath = await writeMultiSourcePipeline(tmpDir, /* withEnrich */ true);
     const handle = makeStubFactory();
     registerEnrichPhase(handle.factory);
@@ -350,15 +356,15 @@ describe('MultiSourcePipelineRunner — Phase 4a enrich hook (post-merge)', () =
 
     expect(handle.calls).toHaveLength(1);
     const call = handle.calls[0]!;
-    expect(call.sourceTable).toBe('stg_merged');
+    expect(call.sourceTable).toBe("stg_merged");
     expect(result.enrichSummary).toEqual(handle.summary);
 
-    const state = await readStateFile(tmpDir, 'enrich-hook-multi-test');
-    expect(state['enrichSummary']).toEqual(handle.summary);
-    expect(state['sources']).toBeDefined(); // merge state still preserved
+    const state = await readStateFile(tmpDir, "enrich-hook-multi-test");
+    expect(state["enrichSummary"]).toEqual(handle.summary);
+    expect(state["sources"]).toBeDefined(); // merge state still preserved
   });
 
-  it('skips the factory when no enrich block is configured', async () => {
+  it("skips the factory when no enrich block is configured", async () => {
     const yamlPath = await writeMultiSourcePipeline(tmpDir, /* withEnrich */ false);
     const handle = makeStubFactory({ throwInside: true });
     registerEnrichPhase(handle.factory);
@@ -370,7 +376,7 @@ describe('MultiSourcePipelineRunner — Phase 4a enrich hook (post-merge)', () =
     expect(result.enrichSummary).toBeUndefined();
   });
 
-  it('--no-enrich bypasses the factory', async () => {
+  it("--no-enrich bypasses the factory", async () => {
     const yamlPath = await writeMultiSourcePipeline(tmpDir, /* withEnrich */ true);
     const handle = makeStubFactory({ throwInside: true });
     registerEnrichPhase(handle.factory);
