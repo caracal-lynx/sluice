@@ -6,12 +6,12 @@
  * Severity: typically critical (bad account codes break imports)
  */
 
-import type { RulePlugin } from '../../../src/plugins/types.js';
+import type { RulePlugin } from "../../../src/plugins/types.js";
 
 export const rule: RulePlugin = {
-  id: 'bc-account-code',
+  id: "bc-account-code",
   validate(value, config, rowIndex, field) {
-    if (value === null || value === undefined || value === '') return null;
+    if (value === null || value === undefined || value === "") return null;
 
     const code = String(value).trim();
 
@@ -21,7 +21,7 @@ export const rule: RulePlugin = {
         field,
         rowIndex,
         value,
-        rule: 'bc-account-code',
+        rule: "bc-account-code",
         severity: config.severity,
         message: config.message ?? `Account code must be 4-10 characters (got "${code}")`,
       };
@@ -32,7 +32,7 @@ export const rule: RulePlugin = {
         field,
         rowIndex,
         value,
-        rule: 'bc-account-code',
+        rule: "bc-account-code",
         severity: config.severity,
         message:
           config.message ??

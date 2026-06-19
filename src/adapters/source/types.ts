@@ -9,8 +9,8 @@
  * via the optional `targetTable` parameter on `extract()`.
  */
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
 
 export interface SourceAdapter {
   readonly id: string;
@@ -35,4 +35,4 @@ export interface ExtractResult {
   columns: ColumnMeta[];
 }
 
-export type { ColumnMeta } from '../../staging/index.js';
+export type { ColumnMeta } from "../../staging/index.js";

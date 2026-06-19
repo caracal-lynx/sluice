@@ -13,20 +13,21 @@
  * the string representation.
  */
 
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
 
-import { TransformRegistry } from '../plugins/registry.js';
-import type { CustomFieldMapping, TransformPlugin } from '../plugins/types.js';
-import type { FieldMapping, Pipeline } from '../config/types.js';
-import type { ColumnMeta, StagingStore } from '../staging/index.js';
-import { quoteIdent } from '../staging/index.js';
-import { TransformError } from '../utils/errors.js';
-import { logger } from '../utils/logger.js';
-import { applyCleanse } from './cleanse.js';
-import { ExpressionEvaluator } from './expression.js';
-import { LookupResolver } from './lookup.js';
-import type { TransformResult } from './types.js';
+import { TransformRegistry } from "../plugins/registry.js";
+import type { CustomFieldMapping, TransformPlugin } from "../plugins/types.js";
+import type { FieldMapping, Pipeline } from "../config/types.js";
+import type { ColumnMeta, StagingStore } from "../staging/index.js";
+import { quoteIdent } from "../staging/index.js";
+import { TransformError } from "../utils/errors.js";
+import { logger } from "../utils/logger.js";
+import { stringifyValue } from "../utils/stringify.js";
+import { applyCleanse } from "./cleanse.js";
+import { ExpressionEvaluator } from "./expression.js";
+import { LookupResolver } from "./lookup.js";
+import type { TransformResult } from "./types.js";
 
 dayjs.extend(customParseFormat);
 
@@ -36,8 +37,8 @@ export class TransformEngine {
   async run(
     config: Pipeline,
     store: StagingStore,
-    sourceTable = 'stg_raw',
-    targetTable = 'stg_transformed',
+    sourceTable = "stg_raw",
+    targetTable = "stg_transformed",
     onProgress?: (rows: number) => void,
   ): Promise<TransformResult> {
     const lookups = new LookupResolver();
@@ -47,7 +48,7 @@ export class TransformEngine {
 
     const outputColumns: ColumnMeta[] = config.transform.fields.map((f) => ({
       name: f.to,
-      duckDbType: 'VARCHAR',
+      duckDbType: "VARCHAR",
     }));
 
     await store.dropTable(targetTable);
@@ -64,7 +65,7 @@ export class TransformEngine {
     const unmappedPlaceholder = config.transform.unmappedPlaceholder;
 
     for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]!;
+      const row = rows[i];
       try {
         const outRow: Record<string, unknown> = {};
         for (const field of config.transform.fields) {
@@ -87,14 +88,14 @@ export class TransformEngine {
         }
       } catch (err) {
         rowsFailed++;
-        if (config.run.onError === 'stop') {
+        if (config.run.onError === "stop") {
           throw err instanceof TransformError
             ? err
             : new TransformError(`transform failed at row ${i}: ${String(err)}`, err);
         }
         logger.warn(
           { rowIndex: i, err: err instanceof Error ? err.message : String(err) },
-          'transform: row failed (onError: continue)',
+          "transform: row failed (onError: continue)",
         );
       }
     }
@@ -124,16 +125,16 @@ function applyFieldMapping(
   }
 
   // ── Types that do not read `from` directly ──────────────────────────────
-  if (field.type === 'constant') {
+  if (field.type === "constant") {
     return field.value ?? null;
   }
-  if (field.type === 'expression') {
-    if (typeof field.value !== 'string') {
+  if (field.type === "expression") {
+    if (typeof field.value !== "string") {
       throw new TransformError(`expression field "${field.to}" requires string 'value'`);
     }
     return expr.evaluate(field.value, row);
   }
-  if (field.type === 'custom') {
+  if (field.type === "custom") {
     if (!field.customOp) {
       throw new TransformError(`custom field "${field.to}" requires 'customOp'`);
     }
@@ -141,10 +142,10 @@ function applyFieldMapping(
     if (!plugin) {
       throw new TransformError(`No custom transform plugin registered for "${field.customOp}"`);
     }
-    const value = typeof field.from === 'string' ? row[field.from] : undefined;
+    const value = typeof field.from === "string" ? row[field.from] : undefined;
 
     // Apply default/optional logic before calling plugin
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === "") {
       if (field.default !== undefined && field.default !== null) {
         return field.default;
       } else if (field.optional) {
@@ -169,26 +170,26 @@ function applyFieldMapping(
   }
 
   // ── concat: join from[] with separator, then cleanse ────────────────────
-  if (field.type === 'concat') {
+  if (field.type === "concat") {
     if (!Array.isArray(field.from)) {
       throw new TransformError(`concat field "${field.to}" requires array 'from'`);
     }
-    const sep = field.separator ?? ' ';
+    const sep = field.separator ?? " ";
     const parts = field.from.map((f) => {
       const v = row[f];
-      return v === null || v === undefined ? '' : String(v);
+      return v === null || v === undefined ? "" : stringifyValue(v);
     });
     let value: unknown = parts.join(sep);
     if (field.cleanse) value = applyCleanse(value, field.cleanse);
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === "") {
       return applyDefaultOrOptional(field, value);
     }
-    return String(value);
+    return stringifyValue(value);
   }
 
   // ── lookup: resolve via LookupResolver ──────────────────────────────────
-  if (field.type === 'lookup') {
-    if (typeof field.from !== 'string') {
+  if (field.type === "lookup") {
+    if (typeof field.from !== "string") {
       throw new TransformError(`lookup field "${field.to}" requires string 'from'`);
     }
     if (!field.lookup) {
@@ -205,23 +206,21 @@ function applyFieldMapping(
   }
 
   // ── Scalar types: string, number, decimal, boolean, date ─────────────────
-  if (typeof field.from !== 'string') {
-    throw new TransformError(
-      `field "${field.to}" of type ${field.type} requires string 'from'`,
-    );
+  if (typeof field.from !== "string") {
+    throw new TransformError(`field "${field.to}" of type ${field.type} requires string 'from'`);
   }
 
   let value: unknown = row[field.from];
 
   // Default + optional: null/empty handling
-  if (value === null || value === undefined || value === '') {
+  if (value === null || value === undefined || value === "") {
     if (field.default !== undefined && field.default !== null) {
       value = field.default;
     } else if (field.optional) {
       return null;
-    } else if (field.type === 'string') {
+    } else if (field.type === "string") {
       // Empty strings pass through as-is for strings unless optional/default
-      value = value === null || value === undefined ? null : '';
+      value = value === null || value === undefined ? null : "";
     }
   }
 
@@ -232,39 +231,41 @@ function applyFieldMapping(
   if (value === null || value === undefined) return null;
 
   switch (field.type) {
-    case 'string': {
-      let s = String(value);
-      if (typeof field.max === 'number') s = s.slice(0, field.max);
+    case "string": {
+      let s = stringifyValue(value);
+      if (typeof field.max === "number") s = s.slice(0, field.max);
       return s;
     }
-    case 'number': {
+    case "number": {
       const n = Number(value);
       if (!Number.isFinite(n)) {
-        throw new TransformError(`field "${field.to}" value "${String(value)}" is not a number`);
+        throw new TransformError(
+          `field "${field.to}" value "${stringifyValue(value)}" is not a number`,
+        );
       }
       return Math.round(n);
     }
-    case 'decimal': {
-      const n = parseFloat(String(value));
+    case "decimal": {
+      const n = parseFloat(stringifyValue(value));
       if (!Number.isFinite(n)) {
         throw new TransformError(
-          `field "${field.to}" value "${String(value)}" is not a decimal`,
+          `field "${field.to}" value "${stringifyValue(value)}" is not a decimal`,
         );
       }
       return n.toFixed(field.precision ?? 2);
     }
-    case 'boolean': {
-      return ['1', 'true', 'yes', 'y', 't'].includes(String(value).toLowerCase())
-        ? 'true'
-        : 'false';
+    case "boolean": {
+      return ["1", "true", "yes", "y", "t"].includes(stringifyValue(value).toLowerCase())
+        ? "true"
+        : "false";
     }
-    case 'date': {
+    case "date": {
       const parsed = field.format
-        ? dayjs(String(value), field.format, true)
-        : dayjs(String(value));
+        ? dayjs(stringifyValue(value), field.format, true)
+        : dayjs(stringifyValue(value));
       if (!parsed.isValid()) {
         throw new TransformError(
-          `field "${field.to}" value "${String(value)}" is not a valid date (format: ${field.format ?? 'ISO'})`,
+          `field "${field.to}" value "${stringifyValue(value)}" is not a valid date (format: ${field.format ?? "ISO"})`,
         );
       }
       return outputDateFormat ? parsed.format(outputDateFormat) : parsed.toISOString();

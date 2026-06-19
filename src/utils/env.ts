@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import { config as dotenvConfig } from 'dotenv';
-import { ConfigError } from './errors.js';
+import { config as dotenvConfig } from "dotenv";
+import { ConfigError } from "./errors.js";
 
 let envLoaded = false;
 

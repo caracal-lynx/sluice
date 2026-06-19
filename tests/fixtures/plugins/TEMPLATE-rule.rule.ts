@@ -15,13 +15,13 @@
  *             severity: warning
  */
 
-import type { RulePlugin, RuleViolation } from '../../../src/plugins/types.js';
-import type { CheckConfig } from '../../../src/config/types.js';
+import type { RulePlugin, RuleViolation } from "../../../src/plugins/types.js";
+import type { CheckConfig } from "../../../src/config/types.js";
 
 export const rule: RulePlugin = {
   // ⚠️  REQUIRED: Unique identifier for your rule
   // Used in DQ config as: type: my-rule
-  id: 'my-rule',
+  id: "my-rule",
 
   /**
    * Validate a value against your custom rule.
@@ -39,7 +39,7 @@ export const rule: RulePlugin = {
     field: string,
   ): RuleViolation | null {
     // Step 1: Skip null/undefined/empty values (unless validation is required)
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === "") {
       return null; // Remove this line if your rule must always validate
     }
 

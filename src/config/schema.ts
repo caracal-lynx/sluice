@@ -17,45 +17,45 @@
  * before this schema is called — Zod sees plain strings, not tokens.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
-const Severity = z.enum(['critical', 'warning', 'info']);
-const SourceAd = z.enum(['mssql', 'pg', 'csv', 'xlsx', 'rest', 'odoo-csv']);
-const TargetAd = z.enum(['bc', 'ifs', 'bluecherry', 'csv', 'pg', 'rest']);
+const Severity = z.enum(["critical", "warning", "info"]);
+const SourceAd = z.enum(["mssql", "pg", "csv", "xlsx", "rest", "odoo-csv"]);
+const TargetAd = z.enum(["bc", "ifs", "bluecherry", "csv", "pg", "rest"]);
 const CleanseOps = z.string().regex(/^[a-zA-Z|:0-9]+$/);
 
 // ── Pagination (REST source) ──────────────────────────────────────────────────
 
 const PaginationSchema = z.object({
   type: z
-    .enum(['offset', 'cursor', 'page'])
+    .enum(["offset", "cursor", "page"])
     .describe(
-      'Pagination strategy: `offset` (skip/take), `cursor` (next-cursor token), or `page` (1-indexed page number).',
+      "Pagination strategy: `offset` (skip/take), `cursor` (next-cursor token), or `page` (1-indexed page number).",
     ),
-  pageSize: z.number().int().positive().default(100).describe('Records to request per page.'),
+  pageSize: z.number().int().positive().default(100).describe("Records to request per page."),
   pageParam: z
     .string()
     .optional()
-    .describe('Query-string parameter name for the offset/page value (e.g. `skip`, `page`).'),
+    .describe("Query-string parameter name for the offset/page value (e.g. `skip`, `page`)."),
   totalField: z
     .string()
     .optional()
     .describe(
-      'Dot-path to the total record count in the response body (used by `offset` and `page`).',
+      "Dot-path to the total record count in the response body (used by `offset` and `page`).",
     ),
-  dataField: z.string().optional().describe('Dot-path to the records array in the response body.'),
+  dataField: z.string().optional().describe("Dot-path to the records array in the response body."),
   cursorField: z
     .string()
     .optional()
     .describe(
-      'Field in the response body whose value is the cursor for the next page (used by `cursor`).',
+      "Field in the response body whose value is the cursor for the next page (used by `cursor`).",
     ),
   cursorParam: z
     .string()
     .optional()
-    .describe('Query-string parameter name to send the cursor in (used by `cursor`).'),
+    .describe("Query-string parameter name to send the cursor in (used by `cursor`)."),
 });
 
 // ── Source ────────────────────────────────────────────────────────────────────
@@ -74,13 +74,13 @@ const OdooPivotSchema = z.object({
     .array(z.string())
     .min(1)
     .describe(
-      'Expected key names. Each becomes a new output column populated with the value for that key.',
+      "Expected key names. Each becomes a new output column populated with the value for that key.",
     ),
   onUnknownKey: z
-    .enum(['warn', 'error'])
-    .default('warn')
+    .enum(["warn", "error"])
+    .default("warn")
     .describe(
-      'How to handle a key not in `keys`. `warn` adds a column named after the unknown key and logs a warning; `error` halts the run.',
+      "How to handle a key not in `keys`. `warn` adds a column named after the unknown key and logs a warning; `error` halts the run.",
     ),
   dropOriginal: z
     .boolean()
@@ -92,49 +92,49 @@ const OdooPivotSchema = z.object({
 
 const SourceBaseSchema = z.object({
   adapter: SourceAd.describe(
-    'Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`.',
+    "Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`.",
   ),
   connection: z
     .string()
     .optional()
     .describe(
-      'Connection string for SQL adapters. Resolves `${ENV_VAR}` tokens at load time. Required for `mssql` and `pg`.',
+      "Connection string for SQL adapters. Resolves `${ENV_VAR}` tokens at load time. Required for `mssql` and `pg`.",
     ),
   query: z
     .string()
     .optional()
-    .describe('SELECT statement for SQL adapters. Required for `mssql` and `pg`.'),
+    .describe("SELECT statement for SQL adapters. Required for `mssql` and `pg`."),
   file: z
     .string()
     .optional()
-    .describe('Path or glob for file adapters. Required for `csv`, `xlsx`, and `odoo-csv`.'),
-  endpoint: z.string().optional().describe('Full URL for the `rest` adapter. Required for `rest`.'),
+    .describe("Path or glob for file adapters. Required for `csv`, `xlsx`, and `odoo-csv`."),
+  endpoint: z.string().optional().describe("Full URL for the `rest` adapter. Required for `rest`."),
   headers: z
     .record(z.string())
     .optional()
-    .describe('Optional HTTP headers, applied to every request from the `rest` adapter.'),
+    .describe("Optional HTTP headers, applied to every request from the `rest` adapter."),
   delimiter: z
     .string()
-    .default(',')
-    .describe('Field delimiter for the `csv` and `odoo-csv` adapters.'),
+    .default(",")
+    .describe("Field delimiter for the `csv` and `odoo-csv` adapters."),
   encoding: z
     .string()
-    .default('utf-8')
-    .describe('File encoding for `csv`, `xlsx`, and `odoo-csv` (any Node-supported encoding).'),
+    .default("utf-8")
+    .describe("File encoding for `csv`, `xlsx`, and `odoo-csv` (any Node-supported encoding)."),
   sheet: z
     .union([z.string(), z.number()])
     .optional()
-    .describe('Sheet name or 0-based index for the `xlsx` adapter.'),
+    .describe("Sheet name or 0-based index for the `xlsx` adapter."),
   pagination: PaginationSchema.optional().describe(
-    'Pagination config for the `rest` adapter. Omit for single-page responses.',
+    "Pagination config for the `rest` adapter. Omit for single-page responses.",
   ),
   pivot: OdooPivotSchema.optional().describe(
-    'Used by the `odoo-csv` adapter only. Declares one column whose `Key: value` cells should be pivoted into new columns named after the keys.',
+    "Used by the `odoo-csv` adapter only. Declares one column whose `Key: value` cells should be pivoted into new columns named after the keys.",
   ),
 });
 
 export const SourceSchema = SourceBaseSchema.refine((s) => s.query || s.file || s.endpoint, {
-  message: 'source must have query, file, or endpoint',
+  message: "source must have query, file, or endpoint",
 });
 
 // ── DQ ────────────────────────────────────────────────────────────────────────
@@ -143,15 +143,15 @@ export const SourceSchema = SourceBaseSchema.refine((s) => s.query || s.file || 
 // built-in checks from composite-rule references during expansion, and
 // (b) plugin authors may want to introspect the built-in check set.
 export const CheckType = z.enum([
-  'notNull',
-  'unique',
-  'pattern',
-  'email',
-  'ukPostcode',
-  'maxLength',
-  'min',
-  'max',
-  'allowedValues',
+  "notNull",
+  "unique",
+  "pattern",
+  "email",
+  "ukPostcode",
+  "maxLength",
+  "min",
+  "max",
+  "allowedValues",
 ]);
 
 const CheckSchema = z.object({
@@ -172,24 +172,24 @@ export const DqSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Optional path to a composite rule library YAML (Tier 1 plugins). Composite-rule references in `rules[]` are expanded into built-in checks before Zod validation.',
+      "Optional path to a composite rule library YAML (Tier 1 plugins). Composite-rule references in `rules[]` are expanded into built-in checks before Zod validation.",
     ),
   stopOnCritical: z
     .boolean()
     .default(true)
     .describe(
-      'When true, the pipeline halts (exit code 2) if any `critical` check fails. When false, critical violations are logged but the run continues.',
+      "When true, the pipeline halts (exit code 2) if any `critical` check fails. When false, critical violations are logged but the run continues.",
     ),
   rejectionFile: z
     .string()
     .optional()
     .describe(
-      'Path for the per-violation rejection CSV. Defaults to `{outputDir}/{pipeline.name}-rejected.csv`.',
+      "Path for the per-violation rejection CSV. Defaults to `{outputDir}/{pipeline.name}-rejected.csv`.",
     ),
   rules: z
     .array(DqRuleSchema)
     .default([])
-    .describe('List of DQ rules. Each entry binds a field to one or more checks.'),
+    .describe("List of DQ rules. Each entry binds a field to one or more checks."),
 });
 
 // ── Enrich (Phase 4a) ─────────────────────────────────────────────────────────
@@ -209,29 +209,29 @@ const EnrichLookupSchema = z.object({
   provider: z.string(),
   writeColumns: EnrichWriteColumnsSchema,
   preValidate: z.string().optional(),
-  onError: z.enum(['flag', 'skip', 'fail']).optional(),
+  onError: z.enum(["flag", "skip", "fail"]).optional(),
   cache: z.boolean().optional(),
   options: z.record(z.unknown()).optional(),
 });
 
 export const EnrichSchema = z.object({
   cache: z
-    .union([z.boolean(), z.literal('persist')])
+    .union([z.boolean(), z.literal("persist")])
     .default(true)
     .describe(
       'Cache strategy for enrich providers. `true` = in-memory cache; `false` = no cache; `"persist"` = on-disk cache between runs.',
     ),
   onError: z
-    .enum(['flag', 'skip', 'fail'])
-    .default('flag')
+    .enum(["flag", "skip", "fail"])
+    .default("flag")
     .describe(
-      'Pipeline-wide error policy when an enrich call fails. `flag` = mark row but keep it; `skip` = drop the row; `fail` = halt the pipeline.',
+      "Pipeline-wide error policy when an enrich call fails. `flag` = mark row but keep it; `skip` = drop the row; `fail` = halt the pipeline.",
     ),
   lookups: z
     .array(EnrichLookupSchema)
     .min(1)
     .describe(
-      'At least one enrich lookup. Each binds a source field to a provider (e.g. VIES, HMRC) and writes the result into named columns.',
+      "At least one enrich lookup. Each binds a source field to a provider (e.g. VIES, HMRC) and writes the result into named columns.",
     ),
 });
 
@@ -251,49 +251,49 @@ const LookupSchema = z.object({
 
 const PrepRuleSchema = z
   .object({
-    field: z.string().describe('Existing column to mutate in place.'),
+    field: z.string().describe("Existing column to mutate in place."),
     sourceId: z
       .string()
       .optional()
       .describe(
-        'Multi-source only — scopes this rule to one pre-merge source. Rules with no sourceId run post-merge against stg_merged.',
+        "Multi-source only — scopes this rule to one pre-merge source. Rules with no sourceId run post-merge against stg_merged.",
       ),
     when: z
       .string()
       .optional()
       .describe(
-        'Optional row predicate (expr-eval; `js:` prefix for the vm sandbox). Falsy → rule skipped for that row.',
+        "Optional row predicate (expr-eval; `js:` prefix for the vm sandbox). Falsy → rule skipped for that row.",
       ),
     cleanse: CleanseOps.optional().describe(
-      'Pipe-separated cleanse op chain — same syntax as transform.fields.cleanse. Exactly one of cleanse / expression / lookup must be set.',
+      "Pipe-separated cleanse op chain — same syntax as transform.fields.cleanse. Exactly one of cleanse / expression / lookup must be set.",
     ),
     expression: z
       .string()
       .optional()
       .describe(
-        'expr-eval expression, or `js:` prefix for the vm sandbox. Exactly one of cleanse / expression / lookup must be set.',
+        "expr-eval expression, or `js:` prefix for the vm sandbox. Exactly one of cleanse / expression / lookup must be set.",
       ),
     lookup: z
       .string()
       .optional()
       .describe(
-        'Name of a prep.lookups entry. Exactly one of cleanse / expression / lookup must be set.',
+        "Name of a prep.lookups entry. Exactly one of cleanse / expression / lookup must be set.",
       ),
     onMiss: z
-      .enum(['keep', 'null', 'error'])
-      .default('keep')
+      .enum(["keep", "null", "error"])
+      .default("keep")
       .describe(
-        'Lookup miss behaviour. `keep` leaves the existing value untouched; `null` overwrites with SQL NULL; `error` throws PrepError (halts the run, ignores run.onError).',
+        "Lookup miss behaviour. `keep` leaves the existing value untouched; `null` overwrites with SQL NULL; `error` throws PrepError (halts the run, ignores run.onError).",
       ),
   })
   .refine(
     (r) =>
-      [r.cleanse, r.expression, r.lookup].filter((v) => v !== undefined && v !== '').length === 1,
-    { message: 'prep rule must specify exactly one of cleanse, expression, lookup' },
+      [r.cleanse, r.expression, r.lookup].filter((v) => v !== undefined && v !== "").length === 1,
+    { message: "prep rule must specify exactly one of cleanse, expression, lookup" },
   )
-  .refine((r) => r.onMiss === 'keep' || r.lookup !== undefined, {
-    message: 'onMiss is only valid when lookup is set',
-    path: ['onMiss'],
+  .refine((r) => r.onMiss === "keep" || r.lookup !== undefined, {
+    message: "onMiss is only valid when lookup is set",
+    path: ["onMiss"],
   });
 
 export const PrepSchema = z.object({
@@ -301,46 +301,46 @@ export const PrepSchema = z.object({
     .array(LookupSchema)
     .default([])
     .describe(
-      'Named lookup tables consumed by prep.rules[].lookup. Loaded once at the start of the prep phase. Cache is separate from transform.lookups in v1.',
+      "Named lookup tables consumed by prep.rules[].lookup. Loaded once at the start of the prep phase. Cache is separate from transform.lookups in v1.",
     ),
   rules: z
     .array(PrepRuleSchema)
     .min(1)
     .describe(
-      'Prep rules — applied top-to-bottom against the staging table. Later rules see earlier rules’ mutations.',
+      "Prep rules — applied top-to-bottom against the staging table. Later rules see earlier rules’ mutations.",
     ),
   summaryFile: z
     .string()
     .optional()
     .describe(
-      'Optional path for the prep summary JSON. Defaults to `{outputDir}/{pipeline.name}-prep-summary.json`.',
+      "Optional path for the prep summary JSON. Defaults to `{outputDir}/{pipeline.name}-prep-summary.json`.",
     ),
 });
 
 const FieldType = z.enum([
-  'string',
-  'number',
-  'decimal',
-  'boolean',
-  'date',
-  'lookup',
-  'concat',
-  'constant',
-  'expression',
-  'custom', // Phase 2: delegates to a TransformPlugin via customOp
+  "string",
+  "number",
+  "decimal",
+  "boolean",
+  "date",
+  "lookup",
+  "concat",
+  "constant",
+  "expression",
+  "custom", // Phase 2: delegates to a TransformPlugin via customOp
 ]);
 
 // Field types that read from the source row — `from` must be set.
 // `constant` emits a fixed value, `expression` evaluates against the full row,
 // `custom` receives the whole row and chooses what to use — all three may omit `from`.
 const TYPES_REQUIRING_FROM = new Set<string>([
-  'string',
-  'number',
-  'decimal',
-  'boolean',
-  'date',
-  'lookup',
-  'concat',
+  "string",
+  "number",
+  "decimal",
+  "boolean",
+  "date",
+  "lookup",
+  "concat",
 ]);
 
 const FieldMappingSchema = z
@@ -365,19 +365,19 @@ const FieldMappingSchema = z
       .boolean()
       .optional()
       .describe(
-        'When true, the engine emits `transform.unmappedPlaceholder` for every row and ignores `from`/`type`. Use during iterative mapping when the target field has no identified source yet.',
+        "When true, the engine emits `transform.unmappedPlaceholder` for every row and ignores `from`/`type`. Use during iterative mapping when the target field has no identified source yet.",
       ),
     // Phase 2:
     customOp: z.string().optional(),
     options: z.record(z.unknown()).optional(),
   })
-  .refine((m) => m.type !== 'custom' || !!m.customOp, {
-    message: 'type: custom requires customOp to be set',
-    path: ['customOp'],
+  .refine((m) => m.type !== "custom" || !!m.customOp, {
+    message: "type: custom requires customOp to be set",
+    path: ["customOp"],
   })
   .refine((m) => m.unmapped === true || !TYPES_REQUIRING_FROM.has(m.type) || m.from !== undefined, {
     message: 'this field type requires "from" to be set (or `unmapped: true`)',
-    path: ['from'],
+    path: ["from"],
   });
 
 export const TransformSchema = z.object({
@@ -385,17 +385,17 @@ export const TransformSchema = z.object({
     .array(LookupSchema)
     .default([])
     .describe(
-      'Named lookup tables, loaded once at the start of the transform phase and cached in memory. Any source adapter (CSV, MSSQL, REST, …) is valid here.',
+      "Named lookup tables, loaded once at the start of the transform phase and cached in memory. Any source adapter (CSV, MSSQL, REST, …) is valid here.",
     ),
   fields: z
     .array(FieldMappingSchema)
     .min(1)
-    .describe('Field mappings — one entry per output column. Order is preserved.'),
+    .describe("Field mappings — one entry per output column. Order is preserved."),
   unmappedPlaceholder: z
     .string()
-    .default('*** TBC ***')
+    .default("*** TBC ***")
     .describe(
-      'Value emitted by field mappings with `unmapped: true`. Used during iterative mapping so draft pipelines run end-to-end before source fields are identified.',
+      "Value emitted by field mappings with `unmapped: true`. Used during iterative mapping so draft pipelines run end-to-end before source fields are identified.",
     ),
 });
 
@@ -404,124 +404,124 @@ export const TransformSchema = z.object({
 export const TargetSchema = z
   .object({
     adapter: TargetAd.describe(
-      'Target adapter id. Built-in: `csv`, `pg`. Paid add-ons: `bc`, `ifs`, `bluecherry`, `rest`.',
+      "Target adapter id. Built-in: `csv`, `pg`. Paid add-ons: `bc`, `ifs`, `bluecherry`, `rest`.",
     ),
     output: z
       .string()
       .optional()
-      .describe('Output file path for file-based targets (`csv`, `ifs`, `bluecherry`).'),
+      .describe("Output file path for file-based targets (`csv`, `ifs`, `bluecherry`)."),
     entity: z
       .string()
       .optional()
       .describe(
-        'Logical entity name. ERP adapters use this to resolve required-column lists; OData adapters use it as the entity-set name.',
+        "Logical entity name. ERP adapters use this to resolve required-column lists; OData adapters use it as the entity-set name.",
       ),
     connection: z
       .string()
       .optional()
-      .describe('Connection string for the `pg` adapter. Resolves `${ENV_VAR}` at load time.'),
+      .describe("Connection string for the `pg` adapter. Resolves `${ENV_VAR}` at load time."),
     includeHeader: z
       .boolean()
       .optional()
       .describe(
-        'Whether to write a header row. Defaults: `csv` true, `ifs` false, `bluecherry` true.',
+        "Whether to write a header row. Defaults: `csv` true, `ifs` false, `bluecherry` true.",
       ),
     columnOrder: z
       .array(z.string())
       .optional()
       .describe(
-        'Explicit column ordering for file-based targets. Required by ERP imports that load by position rather than by name.',
+        "Explicit column ordering for file-based targets. Required by ERP imports that load by position rather than by name.",
       ),
     dateFormat: z
       .string()
       .optional()
       .describe(
-        'dayjs format token for date columns. Defaults: `YYYY-MM-DD` for `csv`/`ifs`, `MM/DD/YYYY` for `bluecherry`.',
+        "dayjs format token for date columns. Defaults: `YYYY-MM-DD` for `csv`/`ifs`, `MM/DD/YYYY` for `bluecherry`.",
       ),
-    delimiter: z.string().default(',').describe('Field delimiter for file-based targets.'),
-    encoding: z.string().default('utf-8').describe('Output file encoding.'),
+    delimiter: z.string().default(",").describe("Field delimiter for file-based targets."),
+    encoding: z.string().default("utf-8").describe("Output file encoding."),
     nullValue: z
       .string()
-      .default('')
-      .describe('Rendered value for null/undefined cells in CSV output.'),
+      .default("")
+      .describe("Rendered value for null/undefined cells in CSV output."),
     template: z
       .string()
       .optional()
       .describe(
-        'Path to a header-only CSV template, used to override the default required-column ordering for `bluecherry`. The literal `default` selects the built-in column set.',
+        "Path to a header-only CSV template, used to override the default required-column ordering for `bluecherry`. The literal `default` selects the built-in column set.",
       ),
     baseUrl: z
       .string()
       .optional()
-      .describe('Base URL for the `bc` adapter. Resolves `${ENV_VAR}`.'),
-    company: z.string().optional().describe('Company GUID or name for the `bc` adapter.'),
-    apiVersion: z.string().default('v2.0').describe('OData API version for the `bc` adapter.'),
+      .describe("Base URL for the `bc` adapter. Resolves `${ENV_VAR}`."),
+    company: z.string().optional().describe("Company GUID or name for the `bc` adapter."),
+    apiVersion: z.string().default("v2.0").describe("OData API version for the `bc` adapter."),
     onConflict: z
-      .enum(['fail', 'upsert', 'ignore'])
-      .default('fail')
+      .enum(["fail", "upsert", "ignore"])
+      .default("fail")
       .describe(
-        'Behaviour when the target rejects an insert as a conflict. `upsert` issues a PATCH (`bc`) or INSERT … ON CONFLICT UPDATE (`pg`).',
+        "Behaviour when the target rejects an insert as a conflict. `upsert` issues a PATCH (`bc`) or INSERT … ON CONFLICT UPDATE (`pg`).",
       ),
     upsertKey: z
       .array(z.string())
       .optional()
-      .describe('Conflict key for `pg` upserts. **Required** when `onConflict: upsert`.'),
+      .describe("Conflict key for `pg` upserts. **Required** when `onConflict: upsert`."),
     batchEndpoint: z
       .boolean()
       .default(true)
       .describe(
         "Use OData `$batch` for the `bc` adapter (max 100 ops per batch). Disable for adapters that don't support batching.",
       ),
-    table: z.string().optional().describe('Target table name for the `pg` adapter.'),
-    schema: z.string().default('public').describe('Target schema for the `pg` adapter.'),
+    table: z.string().optional().describe("Target table name for the `pg` adapter."),
+    schema: z.string().default("public").describe("Target schema for the `pg` adapter."),
   })
   .refine(
-    (t) => t.onConflict !== 'upsert' || (t.upsertKey !== undefined && t.upsertKey.length > 0),
-    { message: 'upsertKey is required when onConflict is "upsert"', path: ['upsertKey'] },
+    (t) => t.onConflict !== "upsert" || (t.upsertKey !== undefined && t.upsertKey.length > 0),
+    { message: 'upsertKey is required when onConflict is "upsert"', path: ["upsertKey"] },
   );
 
 // ── Run ───────────────────────────────────────────────────────────────────────
 
 export const RunSchema = z.object({
   mode: z
-    .enum(['full', 'incremental', 'validate-only'])
-    .default('full')
+    .enum(["full", "incremental", "validate-only"])
+    .default("full")
     .describe(
-      'Run mode. `full` extracts and loads everything; `incremental` filters source records by `incrementalField`; `validate-only` runs DQ + transform but skips the load.',
+      "Run mode. `full` extracts and loads everything; `incremental` filters source records by `incrementalField`; `validate-only` runs DQ + transform but skips the load.",
     ),
   batchSize: z
     .number()
     .int()
     .positive()
     .default(500)
-    .describe('DuckDB insert batch size during extract and transform.'),
+    .describe("DuckDB insert batch size during extract and transform."),
   onError: z
-    .enum(['continue', 'stop'])
-    .default('continue')
+    .enum(["continue", "stop"])
+    .default("continue")
     .describe(
-      'Behaviour when a target adapter rejects a row. `continue` increments `rowsFailed`; `stop` aborts the load.',
+      "Behaviour when a target adapter rejects a row. `continue` increments `rowsFailed`; `stop` aborts the load.",
     ),
   logLevel: z
-    .enum(['debug', 'info', 'warn', 'error'])
-    .default('info')
-    .describe('pino log level. `debug` adds per-row progress lines and disables the progress bar.'),
+    .enum(["debug", "info", "warn", "error"])
+    .default("info")
+    .describe("pino log level. `debug` adds per-row progress lines and disables the progress bar."),
   dryRun: z
     .boolean()
     .default(false)
     .describe(
-      'When true, skip the load phase even if a target is configured. Equivalent to passing `--dry-run` on the command line.',
+      "When true, skip the load phase even if a target is configured. Equivalent to passing `--dry-run` on the command line.",
     ),
   outputDir: z
     .string()
-    .default('./output')
+    .default("./output")
     .describe(
-      'Base directory for run artefacts (rejection CSV, DQ summary JSON, run state JSON, default DuckDB staging file).',
+      "Base directory for run artefacts (rejection CSV, DQ summary JSON, run state JSON, default DuckDB staging file).",
     ),
   stagingDb: z
     .string()
-    .default('')
+    .default("")
     .describe(
-      'DuckDB staging file path. Empty string defaults to `{outputDir}/{pipeline.name}.duckdb`. Set to `:memory:` to force in-memory mode.',
+      "DuckDB staging file path. Empty string defaults to `{outputDir}/{pipeline.name}.duckdb`. Set to `:memory:` to force in-memory mode.",
     ),
   enrichConcurrency: z
     .number()
@@ -529,7 +529,7 @@ export const RunSchema = z.object({
     .positive()
     .default(5)
     .describe(
-      'Phase 4a — concurrent in-flight enrich provider requests. Consumed by `@caracal-lynx/sluice-enrich` if installed.',
+      "Phase 4a — concurrent in-flight enrich provider requests. Consumed by `@caracal-lynx/sluice-enrich` if installed.",
     ),
   enrichTimeoutMs: z
     .number()
@@ -537,7 +537,7 @@ export const RunSchema = z.object({
     .positive()
     .default(5000)
     .describe(
-      'Phase 4a — per-request timeout for enrich provider calls. Consumed by `@caracal-lynx/sluice-enrich` if installed.',
+      "Phase 4a — per-request timeout for enrich provider calls. Consumed by `@caracal-lynx/sluice-enrich` if installed.",
     ),
   enrichMaxRetries: z
     .number()
@@ -546,17 +546,17 @@ export const RunSchema = z.object({
     .max(5)
     .default(3)
     .describe(
-      'Phase 4a — max retries for enrich provider calls. Consumed by `@caracal-lynx/sluice-enrich` if installed.',
+      "Phase 4a — max retries for enrich provider calls. Consumed by `@caracal-lynx/sluice-enrich` if installed.",
     ),
   incrementalField: z
     .string()
     .optional()
-    .describe('Source column used to filter incremental runs (must be timestamp-coercible).'),
+    .describe("Source column used to filter incremental runs (must be timestamp-coercible)."),
   incrementalSince: z
     .string()
     .optional()
     .describe(
-      'ISO datetime override for the incremental window start. If empty, the runner reads `lastRunAt` from the state file.',
+      "ISO datetime override for the incremental window start. If empty, the runner reads `lastRunAt` from the state file.",
     ),
 });
 
@@ -565,46 +565,46 @@ export const RunSchema = z.object({
 const MergeFieldStrategySchema = z
   .object({
     field: z.string(),
-    strategy: z.enum(['coalesce', 'priority-override']).optional(),
+    strategy: z.enum(["coalesce", "priority-override"]).optional(),
     source: z.string().optional(), // named source id
   })
   .refine((s) => s.strategy !== undefined || s.source !== undefined, {
-    message: 'fieldStrategy must specify strategy, source, or both',
+    message: "fieldStrategy must specify strategy, source, or both",
   });
 
 export const MergeSchema = z.object({
   key: z
     .union([z.string(), z.array(z.string())])
     .describe(
-      'Merge key — single column name or array of columns (composite key). Must exist in every source after `rename` is applied.',
+      "Merge key — single column name or array of columns (composite key). Must exist in every source after `rename` is applied.",
     ),
   strategy: z
-    .enum(['coalesce', 'priority-override', 'union', 'intersect'])
-    .default('coalesce')
+    .enum(["coalesce", "priority-override", "union", "intersect"])
+    .default("coalesce")
     .describe(
-      'Merge strategy. `coalesce` = first non-null wins (priority-ordered); `priority-override` = highest-priority source always wins; `union` = all rows deduped by key; `intersect` = rows present in every source.',
+      "Merge strategy. `coalesce` = first non-null wins (priority-ordered); `priority-override` = highest-priority source always wins; `union` = all rows deduped by key; `intersect` = rows present in every source.",
     ),
   onUnmatched: z
-    .enum(['include', 'exclude', 'warn', 'error'])
-    .default('include')
-    .describe('What to do with rows present in fewer than all sources. Ignored by `intersect`.'),
+    .enum(["include", "exclude", "warn", "error"])
+    .default("include")
+    .describe("What to do with rows present in fewer than all sources. Ignored by `intersect`."),
   fieldStrategies: z
     .array(MergeFieldStrategySchema)
     .default([])
     .describe(
-      'Per-field overrides of the top-level strategy. Use to pin a specific field to a specific source, or to override the strategy on a single field.',
+      "Per-field overrides of the top-level strategy. Use to pin a specific field to a specific source, or to override the strategy on a single field.",
     ),
   conflictLog: z
     .string()
     .optional()
     .describe(
-      'Optional CSV path to log per-conflict detail (key, field, winning source, source values). Only written when at least one conflict is detected.',
+      "Optional CSV path to log per-conflict detail (key, field, winning source, source values). Only written when at least one conflict is detected.",
     ),
   incrementalSource: z
     .string()
     .optional()
     .describe(
-      'Source id used for incremental filtering. Required when `run.mode: incremental`. Other sources run full each time.',
+      "Source id used for incremental filtering. Required when `run.mode: incremental`. Other sources run full each time.",
     ),
 });
 
@@ -612,17 +612,17 @@ export const MultiSourceEntrySchema = SourceBaseSchema.extend({
   id: z
     .string()
     .regex(/^[a-z0-9-]+$/, {
-      message: 'source id must be lowercase alphanumeric with hyphens only',
+      message: "source id must be lowercase alphanumeric with hyphens only",
     })
     .describe(
-      'Source id — lowercase alphanumeric with hyphens only. Must be unique across the array; used as the staging table suffix (`stg_raw_{id}`).',
+      "Source id — lowercase alphanumeric with hyphens only. Must be unique across the array; used as the staging table suffix (`stg_raw_{id}`).",
     ),
   priority: z
     .number()
     .int()
     .positive()
     .describe(
-      'Positive integer priority. Lower priority = higher precedence in `coalesce` and `priority-override` strategies.',
+      "Positive integer priority. Lower priority = higher precedence in `coalesce` and `priority-override` strategies.",
     ),
   rename: z
     .record(z.string())
@@ -631,13 +631,13 @@ export const MultiSourceEntrySchema = SourceBaseSchema.extend({
       'Optional rename map `{ "old column": "new column" }` applied in-place after extract. Useful for harmonising CSV/XLSX column headers; SQL/REST sources should rename in the query instead.',
     ),
 }).refine((s) => s.query || s.file || s.endpoint, {
-  message: 'source must have query, file, or endpoint',
+  message: "source must have query, file, or endpoint",
 });
 
 // ── Pipeline root ─────────────────────────────────────────────────────────────
 
 const PipelineMetaSchema = z.object({
-  name: z.string().regex(/^[a-z0-9-]+$/, 'name must be lowercase-hyphenated'),
+  name: z.string().regex(/^[a-z0-9-]+$/, "name must be lowercase-hyphenated"),
   client: z.string(),
   version: z.string(),
   entity: z.string(),
@@ -660,7 +660,7 @@ export const PipelineSchema = z
   .strict()
   .refine(
     (p) => (!!p.source && !p.sources && !p.merge) || (!p.source && !!p.sources && !!p.merge),
-    { message: 'pipeline must have either source (single) or both sources and merge (multi)' },
+    { message: "pipeline must have either source (single) or both sources and merge (multi)" },
   )
   .refine(
     (p) => {
@@ -668,14 +668,14 @@ export const PipelineSchema = z
       const ids = p.sources.map((s) => s.id);
       return new Set(ids).size === ids.length;
     },
-    { message: 'duplicate source ids in sources array' },
+    { message: "duplicate source ids in sources array" },
   )
   .refine(
     (p) => {
-      if (!p.sources || !p.merge || p.run?.mode !== 'incremental') return true;
+      if (!p.sources || !p.merge || p.run?.mode !== "incremental") return true;
       return !!p.merge.incrementalSource;
     },
-    { message: 'merge.incrementalSource is required when run.mode is incremental' },
+    { message: "merge.incrementalSource is required when run.mode is incremental" },
   )
   .refine(
     (p) => {
@@ -683,10 +683,10 @@ export const PipelineSchema = z
       const ids = new Set(p.sources.map((s) => s.id));
       return ids.has(p.merge.incrementalSource);
     },
-    { message: 'merge.incrementalSource must match one of the source ids in sources' },
+    { message: "merge.incrementalSource must match one of the source ids in sources" },
   )
   .refine((p) => !p.prep || !!p.sources || p.prep.rules.every((r) => r.sourceId === undefined), {
-    message: 'prep.rules[].sourceId is only valid in multi-source pipelines',
+    message: "prep.rules[].sourceId is only valid in multi-source pipelines",
   })
   .refine(
     (p) => {
@@ -694,7 +694,7 @@ export const PipelineSchema = z
       const ids = new Set(p.sources.map((s) => s.id));
       return p.prep.rules.every((r) => r.sourceId === undefined || ids.has(r.sourceId));
     },
-    { message: 'prep.rules[].sourceId must match a declared source id' },
+    { message: "prep.rules[].sourceId must match a declared source id" },
   );
 
 // ── Phase 2: toolkit-level config (sluice.config.yaml) ───────────────────────
@@ -720,7 +720,7 @@ export const CompositeRuleSchema = z.object({
     .string()
     .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/)
     .refine((id) => !BUILT_IN_CHECK_NAMES.has(id), {
-      message: 'composite rule id must not collide with a built-in check type',
+      message: "composite rule id must not collide with a built-in check type",
     }),
   description: z.string().optional(),
   checks: z.array(CheckSchema).min(1),

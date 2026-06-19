@@ -29,35 +29,33 @@
  *     does not become an output column, keeping the schema stable.
  */
 
-import { createReadStream, readdirSync } from 'node:fs';
-import * as path from 'node:path';
+import { createReadStream, readdirSync } from "node:fs";
+import * as path from "node:path";
 
-import { parse } from 'csv-parse';
+import { parse } from "csv-parse";
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
-import { SourceError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { ExtractResult, SourceAdapter } from './types.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
+import { SourceError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import { stringifyValue } from "../../utils/stringify.js";
+import type { ExtractResult, SourceAdapter } from "./types.js";
 
 function resolveGlob(pattern: string): string[] {
-  if (!pattern.includes('*')) return [pattern];
+  if (!pattern.includes("*")) return [pattern];
   const parsed = path.parse(pattern);
-  if (parsed.dir.includes('*')) {
+  if (parsed.dir.includes("*")) {
     throw new SourceError(`glob wildcards are only supported in the filename: "${pattern}"`);
   }
   const re = new RegExp(
-    '^' + parsed.base.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$',
+    "^" + parsed.base.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$",
   );
-  const searchDir = parsed.dir === '' ? '.' : parsed.dir;
+  const searchDir = parsed.dir === "" ? "." : parsed.dir;
   let entries: string[];
   try {
     entries = readdirSync(searchDir);
   } catch (err) {
-    throw new SourceError(
-      `could not read directory "${searchDir}" for glob "${pattern}"`,
-      err,
-    );
+    throw new SourceError(`could not read directory "${searchDir}" for glob "${pattern}"`, err);
   }
   const matches = entries
     .filter((f) => re.test(f))
@@ -71,7 +69,7 @@ function resolveGlob(pattern: string): string[] {
 
 function isBlank(value: unknown): boolean {
   if (value === null || value === undefined) return true;
-  if (typeof value === 'string') return value.trim() === '';
+  if (typeof value === "string") return value.trim() === "";
   return false;
 }
 
@@ -86,7 +84,7 @@ function isContinuationRow(row: Record<string, unknown>, pivotColumn: string): b
 
 /** Parse a `Key: value` cell. Returns null if no colon is present. */
 function parseKeyValue(cell: string): { key: string; value: string } | null {
-  const colon = cell.indexOf(':');
+  const colon = cell.indexOf(":");
   if (colon === -1) return null;
   return {
     key: cell.slice(0, colon).trim(),
@@ -95,7 +93,7 @@ function parseKeyValue(cell: string): { key: string; value: string } | null {
 }
 
 export class OdooCsvSourceAdapter implements SourceAdapter {
-  readonly id = 'odoo-csv';
+  readonly id = "odoo-csv";
 
   async connect(_config: SourceConfig): Promise<void> {
     // File-based; no persistent connection.
@@ -110,16 +108,16 @@ export class OdooCsvSourceAdapter implements SourceAdapter {
     store: StagingStore,
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
-    targetTable = 'stg_raw',
+    targetTable = "stg_raw",
   ): Promise<ExtractResult> {
     if (!config.file) {
-      throw new SourceError('odoo-csv source requires `file`');
+      throw new SourceError("odoo-csv source requires `file`");
     }
     const files = resolveGlob(config.file);
     const pivot = config.pivot;
     logger.debug(
       { files, targetTable, pivot: pivot?.column, keys: pivot?.keys },
-      'odoo-csv: resolved input files',
+      "odoo-csv: resolved input files",
     );
 
     let inputColumns: string[] | null = null;
@@ -135,12 +133,7 @@ export class OdooCsvSourceAdapter implements SourceAdapter {
 
     const flushCurrent = async (): Promise<void> => {
       if (!currentParent) return;
-      const outRow = buildOutputRow(
-        currentParent,
-        currentPivotEntries,
-        pivot,
-        logicalRowIndex,
-      );
+      const outRow = buildOutputRow(currentParent, currentPivotEntries, pivot, logicalRowIndex);
       batch.push(outRow);
       logicalRowIndex++;
       currentParent = null;
@@ -177,7 +170,7 @@ export class OdooCsvSourceAdapter implements SourceAdapter {
             if (pivot && !inputColumns.includes(pivot.column)) {
               throw new SourceError(
                 `odoo-csv: pivot.column "${pivot.column}" not found in input columns ` +
-                  `[${inputColumns.join(', ')}] of "${file}"`,
+                  `[${inputColumns.join(", ")}] of "${file}"`,
               );
             }
             outputColumns = buildOutputColumns(inputColumns, pivot);
@@ -205,8 +198,8 @@ export class OdooCsvSourceAdapter implements SourceAdapter {
                   `in "${file}" (no preceding parent row)`,
               );
             }
-            const cell = String(row[pivot.column] ?? '');
-            if (cell.trim() === '') continue; // wholly blank line; skip silently
+            const cell = stringifyValue(row[pivot.column] ?? "");
+            if (cell.trim() === "") continue; // wholly blank line; skip silently
             const kv = parseKeyValue(cell);
             if (!kv) {
               logger.warn(
@@ -220,8 +213,8 @@ export class OdooCsvSourceAdapter implements SourceAdapter {
             // Parent row: flush previous, then capture this one.
             await flushCurrent();
             currentParent = row;
-            const parentCell = String(row[pivot.column] ?? '');
-            if (parentCell.trim() !== '') {
+            const parentCell = stringifyValue(row[pivot.column] ?? "");
+            if (parentCell.trim() !== "") {
               const kv = parseKeyValue(parentCell);
               if (kv) currentPivotEntries.push(kv);
               // Non-key:value parent cells (e.g. a plain string in `Variant
@@ -256,25 +249,20 @@ export class OdooCsvSourceAdapter implements SourceAdapter {
   }
 }
 
-function buildOutputColumns(
-  inputColumns: string[],
-  pivot: SourceConfig['pivot'],
-): ColumnMeta[] {
+function buildOutputColumns(inputColumns: string[], pivot: SourceConfig["pivot"]): ColumnMeta[] {
   if (!pivot) {
-    return inputColumns.map((n) => ({ name: n, duckDbType: 'VARCHAR' }));
+    return inputColumns.map((n) => ({ name: n, duckDbType: "VARCHAR" }));
   }
   const cols: ColumnMeta[] = [];
   for (const c of inputColumns) {
     if (pivot.dropOriginal && c === pivot.column) continue;
-    cols.push({ name: c, duckDbType: 'VARCHAR' });
+    cols.push({ name: c, duckDbType: "VARCHAR" });
   }
   for (const k of pivot.keys) {
     if (cols.some((c) => c.name === k)) {
-      throw new SourceError(
-        `odoo-csv: pivot key "${k}" collides with an existing input column`,
-      );
+      throw new SourceError(`odoo-csv: pivot key "${k}" collides with an existing input column`);
     }
-    cols.push({ name: k, duckDbType: 'VARCHAR' });
+    cols.push({ name: k, duckDbType: "VARCHAR" });
   }
   return cols;
 }
@@ -282,7 +270,7 @@ function buildOutputColumns(
 function buildOutputRow(
   parent: Record<string, unknown>,
   entries: Array<{ key: string; value: string }>,
-  pivot: SourceConfig['pivot'],
+  pivot: SourceConfig["pivot"],
   logicalRowIndex: number,
 ): Record<string, unknown> {
   if (!pivot) {
@@ -304,19 +292,19 @@ function buildOutputRow(
       const msg =
         `odoo-csv: unknown pivot key "${key}" (value "${value}") at logical row ` +
         `${logicalRowIndex + 1}`;
-      if (pivot.onUnknownKey === 'error') {
+      if (pivot.onUnknownKey === "error") {
         throw new SourceError(msg);
       }
       logger.warn(
         { key, value, logicalRow: logicalRowIndex + 1 },
-        'odoo-csv: unknown pivot key — value dropped',
+        "odoo-csv: unknown pivot key — value dropped",
       );
       continue;
     }
     if (seenKeys.has(key)) {
       logger.warn(
         { key, value, logicalRow: logicalRowIndex + 1, previous: out[key] },
-        'odoo-csv: duplicate pivot key in one logical row — last-wins',
+        "odoo-csv: duplicate pivot key in one logical row — last-wins",
       );
     }
     out[key] = value;

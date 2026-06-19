@@ -18,12 +18,12 @@
  *           lowercase: true
  */
 
-import type { TransformPlugin } from '../../../src/plugins/types.js';
+import type { TransformPlugin } from "../../../src/plugins/types.js";
 
 export const transform: TransformPlugin = {
   // ⚠️  REQUIRED: Unique identifier for your operation
   // Used in transform config as: customOp: my-transform
-  id: 'my-transform',
+  id: "my-transform",
 
   /**
    * Transform a value.
@@ -57,6 +57,6 @@ export const transform: TransformPlugin = {
     }
 
     // Step 4: Return the result (or null if empty)
-    return result === '' ? null : result;
+    return result === "" ? null : result;
   },
 };

@@ -6,23 +6,22 @@
  * Severity: typically warning (bad format but recoverable)
  */
 
-import type { RulePlugin } from '../../../src/plugins/types.js';
+import type { RulePlugin } from "../../../src/plugins/types.js";
 
 export const rule: RulePlugin = {
-  id: 'iso-8601-date',
+  id: "iso-8601-date",
   validate(value, config, rowIndex, field) {
-    if (value === null || value === undefined || value === '') return null;
+    if (value === null || value === undefined || value === "") return null;
 
     const str = String(value).trim();
-    const iso8601Regex =
-      /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.{\d{3})?)?([+-]\d{2}:?\d{2}|Z)?$/;
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.{\d{3})?)?([+-]\d{2}:?\d{2}|Z)?$/;
 
     if (!iso8601Regex.test(str)) {
       return {
         field,
         rowIndex,
         value,
-        rule: 'iso-8601-date',
+        rule: "iso-8601-date",
         severity: config.severity,
         message:
           config.message ??
@@ -37,7 +36,7 @@ export const rule: RulePlugin = {
         field,
         rowIndex,
         value,
-        rule: 'iso-8601-date',
+        rule: "iso-8601-date",
         severity: config.severity,
         message: config.message ?? `"${str}" is not a valid ISO 8601 date`,
       };

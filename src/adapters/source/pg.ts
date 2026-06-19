@@ -9,41 +9,41 @@
  * for very large extracts. `targetTable` defaults to 'stg_raw'.
  */
 
-import pg from 'pg';
+import pg from "pg";
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
-import { SourceError } from '../../utils/errors.js';
-import type { ExtractResult, SourceAdapter } from './types.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
+import { SourceError } from "../../utils/errors.js";
+import type { ExtractResult, SourceAdapter } from "./types.js";
 
 // OIDs from pg's built-in types — full list at node_modules/pg-types/lib/textParsers.js
 // We only map the commonest ones; unknown OIDs default to VARCHAR.
 const PG_OID_TO_DUCKDB: Record<number, string> = {
-  16: 'BOOLEAN', // bool
-  20: 'BIGINT', // int8
-  21: 'BIGINT', // int2
-  23: 'BIGINT', // int4
-  25: 'VARCHAR', // text
-  700: 'DOUBLE', // float4
-  701: 'DOUBLE', // float8
-  1043: 'VARCHAR', // varchar
-  1042: 'VARCHAR', // bpchar (char)
-  1082: 'TIMESTAMP', // date
-  1114: 'TIMESTAMP', // timestamp
-  1184: 'TIMESTAMP', // timestamptz
-  1700: 'DOUBLE', // numeric
-  114: 'VARCHAR', // json
-  3802: 'VARCHAR', // jsonb
-  2950: 'VARCHAR', // uuid
+  16: "BOOLEAN", // bool
+  20: "BIGINT", // int8
+  21: "BIGINT", // int2
+  23: "BIGINT", // int4
+  25: "VARCHAR", // text
+  700: "DOUBLE", // float4
+  701: "DOUBLE", // float8
+  1043: "VARCHAR", // varchar
+  1042: "VARCHAR", // bpchar (char)
+  1082: "TIMESTAMP", // date
+  1114: "TIMESTAMP", // timestamp
+  1184: "TIMESTAMP", // timestamptz
+  1700: "DOUBLE", // numeric
+  114: "VARCHAR", // json
+  3802: "VARCHAR", // jsonb
+  2950: "VARCHAR", // uuid
 };
 
 export class PgSourceAdapter implements SourceAdapter {
-  readonly id = 'pg';
+  readonly id = "pg";
   private pool: pg.Pool | null = null;
 
   async connect(config: SourceConfig): Promise<void> {
     if (!config.connection) {
-      throw new SourceError('pg source requires `connection`');
+      throw new SourceError("pg source requires `connection`");
     }
     this.pool = new pg.Pool({ connectionString: config.connection });
     // pg.Pool doesn't connect eagerly; trigger a check via a trivial query so
@@ -73,13 +73,13 @@ export class PgSourceAdapter implements SourceAdapter {
     store: StagingStore,
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
-    targetTable = 'stg_raw',
+    targetTable = "stg_raw",
   ): Promise<ExtractResult> {
     if (!config.query) {
-      throw new SourceError('pg source requires `query`');
+      throw new SourceError("pg source requires `query`");
     }
     if (!this.pool) {
-      throw new SourceError('pg: not connected');
+      throw new SourceError("pg: not connected");
     }
 
     let result: pg.QueryResult<Record<string, unknown>>;
@@ -93,12 +93,12 @@ export class PgSourceAdapter implements SourceAdapter {
     }
 
     if (result.fields.length === 0) {
-      throw new SourceError('pg query produced no columns');
+      throw new SourceError("pg query produced no columns");
     }
 
     const columns: ColumnMeta[] = result.fields.map((f) => ({
       name: f.name,
-      duckDbType: PG_OID_TO_DUCKDB[f.dataTypeID] ?? 'VARCHAR',
+      duckDbType: PG_OID_TO_DUCKDB[f.dataTypeID] ?? "VARCHAR",
     }));
     await store.createTable(targetTable, columns);
 

@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
-import { type ExtractResult } from './adapters/source/index.js';
-import { ConfigLoader } from './config/loader.js';
-import { isMultiSource, type MultiSourceEntry, type Pipeline } from './config/types.js';
-import type { DQSummary } from './dq/index.js';
-import type { EnrichSummary } from './enrich/types.js';
-import { MergeEngine } from './merge/index.js';
-import { PipelineRunner, type RunOverrides, type RunResult } from './runner.js';
-import { type ColumnMeta, StagingStore, quoteIdent } from './staging/index.js';
-import { type LoadResult } from './adapters/target/index.js';
-import { ConfigError, PipelineDQError } from './utils/errors.js';
-import { logger } from './utils/logger.js';
+import { type ExtractResult } from "./adapters/source/index.js";
+import { ConfigLoader } from "./config/loader.js";
+import { isMultiSource, type MultiSourceEntry, type Pipeline } from "./config/types.js";
+import type { DQSummary } from "./dq/index.js";
+import type { EnrichSummary } from "./enrich/types.js";
+import { MergeEngine } from "./merge/index.js";
+import { PipelineRunner, type RunOverrides, type RunResult } from "./runner.js";
+import { type ColumnMeta, StagingStore, quoteIdent } from "./staging/index.js";
+import { type LoadResult } from "./adapters/target/index.js";
+import { ConfigError, PipelineDQError } from "./utils/errors.js";
+import { logger } from "./utils/logger.js";
+import { stringifyValue } from "./utils/stringify.js";
 
 interface SourceExtractMeta {
   sourceId: string;
@@ -23,14 +24,14 @@ interface SourceExtractMeta {
 }
 
 function asColumns(names: string[]): ColumnMeta[] {
-  return names.map((name) => ({ name, duckDbType: 'VARCHAR' }));
+  return names.map((name) => ({ name, duckDbType: "VARCHAR" }));
 }
 
 function sourceRejectionPath(config: Pipeline, sourceId: string): string | undefined {
   const configured = config.dq.rejectionFile;
   if (!configured) return undefined;
   const parsed = path.parse(configured);
-  return path.join(parsed.dir, `${parsed.name}-${sourceId}${parsed.ext || '.csv'}`);
+  return path.join(parsed.dir, `${parsed.name}-${sourceId}${parsed.ext || ".csv"}`);
 }
 
 export class MultiSourcePipelineRunner extends PipelineRunner {
@@ -57,18 +58,15 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     if (overrides.progress) this.progress = overrides.progress;
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
-    await this.loadAllPlugins(
-      path.dirname(path.resolve(yamlPath)),
-      overrides.pluginDirs ?? [],
-    );
+    await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
 
     if (!isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" is not multi-source. Use PipelineRunner for single-source pipelines.`,
       );
     }
-    if (config.run.mode === 'incremental') {
-      throw new ConfigError('incremental mode is not implemented for multi-source profile');
+    if (config.run.mode === "incremental") {
+      throw new ConfigError("incremental mode is not implemented for multi-source profile");
     }
 
     const outputDir = path.resolve(config.run.outputDir);
@@ -94,11 +92,11 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         config.merge,
       );
 
-      const mergedColumns = asColumns(await store.columnNames('stg_merged'));
-      const profile = await this.buildProfileFromTable(store, 'stg_merged', mergedColumns);
+      const mergedColumns = asColumns(await store.columnNames("stg_merged"));
+      const profile = await this.buildProfileFromTable(store, "stg_merged", mergedColumns);
       const profilePath = path.join(outputDir, `${config.pipeline.name}-profile.json`);
-      await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, 'utf-8');
-      logger.info({ profilePath, columns: profile.length }, 'pipeline: profile complete');
+      await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, "utf-8");
+      logger.info({ profilePath, columns: profile.length }, "pipeline: profile complete");
 
       const extractResult: ExtractResult = {
         rowsExtracted: this.sourceExtracts.reduce((sum, s) => sum + s.rowsExtracted, 0),
@@ -118,7 +116,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           rowsRejected: 0,
           violations: { critical: 0, warning: 0, info: 0 },
           byField: {},
-          reportPath: '',
+          reportPath: "",
         },
         transform: null,
         load: null,
@@ -138,18 +136,17 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
 
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
-    await this.loadAllPlugins(
-      path.dirname(path.resolve(yamlPath)),
-      overrides.pluginDirs ?? [],
-    );
+    await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
 
     if (!isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" is not multi-source. Use PipelineRunner for single-source pipelines.`,
       );
     }
-    if (config.run.mode === 'incremental' && !config.run.incrementalField) {
-      throw new ConfigError('run.incrementalField is required for incremental multi-source pipelines');
+    if (config.run.mode === "incremental" && !config.run.incrementalField) {
+      throw new ConfigError(
+        "run.incrementalField is required for incremental multi-source pipelines",
+      );
     }
 
     const outputDir = path.resolve(config.run.outputDir);
@@ -160,16 +157,13 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       await store.open();
 
       this.sourceExtracts = [];
-      this.sourceIncrementalSince = Object.fromEntries(
-        config.sources.map((s) => [s.id, '']),
-      ) as Record<string, string>;
+      this.sourceIncrementalSince = Object.fromEntries(config.sources.map((s) => [s.id, ""]));
       const sortedSources = this.sortSourcesForMerge(config.sources);
-      const incrementalSourceId = config.run.mode === 'incremental'
-        ? config.merge.incrementalSource
-        : undefined;
+      const incrementalSourceId =
+        config.run.mode === "incremental" ? config.merge.incrementalSource : undefined;
       const incrementalSince = incrementalSourceId
         ? await this.resolveIncrementalSinceForSource(config, incrementalSourceId)
-        : '';
+        : "";
 
       if (incrementalSourceId) {
         this.sourceIncrementalSince[incrementalSourceId] = incrementalSince;
@@ -186,7 +180,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         );
       }
 
-      this.progress.startPhase('merge', `Merge (${config.merge.strategy ?? 'coalesce'})`);
+      this.progress.startPhase("merge", `Merge (${config.merge.strategy ?? "coalesce"})`);
       let mergeResult;
       try {
         mergeResult = await this.mergeEngine.run(
@@ -200,10 +194,10 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         );
         this.progress.update(mergeResult.rowsMerged);
         this.progress.endPhase({
-          state: mergeResult.conflicts > 0 ? 'warn' : 'success',
+          state: mergeResult.conflicts > 0 ? "warn" : "success",
         });
       } catch (err) {
-        this.progress.endPhase({ state: 'fail' });
+        this.progress.endPhase({ state: "fail" });
         throw err;
       }
 
@@ -214,7 +208,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       const hasPostMergePrepRules =
         config.prep?.rules.some((r) => r.sourceId === undefined) ?? false;
       if (hasPostMergePrepRules) {
-        await this.runPrep(postMergeConfig, store, overrides, 'stg_merged', undefined);
+        await this.runPrep(postMergeConfig, store, overrides, "stg_merged", undefined);
       }
       const prepSummary = await this.finalisePrepSummary(postMergeConfig);
 
@@ -223,25 +217,25 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         store,
         path.dirname(path.resolve(yamlPath)),
         overrides,
-        'stg_merged',
+        "stg_merged",
       );
 
       const dqSummary = await this.runDQ(
         postMergeConfig,
         store,
-        'stg_merged',
+        "stg_merged",
         undefined,
-        'Data quality (post-merge)',
+        "Data quality (post-merge)",
       );
 
       if (postMergeConfig.dq.stopOnCritical && dqSummary.violations.critical > 0) {
         throw new PipelineDQError(dqSummary.violations.critical, dqSummary.reportPath);
       }
 
-      const mergedColumns = asColumns(await store.columnNames('stg_merged'));
+      const mergedColumns = asColumns(await store.columnNames("stg_merged"));
       const transformSourceTable = await this.materializeAcceptedRows(
         store,
-        'stg_merged',
+        "stg_merged",
         mergedColumns,
         dqSummary.rejectedRowIndices ?? [],
       );
@@ -249,7 +243,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         postMergeConfig,
         store,
         transformSourceTable,
-        'stg_transformed',
+        "stg_transformed",
       );
 
       const extractResult: ExtractResult = {
@@ -273,17 +267,17 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         unmatched: mergeResult.unmatched,
       };
 
-      if (postMergeConfig.run.dryRun || postMergeConfig.run.mode === 'validate-only') {
+      if (postMergeConfig.run.dryRun || postMergeConfig.run.mode === "validate-only") {
         logger.info(
           { dryRun: postMergeConfig.run.dryRun, mode: postMergeConfig.run.mode },
-          'pipeline: stopping before load',
+          "pipeline: stopping before load",
         );
         this.progress.summary({
           pipeline: postMergeConfig.pipeline.name,
           elapsedMs: Date.now() - runStartMs,
           rowsExtracted: extractResult.rowsExtracted,
           warnings: dqSummary.violations.warning,
-          state: dqSummary.violations.warning > 0 || mergeResult.conflicts > 0 ? 'warn' : 'success',
+          state: dqSummary.violations.warning > 0 || mergeResult.conflicts > 0 ? "warn" : "success",
         });
         return {
           ...baseRunResult,
@@ -306,7 +300,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           rowsMerged: mergeResult.rowsMerged,
           rowsLoaded: loadResult.rowsLoaded,
         },
-        'pipeline: done (multi-source)',
+        "pipeline: done (multi-source)",
       );
 
       this.progress.summary({
@@ -315,7 +309,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         rowsExtracted: extractResult.rowsExtracted,
         rowsLoaded: loadResult.rowsLoaded,
         warnings: dqSummary.violations.warning,
-        state: dqSummary.violations.warning > 0 || mergeResult.conflicts > 0 ? 'warn' : 'success',
+        state: dqSummary.violations.warning > 0 || mergeResult.conflicts > 0 ? "warn" : "success",
       });
 
       return {
@@ -353,7 +347,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         {
           lastRunAt: new Date().toISOString(),
           rowsExtracted: s.rowsExtracted,
-          incrementalSince: this.sourceIncrementalSince[s.sourceId] ?? '',
+          incrementalSince: this.sourceIncrementalSince[s.sourceId] ?? "",
         },
       ]),
     );
@@ -366,15 +360,15 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       rowsLoaded: load.rowsLoaded,
       criticalViolations: dq.violations.critical,
       warnings: dq.violations.warning,
-      incrementalSince: config.run.incrementalSince ?? '',
+      incrementalSince: config.run.incrementalSince ?? "",
       sources: sourcesBlock,
     };
     if (enrichSummary !== undefined) {
-      state['enrichSummary'] = enrichSummary;
+      state["enrichSummary"] = enrichSummary;
     }
 
-    await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
-    logger.debug({ stateFilePath }, 'pipeline: state file written');
+    await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
+    logger.debug({ stateFilePath }, "pipeline: state file written");
     return stateFilePath;
   }
 
@@ -423,7 +417,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           incrementalSince,
           rowsAfterFilter: filteredRows,
         },
-        'pipeline: incremental filter applied',
+        "pipeline: incremental filter applied",
       );
     }
 
@@ -477,7 +471,10 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     }
   }
 
-  private async resolveIncrementalSinceForSource(config: Pipeline, incrementalSourceId: string): Promise<string> {
+  private async resolveIncrementalSinceForSource(
+    config: Pipeline,
+    incrementalSourceId: string,
+  ): Promise<string> {
     if (config.run.incrementalSince) return config.run.incrementalSince;
 
     const statePath = path.join(
@@ -485,14 +482,14 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       `${config.pipeline.name}-state.json`,
     );
     try {
-      const raw = await fs.readFile(statePath, 'utf-8');
+      const raw = await fs.readFile(statePath, "utf-8");
       const parsed = JSON.parse(raw) as {
         sources?: Record<string, { lastRunAt?: string }>;
       };
       const lastRunAt = parsed.sources?.[incrementalSourceId]?.lastRunAt;
-      return typeof lastRunAt === 'string' ? lastRunAt : '';
+      return typeof lastRunAt === "string" ? lastRunAt : "";
     } catch {
-      return '';
+      return "";
     }
   }
 
@@ -509,14 +506,11 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       );
     }
 
-    const sinceCheck = await store.query<{ ts: unknown }>(
-      'SELECT TRY_CAST(? AS TIMESTAMP) AS ts',
-      [incrementalSince],
-    );
-    if (!sinceCheck[0]?.ts) {
-      throw new ConfigError(
-        `run.incrementalSince "${incrementalSince}" is not a valid timestamp`,
-      );
+    const sinceCheck = await store.query<{ ts: unknown }>("SELECT TRY_CAST(? AS TIMESTAMP) AS ts", [
+      incrementalSince,
+    ]);
+    if (sinceCheck[0]?.ts === null || sinceCheck[0]?.ts === undefined) {
+      throw new ConfigError(`run.incrementalSince "${incrementalSince}" is not a valid timestamp`);
     }
 
     const invalidRows = await store.query<{ n: unknown }>(
@@ -539,12 +533,12 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         `,
       );
       const sampleValues = examples
-        .map((e) => (e.v === null || e.v === undefined ? '' : String(e.v)))
+        .map((e) => (e.v === null || e.v === undefined ? "" : stringifyValue(e.v)))
         .filter((v) => v.length > 0)
-        .join(', ');
+        .join(", ");
       throw new ConfigError(
         `incrementalField "${incrementalField}" contains ${invalidCount} non-parseable timestamp value(s)` +
-        (sampleValues ? ` (examples: ${sampleValues})` : ''),
+          (sampleValues ? ` (examples: ${sampleValues})` : ""),
       );
     }
 
@@ -563,16 +557,18 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     store: StagingStore,
     tableName: string,
     columns: ColumnMeta[],
-  ): Promise<Array<{
-    name: string;
-    duckDbType: string;
-    rowCount: number;
-    nullCount: number;
-    distinctCount: number;
-    minLen: number | null;
-    maxLen: number | null;
-    sample: Array<string | null>;
-  }>> {
+  ): Promise<
+    Array<{
+      name: string;
+      duckDbType: string;
+      rowCount: number;
+      nullCount: number;
+      distinctCount: number;
+      minLen: number | null;
+      maxLen: number | null;
+      sample: Array<string | null>;
+    }>
+  > {
     const result: Array<{
       name: string;
       duckDbType: string;
@@ -613,7 +609,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         minLen: lenRow[0]?.mn === null || lenRow[0]?.mn === undefined ? null : Number(lenRow[0].mn),
         maxLen: lenRow[0]?.mx === null || lenRow[0]?.mx === undefined ? null : Number(lenRow[0].mx),
         sample: sampleRows.map((r) =>
-          r.v === null || r.v === undefined ? null : String(r.v),
+          r.v === null || r.v === undefined ? null : stringifyValue(r.v),
         ),
       });
     }
@@ -637,9 +633,9 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
         pagination: sourceEntry.pagination,
       },
     };
-    delete (next as Record<string, unknown>)['sources'];
-    delete (next as Record<string, unknown>)['merge'];
-    return next as Pipeline;
+    delete (next as Record<string, unknown>)["sources"];
+    delete (next as Record<string, unknown>)["merge"];
+    return next;
   }
 
   private buildPostMergeConfig(config: Pipeline): Pipeline {
@@ -655,6 +651,6 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     return {
       ...rest,
       dq: { ...config.dq, rules: postMergeRules },
-    } as Pipeline;
+    };
   }
 }

@@ -15,10 +15,10 @@
  * Differs from COALESCE in that it respects source presence, not just value nullability.
  */
 
-import type { MergeStrategyPlugin } from '../types.js';
-import type { StagingStore } from '../../staging/index.js';
-import { quoteIdent } from '../../staging/index.js';
-import { logger } from '../../utils/logger.js';
+import type { MergeStrategyPlugin } from "../types.js";
+import type { StagingStore } from "../../staging/index.js";
+import { quoteIdent } from "../../staging/index.js";
+import { logger } from "../../utils/logger.js";
 
 import {
   buildJoinedTableSql,
@@ -26,15 +26,16 @@ import {
   buildPresentCountExpr,
   normalizeKeyColumns,
   type BuildMergeContext,
-} from '../sql-builder.js';
-import { buildConflictLog } from '../conflict-log.js';
-import type { MergeSourceMeta, MergeResult } from '../types.js';
-import type { MergeConfig } from '../../config/types.js';
-import { ConfigError, PipelineError } from '../../utils/errors.js';
+} from "../sql-builder.js";
+import { buildConflictLog } from "../conflict-log.js";
+import type { MergeSourceMeta, MergeResult } from "../types.js";
+import type { MergeConfig } from "../../config/types.js";
+import { ConfigError, PipelineError } from "../../utils/errors.js";
 
 export const priorityOverrideStrategy: MergeStrategyPlugin = {
-  id: 'priority-override',
-  description: 'Highest priority source wins (even nulls). Uses values from the highest-priority source present for a key, ignoring lower priorities.',
+  id: "priority-override",
+  description:
+    "Highest priority source wins (even nulls). Uses values from the highest-priority source present for a key, ignoring lower priorities.",
 
   async merge(
     store: StagingStore,
@@ -42,7 +43,7 @@ export const priorityOverrideStrategy: MergeStrategyPlugin = {
     config: MergeConfig,
   ): Promise<MergeResult> {
     if (rawSources.length < 2) {
-      throw new ConfigError('merge requires at least 2 sources');
+      throw new ConfigError("merge requires at least 2 sources");
     }
 
     const sources = [...rawSources].sort((a, b) => a.priority - b.priority);
@@ -52,7 +53,7 @@ export const priorityOverrideStrategy: MergeStrategyPlugin = {
     for (const source of sources) {
       sourceColumns[source.id] = await store.columnNames(source.tableName);
       for (const key of keyColumns) {
-        if (!sourceColumns[source.id]!.includes(key)) {
+        if (!sourceColumns[source.id].includes(key)) {
           throw new ConfigError(
             `merge key column '${key}' is missing from source '${source.id}' table '${source.tableName}'`,
           );
@@ -63,7 +64,7 @@ export const priorityOverrideStrategy: MergeStrategyPlugin = {
     const context: BuildMergeContext = { sources, keyColumns, sourceColumns };
 
     // Build the joined table (FULL OUTER JOIN on keys)
-    const joinedTable = 'stg_merge_joined';
+    const joinedTable = "stg_merge_joined";
     await store.query(buildJoinedTableSql(joinedTable, context));
 
     // Check for unmatched rows and handle per config
@@ -73,13 +74,13 @@ export const priorityOverrideStrategy: MergeStrategyPlugin = {
     );
     const unmatched = Number(unmatchedRows[0]?.n ?? 0);
 
-    if (config.onUnmatched === 'error' && unmatched > 0) {
+    if (config.onUnmatched === "error" && unmatched > 0) {
       throw new PipelineError(
         `merge halted: ${unmatched} unmatched row(s) encountered with onUnmatched=error`,
       );
     }
-    if (config.onUnmatched === 'warn' && unmatched > 0) {
-      logger.warn({ unmatched }, 'merge: unmatched rows present');
+    if (config.onUnmatched === "warn" && unmatched > 0) {
+      logger.warn({ unmatched }, "merge: unmatched rows present");
     }
 
     // Build output columns in order: keys first, then all non-key columns
@@ -101,8 +102,8 @@ export const priorityOverrideStrategy: MergeStrategyPlugin = {
     }
 
     // Merge: priority-override uses highest-priority source value (even if null)
-    const mergedTable = 'stg_merged';
-    const cfgOverride: MergeConfig = { ...config, strategy: 'priority-override' };
+    const mergedTable = "stg_merged";
+    const cfgOverride: MergeConfig = { ...config, strategy: "priority-override" };
     await store.query(
       buildMergedTableSql(mergedTable, joinedTable, context, cfgOverride, outputColumns),
     );
@@ -114,18 +115,18 @@ export const priorityOverrideStrategy: MergeStrategyPlugin = {
       context,
       cfgOverride,
       outputColumns,
-      'stg_merge_conflicts',
+      "stg_merge_conflicts",
     );
 
     logger.info(
       {
-        strategy: 'priority-override',
+        strategy: "priority-override",
         sources: sources.length,
         rowsMerged,
         conflicts: conflictLog.count,
         unmatched,
       },
-      'merge: complete',
+      "merge: complete",
     );
 
     return {

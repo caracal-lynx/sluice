@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import { ConfigError } from '../../utils/errors.js';
-import type { TargetAdapter } from './types.js';
+import { ConfigError } from "../../utils/errors.js";
+import type { TargetAdapter } from "./types.js";
 
 const adapters = new Map<string, TargetAdapter>();
 
@@ -18,7 +18,7 @@ export class TargetAdapterRegistry {
     const adapter = adapters.get(id);
     if (!adapter) {
       throw new ConfigError(
-        `No target adapter registered for "${id}". Known adapters: ${[...adapters.keys()].join(', ') || '(none)'}`,
+        `No target adapter registered for "${id}". Known adapters: ${[...adapters.keys()].join(", ") || "(none)"}`,
       );
     }
     return adapter;

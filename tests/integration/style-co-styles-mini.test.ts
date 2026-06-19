@@ -4,52 +4,52 @@
  * BlueCherry target (required columns, header, date auto-format).
  */
 
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { PipelineRunner } from '../../src/runner.js';
+import { PipelineRunner } from "../../src/runner.js";
 
 function yp(p: string): string {
-  return p.replace(/\\/g, '/');
+  return p.replace(/\\/g, "/");
 }
 
-describe('style-co-styles pipeline (CSV → BlueCherry)', () => {
+describe("style-co-styles pipeline (CSV → BlueCherry)", () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'sluice-style-co-'));
+    workDir = mkdtempSync(join(tmpdir(), "sluice-style-co-"));
   });
 
   afterEach(() => {
     rmSync(workDir, { recursive: true, force: true });
   });
 
-  it('runs extract → DQ → transform → BlueCherry CSV and writes a state file', async () => {
-    const stylesCsv = join(workDir, 'styles.csv');
+  it("runs extract → DQ → transform → BlueCherry CSV and writes a state file", async () => {
+    const stylesCsv = join(workDir, "styles.csv");
     writeFileSync(
       stylesCsv,
       [
-        'STYLE_NO,STYLE_DESC,DIVISION,SEASON_CODE,COST_PRICE,RETAIL_PRICE,VENDOR_CODE',
-        'S001,Aran Jumper,W,AW25,25.00,89.99,V1',
-        'S002,Knitted Hat,W,AW25,5.00,19.99,V2',
-      ].join('\n'),
-      'utf-8',
+        "STYLE_NO,STYLE_DESC,DIVISION,SEASON_CODE,COST_PRICE,RETAIL_PRICE,VENDOR_CODE",
+        "S001,Aran Jumper,W,AW25,25.00,89.99,V1",
+        "S002,Knitted Hat,W,AW25,5.00,19.99,V2",
+      ].join("\n"),
+      "utf-8",
     );
 
-    const divLookup = join(workDir, 'divisions.csv');
-    writeFileSync(divLookup, 'legacyCode,bcCode\nW,WOMENS\nM,MENS\n', 'utf-8');
+    const divLookup = join(workDir, "divisions.csv");
+    writeFileSync(divLookup, "legacyCode,bcCode\nW,WOMENS\nM,MENS\n", "utf-8");
 
-    const vendorLookup = join(workDir, 'vendors.csv');
+    const vendorLookup = join(workDir, "vendors.csv");
     writeFileSync(
       vendorLookup,
-      'legacyVendorCode,bcVendorNo\nV1,VENDOR-001\nV2,VENDOR-002\n',
-      'utf-8',
+      "legacyVendorCode,bcVendorNo\nV1,VENDOR-001\nV2,VENDOR-002\n",
+      "utf-8",
     );
 
-    const output = join(workDir, 'style-co-styles.csv');
+    const output = join(workDir, "style-co-styles.csv");
     const yaml = `
 pipeline:
   name: style-co-mini
@@ -104,8 +104,8 @@ run:
   stagingDb: ":memory:"
   outputDir: ${yp(workDir)}
 `;
-    const yamlPath = join(workDir, 'pipeline.yaml');
-    writeFileSync(yamlPath, yaml, 'utf-8');
+    const yamlPath = join(workDir, "pipeline.yaml");
+    writeFileSync(yamlPath, yaml, "utf-8");
 
     const result = await new PipelineRunner().run(yamlPath);
     expect(result.extract.rowsExtracted).toBe(2);
@@ -113,27 +113,27 @@ run:
     expect(result.load?.rowsLoaded).toBe(2);
 
     // Output CSV has the BlueCherry required column order + ActiveFlag
-    const csv = readFileSync(output, 'utf-8');
+    const csv = readFileSync(output, "utf-8");
     const firstLine = csv.split(/\r?\n/)[0]!;
-    expect(firstLine.split(',')).toEqual([
-      'StyleNo',
-      'StyleDesc',
-      'Division',
-      'Season',
-      'CostPrice',
-      'RetailPrice',
-      'ActiveFlag',
-      'VendorNo',
+    expect(firstLine.split(",")).toEqual([
+      "StyleNo",
+      "StyleDesc",
+      "Division",
+      "Season",
+      "CostPrice",
+      "RetailPrice",
+      "ActiveFlag",
+      "VendorNo",
     ]);
-    expect(csv).toContain('S001,Aran Jumper,WOMENS,AW25,25.00,89.99,Y,VENDOR-001');
+    expect(csv).toContain("S001,Aran Jumper,WOMENS,AW25,25.00,89.99,Y,VENDOR-001");
 
     // State file written
-    const statePath = join(workDir, 'style-co-mini-state.json');
+    const statePath = join(workDir, "style-co-mini-state.json");
     expect(existsSync(statePath)).toBe(true);
-    const state = JSON.parse(readFileSync(statePath, 'utf-8'));
+    const state = JSON.parse(readFileSync(statePath, "utf-8"));
     expect(state).toMatchObject({
-      pipeline: 'style-co-mini',
-      lastMode: 'full',
+      pipeline: "style-co-mini",
+      lastMode: "full",
       rowsExtracted: 2,
       rowsLoaded: 2,
       criticalViolations: 0,
