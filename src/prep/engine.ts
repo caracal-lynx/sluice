@@ -23,14 +23,15 @@
  * See docs/PHASE-12-prep-phase-spec.md for the full spec.
  */
 
-import type { PrepConfig, PrepRule, RunConfig } from '../config/types.js';
-import { quoteIdent, type ColumnMeta, type StagingStore } from '../staging/index.js';
-import { applyCleanse } from '../transform/cleanse.js';
-import type { ExpressionEvaluator } from '../transform/expression.js';
-import { PrepError } from '../utils/errors.js';
-import type { Logger } from 'pino';
-import type { PrepLookupResolver } from './lookup.js';
-import type { PrepFiringResult, PrepRuleResult } from './types.js';
+import type { PrepConfig, PrepRule, RunConfig } from "../config/types.js";
+import { quoteIdent, type ColumnMeta, type StagingStore } from "../staging/index.js";
+import { applyCleanse } from "../transform/cleanse.js";
+import type { ExpressionEvaluator } from "../transform/expression.js";
+import { PrepError } from "../utils/errors.js";
+import { stringifyValue } from "../utils/stringify.js";
+import type { Logger } from "pino";
+import type { PrepLookupResolver } from "./lookup.js";
+import type { PrepFiringResult, PrepRuleResult } from "./types.js";
 
 export class PrepEngine {
   constructor(
@@ -62,7 +63,7 @@ export class PrepEngine {
     const firingMeta = { table, sourceId: sourceId ?? null } as const;
 
     if (applicable.length === 0) {
-      this.logger.debug(firingMeta, 'prep: no applicable rules for this firing');
+      this.logger.debug(firingMeta, "prep: no applicable rules for this firing");
       return { table, sourceId: sourceId ?? null, rulesApplied: 0, rules: [] };
     }
 
@@ -89,10 +90,10 @@ export class PrepEngine {
     }));
 
     for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-      const row = rows[rowIdx]!;
+      const row = rows[rowIdx];
       for (let ri = 0; ri < applicable.length; ri++) {
-        const rule = applicable[ri]!;
-        const result = ruleResults[ri]!;
+        const rule = applicable[ri];
+        const result = ruleResults[ri];
         const ruleApplied = this.applyRule(rule, row, rowIdx, runCfg, result);
         if (!ruleApplied) continue;
       }
@@ -102,7 +103,7 @@ export class PrepEngine {
     // of the pipeline's lingua franca (TransformEngine also writes VARCHAR).
     const columns: ColumnMeta[] = existingColumns.map((name) => ({
       name,
-      duckDbType: 'VARCHAR',
+      duckDbType: "VARCHAR",
     }));
     await this.store.dropTable(table);
     await this.store.createTable(table, columns);
@@ -124,7 +125,7 @@ export class PrepEngine {
         rowsSkipped: totalSkipped,
         rowsFailed: totalFailed,
       },
-      'prep: firing complete',
+      "prep: firing complete",
     );
 
     return {
@@ -158,7 +159,7 @@ export class PrepEngine {
           return true;
         }
       } catch (err) {
-        return this.handleRowError(err, rule, rowIdx, runCfg, result, 'when');
+        return this.handleRowError(err, rule, rowIdx, runCfg, result, "when");
       }
     }
 
@@ -170,25 +171,25 @@ export class PrepEngine {
       try {
         newValue = applyCleanse(oldValue, rule.cleanse);
       } catch (err) {
-        return this.handleRowError(err, rule, rowIdx, runCfg, result, 'cleanse');
+        return this.handleRowError(err, rule, rowIdx, runCfg, result, "cleanse");
       }
     } else if (rule.expression !== undefined) {
       try {
         newValue = this.evaluator.evaluate(rule.expression, row);
       } catch (err) {
-        return this.handleRowError(err, rule, rowIdx, runCfg, result, 'expression');
+        return this.handleRowError(err, rule, rowIdx, runCfg, result, "expression");
       }
     } else if (rule.lookup !== undefined) {
       // Unknown lookup names throw PrepError unconditionally — they're a
       // config issue, not a row-level error.
       const resolved = this.resolver.resolve(rule.lookup, oldValue);
       if (resolved === undefined) {
-        if (rule.onMiss === 'error') {
+        if (rule.onMiss === "error") {
           throw new PrepError(
             `prep lookup "${rule.lookup}" missed value ${formatValue(oldValue)} for field "${rule.field}" (onMiss: error)`,
           );
         }
-        newValue = rule.onMiss === 'null' ? null : oldValue;
+        newValue = rule.onMiss === "null" ? null : oldValue;
       } else {
         newValue = resolved;
       }
@@ -215,9 +216,9 @@ export class PrepEngine {
     rowIdx: number,
     runCfg: RunConfig,
     result: PrepRuleResult,
-    phase: 'when' | 'cleanse' | 'expression',
+    phase: "when" | "cleanse" | "expression",
   ): boolean {
-    if (runCfg.onError === 'stop') {
+    if (runCfg.onError === "stop") {
       if (err instanceof PrepError) throw err;
       throw new PrepError(
         `prep ${phase} failed on field "${rule.field}" at row ${rowIdx}: ${formatErr(err)}`,
@@ -232,7 +233,7 @@ export class PrepEngine {
         phase,
         err: err instanceof Error ? err.message : String(err),
       },
-      'prep: row error (onError: continue)',
+      "prep: row error (onError: continue)",
     );
     return true;
   }
@@ -240,16 +241,16 @@ export class PrepEngine {
 
 function describeOp(rule: PrepRule): string {
   if (rule.cleanse !== undefined) return `cleanse:${rule.cleanse}`;
-  if (rule.expression !== undefined) return 'expression';
+  if (rule.expression !== undefined) return "expression";
   if (rule.lookup !== undefined) return `lookup:${rule.lookup}`;
-  return 'unknown';
+  return "unknown";
 }
 
 function formatValue(v: unknown): string {
-  if (v === null) return 'null';
-  if (v === undefined) return 'undefined';
-  if (typeof v === 'string') return JSON.stringify(v);
-  return String(v);
+  if (v === null) return "null";
+  if (v === undefined) return "undefined";
+  if (typeof v === "string") return JSON.stringify(v);
+  return stringifyValue(v);
 }
 
 function formatErr(err: unknown): string {

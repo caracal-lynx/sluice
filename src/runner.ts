@@ -10,32 +10,33 @@
  * by the multi-source runner when it filters per-source DQ rules.
  */
 
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
-import type { ColumnMeta } from './staging/index.js';
+import type { ColumnMeta } from "./staging/index.js";
 
 // The adapter barrels have a side effect that self-registers built-in adapters
 // on first evaluation. Importing from them is sufficient — no extra "for side
 // effect" import required.
-import { SourceAdapterRegistry, type ExtractResult } from './adapters/source/index.js';
-import { TargetAdapterRegistry, type LoadResult } from './adapters/target/index.js';
-import { ConfigLoader } from './config/loader.js';
-import { isMultiSource } from './config/schema.js';
-import type { Pipeline } from './config/types.js';
-import { DQEngine, type DQSummary } from './dq/index.js';
-import type { EnrichPhaseFactory, EnrichSummary } from './enrich/types.js';
-import { MergeStrategyRegistry } from './merge/index.js';
-import { PrepEngine, PrepLookupResolver } from './prep/index.js';
-import type { PrepFiringResult, PrepSummary } from './prep/index.js';
-import { StagingStore, quoteIdent } from './staging/index.js';
-import { ExpressionEvaluator } from './transform/expression.js';
-import { TransformEngine, type TransformResult } from './transform/index.js';
-import { RuleRegistry, TransformRegistry } from './plugins/registry.js';
-import { loadPlugins, loadNpmPlugins } from './plugins/loader.js';
-import { ConfigError, PipelineDQError } from './utils/errors.js';
-import { logger } from './utils/logger.js';
-import { ProgressReporter, createSilentProgress } from './utils/progress.js';
+import { SourceAdapterRegistry, type ExtractResult } from "./adapters/source/index.js";
+import { TargetAdapterRegistry, type LoadResult } from "./adapters/target/index.js";
+import { ConfigLoader } from "./config/loader.js";
+import { isMultiSource } from "./config/schema.js";
+import type { Pipeline } from "./config/types.js";
+import { DQEngine, type DQSummary } from "./dq/index.js";
+import type { EnrichPhaseFactory, EnrichSummary } from "./enrich/types.js";
+import { MergeStrategyRegistry } from "./merge/index.js";
+import { PrepEngine, PrepLookupResolver } from "./prep/index.js";
+import type { PrepFiringResult, PrepSummary } from "./prep/index.js";
+import { StagingStore, quoteIdent } from "./staging/index.js";
+import { ExpressionEvaluator } from "./transform/expression.js";
+import { TransformEngine, type TransformResult } from "./transform/index.js";
+import { RuleRegistry, TransformRegistry } from "./plugins/registry.js";
+import { loadPlugins, loadNpmPlugins } from "./plugins/loader.js";
+import { ConfigError, PipelineDQError } from "./utils/errors.js";
+import { logger } from "./utils/logger.js";
+import { ProgressReporter, createSilentProgress } from "./utils/progress.js";
+import { stringifyValue } from "./utils/stringify.js";
 
 // ── Phase 4a — Enrich phase injection hook ─────────────────────────────────
 //
@@ -62,7 +63,7 @@ export function _isEnrichPhaseRegistered(): boolean {
 
 export interface RunResult {
   pipeline: string;
-  mode: Pipeline['run']['mode'];
+  mode: Pipeline["run"]["mode"];
   extract: ExtractResult;
   dq: DQSummary;
   transform: TransformResult | null;
@@ -84,7 +85,7 @@ export interface RunResult {
 export interface RunOverrides {
   outputDir?: string;
   dryRun?: boolean;
-  mode?: Pipeline['run']['mode'];
+  mode?: Pipeline["run"]["mode"];
   pluginDirs?: string[];
   /** Set by `sluice run --no-enrich` to skip the Phase 4a enrich phase. */
   skipEnrich?: boolean;
@@ -111,16 +112,13 @@ export class PipelineRunner {
   protected readonly transformEngine: TransformEngine;
   protected progress: ProgressReporter = createSilentProgress();
   private pluginsLoaded = false;
-  private incrementalSinceUsed = '';
+  private incrementalSinceUsed = "";
   /** Per-run prep state — reset at the top of every run/profile call. */
   protected prepResolver: PrepLookupResolver | undefined;
   protected prepEngine: PrepEngine | undefined;
   protected prepFirings: PrepFiringResult[] = [];
 
-  constructor(
-    ruleRegistry?: RuleRegistry,
-    transformRegistry?: TransformRegistry,
-  ) {
+  constructor(ruleRegistry?: RuleRegistry, transformRegistry?: TransformRegistry) {
     this.ruleRegistry = ruleRegistry ?? new RuleRegistry();
     this.transformRegistry = transformRegistry ?? new TransformRegistry();
     this.dqEngine = new DQEngine(this.ruleRegistry);
@@ -137,17 +135,21 @@ export class PipelineRunner {
   protected async loadAllPlugins(cwd: string, pluginDirs: string[] = []): Promise<void> {
     if (this.pluginsLoaded) return;
 
-    const defaultPluginDir = path.join(cwd, 'plugins');
-    const allPluginDirs = Array.from(new Set([
-      defaultPluginDir,
-      ...pluginDirs.map((d) => path.resolve(d)),
-    ]));
+    const defaultPluginDir = path.join(cwd, "plugins");
+    const allPluginDirs = Array.from(
+      new Set([defaultPluginDir, ...pluginDirs.map((d) => path.resolve(d))]),
+    );
 
     for (const pluginDir of allPluginDirs) {
-      await loadPlugins(pluginDir, this.ruleRegistry, this.transformRegistry, MergeStrategyRegistry);
+      await loadPlugins(
+        pluginDir,
+        this.ruleRegistry,
+        this.transformRegistry,
+        MergeStrategyRegistry,
+      );
     }
 
-    const configPath = path.join(cwd, 'sluice.config.yaml');
+    const configPath = path.join(cwd, "sluice.config.yaml");
     await loadNpmPlugins(
       configPath,
       this.ruleRegistry,
@@ -162,12 +164,12 @@ export class PipelineRunner {
         transforms: this.transformRegistry.list().length,
         pluginDirs: allPluginDirs,
       },
-      'plugins: all loaded',
+      "plugins: all loaded",
     );
   }
 
   async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
-    this.incrementalSinceUsed = '';
+    this.incrementalSinceUsed = "";
     this.prepResolver = undefined;
     this.prepEngine = undefined;
     this.prepFirings = [];
@@ -177,24 +179,21 @@ export class PipelineRunner {
 
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
-    await this.loadAllPlugins(
-      path.dirname(path.resolve(yamlPath)),
-      overrides.pluginDirs ?? [],
-    );
+    await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
     logger.info(
       { pipeline: config.pipeline.name, yaml: yamlPath, mode: config.run.mode },
-      'pipeline: start',
+      "pipeline: start",
     );
 
     if (isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" declares multiple sources. ` +
-        'Use MultiSourcePipelineRunner to run multi-source pipelines.',
+          "Use MultiSourcePipelineRunner to run multi-source pipelines.",
       );
     }
 
-    if (config.run.mode === 'incremental' && !config.run.incrementalField) {
-      throw new ConfigError('run.incrementalField is required for incremental pipelines');
+    if (config.run.mode === "incremental" && !config.run.incrementalField) {
+      throw new ConfigError("run.incrementalField is required for incremental pipelines");
     }
 
     const outputDir = path.resolve(config.run.outputDir);
@@ -204,8 +203,8 @@ export class PipelineRunner {
     try {
       await store.open();
 
-      const extractResult = await this.runExtract(config, store, 'stg_raw');
-      if (config.run.mode === 'incremental' && config.run.incrementalField) {
+      const extractResult = await this.runExtract(config, store, "stg_raw");
+      if (config.run.mode === "incremental" && config.run.incrementalField) {
         const incrementalSince = await this.resolveIncrementalSince(config);
         this.incrementalSinceUsed = incrementalSince;
         if (incrementalSince) {
@@ -223,7 +222,7 @@ export class PipelineRunner {
               incrementalSince,
               rowsAfterFilter: extractResult.rowsExtracted,
             },
-            'pipeline: incremental filter applied',
+            "pipeline: incremental filter applied",
           );
         }
       }
@@ -258,20 +257,20 @@ export class PipelineRunner {
         config,
         store,
         transformSourceTable,
-        'stg_transformed',
+        "stg_transformed",
       );
 
-      if (config.run.dryRun || config.run.mode === 'validate-only') {
+      if (config.run.dryRun || config.run.mode === "validate-only") {
         logger.info(
           { dryRun: config.run.dryRun, mode: config.run.mode },
-          'pipeline: stopping before load',
+          "pipeline: stopping before load",
         );
         this.progress.summary({
           pipeline: config.pipeline.name,
           elapsedMs: Date.now() - runStartMs,
           rowsExtracted: extractResult.rowsExtracted,
           warnings: dqSummary.violations.warning,
-          state: dqSummary.violations.warning > 0 ? 'warn' : 'success',
+          state: dqSummary.violations.warning > 0 ? "warn" : "success",
         });
         return this.buildRunResult(
           config,
@@ -299,7 +298,7 @@ export class PipelineRunner {
           rowsExtracted: extractResult.rowsExtracted,
           rowsLoaded: loadResult.rowsLoaded,
         },
-        'pipeline: done',
+        "pipeline: done",
       );
 
       this.progress.summary({
@@ -308,7 +307,7 @@ export class PipelineRunner {
         rowsExtracted: extractResult.rowsExtracted,
         rowsLoaded: loadResult.rowsLoaded,
         warnings: dqSummary.violations.warning,
-        state: dqSummary.violations.warning > 0 ? 'warn' : 'success',
+        state: dqSummary.violations.warning > 0 ? "warn" : "success",
       });
 
       return {
@@ -333,16 +332,16 @@ export class PipelineRunner {
   protected async runExtract(
     config: Pipeline,
     store: StagingStore,
-    tableName = 'stg_raw',
-    phaseLabel = 'Extract',
+    tableName = "stg_raw",
+    phaseLabel = "Extract",
   ): Promise<ExtractResult> {
     if (!config.source) {
       throw new ConfigError(
-        'runExtract called on a multi-source pipeline; use MultiSourcePipelineRunner',
+        "runExtract called on a multi-source pipeline; use MultiSourcePipelineRunner",
       );
     }
     const adapter = SourceAdapterRegistry.get(config.source.adapter);
-    this.progress.startPhase('extract', phaseLabel);
+    this.progress.startPhase("extract", phaseLabel);
     // Staging DB files persist across runs. `CREATE TABLE IF NOT EXISTS`
     // (from buildCreateTableSql) would silently reuse an old table and cause
     // each run to append a fresh copy of the source data. Drop up-front so
@@ -355,20 +354,20 @@ export class PipelineRunner {
         store,
         config.run,
         (rows) => {
-          logger.debug({ rows }, 'extracting');
+          logger.debug({ rows }, "extracting");
           this.progress.update(rows);
         },
         tableName,
       );
       logger.info(
         { rowsExtracted: result.rowsExtracted, table: result.tableName },
-        'pipeline: extract complete',
+        "pipeline: extract complete",
       );
       this.progress.update(result.rowsExtracted);
-      this.progress.endPhase({ state: 'success' });
+      this.progress.endPhase({ state: "success" });
       return result;
     } catch (err) {
-      this.progress.endPhase({ state: 'fail' });
+      this.progress.endPhase({ state: "fail" });
       throw err;
     } finally {
       await adapter.disconnect();
@@ -378,14 +377,14 @@ export class PipelineRunner {
   protected async runDQ(
     config: Pipeline,
     store: StagingStore,
-    tableName = 'stg_raw',
+    tableName = "stg_raw",
     _sourceId?: string, // Reserved for per-source filtering in MultiSourcePipelineRunner.
-    phaseLabel = 'Data quality',
+    phaseLabel = "Data quality",
   ): Promise<DQSummary> {
     const total = (await store.tableExists(tableName))
       ? await store.rowCount(tableName)
       : undefined;
-    this.progress.startPhase('dq', phaseLabel, total !== undefined ? { total } : {});
+    this.progress.startPhase("dq", phaseLabel, total !== undefined ? { total } : {});
     try {
       const summary = await this.dqEngine.run(config, store, tableName, (rows) => {
         this.progress.update(rows);
@@ -398,15 +397,18 @@ export class PipelineRunner {
           warning: summary.violations.warning,
           info: summary.violations.info,
         },
-        'pipeline: dq complete',
+        "pipeline: dq complete",
       );
-      const state = summary.violations.critical > 0
-        ? 'fail'
-        : summary.violations.warning > 0 ? 'warn' : 'success';
+      const state =
+        summary.violations.critical > 0
+          ? "fail"
+          : summary.violations.warning > 0
+            ? "warn"
+            : "success";
       this.progress.endPhase({ state });
       return summary;
     } catch (err) {
-      this.progress.endPhase({ state: 'fail' });
+      this.progress.endPhase({ state: "fail" });
       throw err;
     }
   }
@@ -430,28 +432,25 @@ export class PipelineRunner {
   ): Promise<EnrichSummary | undefined> {
     if (!config.enrich) return undefined;
     if (overrides.skipEnrich) {
-      logger.info(
-        { pipeline: config.pipeline.name },
-        'pipeline: enrich skipped (--no-enrich)',
-      );
+      logger.info({ pipeline: config.pipeline.name }, "pipeline: enrich skipped (--no-enrich)");
       return undefined;
     }
-    if (config.run.dryRun || config.run.mode === 'validate-only') {
+    if (config.run.dryRun || config.run.mode === "validate-only") {
       logger.info(
         { mode: config.run.mode, dryRun: config.run.dryRun },
-        'pipeline: enrich skipped (validate / dry run)',
+        "pipeline: enrich skipped (validate / dry run)",
       );
       return undefined;
     }
     if (!_enrichPhaseFactory) {
       logger.warn(
         { pipeline: config.pipeline.name },
-        'pipeline: enrich block configured but @caracal-lynx/sluice-enrich is not installed — skipping',
+        "pipeline: enrich block configured but @caracal-lynx/sluice-enrich is not installed — skipping",
       );
       return undefined;
     }
 
-    this.progress.startPhase('enrich', 'Enrich');
+    this.progress.startPhase("enrich", "Enrich");
     try {
       const phase = _enrichPhaseFactory(
         config.enrich,
@@ -462,14 +461,11 @@ export class PipelineRunner {
         sourceTable,
       );
       const summary = await phase.run();
-      logger.info(
-        { lookups: summary.lookups.length },
-        'pipeline: enrich complete',
-      );
-      this.progress.endPhase({ state: 'success' });
+      logger.info({ lookups: summary.lookups.length }, "pipeline: enrich complete");
+      this.progress.endPhase({ state: "success" });
       return summary;
     } catch (err) {
-      this.progress.endPhase({ state: 'fail' });
+      this.progress.endPhase({ state: "fail" });
       throw err;
     }
   }
@@ -477,13 +473,13 @@ export class PipelineRunner {
   protected async runTransform(
     config: Pipeline,
     store: StagingStore,
-    sourceTable = 'stg_raw',
-    targetTable = 'stg_transformed',
+    sourceTable = "stg_raw",
+    targetTable = "stg_transformed",
   ): Promise<TransformResult> {
     const total = (await store.tableExists(sourceTable))
       ? await store.rowCount(sourceTable)
       : undefined;
-    this.progress.startPhase('transform', 'Transform', total !== undefined ? { total } : {});
+    this.progress.startPhase("transform", "Transform", total !== undefined ? { total } : {});
     try {
       const result = await this.transformEngine.run(
         config,
@@ -500,46 +496,41 @@ export class PipelineRunner {
           sourceTable,
           targetTable,
         },
-        'pipeline: transform complete',
+        "pipeline: transform complete",
       );
       this.progress.endPhase({
-        state: result.rowsFailed > 0 ? 'warn' : 'success',
+        state: result.rowsFailed > 0 ? "warn" : "success",
       });
       return result;
     } catch (err) {
-      this.progress.endPhase({ state: 'fail' });
+      this.progress.endPhase({ state: "fail" });
       throw err;
     }
   }
 
   protected async runLoad(config: Pipeline, store: StagingStore): Promise<LoadResult> {
     const adapter = TargetAdapterRegistry.get(config.target.adapter);
-    const total = (await store.tableExists('stg_transformed'))
-      ? await store.rowCount('stg_transformed')
+    const total = (await store.tableExists("stg_transformed"))
+      ? await store.rowCount("stg_transformed")
       : undefined;
-    this.progress.startPhase('load', 'Load', total !== undefined ? { total } : {});
+    this.progress.startPhase("load", "Load", total !== undefined ? { total } : {});
     await adapter.connect(config.target);
     try {
-      const result = await adapter.load(
-        config.target,
-        store,
-        config.run,
-        (rows) => {
-          logger.debug({ rows }, 'loading');
-          this.progress.update(rows);
-        },
-      );
+      const result = await adapter.load(config.target, store, config.run, (rows) => {
+        logger.debug({ rows }, "loading");
+        this.progress.update(rows);
+      });
       logger.info(
         { rowsLoaded: result.rowsLoaded, outputPath: result.outputPath },
-        'pipeline: load complete',
+        "pipeline: load complete",
       );
       this.progress.update(result.rowsLoaded);
       this.progress.endPhase({
-        state: result.rowsFailed > 0 ? 'warn' : 'success',
+        state: result.rowsFailed > 0 ? "warn" : "success",
       });
       return result;
     } catch (err) {
-      this.progress.endPhase({ state: 'fail' });
+      this.progress.endPhase({ state: "fail" });
       throw err;
     } finally {
       await adapter.disconnect();
@@ -564,15 +555,15 @@ export class PipelineRunner {
       rowsLoaded: load.rowsLoaded,
       criticalViolations: dq.violations.critical,
       warnings: dq.violations.warning,
-      incrementalSince: this.incrementalSinceUsed || (config.run.incrementalSince ?? ''),
+      incrementalSince: this.incrementalSinceUsed || (config.run.incrementalSince ?? ""),
     };
     // Omit the key entirely when no enrich phase ran, so existing pipelines
     // produce byte-for-byte identical state files.
     if (enrichSummary !== undefined) {
-      state['enrichSummary'] = enrichSummary;
+      state["enrichSummary"] = enrichSummary;
     }
-    await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
-    logger.debug({ stateFilePath }, 'pipeline: state file written');
+    await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
+    logger.debug({ stateFilePath }, "pipeline: state file written");
     return stateFilePath;
   }
 
@@ -589,18 +580,15 @@ export class PipelineRunner {
     if (overrides.progress) this.progress = overrides.progress;
     const loaded = await ConfigLoader.load(yamlPath);
     const config = this.applyOverrides(loaded, overrides);
-    await this.loadAllPlugins(
-      path.dirname(path.resolve(yamlPath)),
-      overrides.pluginDirs ?? [],
-    );
+    await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
     if (isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" declares multiple sources. ` +
-        'Use MultiSourcePipelineRunner to profile multi-source pipelines.',
+          "Use MultiSourcePipelineRunner to profile multi-source pipelines.",
       );
     }
-    if (config.run.mode === 'incremental' && !config.run.incrementalField) {
-      throw new ConfigError('run.incrementalField is required for incremental pipelines');
+    if (config.run.mode === "incremental" && !config.run.incrementalField) {
+      throw new ConfigError("run.incrementalField is required for incremental pipelines");
     }
     const outputDir = path.resolve(config.run.outputDir);
     await fs.mkdir(outputDir, { recursive: true });
@@ -608,8 +596,8 @@ export class PipelineRunner {
     const store = new StagingStore(this.resolveStagingDb(config));
     try {
       await store.open();
-      const extractResult = await this.runExtract(config, store, 'stg_raw');
-      if (config.run.mode === 'incremental' && config.run.incrementalField) {
+      const extractResult = await this.runExtract(config, store, "stg_raw");
+      if (config.run.mode === "incremental" && config.run.incrementalField) {
         const incrementalSince = await this.resolveIncrementalSince(config);
         if (incrementalSince) {
           await this.applyIncrementalFilter(
@@ -626,15 +614,19 @@ export class PipelineRunner {
               incrementalSince,
               rowsAfterFilter: extractResult.rowsExtracted,
             },
-            'pipeline: incremental filter applied (profile)',
+            "pipeline: incremental filter applied (profile)",
           );
         }
       }
 
-      const profile = await this.buildProfile(store, extractResult.tableName, extractResult.columns);
+      const profile = await this.buildProfile(
+        store,
+        extractResult.tableName,
+        extractResult.columns,
+      );
       const profilePath = path.join(outputDir, `${config.pipeline.name}-profile.json`);
-      await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, 'utf-8');
-      logger.info({ profilePath, columns: profile.length }, 'pipeline: profile complete');
+      await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, "utf-8");
+      logger.info({ profilePath, columns: profile.length }, "pipeline: profile complete");
 
       return {
         pipeline: config.pipeline.name,
@@ -657,9 +649,7 @@ export class PipelineRunner {
   ): Promise<ProfileColumn[]> {
     const result: ProfileColumn[] = [];
     const tbl = tableName;
-    const rowCountRow = await store.query<{ n: unknown }>(
-      `SELECT count(*) AS n FROM "${tbl}"`,
-    );
+    const rowCountRow = await store.query<{ n: unknown }>(`SELECT count(*) AS n FROM "${tbl}"`);
     const rowCount = Number(rowCountRow[0]?.n ?? 0);
     for (const col of columns) {
       const qCol = `"${col.name.replace(/"/g, '""')}"`;
@@ -683,7 +673,9 @@ export class PipelineRunner {
         distinctCount: Number(distinctRow?.n ?? 0),
         minLen: lenRow[0]?.mn === null || lenRow[0]?.mn === undefined ? null : Number(lenRow[0].mn),
         maxLen: lenRow[0]?.mx === null || lenRow[0]?.mx === undefined ? null : Number(lenRow[0].mx),
-        sample: sampleRows.map((r) => (r['v'] === null || r['v'] === undefined ? null : String(r['v']))),
+        sample: sampleRows.map((r) =>
+          r["v"] === null || r["v"] === undefined ? null : stringifyValue(r["v"]),
+        ),
       });
     }
     return result;
@@ -701,11 +693,8 @@ export class PipelineRunner {
 
   protected resolveStagingDb(config: Pipeline): string {
     if (config.run.stagingDb) return config.run.stagingDb;
-    if (config.run.dryRun) return ':memory:';
-    return path.join(
-      path.resolve(config.run.outputDir),
-      `${config.pipeline.name}.duckdb`,
-    );
+    if (config.run.dryRun) return ":memory:";
+    return path.join(path.resolve(config.run.outputDir), `${config.pipeline.name}.duckdb`);
   }
 
   protected async resolveIncrementalSince(config: Pipeline): Promise<string> {
@@ -717,11 +706,11 @@ export class PipelineRunner {
     );
 
     try {
-      const raw = await fs.readFile(statePath, 'utf-8');
+      const raw = await fs.readFile(statePath, "utf-8");
       const parsed = JSON.parse(raw) as { lastRunAt?: string };
-      return typeof parsed.lastRunAt === 'string' ? parsed.lastRunAt : '';
+      return typeof parsed.lastRunAt === "string" ? parsed.lastRunAt : "";
     } catch {
-      return '';
+      return "";
     }
   }
 
@@ -738,14 +727,11 @@ export class PipelineRunner {
       );
     }
 
-    const sinceCheck = await store.query<{ ts: unknown }>(
-      'SELECT TRY_CAST(? AS TIMESTAMP) AS ts',
-      [incrementalSince],
-    );
-    if (!sinceCheck[0]?.ts) {
-      throw new ConfigError(
-        `run.incrementalSince "${incrementalSince}" is not a valid timestamp`,
-      );
+    const sinceCheck = await store.query<{ ts: unknown }>("SELECT TRY_CAST(? AS TIMESTAMP) AS ts", [
+      incrementalSince,
+    ]);
+    if (sinceCheck[0]?.ts === null || sinceCheck[0]?.ts === undefined) {
+      throw new ConfigError(`run.incrementalSince "${incrementalSince}" is not a valid timestamp`);
     }
 
     const invalidRows = await store.query<{ n: unknown }>(
@@ -802,7 +788,7 @@ export class PipelineRunner {
         rejectedRows: rejectedRowIndices.length,
         acceptedRows: acceptedRows.length,
       },
-      'pipeline: filtered rejected rows before transform',
+      "pipeline: filtered rejected rows before transform",
     );
 
     return acceptedTable;
@@ -854,7 +840,7 @@ export class PipelineRunner {
     if (overrides.skipPrep) {
       logger.info(
         { pipeline: config.pipeline.name, table, sourceId: sourceId ?? null },
-        'pipeline: prep skipped (--no-prep)',
+        "pipeline: prep skipped (--no-prep)",
       );
       return undefined;
     }
@@ -866,24 +852,19 @@ export class PipelineRunner {
       }
     }
     if (!this.prepEngine) {
-      this.prepEngine = new PrepEngine(
-        store,
-        this.prepResolver,
-        new ExpressionEvaluator(),
-        logger,
-      );
+      this.prepEngine = new PrepEngine(store, this.prepResolver, new ExpressionEvaluator(), logger);
     }
 
-    const phaseLabel = sourceId ? `Prep (${sourceId})` : 'Prep';
-    this.progress.startPhase('prep', phaseLabel);
+    const phaseLabel = sourceId ? `Prep (${sourceId})` : "Prep";
+    this.progress.startPhase("prep", phaseLabel);
     try {
       const firing = await this.prepEngine.run(table, config.prep, sourceId, config.run);
       this.prepFirings.push(firing);
       const failed = firing.rules.reduce((n, r) => n + r.rowsFailed, 0);
-      this.progress.endPhase({ state: failed > 0 ? 'warn' : 'success' });
+      this.progress.endPhase({ state: failed > 0 ? "warn" : "success" });
       return firing;
     } catch (err) {
-      this.progress.endPhase({ state: 'fail' });
+      this.progress.endPhase({ state: "fail" });
       throw err;
     }
   }
@@ -908,10 +889,10 @@ export class PipelineRunner {
       ? path.resolve(config.prep.summaryFile)
       : defaultPath;
     await fs.mkdir(path.dirname(summaryPath), { recursive: true });
-    await fs.writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, 'utf-8');
+    await fs.writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf-8");
     logger.info(
       { pipeline: config.pipeline.name, firings: summary.firings.length, summaryPath },
-      'pipeline: prep summary written',
+      "pipeline: prep summary written",
     );
     return summary;
   }
@@ -937,6 +918,6 @@ function stubDqSummary(pipelineName: string, rowsChecked: number): DQSummary {
     rowsRejected: 0,
     violations: { critical: 0, warning: 0, info: 0 },
     byField: {},
-    reportPath: '',
+    reportPath: "",
   };
 }

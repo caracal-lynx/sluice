@@ -17,35 +17,32 @@
  * have to pass it; `MultiSourcePipelineRunner` overrides per source.
  */
 
-import { createReadStream, readdirSync } from 'node:fs';
-import * as path from 'node:path';
+import { createReadStream, readdirSync } from "node:fs";
+import * as path from "node:path";
 
-import { parse } from 'csv-parse';
+import { parse } from "csv-parse";
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
-import { SourceError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { ExtractResult, SourceAdapter } from './types.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
+import { SourceError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import type { ExtractResult, SourceAdapter } from "./types.js";
 
 function resolveGlob(pattern: string): string[] {
-  if (!pattern.includes('*')) return [pattern];
+  if (!pattern.includes("*")) return [pattern];
   const parsed = path.parse(pattern);
-  if (parsed.dir.includes('*')) {
+  if (parsed.dir.includes("*")) {
     throw new SourceError(`glob wildcards are only supported in the filename: "${pattern}"`);
   }
   const re = new RegExp(
-    '^' + parsed.base.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$',
+    "^" + parsed.base.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$",
   );
-  const searchDir = parsed.dir === '' ? '.' : parsed.dir;
+  const searchDir = parsed.dir === "" ? "." : parsed.dir;
   let entries: string[];
   try {
     entries = readdirSync(searchDir);
   } catch (err) {
-    throw new SourceError(
-      `could not read directory "${searchDir}" for glob "${pattern}"`,
-      err,
-    );
+    throw new SourceError(`could not read directory "${searchDir}" for glob "${pattern}"`, err);
   }
   const matches = entries
     .filter((f) => re.test(f))
@@ -58,7 +55,7 @@ function resolveGlob(pattern: string): string[] {
 }
 
 export class CsvSourceAdapter implements SourceAdapter {
-  readonly id = 'csv';
+  readonly id = "csv";
 
   async connect(_config: SourceConfig): Promise<void> {
     // CSV is file-based; no persistent connection to establish.
@@ -73,13 +70,13 @@ export class CsvSourceAdapter implements SourceAdapter {
     store: StagingStore,
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
-    targetTable = 'stg_raw',
+    targetTable = "stg_raw",
   ): Promise<ExtractResult> {
     if (!config.file) {
-      throw new SourceError('csv source requires `file`');
+      throw new SourceError("csv source requires `file`");
     }
     const files = resolveGlob(config.file);
-    logger.debug({ files, targetTable }, 'csv: resolved input files');
+    logger.debug({ files, targetTable }, "csv: resolved input files");
 
     let columns: ColumnMeta[] | null = null;
     let totalRows = 0;
@@ -104,7 +101,7 @@ export class CsvSourceAdapter implements SourceAdapter {
             if (names.length === 0) {
               throw new SourceError(`csv file "${file}" has no columns`);
             }
-            columns = names.map((n) => ({ name: n, duckDbType: 'VARCHAR' }));
+            columns = names.map((n) => ({ name: n, duckDbType: "VARCHAR" }));
             await store.createTable(targetTable, columns);
           }
           batch.push(row);

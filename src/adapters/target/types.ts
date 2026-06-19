@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import type { RunConfig, TargetConfig } from '../../config/types.js';
-import type { StagingStore } from '../../staging/index.js';
+import type { RunConfig, TargetConfig } from "../../config/types.js";
+import type { StagingStore } from "../../staging/index.js";
 
 export interface TargetAdapter {
   readonly id: string;

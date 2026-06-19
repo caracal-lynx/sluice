@@ -14,10 +14,10 @@
  *   → Result: includes both {ID: "A"} and {ID: "B"} rows
  */
 
-import type { MergeStrategyPlugin } from '../types.js';
-import type { StagingStore } from '../../staging/index.js';
-import { quoteIdent } from '../../staging/index.js';
-import { logger } from '../../utils/logger.js';
+import type { MergeStrategyPlugin } from "../types.js";
+import type { StagingStore } from "../../staging/index.js";
+import { quoteIdent } from "../../staging/index.js";
+import { logger } from "../../utils/logger.js";
 
 import {
   buildJoinedTableSql,
@@ -25,15 +25,16 @@ import {
   buildPresentCountExpr,
   normalizeKeyColumns,
   type BuildMergeContext,
-} from '../sql-builder.js';
-import { buildConflictLog } from '../conflict-log.js';
-import type { MergeSourceMeta, MergeResult } from '../types.js';
-import type { MergeConfig } from '../../config/types.js';
-import { ConfigError } from '../../utils/errors.js';
+} from "../sql-builder.js";
+import { buildConflictLog } from "../conflict-log.js";
+import type { MergeSourceMeta, MergeResult } from "../types.js";
+import type { MergeConfig } from "../../config/types.js";
+import { ConfigError } from "../../utils/errors.js";
 
 export const unionStrategy: MergeStrategyPlugin = {
-  id: 'union',
-  description: 'All rows from all sources. Includes all rows from every source; deduplicates by key. Useful for union-ing independent sources.',
+  id: "union",
+  description:
+    "All rows from all sources. Includes all rows from every source; deduplicates by key. Useful for union-ing independent sources.",
 
   async merge(
     store: StagingStore,
@@ -41,7 +42,7 @@ export const unionStrategy: MergeStrategyPlugin = {
     config: MergeConfig,
   ): Promise<MergeResult> {
     if (rawSources.length < 2) {
-      throw new ConfigError('merge requires at least 2 sources');
+      throw new ConfigError("merge requires at least 2 sources");
     }
 
     const sources = [...rawSources].sort((a, b) => a.priority - b.priority);
@@ -51,7 +52,7 @@ export const unionStrategy: MergeStrategyPlugin = {
     for (const source of sources) {
       sourceColumns[source.id] = await store.columnNames(source.tableName);
       for (const key of keyColumns) {
-        if (!sourceColumns[source.id]!.includes(key)) {
+        if (!sourceColumns[source.id].includes(key)) {
           throw new ConfigError(
             `merge key column '${key}' is missing from source '${source.id}' table '${source.tableName}'`,
           );
@@ -62,7 +63,7 @@ export const unionStrategy: MergeStrategyPlugin = {
     const context: BuildMergeContext = { sources, keyColumns, sourceColumns };
 
     // Build the joined table (FULL OUTER JOIN on keys)
-    const joinedTable = 'stg_merge_joined';
+    const joinedTable = "stg_merge_joined";
     await store.query(buildJoinedTableSql(joinedTable, context));
 
     // Check for unmatched rows (informational only for union strategy)
@@ -72,8 +73,8 @@ export const unionStrategy: MergeStrategyPlugin = {
     );
     const unmatched = Number(unmatchedRows[0]?.n ?? 0);
 
-    if (unmatched > 0 && config.onUnmatched === 'warn') {
-      logger.warn({ unmatched }, 'merge: unmatched rows included in union');
+    if (unmatched > 0 && config.onUnmatched === "warn") {
+      logger.warn({ unmatched }, "merge: unmatched rows included in union");
     }
 
     // Build output columns in order: keys first, then all non-key columns
@@ -95,8 +96,8 @@ export const unionStrategy: MergeStrategyPlugin = {
     }
 
     // Merge: union includes all rows, coalesce field values
-    const mergedTable = 'stg_merged';
-    const cfgOverride: MergeConfig = { ...config, strategy: 'coalesce', onUnmatched: 'include' };
+    const mergedTable = "stg_merged";
+    const cfgOverride: MergeConfig = { ...config, strategy: "coalesce", onUnmatched: "include" };
     await store.query(
       buildMergedTableSql(mergedTable, joinedTable, context, cfgOverride, outputColumns),
     );
@@ -108,18 +109,18 @@ export const unionStrategy: MergeStrategyPlugin = {
       context,
       cfgOverride,
       outputColumns,
-      'stg_merge_conflicts',
+      "stg_merge_conflicts",
     );
 
     logger.info(
       {
-        strategy: 'union',
+        strategy: "union",
         sources: sources.length,
         rowsMerged,
         conflicts: conflictLog.count,
         unmatched,
       },
-      'merge: complete',
+      "merge: complete",
     );
 
     return {

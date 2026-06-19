@@ -10,7 +10,8 @@
  * metadata array below.
  */
 
-import { TransformError } from '../utils/errors.js';
+import { TransformError } from "../utils/errors.js";
+import { stringifyValue } from "../utils/stringify.js";
 
 type CleanseOp = (value: string) => string | null;
 
@@ -30,33 +31,33 @@ export interface BuiltinCleanseOpInfo {
 }
 
 export const BUILTIN_CLEANSE_OPS: readonly BuiltinCleanseOpInfo[] = Object.freeze([
-  { id: 'trim', description: 'Strip leading/trailing whitespace.' },
-  { id: 'uppercase', description: 'Uppercase the value.' },
-  { id: 'lowercase', description: 'Lowercase the value.' },
-  { id: 'titleCase', description: 'Capitalise the first letter of each word.' },
-  { id: 'stripNonAlpha', description: 'Remove every character that is not [a-zA-Z].' },
-  { id: 'stripNonNumeric', description: 'Remove every character that is not [0-9].' },
-  { id: 'stripWhitespace', description: 'Remove every whitespace character.' },
-  { id: 'nullIfEmpty', description: 'Convert empty strings to null.' },
-  { id: 'normaliseQuotes', description: 'Replace smart quotes with their ASCII equivalents.' },
+  { id: "trim", description: "Strip leading/trailing whitespace." },
+  { id: "uppercase", description: "Uppercase the value." },
+  { id: "lowercase", description: "Lowercase the value." },
+  { id: "titleCase", description: "Capitalise the first letter of each word." },
+  { id: "stripNonAlpha", description: "Remove every character that is not [a-zA-Z]." },
+  { id: "stripNonNumeric", description: "Remove every character that is not [0-9]." },
+  { id: "stripWhitespace", description: "Remove every whitespace character." },
+  { id: "nullIfEmpty", description: "Convert empty strings to null." },
+  { id: "normaliseQuotes", description: "Replace smart quotes with their ASCII equivalents." },
   {
-    id: 'normaliseUnicode',
-    description: 'NFD-normalise then strip combining marks. Useful for diacritic removal.',
+    id: "normaliseUnicode",
+    description: "NFD-normalise then strip combining marks. Useful for diacritic removal.",
   },
   {
-    id: 'padStart',
-    description: 'Left-pad to width with a fill character.',
-    argSpec: 'padStart:<width>[:<fill>]  (fill defaults to space)',
+    id: "padStart",
+    description: "Left-pad to width with a fill character.",
+    argSpec: "padStart:<width>[:<fill>]  (fill defaults to space)",
   },
   {
-    id: 'padEnd',
-    description: 'Right-pad to width with a fill character.',
-    argSpec: 'padEnd:<width>[:<fill>]  (fill defaults to space)',
+    id: "padEnd",
+    description: "Right-pad to width with a fill character.",
+    argSpec: "padEnd:<width>[:<fill>]  (fill defaults to space)",
   },
   {
-    id: 'truncate',
-    description: 'Slice to a maximum length.',
-    argSpec: 'truncate:<length>',
+    id: "truncate",
+    description: "Slice to a maximum length.",
+    argSpec: "truncate:<length>",
   },
 ]);
 
@@ -66,45 +67,44 @@ const OPS: Record<string, CleanseOp> = {
   lowercase: (v) => v.toLowerCase(),
   titleCase: (v) =>
     v.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()),
-  stripNonAlpha: (v) => v.replace(/[^a-zA-Z]/g, ''),
-  stripNonNumeric: (v) => v.replace(/[^0-9]/g, ''),
-  stripWhitespace: (v) => v.replace(/\s+/g, ''),
-  nullIfEmpty: (v) => (v === '' ? null : v),
-  normaliseQuotes: (v) =>
-    v.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"'),
+  stripNonAlpha: (v) => v.replace(/[^a-zA-Z]/g, ""),
+  stripNonNumeric: (v) => v.replace(/[^0-9]/g, ""),
+  stripWhitespace: (v) => v.replace(/\s+/g, ""),
+  nullIfEmpty: (v) => (v === "" ? null : v),
+  normaliseQuotes: (v) => v.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"'),
   // NFD → strip combining marks → leave ASCII text
-  normaliseUnicode: (v) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+  normaliseUnicode: (v) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
 };
 
 export function applyCleanse(value: unknown, spec: string): unknown {
   if (value === null || value === undefined) return value;
-  let current: string | null = String(value);
+  let current: string | null = stringifyValue(value);
 
-  for (const step of spec.split('|')) {
+  for (const step of spec.split("|")) {
     if (current === null) return null;
-    const [name, ...args] = step.split(':');
+    const [name, ...args] = step.split(":");
     if (!name) continue;
 
-    if (name === 'padStart') {
-      const width = Number.parseInt(args[0] ?? '0', 10);
-      const pad = args[1] ?? ' ';
+    if (name === "padStart") {
+      const width = Number.parseInt(args[0] ?? "0", 10);
+      const pad = args[1] ?? " ";
       if (!Number.isFinite(width) || width < 0) {
         throw new TransformError(`padStart requires a non-negative width, got "${args[0]}"`);
       }
       current = current.padStart(width, pad);
       continue;
     }
-    if (name === 'padEnd') {
-      const width = Number.parseInt(args[0] ?? '0', 10);
-      const pad = args[1] ?? ' ';
+    if (name === "padEnd") {
+      const width = Number.parseInt(args[0] ?? "0", 10);
+      const pad = args[1] ?? " ";
       if (!Number.isFinite(width) || width < 0) {
         throw new TransformError(`padEnd requires a non-negative width, got "${args[0]}"`);
       }
       current = current.padEnd(width, pad);
       continue;
     }
-    if (name === 'truncate') {
-      const len = Number.parseInt(args[0] ?? '0', 10);
+    if (name === "truncate") {
+      const len = Number.parseInt(args[0] ?? "0", 10);
       if (!Number.isFinite(len) || len < 0) {
         throw new TransformError(`truncate requires a non-negative length, got "${args[0]}"`);
       }
@@ -113,7 +113,7 @@ export function applyCleanse(value: unknown, spec: string): unknown {
     }
 
     const op = OPS[name];
-    if (!op) {
+    if (op === undefined) {
       throw new TransformError(`Unknown cleanse operation: "${name}"`);
     }
     current = op(current);

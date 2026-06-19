@@ -11,12 +11,12 @@
  * Neither path uses `eval()` or `new Function()`.
  */
 
-import { runInNewContext } from 'node:vm';
+import { runInNewContext } from "node:vm";
 
-import { Parser, type Value } from 'expr-eval-fork';
+import { Parser, type Value } from "expr-eval-fork";
 
-import { ExpressionError } from '../utils/errors.js';
-import { logger } from '../utils/logger.js';
+import { ExpressionError } from "../utils/errors.js";
+import { logger } from "../utils/logger.js";
 
 const parser = new Parser();
 
@@ -24,11 +24,11 @@ export class ExpressionEvaluator {
   private readonly warnedExpressions = new Set<string>();
 
   evaluate(expression: string, row: Record<string, unknown>): unknown {
-    if (expression.startsWith('js:')) {
+    if (expression.startsWith("js:")) {
       const code = expression.slice(3).trim();
       if (!this.warnedExpressions.has(code)) {
         this.warnedExpressions.add(code);
-        logger.warn({ expression: code }, 'expression: using js: path (vm.runInNewContext)');
+        logger.warn({ expression: code }, "expression: using js: path (vm.runInNewContext)");
       }
       try {
         return runInNewContext(

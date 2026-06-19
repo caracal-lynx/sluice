@@ -16,11 +16,12 @@ import {
   DuckDBInstance,
   type DuckDBConnection,
   type DuckDBPreparedStatement,
-} from '@duckdb/node-api';
+} from "@duckdb/node-api";
 
-import { StagingError } from '../utils/errors.js';
-import { logger } from '../utils/logger.js';
-import { buildCreateTableSql, quoteIdent, type ColumnMeta } from './schema.js';
+import { StagingError } from "../utils/errors.js";
+import { logger } from "../utils/logger.js";
+import { stringifyValue } from "../utils/stringify.js";
+import { buildCreateTableSql, quoteIdent, type ColumnMeta } from "./schema.js";
 
 export interface ExportToCsvOptions {
   delimiter?: string;
@@ -57,15 +58,15 @@ function bindParam(prep: DuckDBPreparedStatement, pos: number, value: unknown): 
     prep.bindNull(pos);
     return;
   }
-  if (typeof value === 'boolean') {
+  if (typeof value === "boolean") {
     prep.bindBoolean(pos, value);
     return;
   }
-  if (typeof value === 'bigint') {
+  if (typeof value === "bigint") {
     prep.bindBigInt(pos, value);
     return;
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     if (Number.isInteger(value) && value >= -2_147_483_648 && value <= 2_147_483_647) {
       prep.bindInteger(pos, value);
     } else {
@@ -79,7 +80,7 @@ function bindParam(prep: DuckDBPreparedStatement, pos: number, value: unknown): 
     prep.bindVarchar(pos, value.toISOString());
     return;
   }
-  prep.bindVarchar(pos, String(value));
+  prep.bindVarchar(pos, stringifyValue(value));
 }
 
 export class StagingStore {
@@ -105,6 +106,9 @@ export class StagingStore {
   }
 
   async close(): Promise<void> {
+    // DuckDB teardown is synchronous, but the public API is async (callers
+    // `await store.close()`); keep it genuinely async.
+    await Promise.resolve();
     if (!this.instance) return;
     const conn = this.conn;
     const instance = this.instance;
@@ -135,19 +139,15 @@ export class StagingStore {
    */
   async insertBatch(table: string, rows: Record<string, unknown>[]): Promise<void> {
     if (rows.length === 0) return;
-    const first = rows[0]!;
+    const first = rows[0];
     const cols = Object.keys(first);
     if (cols.length === 0) {
-      throw new StagingError('insertBatch: rows have no columns');
+      throw new StagingError("insertBatch: rows have no columns");
     }
-    const colList = cols.map(quoteIdent).join(', ');
+    const colList = cols.map(quoteIdent).join(", ");
     let n = 0;
-    const rowPlaceholders = rows
-      .map(() => `(${cols.map(() => `$${++n}`).join(', ')})`)
-      .join(', ');
-    const flatParams = rows.flatMap((r) =>
-      cols.map((c) => (r[c] === undefined ? null : r[c])),
-    );
+    const rowPlaceholders = rows.map(() => `(${cols.map(() => `$${++n}`).join(", ")})`).join(", ");
+    const flatParams = rows.flatMap((r) => cols.map((c) => (r[c] === undefined ? null : r[c])));
     const sql = `INSERT INTO ${quoteIdent(table)} (${colList}) VALUES ${rowPlaceholders}`;
     await this.execPrepared(sql, flatParams);
   }
@@ -159,7 +159,7 @@ export class StagingStore {
 
   async tableExists(name: string): Promise<boolean> {
     const rows = await this.query<{ n: bigint | number }>(
-      'SELECT count(*) AS n FROM information_schema.tables WHERE table_name = ?',
+      "SELECT count(*) AS n FROM information_schema.tables WHERE table_name = ?",
       [name],
     );
     const n = rows[0]?.n ?? 0;
@@ -179,7 +179,7 @@ export class StagingStore {
 
   async columnNames(table: string): Promise<string[]> {
     const rows = await this.query<{ column_name: string }>(
-      'SELECT column_name FROM information_schema.columns WHERE table_name = ? ORDER BY ordinal_position',
+      "SELECT column_name FROM information_schema.columns WHERE table_name = ? ORDER BY ordinal_position",
       [table],
     );
     return rows.map((r) => r.column_name);
@@ -189,21 +189,20 @@ export class StagingStore {
    * Export a table to a CSV file. DuckDB always emits UTF-8; the `encoding`
    * option is accepted for API symmetry and currently ignored.
    */
-  async exportToCsv(table: string, outputPath: string, options?: ExportToCsvOptions): Promise<void> {
-    const delim = options?.delimiter ?? ',';
+  async exportToCsv(
+    table: string,
+    outputPath: string,
+    options?: ExportToCsvOptions,
+  ): Promise<void> {
+    const delim = options?.delimiter ?? ",";
     const header = options?.header ?? true;
-    const safePath = outputPath.replace(/\\/g, '/').replace(/'/g, "''");
+    const safePath = outputPath.replace(/\\/g, "/").replace(/'/g, "''");
     const safeDelim = delim.replace(/'/g, "''");
-    const clauses = [
-      `HEADER ${header ? 'TRUE' : 'FALSE'}`,
-      `DELIMITER '${safeDelim}'`,
-    ];
+    const clauses = [`HEADER ${header ? "TRUE" : "FALSE"}`, `DELIMITER '${safeDelim}'`];
     if (options?.nullValue !== undefined) {
       clauses.push(`NULL '${options.nullValue.replace(/'/g, "''")}'`);
     }
-    await this.exec(
-      `COPY ${quoteIdent(table)} TO '${safePath}' (${clauses.join(', ')})`,
-    );
+    await this.exec(`COPY ${quoteIdent(table)} TO '${safePath}' (${clauses.join(", ")})`);
   }
 
   /**
@@ -220,7 +219,7 @@ export class StagingStore {
     const existingColumns = await this.columnNames(tableName);
     const unknownKeys = Object.keys(renames).filter((k) => !existingColumns.includes(k));
     if (unknownKeys.length > 0) {
-      logger.warn({ tableName, unknownKeys }, 'rename map contains columns not found in table');
+      logger.warn({ tableName, unknownKeys }, "rename map contains columns not found in table");
     }
 
     const selectList = existingColumns
@@ -230,7 +229,7 @@ export class StagingStore {
           ? `${quoteIdent(col)} AS ${quoteIdent(newName)}`
           : quoteIdent(col);
       })
-      .join(', ');
+      .join(", ");
 
     await this.exec(
       `CREATE OR REPLACE TABLE ${quoteIdent(tableName)} AS SELECT ${selectList} FROM ${quoteIdent(tableName)}`,
@@ -253,8 +252,11 @@ export class StagingStore {
    * Used by the Phase 4a enrich runner to deduplicate API calls.
    */
   async selectDistinct(_table: string, _field: string): Promise<string[]> {
+    // Throwing stub — the failure must surface as a rejected promise (tests
+    // and callers use `.rejects`/`await`), so the method stays async.
+    await Promise.resolve();
     throw new StagingError(
-      'StagingStore.selectDistinct: not yet implemented — install @caracal-lynx/sluice-enrich',
+      "StagingStore.selectDistinct: not yet implemented — install @caracal-lynx/sluice-enrich",
     );
   }
 
@@ -262,10 +264,11 @@ export class StagingStore {
   async addColumnIfNotExists(
     _table: string,
     _column: string,
-    _type: 'BOOLEAN' | 'VARCHAR',
+    _type: "BOOLEAN" | "VARCHAR",
   ): Promise<void> {
+    await Promise.resolve();
     throw new StagingError(
-      'StagingStore.addColumnIfNotExists: not yet implemented — install @caracal-lynx/sluice-enrich',
+      "StagingStore.addColumnIfNotExists: not yet implemented — install @caracal-lynx/sluice-enrich",
     );
   }
 
@@ -277,8 +280,9 @@ export class StagingStore {
     _table: string,
     _updates: Map<number | bigint, Record<string, unknown>>,
   ): Promise<void> {
+    await Promise.resolve();
     throw new StagingError(
-      'StagingStore.batchUpdateColumns: not yet implemented — install @caracal-lynx/sluice-enrich',
+      "StagingStore.batchUpdateColumns: not yet implemented — install @caracal-lynx/sluice-enrich",
     );
   }
 
@@ -291,12 +295,12 @@ export class StagingStore {
    */
   private async exec(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
     if (!this.conn) {
-      throw new StagingError('StagingStore is not open');
+      throw new StagingError("StagingStore is not open");
     }
     if (params.length === 0) {
       try {
         const reader = await this.conn.runAndReadAll(sql);
-        return reader.getRowObjectsJS() as Record<string, unknown>[];
+        return reader.getRowObjectsJS();
       } catch (err) {
         throw new StagingError(
           `DuckDB query failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -311,12 +315,9 @@ export class StagingStore {
    * Run a parameterised statement via a prepared statement. Translates `?`
    * placeholders to `$N` and binds positional params with type sniffing.
    */
-  private async execPrepared(
-    sql: string,
-    params: unknown[],
-  ): Promise<Record<string, unknown>[]> {
+  private async execPrepared(sql: string, params: unknown[]): Promise<Record<string, unknown>[]> {
     if (!this.conn) {
-      throw new StagingError('StagingStore is not open');
+      throw new StagingError("StagingStore is not open");
     }
     const translated = translatePlaceholders(sql);
     let prep: DuckDBPreparedStatement | null = null;
@@ -326,7 +327,7 @@ export class StagingStore {
         bindParam(prep!, i + 1, value);
       });
       const reader = await prep.runAndReadAll();
-      return reader.getRowObjectsJS() as Record<string, unknown>[];
+      return reader.getRowObjectsJS();
     } catch (err) {
       throw new StagingError(
         `DuckDB query failed: ${err instanceof Error ? err.message : String(err)}`,

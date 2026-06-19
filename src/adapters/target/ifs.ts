@@ -10,19 +10,19 @@
  * `columnOrder` is set.
  */
 
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
-import type { RunConfig, TargetConfig } from '../../config/types.js';
-import { quoteIdent, type StagingStore } from '../../staging/index.js';
-import { LoadError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { LoadResult, TargetAdapter } from './types.js';
+import type { RunConfig, TargetConfig } from "../../config/types.js";
+import { quoteIdent, type StagingStore } from "../../staging/index.js";
+import { LoadError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import type { LoadResult, TargetAdapter } from "./types.js";
 
-const STAGING_TABLE = 'stg_transformed';
+const STAGING_TABLE = "stg_transformed";
 
 export class IfsTargetAdapter implements TargetAdapter {
-  readonly id = 'ifs';
+  readonly id = "ifs";
 
   async connect(_config: TargetConfig): Promise<void> {
     // Nothing to establish.
@@ -39,7 +39,7 @@ export class IfsTargetAdapter implements TargetAdapter {
     onProgress: (rows: number) => void,
   ): Promise<LoadResult> {
     if (!config.output) {
-      throw new LoadError('ifs target requires `output`');
+      throw new LoadError("ifs target requires `output`");
     }
     const outputPath = path.resolve(config.output);
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
@@ -53,7 +53,7 @@ export class IfsTargetAdapter implements TargetAdapter {
       const missing = config.columnOrder.filter((c) => !allColumns.includes(c));
       if (missing.length > 0) {
         throw new LoadError(
-          `ifs: columnOrder references columns not present in stg_transformed: ${missing.join(', ')}`,
+          `ifs: columnOrder references columns not present in stg_transformed: ${missing.join(", ")}`,
         );
       }
       orderedColumns = config.columnOrder;
@@ -61,19 +61,19 @@ export class IfsTargetAdapter implements TargetAdapter {
       orderedColumns = allColumns;
     }
 
-    const safePath = outputPath.replace(/\\/g, '/').replace(/'/g, "''");
-    const safeDelim = (config.delimiter ?? ',').replace(/'/g, "''");
+    const safePath = outputPath.replace(/\\/g, "/").replace(/'/g, "''");
+    const safeDelim = (config.delimiter ?? ",").replace(/'/g, "''");
     const safeNull = config.nullValue.replace(/'/g, "''");
-    const selectList = orderedColumns.map(quoteIdent).join(', ');
+    const selectList = orderedColumns.map(quoteIdent).join(", ");
 
     await store.query(
-      `COPY (SELECT ${selectList} FROM ${quoteIdent(STAGING_TABLE)}) TO '${safePath}' (HEADER ${includeHeader ? 'TRUE' : 'FALSE'}, DELIMITER '${safeDelim}', NULL '${safeNull}')`,
+      `COPY (SELECT ${selectList} FROM ${quoteIdent(STAGING_TABLE)}) TO '${safePath}' (HEADER ${includeHeader ? "TRUE" : "FALSE"}, DELIMITER '${safeDelim}', NULL '${safeNull}')`,
     );
 
     onProgress(rowsLoaded);
     logger.debug(
       { outputPath, rowsLoaded, columns: orderedColumns.length },
-      'ifs target: load complete',
+      "ifs target: load complete",
     );
 
     return { rowsLoaded, rowsFailed: 0, outputPath };

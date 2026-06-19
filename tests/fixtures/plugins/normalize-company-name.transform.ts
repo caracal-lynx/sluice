@@ -9,41 +9,41 @@
  *   - maxLength: number (default: 100) - truncate after N chars
  */
 
-import type { TransformPlugin } from '../../../src/plugins/types.js';
+import type { TransformPlugin } from "../../../src/plugins/types.js";
 
 const COMPANY_SUFFIXES = [
-  'ltd.',
-  'ltd',
-  'inc.',
-  'inc',
-  'llc',
-  'llc.',
-  'corp.',
-  'corp',
-  'co.',
-  'co',
-  'gmbh',
-  'ag',
-  'sa',
-  'bv',
-  'plc',
-  'plc.',
+  "ltd.",
+  "ltd",
+  "inc.",
+  "inc",
+  "llc",
+  "llc.",
+  "corp.",
+  "corp",
+  "co.",
+  "co",
+  "gmbh",
+  "ag",
+  "sa",
+  "bv",
+  "plc",
+  "plc.",
 ];
 
 export const transform: TransformPlugin = {
-  id: 'normalize-company-name',
+  id: "normalize-company-name",
   apply: async (value, options) => {
     if (value === null || value === undefined) return null;
 
     let name = String(value).trim();
-    if (name === '') return null;
+    if (name === "") return null;
 
     const removeSuffixes = (options?.removeSuffixes as boolean) ?? true;
     const titleCase = (options?.titleCase as boolean) ?? true;
     const maxLength = (options?.maxLength as number) ?? 100;
 
     // Step 1: Normalize whitespace
-    name = name.replace(/\s+/g, ' ');
+    name = name.replace(/\s+/g, " ");
 
     // Step 2: Remove common suffixes
     if (removeSuffixes) {
@@ -61,7 +61,7 @@ export const transform: TransformPlugin = {
       name = name
         .split(/\s+/)
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
+        .join(" ");
     }
 
     // Step 4: Truncate if needed
@@ -69,6 +69,6 @@ export const transform: TransformPlugin = {
       name = name.substring(0, maxLength).trim();
     }
 
-    return name === '' ? null : name;
+    return name === "" ? null : name;
   },
 };

@@ -57,10 +57,10 @@ dq:
       sourceId: sql-server
       checks:
         - { type: notNull, severity: critical }
-        - { type: unique,  severity: critical }
+        - { type: unique, severity: critical }
     - field: STYLE_DESC
       checks:
-        - { type: notNull,   severity: critical }
+        - { type: notNull, severity: critical }
         - { type: maxLength, value: 255, severity: warning }
     - field: COST_PRICE
       checks:
@@ -68,12 +68,12 @@ dq:
 
 transform:
   fields:
-    - { from: STYLE_NO,      to: StyleNo,      type: string,  max: 20,  cleanse: trim|uppercase }
-    - { from: STYLE_DESC,    to: StyleDesc,    type: string,  max: 255, cleanse: trim }
-    - { from: COST_PRICE,    to: CostPrice,    type: decimal, precision: 2, optional: true }
-    - { from: RETAIL_PRICE,  to: RetailPrice,  type: decimal, precision: 2, optional: true }
-    - { from: FIBRE_CONTENT, to: FibreContent, type: string,  max: 200,  optional: true }
-    - { to: ActiveFlag,      type: constant,   value: "Y" }
+    - { from: STYLE_NO, to: StyleNo, type: string, max: 20, cleanse: trim|uppercase }
+    - { from: STYLE_DESC, to: StyleDesc, type: string, max: 255, cleanse: trim }
+    - { from: COST_PRICE, to: CostPrice, type: decimal, precision: 2, optional: true }
+    - { from: RETAIL_PRICE, to: RetailPrice, type: decimal, precision: 2, optional: true }
+    - { from: FIBRE_CONTENT, to: FibreContent, type: string, max: 200, optional: true }
+    - { to: ActiveFlag, type: constant, value: "Y" }
 
 target:
   adapter: bluecherry

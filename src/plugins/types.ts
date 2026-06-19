@@ -9,9 +9,9 @@
  * Plugins must be pure — no I/O, no side effects, no async.
  */
 
-import type { CheckConfig } from '../config/types.js';
-import type { MergeStrategyRegistry } from '../merge/index.js';
-import type { RuleRegistry, TransformRegistry } from './registry.js';
+import type { CheckConfig } from "../config/types.js";
+import type { MergeStrategyRegistry } from "../merge/index.js";
+import type { RuleRegistry, TransformRegistry } from "./registry.js";
 
 // ── DQ rule plugin ────────────────────────────────────────────────────────────
 
@@ -36,12 +36,12 @@ export interface RulePlugin {
 }
 
 export interface RuleViolation {
-  field:    string;
+  field: string;
   rowIndex: number;
-  value:    unknown;
-  rule:     string;
-  severity: 'critical' | 'warning' | 'info';
-  message:  string;
+  value: unknown;
+  rule: string;
+  severity: "critical" | "warning" | "info";
+  message: string;
 }
 
 // ── Transform plugin ──────────────────────────────────────────────────────────
@@ -62,17 +62,13 @@ export interface TransformPlugin {
    * Must be pure — no side effects, no I/O.
    * Must not mutate the row object.
    */
-  apply(
-    value: unknown,
-    row: Record<string, unknown>,
-    config: CustomFieldMapping,
-  ): unknown;
+  apply(value: unknown, row: Record<string, unknown>, config: CustomFieldMapping): unknown;
 }
 
 export interface CustomFieldMapping {
-  from?:    string | string[];
-  to:       string;
-  type:     'custom';
+  from?: string | string[];
+  to: string;
+  type: "custom";
   customOp: string;
   /** Arbitrary per-plugin config from YAML, passed through verbatim. */
   options?: Record<string, unknown>;
@@ -84,9 +80,9 @@ export interface CustomFieldMapping {
 
 export interface PluginPackage {
   register(
-    rules:      RuleRegistry,
+    rules: RuleRegistry,
     transforms: TransformRegistry,
-    options?:   Record<string, unknown>,
+    options?: Record<string, unknown>,
     mergeStrategies?: typeof MergeStrategyRegistry,
   ): void;
 }

@@ -9,23 +9,23 @@
  *   - ignore → INSERT … ON CONFLICT DO NOTHING
  */
 
-import pg from 'pg';
+import pg from "pg";
 
-import type { RunConfig, TargetConfig } from '../../config/types.js';
-import { quoteIdent, type StagingStore } from '../../staging/index.js';
-import { ConfigError, LoadError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { LoadResult, TargetAdapter } from './types.js';
+import type { RunConfig, TargetConfig } from "../../config/types.js";
+import { quoteIdent, type StagingStore } from "../../staging/index.js";
+import { ConfigError, LoadError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import type { LoadResult, TargetAdapter } from "./types.js";
 
-const STAGING_TABLE = 'stg_transformed';
+const STAGING_TABLE = "stg_transformed";
 
 export class PgTargetAdapter implements TargetAdapter {
-  readonly id = 'pg';
+  readonly id = "pg";
   private pool: pg.Pool | null = null;
 
   async connect(config: TargetConfig): Promise<void> {
     if (!config.connection) {
-      throw new ConfigError('pg target requires `connection`');
+      throw new ConfigError("pg target requires `connection`");
     }
     this.pool = new pg.Pool({ connectionString: config.connection });
     try {
@@ -54,8 +54,8 @@ export class PgTargetAdapter implements TargetAdapter {
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
   ): Promise<LoadResult> {
-    if (!this.pool) throw new LoadError('pg target: not connected');
-    if (!config.table) throw new ConfigError('pg target requires `table`');
+    if (!this.pool) throw new LoadError("pg target: not connected");
+    if (!config.table) throw new ConfigError("pg target requires `table`");
 
     const schema = config.schema;
     const table = config.table;
@@ -63,27 +63,28 @@ export class PgTargetAdapter implements TargetAdapter {
 
     const columns = await store.columnNames(STAGING_TABLE);
     if (columns.length === 0) {
-      throw new LoadError('pg target: stg_transformed has no columns');
+      throw new LoadError("pg target: stg_transformed has no columns");
     }
     const rows = await store.query<Record<string, unknown>>(`SELECT * FROM "${STAGING_TABLE}"`);
 
-    const colList = columns.map(quoteIdent).join(', ');
-    let conflictClause = '';
-    if (config.onConflict === 'upsert') {
+    const colList = columns.map(quoteIdent).join(", ");
+    let conflictClause = "";
+    if (config.onConflict === "upsert") {
       const key = config.upsertKey;
       if (!key || key.length === 0) {
-        throw new ConfigError('pg target: onConflict: upsert requires upsertKey');
+        throw new ConfigError("pg target: onConflict: upsert requires upsertKey");
       }
       const updateSet = columns
         .filter((c) => !key.includes(c))
         .map((c) => `${quoteIdent(c)} = EXCLUDED.${quoteIdent(c)}`)
-        .join(', ');
-      const conflictCols = key.map(quoteIdent).join(', ');
-      conflictClause = updateSet.length > 0
-        ? `ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSet}`
-        : `ON CONFLICT (${conflictCols}) DO NOTHING`;
-    } else if (config.onConflict === 'ignore') {
-      conflictClause = 'ON CONFLICT DO NOTHING';
+        .join(", ");
+      const conflictCols = key.map(quoteIdent).join(", ");
+      conflictClause =
+        updateSet.length > 0
+          ? `ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSet}`
+          : `ON CONFLICT (${conflictCols}) DO NOTHING`;
+    } else if (config.onConflict === "ignore") {
+      conflictClause = "ON CONFLICT DO NOTHING";
     }
 
     let rowsLoaded = 0;
@@ -100,16 +101,17 @@ export class PgTargetAdapter implements TargetAdapter {
           placeholders.push(`$${ph++}`);
           values.push(row[col] === undefined ? null : row[col]);
         }
-        placeholderRows.push(`(${placeholders.join(', ')})`);
+        placeholderRows.push(`(${placeholders.join(", ")})`);
       }
-      const sql = `INSERT INTO ${qualified} (${colList}) VALUES ${placeholderRows.join(', ')} ${conflictClause}`.trim();
+      const sql =
+        `INSERT INTO ${qualified} (${colList}) VALUES ${placeholderRows.join(", ")} ${conflictClause}`.trim();
       try {
         const res = await this.pool.query(sql, values);
         rowsLoaded += res.rowCount ?? batch.length;
         onProgress(rowsLoaded);
       } catch (err) {
         rowsFailed += batch.length;
-        if (runConfig.onError === 'stop') {
+        if (runConfig.onError === "stop") {
           throw new LoadError(
             `pg target: insert failed: ${err instanceof Error ? err.message : String(err)}`,
             err,
@@ -117,7 +119,7 @@ export class PgTargetAdapter implements TargetAdapter {
         }
         logger.warn(
           { err: err instanceof Error ? err.message : String(err), batchStart: i },
-          'pg target: batch failed (onError: continue)',
+          "pg target: batch failed (onError: continue)",
         );
       }
     }

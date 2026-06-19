@@ -13,70 +13,71 @@
  * `targetTable` defaults to 'stg_raw'.
  */
 
-import sql, { type config as SqlConfig, type ConnectionPool, type Request } from 'mssql';
+import sql, { type config as SqlConfig, type ConnectionPool, type Request } from "mssql";
 
-import type { RunConfig, SourceConfig } from '../../config/types.js';
-import type { ColumnMeta, StagingStore } from '../../staging/index.js';
-import { SourceError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
-import type { ExtractResult, SourceAdapter } from './types.js';
+import type { RunConfig, SourceConfig } from "../../config/types.js";
+import type { ColumnMeta, StagingStore } from "../../staging/index.js";
+import { SourceError } from "../../utils/errors.js";
+import { logger } from "../../utils/logger.js";
+import { stringifyValue } from "../../utils/stringify.js";
+import type { ExtractResult, SourceAdapter } from "./types.js";
 
 // Column metadata from mssql carries the type constructor function; its `.name`
 // yields the SQL Server type name (e.g. "VarChar", "Int").
 const MSSQL_TO_DUCKDB: Record<string, string> = {
-  varchar: 'VARCHAR',
-  nvarchar: 'VARCHAR',
-  char: 'VARCHAR',
-  nchar: 'VARCHAR',
-  text: 'VARCHAR',
-  ntext: 'VARCHAR',
-  xml: 'VARCHAR',
-  uniqueidentifier: 'VARCHAR',
-  int: 'BIGINT',
-  bigint: 'BIGINT',
-  smallint: 'BIGINT',
-  tinyint: 'BIGINT',
-  decimal: 'DOUBLE',
-  numeric: 'DOUBLE',
-  money: 'DOUBLE',
-  smallmoney: 'DOUBLE',
-  float: 'DOUBLE',
-  real: 'DOUBLE',
-  bit: 'BOOLEAN',
-  datetime: 'TIMESTAMP',
-  datetime2: 'TIMESTAMP',
-  smalldatetime: 'TIMESTAMP',
-  datetimeoffset: 'TIMESTAMP',
-  date: 'TIMESTAMP',
-  time: 'VARCHAR',
+  varchar: "VARCHAR",
+  nvarchar: "VARCHAR",
+  char: "VARCHAR",
+  nchar: "VARCHAR",
+  text: "VARCHAR",
+  ntext: "VARCHAR",
+  xml: "VARCHAR",
+  uniqueidentifier: "VARCHAR",
+  int: "BIGINT",
+  bigint: "BIGINT",
+  smallint: "BIGINT",
+  tinyint: "BIGINT",
+  decimal: "DOUBLE",
+  numeric: "DOUBLE",
+  money: "DOUBLE",
+  smallmoney: "DOUBLE",
+  float: "DOUBLE",
+  real: "DOUBLE",
+  bit: "BOOLEAN",
+  datetime: "TIMESTAMP",
+  datetime2: "TIMESTAMP",
+  smalldatetime: "TIMESTAMP",
+  datetimeoffset: "TIMESTAMP",
+  date: "TIMESTAMP",
+  time: "VARCHAR",
 };
 
 function mapMssqlType(t: unknown): string {
-  if (t === null || t === undefined) return 'VARCHAR';
+  if (t === null || t === undefined) return "VARCHAR";
   const name =
-    typeof t === 'function'
-      ? ((t as { name?: string }).name ?? '')
-      : typeof t === 'object'
-        ? ((t as { name?: string }).name ?? '')
-        : String(t);
-  return MSSQL_TO_DUCKDB[name.toLowerCase()] ?? 'VARCHAR';
+    typeof t === "function"
+      ? ((t as { name?: string }).name ?? "")
+      : typeof t === "object"
+        ? ((t as { name?: string }).name ?? "")
+        : stringifyValue(t);
+  return MSSQL_TO_DUCKDB[name.toLowerCase()] ?? "VARCHAR";
 }
 
 function parseBooleanParam(value: string | null): boolean | undefined {
   if (value === null) return undefined;
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1') return true;
-  if (normalized === 'false' || normalized === '0') return false;
+  if (normalized === "true" || normalized === "1") return true;
+  if (normalized === "false" || normalized === "0") return false;
   return undefined;
 }
 
 function parseMssqlUrl(connection: string): SqlConfig {
   const parsed = new URL(connection);
-  const database = parsed.pathname.replace(/^\//, '');
+  const database = parsed.pathname.replace(/^\//, "");
 
-  const encrypt = parseBooleanParam(parsed.searchParams.get('encrypt'));
+  const encrypt = parseBooleanParam(parsed.searchParams.get("encrypt"));
   const trustServerCertificate = parseBooleanParam(
-    parsed.searchParams.get('trustServerCertificate'),
+    parsed.searchParams.get("trustServerCertificate"),
   );
 
   const config: SqlConfig = {
@@ -100,14 +101,14 @@ function parseMssqlUrl(connection: string): SqlConfig {
 
 function parseConnection(connection: string): string | SqlConfig {
   const trimmed = connection.trimStart();
-  if (trimmed.startsWith('{')) {
+  if (trimmed.startsWith("{")) {
     try {
       return JSON.parse(connection) as SqlConfig;
     } catch (err) {
       throw new SourceError(`mssql: invalid JSON in connection config: ${String(err)}`, err);
     }
   }
-  if (trimmed.startsWith('mssql://')) {
+  if (trimmed.startsWith("mssql://")) {
     try {
       return parseMssqlUrl(connection);
     } catch (err) {
@@ -118,15 +119,15 @@ function parseConnection(connection: string): string | SqlConfig {
 }
 
 export class MssqlSourceAdapter implements SourceAdapter {
-  readonly id = 'mssql';
+  readonly id = "mssql";
   private pool: ConnectionPool | null = null;
 
   async connect(config: SourceConfig): Promise<void> {
     if (!config.connection) {
-      throw new SourceError('mssql source requires `connection`');
+      throw new SourceError("mssql source requires `connection`");
     }
     const poolConfig = parseConnection(config.connection);
-    this.pool = new sql.ConnectionPool(poolConfig as SqlConfig);
+    this.pool = new sql.ConnectionPool(poolConfig);
     try {
       await this.pool.connect();
     } catch (err) {
@@ -151,13 +152,13 @@ export class MssqlSourceAdapter implements SourceAdapter {
     store: StagingStore,
     runConfig: RunConfig,
     onProgress: (rows: number) => void,
-    targetTable = 'stg_raw',
+    targetTable = "stg_raw",
   ): Promise<ExtractResult> {
     if (!config.query) {
-      throw new SourceError('mssql source requires `query`');
+      throw new SourceError("mssql source requires `query`");
     }
     if (!this.pool) {
-      throw new SourceError('mssql: not connected (call connect() first)');
+      throw new SourceError("mssql: not connected (call connect() first)");
     }
     const query = config.query;
 
@@ -185,14 +186,14 @@ export class MssqlSourceAdapter implements SourceAdapter {
         );
       };
 
-      request.on('recordset', (meta: Record<string, { type?: unknown }>) => {
+      request.on("recordset", (meta: Record<string, { type?: unknown }>) => {
         try {
           columns = Object.entries(meta).map(([name, info]) => ({
             name,
             duckDbType: mapMssqlType(info?.type),
           }));
           if (columns.length === 0) {
-            throw new SourceError('mssql query produced no columns');
+            throw new SourceError("mssql query produced no columns");
           }
           tableReady = store.createTable(targetTable, columns);
           tableReady.catch(fail);
@@ -201,7 +202,7 @@ export class MssqlSourceAdapter implements SourceAdapter {
         }
       });
 
-      request.on('row', (row: Record<string, unknown>) => {
+      request.on("row", (row: Record<string, unknown>) => {
         pendingBatch.push(row);
         if (pendingBatch.length >= runConfig.batchSize) {
           const toInsert = pendingBatch;
@@ -228,10 +229,10 @@ export class MssqlSourceAdapter implements SourceAdapter {
         }
       });
 
-      request.on('error', fail);
+      request.on("error", fail);
 
-      request.on('done', () => {
-        (async () => {
+      request.on("done", () => {
+        void (async () => {
           try {
             await tableReady;
             if (pendingBatch.length > 0) {
@@ -241,11 +242,11 @@ export class MssqlSourceAdapter implements SourceAdapter {
               pendingBatch = [];
             }
             if (!columns) {
-              throw new SourceError('mssql query completed without any columns');
+              throw new SourceError("mssql query completed without any columns");
             }
             if (settled) return;
             settled = true;
-            logger.debug({ totalRows, targetTable }, 'mssql: extract complete');
+            logger.debug({ totalRows, targetTable }, "mssql: extract complete");
             resolve({ rowsExtracted: totalRows, tableName: targetTable, columns });
           } catch (err) {
             fail(err);
@@ -254,7 +255,7 @@ export class MssqlSourceAdapter implements SourceAdapter {
       });
 
       try {
-        request.query(query);
+        void request.query(query);
       } catch (err) {
         fail(err);
       }

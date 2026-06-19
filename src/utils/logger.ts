@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import pino from 'pino';
+import pino from "pino";
 
 /**
  * Route all pino output to stderr so stdout stays dedicated to the progress
@@ -15,6 +15,6 @@ import pino from 'pino';
  * stays visible on the terminal.
  */
 export const logger = pino(
-  { level: process.env['LOG_LEVEL'] ?? 'info' },
+  { level: process.env["LOG_LEVEL"] ?? "info" },
   pino.destination({ fd: 2, sync: false }),
 );

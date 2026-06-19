@@ -17,11 +17,10 @@ pipeline:
   entity: CustomerInfo
   description: Customer master migration — legacy SQL to IFS ERP
 
-
 # ── EXTRACT ───────────────────────────────────────────────────────────────────
 source:
-  adapter: mssql                   # mssql | pg | csv | xlsx | rest
-  connection: ${SOURCE_MSSQL}     # resolved from .env at runtime
+  adapter: mssql # mssql | pg | csv | xlsx | rest
+  connection: ${SOURCE_MSSQL} # resolved from .env at runtime
   query: |
     SELECT
       c.CUST_CODE, c.CUST_NAME, c.ADDR1, c.ADDR2,
@@ -31,7 +30,6 @@ source:
     WHERE c.Active = 1
       AND c.DELETED = 0
 
-
 # ── DATA QUALITY ──────────────────────────────────────────────────────────────
 dq:
   stopOnCritical: true
@@ -40,13 +38,13 @@ dq:
   rules:
     - field: CUST_CODE
       checks:
-        - { type: notNull,   severity: critical }
-        - { type: unique,    severity: critical }
-        - { type: pattern,   value: "^[A-Z0-9]{3,10}$", severity: warning }
+        - { type: notNull, severity: critical }
+        - { type: unique, severity: critical }
+        - { type: pattern, value: "^[A-Z0-9]{3,10}$", severity: warning }
 
     - field: CUST_NAME
       checks:
-        - { type: notNull,   severity: critical }
+        - { type: notNull, severity: critical }
         - { type: maxLength, value: 100, severity: warning }
 
     - field: POST_CODE
@@ -55,21 +53,19 @@ dq:
 
     - field: EMAIL
       checks:
-        - { type: email,     severity: warning }
+        - { type: email, severity: warning }
 
     - field: CREDIT_LIMIT
       checks:
-        - { type: min,       value: 0,      severity: critical }
-        - { type: max,       value: 500000, severity: warning }
+        - { type: min, value: 0, severity: critical }
+        - { type: max, value: 500000, severity: warning }
 
     - field: COUNTRY
       checks:
         - { type: allowedValues, value: [GB, IE, US, DE, FR], severity: warning }
 
-
 # ── TRANSFORM ─────────────────────────────────────────────────────────────────
 transform:
-
   lookups:
     - name: currencyMap
       source:
@@ -87,18 +83,17 @@ transform:
       value: value
 
   fields:
-    - { from: CUST_CODE,      to: CustomerNo,   type: string,  max: 20 }
-    - { from: CUST_NAME,      to: Name,         type: string,  max: 100, cleanse: trim|titleCase }
-    - { from: [ADDR1, ADDR2], to: Address1,     type: concat,  separator: ", ", cleanse: trim }
-    - { from: POST_CODE,      to: ZipCode,      type: string,  cleanse: trim|uppercase }
-    - { from: COUNTRY,        to: Country,      type: string,  default: GB }
-    - { from: CURRENCY,       to: CurrencyCode, type: lookup,  lookup: currencyMap, default: GBP }
-    - { from: ACCT_MGR_ID,    to: SalesmanCode, type: lookup,  lookup: acctMgrMap,  optional: true }
-    - { from: CREDIT_LIMIT,   to: CreditLimit,  type: decimal, precision: 2 }
-    - { from: EMAIL,          to: Email,        type: string,  cleanse: trim|lowercase }
-    - { to: CustomerGroup,    type: constant,   value: DOMESTIC }
-    - { to: SearchName,       type: expression, value: "row.CUST_NAME.toUpperCase().substring(0, 20)" }
-
+    - { from: CUST_CODE, to: CustomerNo, type: string, max: 20 }
+    - { from: CUST_NAME, to: Name, type: string, max: 100, cleanse: trim|titleCase }
+    - { from: [ADDR1, ADDR2], to: Address1, type: concat, separator: ", ", cleanse: trim }
+    - { from: POST_CODE, to: ZipCode, type: string, cleanse: trim|uppercase }
+    - { from: COUNTRY, to: Country, type: string, default: GB }
+    - { from: CURRENCY, to: CurrencyCode, type: lookup, lookup: currencyMap, default: GBP }
+    - { from: ACCT_MGR_ID, to: SalesmanCode, type: lookup, lookup: acctMgrMap, optional: true }
+    - { from: CREDIT_LIMIT, to: CreditLimit, type: decimal, precision: 2 }
+    - { from: EMAIL, to: Email, type: string, cleanse: trim|lowercase }
+    - { to: CustomerGroup, type: constant, value: DOMESTIC }
+    - { to: SearchName, type: expression, value: "row.CUST_NAME.toUpperCase().substring(0, 20)" }
 
 # ── LOAD ──────────────────────────────────────────────────────────────────────
 target:
@@ -118,7 +113,6 @@ target:
     - Email
     - CustomerGroup
     - SearchName
-
 
 # ── EXECUTION ─────────────────────────────────────────────────────────────────
 run:

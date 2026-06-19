@@ -5,23 +5,23 @@
  * end-to-end with realistic multi-source scenarios.
  */
 
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { MultiSourcePipelineRunner } from '../../src/index.js';
+import { MultiSourcePipelineRunner } from "../../src/index.js";
 
 function yamlPath(p: string): string {
-  return p.replace(/\\/g, '/');
+  return p.replace(/\\/g, "/");
 }
 
-describe('Merge strategy integration tests', () => {
+describe("Merge strategy integration tests", () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'sluice-merge-'));
+    workDir = mkdtempSync(join(tmpdir(), "sluice-merge-"));
   });
 
   afterEach(() => {
@@ -30,16 +30,16 @@ describe('Merge strategy integration tests', () => {
       rmSync(workDir, { recursive: true, force: true });
     } catch (err) {
       // On Windows, DuckDB might still hold file locks; log and continue
-      if ((err as any).code !== 'EPERM') throw err;
+      if ((err as any).code !== "EPERM") throw err;
     }
   });
 
-  describe('coalesce strategy', () => {
-    it('merges two sources using coalesce: first non-null wins', async () => {
-      const sqlServerCsv = join(workDir, 'sqlserver.csv');
-      const excelCsv = join(workDir, 'excel.csv');
-      const outputCsv = join(workDir, 'merged.csv');
-      const pipelineYaml = join(workDir, 'coalesce-merge.pipeline.yaml');
+  describe("coalesce strategy", () => {
+    it("merges two sources using coalesce: first non-null wins", async () => {
+      const sqlServerCsv = join(workDir, "sqlserver.csv");
+      const excelCsv = join(workDir, "excel.csv");
+      const outputCsv = join(workDir, "merged.csv");
+      const pipelineYaml = join(workDir, "coalesce-merge.pipeline.yaml");
 
       // SQL Server source: primary data with some gaps
       writeFileSync(
@@ -113,25 +113,25 @@ run:
       const runner = new MultiSourcePipelineRunner();
       const result = await runner.run(pipelineYaml);
 
-      expect(result.pipeline).toBe('coalesce-merge');
+      expect(result.pipeline).toBe("coalesce-merge");
       expect(result.extract.rowsExtracted).toBeGreaterThan(0);
       expect(result.merge).toBeDefined();
       expect(result.merge?.rowsMerged).toBeGreaterThan(0);
 
       // Verify output contains coalesced values
-      const output = readFileSync(outputCsv, 'utf-8');
-      expect(output).toContain('CUSTOMER_ID');
-      expect(output).toContain('Acme Corp'); // SQL Server name (priority 1)
-      expect(output).toContain('beta@example.com'); // Excel email (SQL was empty)
+      const output = readFileSync(outputCsv, "utf-8");
+      expect(output).toContain("CUSTOMER_ID");
+      expect(output).toContain("Acme Corp"); // SQL Server name (priority 1)
+      expect(output).toContain("beta@example.com"); // Excel email (SQL was empty)
     });
   });
 
-  describe('union strategy', () => {
-    it('merges multiple sources including all rows', async () => {
-      const source1Csv = join(workDir, 'source1.csv');
-      const source2Csv = join(workDir, 'source2.csv');
-      const outputCsv = join(workDir, 'merged.csv');
-      const pipelineYaml = join(workDir, 'union-merge.pipeline.yaml');
+  describe("union strategy", () => {
+    it("merges multiple sources including all rows", async () => {
+      const source1Csv = join(workDir, "source1.csv");
+      const source2Csv = join(workDir, "source2.csv");
+      const outputCsv = join(workDir, "merged.csv");
+      const pipelineYaml = join(workDir, "union-merge.pipeline.yaml");
 
       // Source 1: Regional data
       writeFileSync(
@@ -200,24 +200,24 @@ run:
       const runner = new MultiSourcePipelineRunner();
       const result = await runner.run(pipelineYaml);
 
-      expect(result.pipeline).toBe('union-merge');
+      expect(result.pipeline).toBe("union-merge");
       expect(result.merge).toBeDefined();
       // Union should include all rows: S001 (dedup), S002, S003
       expect(result.merge?.rowsMerged).toBe(3);
 
-      const output = readFileSync(outputCsv, 'utf-8');
-      expect(output).toContain('S001');
-      expect(output).toContain('S002');
-      expect(output).toContain('S003');
+      const output = readFileSync(outputCsv, "utf-8");
+      expect(output).toContain("S001");
+      expect(output).toContain("S002");
+      expect(output).toContain("S003");
     });
   });
 
-  describe('intersect strategy', () => {
-    it('merges only rows present in all sources', async () => {
-      const source1Csv = join(workDir, 'source1.csv');
-      const source2Csv = join(workDir, 'source2.csv');
-      const outputCsv = join(workDir, 'merged.csv');
-      const pipelineYaml = join(workDir, 'intersect-merge.pipeline.yaml');
+  describe("intersect strategy", () => {
+    it("merges only rows present in all sources", async () => {
+      const source1Csv = join(workDir, "source1.csv");
+      const source2Csv = join(workDir, "source2.csv");
+      const outputCsv = join(workDir, "merged.csv");
+      const pipelineYaml = join(workDir, "intersect-merge.pipeline.yaml");
 
       // Source 1: Legacy system
       writeFileSync(
@@ -286,24 +286,24 @@ run:
       const runner = new MultiSourcePipelineRunner();
       const result = await runner.run(pipelineYaml);
 
-      expect(result.pipeline).toBe('intersect-merge');
+      expect(result.pipeline).toBe("intersect-merge");
       expect(result.merge).toBeDefined();
       // Only C001 and C002 are in both sources
       expect(result.merge?.rowsMerged).toBe(2);
 
-      const output = readFileSync(outputCsv, 'utf-8');
-      expect(output).toContain('C001');
-      expect(output).toContain('C002');
-      expect(output).not.toContain('C003'); // C003 only in source 1
+      const output = readFileSync(outputCsv, "utf-8");
+      expect(output).toContain("C001");
+      expect(output).toContain("C002");
+      expect(output).not.toContain("C003"); // C003 only in source 1
     });
   });
 
-  describe('priority-override strategy', () => {
-    it('uses highest priority source values (including nulls)', async () => {
-      const primaryCsv = join(workDir, 'primary.csv');
-      const secondaryCsv = join(workDir, 'secondary.csv');
-      const outputCsv = join(workDir, 'merged.csv');
-      const pipelineYaml = join(workDir, 'priority-override-merge.pipeline.yaml');
+  describe("priority-override strategy", () => {
+    it("uses highest priority source values (including nulls)", async () => {
+      const primaryCsv = join(workDir, "primary.csv");
+      const secondaryCsv = join(workDir, "secondary.csv");
+      const outputCsv = join(workDir, "merged.csv");
+      const pipelineYaml = join(workDir, "priority-override-merge.pipeline.yaml");
 
       // Primary source: has authority
       writeFileSync(
@@ -372,23 +372,23 @@ run:
       const runner = new MultiSourcePipelineRunner();
       const result = await runner.run(pipelineYaml);
 
-      expect(result.pipeline).toBe('priority-override-merge');
+      expect(result.pipeline).toBe("priority-override-merge");
       expect(result.merge).toBeDefined();
       expect(result.merge?.rowsMerged).toBeGreaterThan(0);
 
-      const output = readFileSync(outputCsv, 'utf-8');
-      expect(output).toContain('Widget A'); // Primary name
-      expect(output).toContain('Widget B'); // Primary name
+      const output = readFileSync(outputCsv, "utf-8");
+      expect(output).toContain("Widget A"); // Primary name
+      expect(output).toContain("Widget B"); // Primary name
       // Price for I001 should be empty (primary is null, priority-override respects that)
     });
   });
 
-  describe('merge with composite keys', () => {
-    it('merges sources with composite primary keys', async () => {
-      const source1Csv = join(workDir, 'source1.csv');
-      const source2Csv = join(workDir, 'source2.csv');
-      const outputCsv = join(workDir, 'merged.csv');
-      const pipelineYaml = join(workDir, 'composite-key-merge.pipeline.yaml');
+  describe("merge with composite keys", () => {
+    it("merges sources with composite primary keys", async () => {
+      const source1Csv = join(workDir, "source1.csv");
+      const source2Csv = join(workDir, "source2.csv");
+      const outputCsv = join(workDir, "merged.csv");
+      const pipelineYaml = join(workDir, "composite-key-merge.pipeline.yaml");
 
       // Source 1: By Season
       writeFileSync(
@@ -460,14 +460,14 @@ run:
       const runner = new MultiSourcePipelineRunner();
       const result = await runner.run(pipelineYaml);
 
-      expect(result.pipeline).toBe('composite-merge');
+      expect(result.pipeline).toBe("composite-merge");
       expect(result.merge).toBeDefined();
       expect(result.merge?.rowsMerged).toBeGreaterThan(0);
 
-      const output = readFileSync(outputCsv, 'utf-8');
+      const output = readFileSync(outputCsv, "utf-8");
       // Should have rows for all unique (SEASON, STYLE_ID) combinations
-      expect(output).toContain('SS24');
-      expect(output).toContain('AW24');
+      expect(output).toContain("SS24");
+      expect(output).toContain("AW24");
     });
   });
 });

@@ -8,8 +8,8 @@
  * imported. Tests that need a clean registry can call `unregister()`.
  */
 
-import { ConfigError } from '../../utils/errors.js';
-import type { SourceAdapter } from './types.js';
+import { ConfigError } from "../../utils/errors.js";
+import type { SourceAdapter } from "./types.js";
 
 const adapters = new Map<string, SourceAdapter>();
 
@@ -25,7 +25,7 @@ export class SourceAdapterRegistry {
     const adapter = adapters.get(id);
     if (!adapter) {
       throw new ConfigError(
-        `No source adapter registered for "${id}". Known adapters: ${[...adapters.keys()].join(', ') || '(none)'}`,
+        `No source adapter registered for "${id}". Known adapters: ${[...adapters.keys()].join(", ") || "(none)"}`,
       );
     }
     return adapter;
