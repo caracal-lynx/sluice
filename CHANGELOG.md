@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.7.1
+
+### Patch Changes
+
+- [#207](https://github.com/caracal-lynx/sluice/pull/207) [`c5e3e09`](https://github.com/caracal-lynx/sluice/commit/c5e3e0995119f22b4ff5200f388ebc4b0f267509) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Adopt the standards-compliant ESLint + Prettier config (DAG-158 pilot). Resolves all `[LINT-01]` findings: the two fire-and-forget promises in the mssql source adapter are now explicitly `void`-ed, value stringification at data boundaries is hardened (objects render as JSON rather than `[object Object]`), and `tsconfig.test.json` is fixed so tests are actually type-checked. No public API changes.
+
 ## 0.7.0
 
 ### Minor Changes
@@ -88,8 +94,8 @@
     adapter: odoo-csv
     file: ./sources/odoo-products.csv
     pivot:
-      column: 'Variant Values'
-      keys: [Size, 'Colours Pioneer', COLOUR_YARN]
+      column: "Variant Values"
+      keys: [Size, "Colours Pioneer", COLOUR_YARN]
       onUnknownKey: warn # warn (default) | error
       dropOriginal: true # default true — drop the pivot column from output
   ```
@@ -123,7 +129,7 @@
 
   ```yaml
   transform:
-    unmappedPlaceholder: '*** TBC ***' # optional override
+    unmappedPlaceholder: "*** TBC ***" # optional override
     fields:
       - to: Division
         type: string
