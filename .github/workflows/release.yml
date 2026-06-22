@@ -25,4 +25,9 @@ jobs:
     with:
       node-version: "24.16.0"
       package-manager: pnpm
+      # Read auth for restricted @caracal-lynx/* deps (the shared eslint-config
+      # is a devDependency). Without it the release install 404s on the private
+      # package via pnpm's minimumReleaseAge check. node-release defaults this
+      # to false; node-ci enables it, which is why CI passed but release did not.
+      npm-read-auth: true
     secrets: inherit
