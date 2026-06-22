@@ -148,9 +148,6 @@ describe("sluice plugins command", () => {
     const allRules = ruleRegistry.list();
     const allTransforms = transformRegistry.list();
 
-    console.log("Discovered rules:", allRules);
-    console.log("Discovered transforms:", allTransforms);
-
     expect(allRules.length).toBeGreaterThan(0);
     expect(allTransforms.length).toBeGreaterThan(0);
   });

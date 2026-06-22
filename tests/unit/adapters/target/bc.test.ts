@@ -13,7 +13,7 @@ vi.mock("axios", () => {
   const create = vi.fn(() => instance);
   // Provide isAxiosError helper to match the real axios behaviour
   const isAxiosError = (err: unknown): boolean =>
-    !!(err && typeof err === "object" && (err as { isAxiosError?: boolean }).isAxiosError);
+    !!(typeof err === "object" && err !== null && (err as { isAxiosError?: boolean }).isAxiosError);
   return { default: { create, isAxiosError, __post: post, __patch: patch, __instance: instance } };
 });
 
