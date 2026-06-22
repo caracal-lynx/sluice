@@ -34,5 +34,12 @@ jobs:
         with:
           node-version: "24.17.0"
           cache: pnpm
+          # Read auth for restricted @caracal-lynx/* deps (e.g. the shared
+          # eslint-config). Without it, pnpm's minimumReleaseAge check 404s on
+          # the private package and fails the frozen install (DAG-159). Mirrors
+          # the central node-ci.yml auth wiring.
+          registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_READ_TOKEN }}
       - run: pnpm typecheck:tsgo
