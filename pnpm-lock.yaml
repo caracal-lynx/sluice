@@ -66,6 +66,9 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
+      '@caracal-lynx/eslint-config':
+        specifier: ^0.1.0
+        version: 0.1.0(@typescript-eslint/eslint-plugin@8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3)(vitest@4.1.9)
       '@changesets/changelog-github':
         specifier: ^0.7.0
         version: 0.7.0
@@ -93,9 +96,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.8
         version: 4.1.9(vitest@4.1.9)
-      '@vitest/eslint-plugin':
-        specifier: ^1.6.20
-        version: 1.6.20(@typescript-eslint/eslint-plugin@8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3)(vitest@4.1.9)
       eslint:
         specifier: ^10.5.0
         version: 10.5.0
@@ -276,6 +276,13 @@ packages:
   '@capsizecss/unpack@4.0.1':
     resolution: {integrity: sha512-CuNiSqg7+e1cO/GjffyMOm5Tt2jUF9CWHHnvQ/UkqvtkGfHdgwEC0wpmq7fkN3gxwpRnrAN0WzO3vREKmNolMQ==}
     engines: {node: '>=18'}
+
+  '@caracal-lynx/eslint-config@0.1.0':
+    resolution: {integrity: sha512-5SeGPFrFS2IzGoxVWFuvrML2iN3gvalpL3vRf8xLUHB7UxBk3Q1k6YQDCfcq21AR2eaPzn26n4wQHPkLVENrVw==}
+    engines: {node: '>=24.16.0', pnpm: '>=11'}
+    peerDependencies:
+      eslint: '>=9'
+      typescript: '>=5'
 
   '@changesets/apply-release-plan@7.1.1':
     resolution: {integrity: sha512-9qPCm/rLx/xoOFXIHGB229+4GOL76S4MC+7tyOuTsR6+1jYlfFDQORdvwR5hDA6y4FL2BPt3qpbcQIS+dW85LA==}
@@ -4105,6 +4112,17 @@ snapshots:
   '@capsizecss/unpack@4.0.1':
     dependencies:
       fontkitten: 1.0.3
+
+  '@caracal-lynx/eslint-config@0.1.0(@typescript-eslint/eslint-plugin@8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3)(vitest@4.1.9)':
+    dependencies:
+      '@vitest/eslint-plugin': 1.6.20(@typescript-eslint/eslint-plugin@8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3)(vitest@4.1.9)
+      eslint: 10.5.0
+      typescript: 6.0.3
+      typescript-eslint: 8.61.1(eslint@10.5.0)(typescript@6.0.3)
+    transitivePeerDependencies:
+      - '@typescript-eslint/eslint-plugin'
+      - supports-color
+      - vitest
 
   '@changesets/apply-release-plan@7.1.1':
     dependencies:
