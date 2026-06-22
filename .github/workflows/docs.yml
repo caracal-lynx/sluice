@@ -45,7 +45,7 @@ jobs:
       - name: Set up Node.js 24
         uses: actions/setup-node@v6
         with:
-          node-version: '24.16.0'
+          node-version: '24.17.0'
           cache: pnpm
 
       # One workspace install covers both the root package and docs-site, so
