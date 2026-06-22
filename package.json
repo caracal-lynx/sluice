@@ -41,6 +41,7 @@
     "access": "public"
   },
   "packageManager": "pnpm@11.8.0",
+  "prettier": "@caracal-lynx/eslint-config/prettier",
   "engines": {
     "node": ">=24.16.0",
     "pnpm": ">=11"
@@ -81,6 +82,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@caracal-lynx/eslint-config": "^0.1.0",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
     "@types/cli-progress": "^3.11.6",
@@ -90,7 +92,6 @@
     "@types/pg": "^8.20.0",
     "@typescript/native-preview": "^7.0.0-dev.20260614.1",
     "@vitest/coverage-v8": "^4.1.8",
-    "@vitest/eslint-plugin": "^1.6.20",
     "eslint": "^10.5.0",
     "lefthook": "^2.1.9",
     "pino-pretty": "^13.1.3",

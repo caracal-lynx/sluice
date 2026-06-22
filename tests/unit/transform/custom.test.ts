@@ -53,7 +53,7 @@ describe("TransformEngine — custom operations (type: custom)", () => {
   });
 
   async function seed(rows: Record<string, unknown>[]): Promise<void> {
-    const firstRow = rows[0];
+    const firstRow = rows.at(0);
     if (!firstRow) return;
     await store.createTable(
       "stg_raw",
