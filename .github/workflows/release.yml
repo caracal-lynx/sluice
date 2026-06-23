@@ -21,13 +21,12 @@ permissions:
 
 jobs:
   release:
-    uses: caracal-lynx/.github/.github/workflows/node-release.yml@v1.6.0
+    # @v1.9.0 fixes the install-step auth gap (DAG-162): node-release now passes
+    # NPM_READ_TOKEN to the install step unconditionally, so restricted
+    # @caracal-lynx/* deps (the shared eslint-config) resolve with just
+    # secrets: inherit. The old per-repo `npm-read-auth: true` is now a no-op.
+    uses: caracal-lynx/.github/.github/workflows/node-release.yml@v1.9.0
     with:
       node-version: "24.16.0"
       package-manager: pnpm
-      # Read auth for restricted @caracal-lynx/* deps (the shared eslint-config
-      # is a devDependency). Without it the release install 404s on the private
-      # package via pnpm's minimumReleaseAge check. node-release defaults this
-      # to false; node-ci enables it, which is why CI passed but release did not.
-      npm-read-auth: true
     secrets: inherit
