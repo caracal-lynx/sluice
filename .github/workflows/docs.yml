@@ -4,20 +4,20 @@ on:
   push:
     branches: [master]
     paths:
-      - 'docs-site/**'
-      - 'src/config/schema.ts'
-      - 'CHANGELOG.md'
-      - 'PLUGINS.md'
-      - 'README.md'
-      - '.github/workflows/docs.yml'
+      - "docs-site/**"
+      - "src/config/schema.ts"
+      - "CHANGELOG.md"
+      - "PLUGINS.md"
+      - "README.md"
+      - ".github/workflows/docs.yml"
   pull_request:
     paths:
-      - 'docs-site/**'
-      - 'src/config/schema.ts'
-      - 'CHANGELOG.md'
-      - 'PLUGINS.md'
-      - 'README.md'
-      - '.github/workflows/docs.yml'
+      - "docs-site/**"
+      - "src/config/schema.ts"
+      - "CHANGELOG.md"
+      - "PLUGINS.md"
+      - "README.md"
+      - ".github/workflows/docs.yml"
   workflow_dispatch:
 
 permissions:
@@ -45,15 +45,22 @@ jobs:
       - name: Set up Node.js 24
         uses: actions/setup-node@v6
         with:
-          node-version: '24.17.0'
+          node-version: "24.17.0"
           cache: pnpm
+          registry-url: https://registry.npmjs.org
 
       # One workspace install covers both the root package and docs-site, so
       # docs-site/scripts/generate-schema-reference.ts can resolve `zod` from
       # src/config/schema.ts at the repo root. Build scripts are gated by
       # pnpm.onlyBuiltDependencies in the root package.json.
+      #
+      # NODE_AUTH_TOKEN: the root devDeps include the restricted
+      # @caracal-lynx/eslint-config, so --frozen-lockfile's minimumReleaseAge
+      # check 404s unauthenticated (DAG-162, same class as ci-tsgo.yml #216).
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_READ_TOKEN }}
 
       - name: Build site (runs prebuild = sync changelog + generate schema reference)
         run: pnpm --filter docs-site build
