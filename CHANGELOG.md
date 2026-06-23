@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.7.2
+
+### Patch Changes
+
+- [#216](https://github.com/caracal-lynx/sluice/pull/216) [`0f3ad5d`](https://github.com/caracal-lynx/sluice/commit/0f3ad5db70d797b601adea38e8ebc820478aeb00) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Consume the shared `@caracal-lynx/eslint-config` package via `extends` (DAG-159), replacing Sluice's inlined DAG-158 pilot config. Keeps only the Sluice-specific deltas (the `docs-site` ignore and the split-tsconfig project wiring) and points the Prettier config at the package subpath. Lint/format configuration only — no public API or runtime changes.
+
 ## 0.7.1
 
 ### Patch Changes
