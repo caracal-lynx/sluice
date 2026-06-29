@@ -19,10 +19,10 @@ importers:
         version: 1.5.0-r.1
       axios:
         specifier: ^1.17.0
-        version: 1.18.0
+        version: 1.18.1
       axios-retry:
         specifier: ^4.5.0
-        version: 4.5.0(axios@1.18.0)
+        version: 4.5.0(axios@1.18.1)
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
@@ -1580,8 +1580,8 @@ packages:
     peerDependencies:
       axios: 0.x || 1.x
 
-  axios@1.18.0:
-    resolution: {integrity: sha512-E32NzpYKp++W7XRe52rHiXV2ehxmh3wbdgO7MHeFM+vqxLBYHzt0ElkiImtOBxtOmyp0yoC8C6uESVV84Y2/hw==}
+  axios@1.18.1:
+    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -5492,12 +5492,12 @@ snapshots:
 
   atomic-sleep@1.0.0: {}
 
-  axios-retry@4.5.0(axios@1.18.0):
+  axios-retry@4.5.0(axios@1.18.1):
     dependencies:
-      axios: 1.18.0
+      axios: 1.18.1
       is-retry-allowed: 2.2.0
 
-  axios@1.18.0:
+  axios@1.18.1:
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.6
