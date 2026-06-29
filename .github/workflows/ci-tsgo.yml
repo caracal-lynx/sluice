@@ -32,7 +32,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24.17.0"
+          node-version: "24.18.0"
           cache: pnpm
           # Read auth for restricted @caracal-lynx/* deps (e.g. the shared
           # eslint-config). Without it, pnpm's minimumReleaseAge check 404s on
