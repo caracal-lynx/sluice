@@ -103,7 +103,7 @@ steps here unless they're genuinely Sluice-specific (like `ci-tsgo.yml` or
 `docs.yml`).
 
 - `.github/workflows/ci.yml` — calls `caracal-lynx/.github`'s `node-ci.yml`, pinned to a released tag (Renovate-managed — check the file for the current version; `@master` is no longer used, see DAG-67). Runs lint / typecheck / test / build / security audit / changeset.
-- `.github/workflows/release.yml` — calls `caracal-lynx/.github`'s `node-release.yml`, pinned to a released tag (Renovate-managed). Changesets PR-flow + npm Trusted Publishing.
+- `.github/workflows/release.yml` — calls `caracal-lynx/.github`'s `node-release.yml`, pinned to a released tag (Renovate-managed). Changesets PR-flow + npm Trusted Publishing. **Linear release sync is on** (`sync-linear: true`, DAG-74): every npm publish creates a completed release in the **Sluice** Linear pipeline, linking the issues referenced in that release's commit range. To be picked up, reference the issue as `DAG-NN` (uppercase) or a PR as `#NN` in the **commit message or PR description** — the house `[<branch>] -` prefix only carries a lowercase branch slug, so the PR description/title (which we already tag with `DAG-NN`) is the reliable carrier; issues linked only via a merged PR are resolved too.
 - `.github/workflows/ci-tsgo.yml` — **Sluice-specific.** Non-blocking parallel tsgo typecheck, ahead of the planned TypeScript 7 upgrade. Drop when TS 7 stable.
 - `.github/workflows/docs.yml` — **Sluice-specific.** Astro docs-site build + GitHub Pages deploy. Stays local.
 
