@@ -3,6 +3,7 @@
 
 import type { MergeConfig } from "../config/types.js";
 import { quoteIdent } from "../staging/index.js";
+import { ConfigError } from "../utils/errors.js";
 
 import type { MergeSourceMeta } from "./types.js";
 
@@ -59,12 +60,16 @@ export function buildConflictPredicate(columnRefs: string[]): string {
 
 export function buildJoinedTableSql(joinedTable: string, context: BuildMergeContext): string {
   const { sources, keyColumns, sourceColumns } = context;
-  const aliases = sources.map((_s, idx) => `s${idx}`);
+  const entries = sources.map((source, idx) => ({ source, alias: `s${idx}` }));
+
+  // Callers guard `sources.length < 2`; narrow the empty case for the compiler.
+  const [first, ...rest] = entries;
+  if (first === undefined) {
+    throw new ConfigError("merge requires at least one source");
+  }
 
   const selectList: string[] = [];
-  for (let i = 0; i < sources.length; i += 1) {
-    const source = sources[i];
-    const alias = aliases[i];
+  for (const { source, alias } of entries) {
     for (const col of sourceColumns[source.id] ?? []) {
       selectList.push(
         `${alias}.${quoteIdent(col)} AS ${quoteIdent(prefixedColumn(source.id, col))}`,
@@ -72,12 +77,10 @@ export function buildJoinedTableSql(joinedTable: string, context: BuildMergeCont
     }
   }
 
-  const from = `${quoteIdent(sources[0].tableName)} ${aliases[0]}`;
-  const joins: string[] = [];
-  for (let i = 1; i < sources.length; i += 1) {
-    const source = sources[i];
-    const alias = aliases[i];
-    const prevAliases = aliases.slice(0, i);
+  const from = `${quoteIdent(first.source.tableName)} ${first.alias}`;
+  const joins = rest.map(({ source, alias }, restIdx) => {
+    // restIdx 0 is the second source; prior aliases are entries[0..restIdx].
+    const prevAliases = entries.slice(0, restIdx + 1).map((e) => e.alias);
     const on = keyColumns
       .map((k) => {
         const left = `COALESCE(${prevAliases.map((a) => `${a}.${quoteIdent(k)}`).join(", ")})`;
@@ -85,9 +88,8 @@ export function buildJoinedTableSql(joinedTable: string, context: BuildMergeCont
         return `${left} = ${right}`;
       })
       .join(" AND ");
-
-    joins.push(`FULL OUTER JOIN ${quoteIdent(source.tableName)} ${alias} ON ${on}`);
-  }
+    return `FULL OUTER JOIN ${quoteIdent(source.tableName)} ${alias} ON ${on}`;
+  });
 
   return `CREATE OR REPLACE TABLE ${quoteIdent(joinedTable)} AS SELECT ${selectList.join(", ")} FROM ${from} ${joins.join(" ")}`;
 }
@@ -137,9 +139,12 @@ export function buildFieldValueExpr(
     .filter((s) => sourceHasColumn(context.sourceColumns, s.id, column))
     .map((s) => quoteIdent(prefixedColumn(s.id, column)));
 
-  if (refs.length === 0) return "NULL";
-  if (strategy === "priority-override") return refs[0];
-  const normalizedRefs = refs.map((r) => `NULLIF(TRIM(CAST(${r} AS VARCHAR)), '')`);
+  const [firstRef, ...restRefs] = refs;
+  if (firstRef === undefined) return "NULL";
+  if (strategy === "priority-override") return firstRef;
+  const normalizedRefs = [firstRef, ...restRefs].map(
+    (r) => `NULLIF(TRIM(CAST(${r} AS VARCHAR)), '')`,
+  );
   return `COALESCE(${normalizedRefs.join(", ")})`;
 }
 

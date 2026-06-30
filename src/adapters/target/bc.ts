@@ -237,7 +237,9 @@ function countBatchResponses(body: string): { succeeded: number; failed: number 
   let succeeded = 0;
   let failed = 0;
   while ((match = re.exec(body))) {
-    const code = Number.parseInt(match[1], 10);
+    const [, codeStr] = match;
+    if (codeStr === undefined) continue;
+    const code = Number.parseInt(codeStr, 10);
     if (code >= 200 && code < 300) succeeded++;
     else failed++;
   }
