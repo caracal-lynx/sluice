@@ -17,10 +17,11 @@ jobs:
     uses: caracal-lynx/.github/.github/workflows/node-ci.yml@v1.9.0
     with:
       node-version: "24.16.0"
-      # Single-OS for now — Windows matrix is a deliberate follow-up; today's
-      # Sluice CI has never run on Windows so adding it here would conflate
-      # the pilot migration with a behaviour change.
-      os-matrix: '["ubuntu-latest"]'
+      # Cross-platform matrix — Sluice MUST run on Windows PowerShell 7 as well as
+      # in CI (CLAUDE.md non-negotiable), so both OSes gate every change (DAG-79).
+      # The whole suite passes on Windows (DuckDB win32 binding loads, paths use
+      # path.join). The `ci / CI success` aggregator already gates both legs.
+      os-matrix: '["ubuntu-latest", "windows-latest"]'
       package-manager: pnpm
       coverage: true
       # PUB-06: every src/ change needs a changeset. The bespoke job that used to
