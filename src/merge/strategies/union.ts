@@ -50,9 +50,10 @@ export const unionStrategy: MergeStrategyPlugin = {
 
     const sourceColumns: Record<string, string[]> = {};
     for (const source of sources) {
-      sourceColumns[source.id] = await store.columnNames(source.tableName);
+      const columns = await store.columnNames(source.tableName);
+      sourceColumns[source.id] = columns;
       for (const key of keyColumns) {
-        if (!sourceColumns[source.id].includes(key)) {
+        if (!columns.includes(key)) {
           throw new ConfigError(
             `merge key column '${key}' is missing from source '${source.id}' table '${source.tableName}'`,
           );

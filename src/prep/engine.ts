@@ -89,11 +89,11 @@ export class PrepEngine {
       rowsFailed: 0,
     }));
 
-    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-      const row = rows[rowIdx];
+    for (const [rowIdx, row] of rows.entries()) {
       for (let ri = 0; ri < applicable.length; ri++) {
         const rule = applicable[ri];
         const result = ruleResults[ri];
+        if (rule === undefined || result === undefined) continue;
         const ruleApplied = this.applyRule(rule, row, rowIdx, runCfg, result);
         if (!ruleApplied) continue;
       }

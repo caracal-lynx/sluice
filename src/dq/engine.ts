@@ -56,11 +56,10 @@ export class DQEngine {
     // ── Main pass: validate every (row, rule, check) combination ──
     const violations: RuleViolation[] = [];
     const progressEvery = 500;
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    for (const [rowIndex, row] of rows.entries()) {
       if (onProgress && rowIndex > 0 && rowIndex % progressEvery === 0) {
         onProgress(rowIndex);
       }
-      const row = rows[rowIndex];
       for (const rule of rules) {
         const value = row[rule.field];
         for (const check of rule.checks) {
