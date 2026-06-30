@@ -69,7 +69,8 @@ export class XlsxSourceAdapter implements SourceAdapter {
     }
 
     const worksheets = workbook.worksheets;
-    if (worksheets.length === 0) {
+    const [firstSheet] = worksheets;
+    if (firstSheet === undefined) {
       throw new SourceError(`xlsx: workbook "${config.file}" has no sheets`);
     }
 
@@ -78,7 +79,7 @@ export class XlsxSourceAdapter implements SourceAdapter {
         {
           file: config.file,
           sheets: worksheets.map((w) => w.name),
-          using: worksheets[0].name,
+          using: firstSheet.name,
         },
         "xlsx: multiple sheets found and `source.sheet` is unset — using first sheet",
       );
@@ -86,7 +87,7 @@ export class XlsxSourceAdapter implements SourceAdapter {
 
     const worksheet =
       config.sheet === undefined
-        ? worksheets[0]
+        ? firstSheet
         : typeof config.sheet === "number"
           ? worksheets[config.sheet]
           : workbook.getWorksheet(config.sheet);
@@ -115,9 +116,9 @@ export class XlsxSourceAdapter implements SourceAdapter {
       const row = worksheet.getRow(r);
       if (!row.hasValues) continue;
       const record: Record<string, string> = {};
-      for (let c = 1; c <= headers.length; c++) {
-        record[headers[c - 1]] = cellToString(row.getCell(c));
-      }
+      headers.forEach((header, idx) => {
+        record[header] = cellToString(row.getCell(idx + 1));
+      });
       records.push(record);
     }
 

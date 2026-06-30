@@ -138,8 +138,8 @@ export class StagingStore {
    * and binds all params positionally.
    */
   async insertBatch(table: string, rows: Record<string, unknown>[]): Promise<void> {
-    if (rows.length === 0) return;
-    const first = rows[0];
+    const [first] = rows;
+    if (first === undefined) return;
     const cols = Object.keys(first);
     if (cols.length === 0) {
       throw new StagingError("insertBatch: rows have no columns");

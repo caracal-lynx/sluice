@@ -64,8 +64,7 @@ export class TransformEngine {
 
     const unmappedPlaceholder = config.transform.unmappedPlaceholder;
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    for (const [i, row] of rows.entries()) {
       try {
         const outRow: Record<string, unknown> = {};
         for (const field of config.transform.fields) {

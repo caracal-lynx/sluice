@@ -86,6 +86,19 @@ not listed here follows the programme stack.
   never `eval()`, never `new Function()`. (Fork rationale lives in
   [data-gubbins.md](c:/repos/standards/programmes/data-gubbins.md).)
 
+## TypeScript config
+
+- **Full `[C-01]` strict baseline is on** (DAG-10): `noUncheckedIndexedAccess`,
+  `verbatimModuleSyntax`, `isolatedModules`, `useUnknownInCatchVariables`,
+  `noImplicitOverride`, etc. are all enabled in `tsconfig.json`.
+- **`[SCOPE-02]` deviation — `target`/`lib` are `ES2025`, not the baseline `ES2024`.**
+  Intentional: `engines.node` is `>=24.16.0` (`.nvmrc` 24.17.0), which fully supports
+  ES2025, so Sluice runs one notch ahead of the `[C-01]` baseline tsconfig.
+- **Tests are not yet typechecked.** `pnpm typecheck` covers `src/` only;
+  `tsconfig.test.json` is used solely as the ESLint parser project, so test type
+  errors are latent. Wiring tests into the typecheck gate (and clearing the backlog)
+  is tracked in **DAG-169** — don't assume test type-safety until it lands.
+
 ## Targets
 
 - **IFS** — CSV import via IFS bulk-load utility (`src/adapters/target/ifs.ts`)
