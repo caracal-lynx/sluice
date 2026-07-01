@@ -1,0 +1,48 @@
+# CodeRabbit config — Sluice (TypeScript/Node pipeline engine)
+# Docs: https://docs.coderabbit.ai/reference/yaml-template
+# Org-wide defaults (chill/en-GB/diagrams) are set in the dashboard; this file
+# tunes path filters + review focus for this repo. See DAG-107.
+language: en-GB
+
+reviews:
+  profile: chill
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  sequence_diagrams: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - master
+
+  path_filters:
+    - "!dist/**"
+    - "!**/*.lock"
+    - "!**/node_modules/**"
+    - "!**/*.snap"
+
+  path_instructions:
+    - path: "src/**"
+      instructions: |
+        Sluice pipeline engine. Pay particular attention to:
+        - DuckDB SQL safety (no string interpolation into SQL)
+        - YAML schema validation before execution
+    - path: "src/adapters/**"
+      instructions: |
+        ERP adapters (write-side). Writes must be idempotent and
+        dry-run-able; flag any non-reversible or non-dry-runnable write path.
+    - path: "src/cli.ts"
+      instructions: |
+        CLI surface. Check argument parsing, error messages are
+        actionable, and exit codes follow conventions.
+    - path: "tests/**/*.test.ts"
+      instructions: |
+        Test files. Verify each test has clear arrange/act/assert
+        and uses real DuckDB in-memory rather than mocks where possible.
+
+chat:
+  auto_reply: true
