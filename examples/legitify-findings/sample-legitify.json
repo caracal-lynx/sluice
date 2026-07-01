@@ -1,0 +1,63 @@
+{
+  "type": "flattened",
+  "content": {
+    "data.organization.two_factor_authentication_not_required_for_org": {
+      "policyInfo": {
+        "title": "Two-Factor Authentication Should Be Enforced For The Organization",
+        "policyName": "two_factor_authentication_not_required_for_org",
+        "severity": "HIGH",
+        "namespace": "organization",
+        "threat": ["credential theft grants org access"]
+      },
+      "violations": [
+        {
+          "violationEntityType": "organization",
+          "aux": { "entityName": "example-org" },
+          "status": "PASSED"
+        }
+      ]
+    },
+    "data.repository.code_review_not_required": {
+      "policyInfo": {
+        "title": "Code Review Should Be Required",
+        "policyName": "code_review_not_required",
+        "severity": "HIGH",
+        "namespace": "repository",
+        "threat": ["unreviewed code reaches the default branch"]
+      },
+      "violations": [
+        {
+          "violationEntityType": "repository",
+          "aux": { "entityName": "example-org/alpha" },
+          "status": "FAILED"
+        },
+        {
+          "violationEntityType": "repository",
+          "aux": { "entityName": "example-org/beta" },
+          "status": "FAILED"
+        },
+        {
+          "violationEntityType": "repository",
+          "aux": { "entityName": "example-org/gamma" },
+          "status": "PASSED"
+        }
+      ]
+    },
+    "data.repository.secret_scanning_not_enabled": {
+      "policyInfo": {
+        "title": "Secret Scanning Should Be Enabled",
+        "policyName": "secret_scanning_not_enabled",
+        "severity": "MEDIUM",
+        "namespace": "repository",
+        "threat": ["committed secrets go undetected"]
+      },
+      "violations": [
+        {
+          "violationEntityType": "repository",
+          "aux": { "entityName": "example-org/alpha" },
+          "status": "FAILED"
+        }
+      ]
+    }
+  }
+}

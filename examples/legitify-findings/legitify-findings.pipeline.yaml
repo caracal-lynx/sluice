@@ -1,0 +1,64 @@
+pipeline:
+  name: legitify-findings
+  client: caracal-lynx
+  version: "1.0"
+  entity: SecurityFinding
+  description: |
+    Ingest a reshaped Legitify posture scan (one row per policy+resource) into a
+    normalised findings table for trend analysis. The generic `json` adapter loads
+    the reshaped array; DQ guards the finding grain; transform normalises severity
+    and builds a stable finding key (policy|namespace|resource) so the same finding
+    can be tracked across weekly scans.
+
+    Input is produced by reshape-legitify.ps1 from raw Legitify JSON. This example
+    ships a synthetic sample; point it at real scans (kept in the private
+    .github-private/legitify/history) for actual trend data.
+
+source:
+  adapter: json
+  file: ./sample-findings.json # reshape-legitify.ps1 output (root array)
+
+dq:
+  stopOnCritical: true
+  rejectionFile: ./output/legitify-findings-rejected.csv
+  rules:
+    - field: policy
+      checks:
+        - { type: notNull, severity: critical }
+    - field: namespace
+      checks:
+        - { type: notNull, severity: critical }
+        - {
+            type: allowedValues,
+            value: [organization, member, actions, runner_group, repository],
+            severity: warning,
+          }
+    - field: status
+      checks:
+        - { type: notNull, severity: critical }
+        - { type: allowedValues, value: [PASSED, FAILED, SKIPPED], severity: warning }
+    - field: severity
+      checks:
+        - { type: allowedValues, value: [CRITICAL, HIGH, MEDIUM, LOW], severity: warning }
+
+transform:
+  fields:
+    - { from: scan_date, to: scan_date, type: string, cleanse: trim }
+    - { from: policy, to: policy_name, type: string, cleanse: trim }
+    - { from: namespace, to: namespace, type: string, cleanse: trim|lowercase }
+    - { from: severity, to: severity, type: string, cleanse: trim|uppercase }
+    - { from: status, to: status, type: string, cleanse: trim|uppercase }
+    - { from: entity_type, to: entity_type, type: string, cleanse: trim }
+    - { from: entity_name, to: resource, type: string, cleanse: trim }
+    # Stable key so a finding can be tracked across weekly scans (open/closed/regressed).
+    - { from: [policy, namespace, entity_name], to: finding_key, type: concat, separator: "|" }
+
+target:
+  adapter: csv
+  output: ./output/legitify-trend.csv
+  includeHeader: true
+
+run:
+  mode: full
+  outputDir: ./output
+  stagingDb: ./output/legitify-findings.duckdb
