@@ -1,5 +1,17 @@
 # @caracal-lynx/sluice
 
+## 0.7.3
+
+### Patch Changes
+
+- [#227](https://github.com/caracal-lynx/sluice/pull/227) [`e41efd2`](https://github.com/caracal-lynx/sluice/commit/e41efd21e379dd263d0930c0e0dd26f899c3da92) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Enable the full `[C-01]` TypeScript strict baseline in `tsconfig.json`
+  (`noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `isolatedModules`,
+  `useUnknownInCatchVariables`, `noImplicitOverride`, and the rest) and fix the
+  resulting null-safety findings in the merge engine, the xlsx/bc adapters, and
+  the dq/prep/transform/staging modules. All fixes are behaviour-preserving
+  (real narrowing via destructuring/iterators — no `as`/`!`/`@ts-expect-error`).
+  (DAG-10)
+
 ## 0.7.2
 
 ### Patch Changes
