@@ -1,0 +1,52 @@
+[
+  {
+    "scan_date": "2026-07-01",
+    "policy": "two_factor_authentication_not_required_for_org",
+    "namespace": "organization",
+    "severity": "HIGH",
+    "title": "Two-Factor Authentication Should Be Enforced For The Organization",
+    "status": "PASSED",
+    "entity_type": "organization",
+    "entity_name": "example-org"
+  },
+  {
+    "scan_date": "2026-07-01",
+    "policy": "code_review_not_required",
+    "namespace": "repository",
+    "severity": "HIGH",
+    "title": "Code Review Should Be Required",
+    "status": "FAILED",
+    "entity_type": "repository",
+    "entity_name": "example-org/alpha"
+  },
+  {
+    "scan_date": "2026-07-01",
+    "policy": "code_review_not_required",
+    "namespace": "repository",
+    "severity": "HIGH",
+    "title": "Code Review Should Be Required",
+    "status": "FAILED",
+    "entity_type": "repository",
+    "entity_name": "example-org/beta"
+  },
+  {
+    "scan_date": "2026-07-01",
+    "policy": "code_review_not_required",
+    "namespace": "repository",
+    "severity": "HIGH",
+    "title": "Code Review Should Be Required",
+    "status": "PASSED",
+    "entity_type": "repository",
+    "entity_name": "example-org/gamma"
+  },
+  {
+    "scan_date": "2026-07-01",
+    "policy": "secret_scanning_not_enabled",
+    "namespace": "repository",
+    "severity": "MEDIUM",
+    "title": "Secret Scanning Should Be Enabled",
+    "status": "FAILED",
+    "entity_type": "repository",
+    "entity_name": "example-org/alpha"
+  }
+]

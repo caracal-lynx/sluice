@@ -22,7 +22,7 @@ import { z } from "zod";
 // ── Primitives ────────────────────────────────────────────────────────────────
 
 const Severity = z.enum(["critical", "warning", "info"]);
-const SourceAd = z.enum(["mssql", "pg", "csv", "xlsx", "rest", "odoo-csv"]);
+const SourceAd = z.enum(["mssql", "pg", "csv", "xlsx", "rest", "odoo-csv", "json"]);
 const TargetAd = z.enum(["bc", "ifs", "bluecherry", "csv", "pg", "rest"]);
 const CleanseOps = z.string().regex(/^[a-zA-Z|:0-9]+$/);
 
@@ -92,7 +92,7 @@ const OdooPivotSchema = z.object({
 
 const SourceBaseSchema = z.object({
   adapter: SourceAd.describe(
-    "Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`.",
+    "Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`, `json`.",
   ),
   connection: z
     .string()
@@ -107,7 +107,15 @@ const SourceBaseSchema = z.object({
   file: z
     .string()
     .optional()
-    .describe("Path or glob for file adapters. Required for `csv`, `xlsx`, and `odoo-csv`."),
+    .describe(
+      "Path or glob for file adapters. Required for `csv`, `xlsx`, `odoo-csv`, and `json`.",
+    ),
+  recordPath: z
+    .string()
+    .optional()
+    .describe(
+      "Used by the `json` adapter only. Dot-path to the records array inside the file (e.g. `data.items`). Omit when the file's root is already an array.",
+    ),
   endpoint: z.string().optional().describe("Full URL for the `rest` adapter. Required for `rest`."),
   headers: z
     .record(z.string())
