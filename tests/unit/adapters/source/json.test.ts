@@ -128,6 +128,33 @@ describe("JsonSourceAdapter", () => {
     );
   });
 
+  it("throws SourceError when an array element is not an object (null/scalar)", async () => {
+    const file = writeJson("bad-elems.json", [{ id: 1 }, null, "nope", 42]);
+    const config: SourceConfig = { adapter: "json", file, delimiter: ",", encoding: "utf-8" };
+    await expect(adapter.extract(config, store, BASE_RUN, () => {})).rejects.toBeInstanceOf(
+      SourceError,
+    );
+  });
+
+  it("handles unicode and boundary-number values (stored as VARCHAR text)", async () => {
+    const file = writeJson("edge.json", [
+      { name: "Ævar Arnfjörð 🦊", big: Number.MAX_SAFE_INTEGER, zero: 0, flag: false },
+    ]);
+    const config: SourceConfig = { adapter: "json", file, delimiter: ",", encoding: "utf-8" };
+    const result = await adapter.extract(config, store, BASE_RUN, () => {});
+    expect(result.rowsExtracted).toBe(1);
+    expect(result.columns.map((c) => c.name).sort()).toEqual(["big", "flag", "name", "zero"]);
+  });
+
+  it("throws SourceError on a flattened-key collision", async () => {
+    // both `a__b` (flat) and `a: { b }` (nested) collapse to the same column.
+    const file = writeJson("collision.json", [{ a__b: 1, a: { b: 2 } }]);
+    const config: SourceConfig = { adapter: "json", file, delimiter: ",", encoding: "utf-8" };
+    await expect(adapter.extract(config, store, BASE_RUN, () => {})).rejects.toBeInstanceOf(
+      SourceError,
+    );
+  });
+
   it("throws SourceError on invalid JSON", async () => {
     const p = join(tmpDir, "bad.json");
     writeFileSync(p, "{ not json", "utf8");

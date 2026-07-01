@@ -10,6 +10,7 @@
  */
 
 import type { ColumnMeta } from "../staging/index.js";
+import { SourceError } from "./errors.js";
 
 /** Walk a dot-path (`a.b.c`) into a nested object. Returns undefined if any hop is missing. */
 export function getPath(obj: unknown, dotPath: string): unknown {
@@ -36,6 +37,13 @@ export function flatten(
     if (v !== null && typeof v === "object" && !Array.isArray(v)) {
       flatten(v as Record<string, unknown>, key, out);
     } else {
+      // Fail loud on a flattened-key collision (e.g. both `a__b` and `a: { b }`)
+      // rather than silently overwriting one value in the staging row.
+      if (Object.prototype.hasOwnProperty.call(out, key)) {
+        throw new SourceError(
+          `flatten: key collision on "${key}" — the record carries both a nested and a flat form of this path`,
+        );
+      }
       out[key] = Array.isArray(v) ? JSON.stringify(v) : v;
     }
   }

@@ -70,10 +70,21 @@ export class JsonSourceAdapter implements SourceAdapter {
       );
     }
     if (node.length === 0) {
+      // Consistent with the csv/rest adapters: a VARCHAR staging schema can't be
+      // inferred from zero rows. A genuinely empty result (e.g. a clean Legitify
+      // week) is an orchestration concern — skip ingest rather than run this.
       throw new SourceError(`json: "${config.file}" produced no records`);
     }
 
-    const flatRecords = node.map((r) => flatten(r as Record<string, unknown>));
+    const flatRecords = node.map((r, i) => {
+      if (r === null || typeof r !== "object" || Array.isArray(r)) {
+        const got = r === null ? "null" : Array.isArray(r) ? "array" : typeof r;
+        throw new SourceError(
+          `json: record ${i} in "${config.file}" is not an object (got ${got}); the records array must contain objects`,
+        );
+      }
+      return flatten(r as Record<string, unknown>);
+    });
     const columns: ColumnMeta[] = collectColumns(flatRecords);
     await store.createTable(targetTable, columns);
     logger.debug({ file: config.file, rows: flatRecords.length, targetTable }, "json: loaded file");

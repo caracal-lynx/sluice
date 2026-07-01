@@ -41,6 +41,7 @@ $rows = foreach ($p in $doc.content.PSObject.Properties) {
     }
   }
 }
-# -AsArray keeps a single-row scan valid JSON (ConvertTo-Json emits a bare object otherwise).
-$rows | ConvertTo-Json -Depth 5 -AsArray | Set-Content $OutputJson -Encoding utf8
+# @($rows) keeps the output a JSON array for single-row AND zero-finding (clean-week)
+# scans — piping $null through ConvertTo-Json -AsArray would emit `null`, not `[]`.
+ConvertTo-Json -InputObject @($rows) -Depth 5 | Set-Content $OutputJson -Encoding utf8
 Write-Host "Wrote $($rows.Count) findings to $OutputJson (scan_date=$ScanDate)"
