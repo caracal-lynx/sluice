@@ -144,6 +144,9 @@ describe("JsonSourceAdapter", () => {
     const result = await adapter.extract(config, store, BASE_RUN, () => {});
     expect(result.rowsExtracted).toBe(1);
     expect(result.columns.map((c) => c.name).sort()).toEqual(["big", "flag", "name", "zero"]);
+    // Confirm values are actually stored (not coerced/dropped) — esp. the falsy 0/false.
+    const rows = await store.query<Record<string, unknown>>(`SELECT name, zero, flag FROM stg_raw`);
+    expect(rows[0]).toMatchObject({ name: "Ævar Arnfjörð 🦊", zero: "0", flag: "false" });
   });
 
   it("throws SourceError on a flattened-key collision", async () => {
