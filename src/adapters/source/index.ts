@@ -6,6 +6,7 @@
  */
 
 import { CsvSourceAdapter } from "./csv.js";
+import { JsonSourceAdapter } from "./json.js";
 import { MssqlSourceAdapter } from "./mssql.js";
 import { OdooCsvSourceAdapter } from "./odoo-csv.js";
 import { PgSourceAdapter } from "./pg.js";
@@ -21,9 +22,11 @@ if (!SourceAdapterRegistry.has("csv")) {
   SourceAdapterRegistry.register(new XlsxSourceAdapter());
   SourceAdapterRegistry.register(new RestSourceAdapter());
   SourceAdapterRegistry.register(new OdooCsvSourceAdapter());
+  SourceAdapterRegistry.register(new JsonSourceAdapter());
 }
 
 export { CsvSourceAdapter } from "./csv.js";
+export { JsonSourceAdapter } from "./json.js";
 export { MssqlSourceAdapter } from "./mssql.js";
 export { OdooCsvSourceAdapter } from "./odoo-csv.js";
 export { PgSourceAdapter } from "./pg.js";
