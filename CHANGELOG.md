@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.8.0
+
+### Minor Changes
+
+- [#231](https://github.com/caracal-lynx/sluice/pull/231) [`750d6f1`](https://github.com/caracal-lynx/sluice/commit/750d6f1c6814fd65d42e34a5498a9be858a380f3) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Add a `json` file source adapter. Reads a local JSON file into staging, with an optional `recordPath` dot-path to the records array (root array when omitted); nested objects are flattened with `__` (logic shared with the `rest` adapter). Includes a `examples/legitify-findings/` worked example that ingests a Legitify posture scan into a normalised findings table (DAG-95).
+
 ## 0.7.3
 
 ### Patch Changes
