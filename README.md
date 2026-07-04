@@ -614,7 +614,7 @@ pnpm format        # prettier
 pnpm dev run customers.pipeline.yaml | pnpm exec pino-pretty
 ```
 
-> **Note:** Sluice develops with **pnpm** (activated via corepack — see [CLAUDE.md](CLAUDE.md)). Published to npm, so end users can still install with any package manager.
+> **Note:** Sluice develops with **pnpm** (see [CLAUDE.md](CLAUDE.md)). Published to npm, so end users can still install with any package manager.
 >
 > **Note:** Uses `tsx`, not `ts-node`. Path aliases work correctly on Windows without extra configuration. 🪟
 
