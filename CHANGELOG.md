@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.8.1
+
+### Patch Changes
+
+- [#244](https://github.com/caracal-lynx/sluice/pull/244) [`d0e4330`](https://github.com/caracal-lynx/sluice/commit/d0e4330c62e7c3582868549c6612eedf408ee1fa) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Update runtime dependencies: mssql 12.7.0, js-yaml 4.3.0, sharp 0.35.3, csv-parse 7.0.1, csv-stringify 6.8.1, and Node.js 24.18.0.
+
 ## 0.8.0
 
 ### Minor Changes
