@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   ci:
-    uses: caracal-lynx/.github/.github/workflows/node-ci.yml@v1.9.0
+    uses: caracal-lynx/.github/.github/workflows/node-ci.yml@v1.11.0
     with:
       node-version: "24.16.0"
       # Cross-platform matrix — Sluice MUST run on Windows PowerShell 7 as well as
