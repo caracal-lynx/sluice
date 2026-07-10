@@ -12,6 +12,11 @@
       "description": "Pinned to v3 until src/config/schema.ts is migrated to the v4 API"
     },
     {
+      "matchPackageNames": ["js-yaml"],
+      "allowedVersions": "<5",
+      "description": "Pinned to v4: v5 is ESM-only and drops the default export, which breaks a transitive default-import in the docs-site astro/starlight prerender path (js-yaml v5 reverted in PR after #250). Lift once the docs toolchain supports v5."
+    },
+    {
       "description": "Transitive-vuln override pins live in pnpm-workspace.yaml and are managed by hand, not Renovate. Disable them so Renovate stops attempting the override-entry lookups that raise the 'failed to look up npm package tmp: no-result' dependency-lookup warning.",
       "matchFileNames": ["pnpm-workspace.yaml"],
       "matchPackageNames": ["tmp", "devalue", "uuid", "esbuild"],
