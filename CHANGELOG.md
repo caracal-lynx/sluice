@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.8.2
+
+### Patch Changes
+
+- [#252](https://github.com/caracal-lynx/sluice/pull/252) [`559ce80`](https://github.com/caracal-lynx/sluice/commit/559ce801c4db8212618e842a258085ac80d4328b) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Revert js-yaml to v4. v5 is ESM-only and drops the default export, which breaks a transitive default-import in the docs-site astro/starlight prerender path. Pinned to `<5` in Renovate until the docs toolchain supports v5.
+
 ## 0.8.1
 
 ### Patch Changes
