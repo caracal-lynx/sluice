@@ -10,6 +10,8 @@ on:
       - "PLUGINS.md"
       - "README.md"
       - ".github/workflows/docs.yml"
+      - "pnpm-lock.yaml"
+      - "package.json"
   pull_request:
     paths:
       - "docs-site/**"
@@ -18,6 +20,8 @@ on:
       - "PLUGINS.md"
       - "README.md"
       - ".github/workflows/docs.yml"
+      - "pnpm-lock.yaml"
+      - "package.json"
   workflow_dispatch:
 
 permissions:
