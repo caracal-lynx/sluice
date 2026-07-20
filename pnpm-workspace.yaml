@@ -30,3 +30,13 @@ allowBuilds:
   esbuild: true
   lefthook: true
   sharp: true
+
+# Supply-chain age gate (DAG-206). pnpm's default is 1440 (1 day); 4320 raises
+# it to 3 days so it matches the Renovate `minimumReleaseAge` carried by
+# local>caracal-lynx/.github:renovate-config-pnpm. Without this the two gates
+# disagree: Renovate age-gates the update it *proposes*, but a rebase re-resolves
+# the lockfile to newest-in-range ungated, so a package published minutes ago can
+# land in the lockfile (sluice #262 — astro 7.1.2, published ~1h before the run).
+# Applies to resolution AND frozen-lockfile verification, transitive deps
+# included. Use `minimumReleaseAgeExclude` for urgent security patches.
+minimumReleaseAge: 4320
