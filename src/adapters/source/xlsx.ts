@@ -2,17 +2,20 @@
 // Copyright (c) 2026 Caracal Lynx Limited
 
 /**
- * Excel (XLSX) source adapter. Reads the workbook with ExcelJS, picks the
- * named/indexed sheet (or warns + uses the first), and emits each row as a
+ * Excel (XLSX) source adapter. Reads the workbook with read-excel-file, picks
+ * the named/indexed sheet (or warns + uses the first), and emits each row as a
  * Record<string, string> keyed by the header row. All columns stage as
  * VARCHAR — type coercion happens in transform, not here.
  *
  * `targetTable` defaults to 'stg_raw'.
+ *
+ * Reader choice: read-excel-file replaced exceljs in 2026-07 (DAG-207). It is
+ * read-only, which is all this adapter needs, and it resolves formulas to their
+ * cached result and dates to `Date` before we see them.
+ * See docs/adr/0001-replace-exceljs-with-read-excel-file.md.
  */
 
-import { readFile as readFileAsync } from "node:fs/promises";
-
-import ExcelJS from "exceljs";
+import readXlsxFile, { type Sheet } from "read-excel-file/node";
 
 import type { RunConfig, SourceConfig } from "../../config/types.js";
 import type { ColumnMeta, StagingStore } from "../../staging/index.js";
@@ -43,9 +46,11 @@ export class XlsxSourceAdapter implements SourceAdapter {
       throw new SourceError("xlsx source requires `file`");
     }
 
-    let buf: Buffer;
+    // read-excel-file returns every sheet in one pass: [{ sheet, data }, ...].
+    // `data` is a row-major array of already-coerced cell values.
+    let sheets: Sheet[];
     try {
-      buf = await readFileAsync(config.file);
+      sheets = await readXlsxFile(config.file);
     } catch (err) {
       throw new SourceError(
         `xlsx: failed to read "${config.file}": ${err instanceof Error ? err.message : String(err)}`,
@@ -53,77 +58,57 @@ export class XlsxSourceAdapter implements SourceAdapter {
       );
     }
 
-    const workbook = new ExcelJS.Workbook();
-    try {
-      // exceljs's bundled types predate Node's generic `Buffer<T>` (introduced
-      // when ArrayBuffer became resizable). TS can't reconcile our runtime
-      // `Buffer<ArrayBufferLike>` with exceljs's `Buffer` reference in either
-      // direction. Same byte layout at runtime — accept the gap.
-      // @ts-expect-error exceljs Buffer typing predates Node's generic Buffer<T>
-      await workbook.xlsx.load(buf);
-    } catch (err) {
-      throw new SourceError(
-        `xlsx: failed to parse "${config.file}": ${err instanceof Error ? err.message : String(err)}`,
-        err,
-      );
-    }
-
-    const worksheets = workbook.worksheets;
-    const [firstSheet] = worksheets;
+    const [firstSheet] = sheets;
     if (firstSheet === undefined) {
       throw new SourceError(`xlsx: workbook "${config.file}" has no sheets`);
     }
 
-    if (worksheets.length > 1 && config.sheet === undefined) {
+    if (sheets.length > 1 && config.sheet === undefined) {
       logger.warn(
         {
           file: config.file,
-          sheets: worksheets.map((w) => w.name),
-          using: firstSheet.name,
+          sheets: sheets.map((s) => s.sheet),
+          using: firstSheet.sheet,
         },
         "xlsx: multiple sheets found and `source.sheet` is unset — using first sheet",
       );
     }
 
-    const worksheet =
+    // Numeric `sheet` stays 0-based, matching the previous exceljs behaviour.
+    const selected =
       config.sheet === undefined
         ? firstSheet
         : typeof config.sheet === "number"
-          ? worksheets[config.sheet]
-          : workbook.getWorksheet(config.sheet);
+          ? sheets[config.sheet]
+          : sheets.find((s) => s.sheet === config.sheet);
 
-    if (!worksheet) {
+    if (!selected) {
       throw new SourceError(`xlsx: sheet "${String(config.sheet)}" not found in ${config.file}`);
     }
 
-    // Headers from row 1
-    const headerRow = worksheet.getRow(1);
-    const headers: string[] = [];
-    headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-      headers[colNumber - 1] = cellToString(cell).trim();
-    });
+    const [headerRow = [], ...dataRows] = selected.data;
+    const headers: string[] = headerRow.map((cell) => cellToString(cell).trim());
     // Trim trailing empties
     while (headers.length > 0 && !headers[headers.length - 1]) {
       headers.pop();
     }
     if (headers.length === 0) {
-      throw new SourceError(`xlsx: sheet "${worksheet.name}" has no header row`);
+      throw new SourceError(`xlsx: sheet "${selected.sheet}" has no header row`);
     }
 
-    // Data rows (start from row 2)
     const records: Record<string, string>[] = [];
-    for (let r = 2; r <= worksheet.rowCount; r++) {
-      const row = worksheet.getRow(r);
-      if (!row.hasValues) continue;
+    for (const row of dataRows) {
+      // Mirrors exceljs's `row.hasValues` — skip rows that are entirely blank.
+      if (row.every((cell) => cell === null || cell === undefined || cell === "")) continue;
       const record: Record<string, string> = {};
       headers.forEach((header, idx) => {
-        record[header] = cellToString(row.getCell(idx + 1));
+        record[header] = cellToString(row[idx]);
       });
       records.push(record);
     }
 
     if (records.length === 0) {
-      throw new SourceError(`xlsx: sheet "${worksheet.name}" is empty`);
+      throw new SourceError(`xlsx: sheet "${selected.sheet}" is empty`);
     }
 
     const columns: ColumnMeta[] = headers.map((n) => ({
@@ -143,40 +128,14 @@ export class XlsxSourceAdapter implements SourceAdapter {
 }
 
 /**
- * Render an ExcelJS cell value as a flat string. Mirrors the conventional
- * "displayed text" view: numbers/booleans coerced, dates ISO-formatted,
- * formulas resolved to their cached result, rich text concatenated,
- * hyperlinks rendered as their visible text.
+ * Render a cell value as a flat string — the conventional "displayed text"
+ * view. read-excel-file hands back primitives, `Date`s, and formula results
+ * already resolved to their cached value, so this stays deliberately thin.
  */
-function cellToString(cell: ExcelJS.Cell): string {
-  const v = cell.value;
+function cellToString(v: unknown): string {
   if (v === null || v === undefined) return "";
   if (typeof v === "string") return v;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   if (v instanceof Date) return v.toISOString();
-  if (typeof v === "object") {
-    // Formula: { formula, result }
-    if ("result" in v && v.result !== undefined) {
-      const r = v.result;
-      if (r === null || r === undefined) return "";
-      if (typeof r === "object" && "error" in r) return `#${(r as { error: string }).error}`;
-      if (r instanceof Date) return r.toISOString();
-      return String(r);
-    }
-    // Rich text: { richText: [{ text }] }
-    if ("richText" in v && Array.isArray((v as { richText?: unknown }).richText)) {
-      return (v as { richText: Array<{ text?: string }> }).richText
-        .map((part) => part.text ?? "")
-        .join("");
-    }
-    // Hyperlink: { text, hyperlink }
-    if ("text" in v) {
-      return stringifyValue((v as { text: unknown }).text ?? "");
-    }
-    // Error: { error: '#NULL!' }
-    if ("error" in v) {
-      return `#${(v as { error: string }).error}`;
-    }
-  }
   return stringifyValue(v);
 }

@@ -1,8 +1,5 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import ExcelJS from "exceljs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { XlsxSourceAdapter } from "../../../../src/adapters/source/xlsx.js";
@@ -19,77 +16,65 @@ const BASE_RUN: RunConfig = {
   stagingDb: "",
 };
 
-async function writeXlsx(
-  filePath: string,
-  sheets: Record<string, Array<Record<string, unknown>>>,
-): Promise<void> {
-  const wb = new ExcelJS.Workbook();
-  for (const [name, rows] of Object.entries(sheets)) {
-    const ws = wb.addWorksheet(name);
-    if (rows.length === 0) continue;
-    const keys = Object.keys(rows[0]!);
-    ws.addRow(keys);
-    for (const row of rows) {
-      ws.addRow(keys.map((k) => row[k]));
-    }
-  }
-  const buf = await wb.xlsx.writeBuffer();
-  writeFileSync(filePath, Buffer.from(buf));
-}
+// Committed workbooks (DAG-207). Previously these were generated at test time
+// with exceljs; that dependency is gone, and a binary fixture is a truer test
+// of the reader anyway — it pins the exact bytes we parse.
+//   single.xlsx     — sheet "Data":  id,name / 1,a / 2,b
+//   multi.xlsx      — sheets "Alpha" (x/one) and "Beta" (x/two)
+//   single-col.xlsx — sheet "Data":  a / x
+const FIXTURES = join(import.meta.dirname, "../../../fixtures/xlsx");
+const fixture = (name: string): string => join(FIXTURES, name);
 
 describe("XlsxSourceAdapter", () => {
   let store: StagingStore;
-  let tmp: string;
 
   beforeEach(async () => {
     store = new StagingStore(":memory:");
     await store.open();
-    tmp = mkdtempSync(join(tmpdir(), "sluice-xlsx-"));
   });
 
   afterEach(async () => {
     await store.close();
-    rmSync(tmp, { recursive: true, force: true });
   });
 
   it("reads a single-sheet XLSX and stages rows as VARCHAR", async () => {
-    const file = join(tmp, "single.xlsx");
-    await writeXlsx(file, {
-      Data: [
-        { id: "1", name: "a" },
-        { id: "2", name: "b" },
-      ],
-    });
     const adapter = new XlsxSourceAdapter();
-    const config: SourceConfig = { adapter: "xlsx", file, delimiter: ",", encoding: "utf-8" };
+    const config: SourceConfig = {
+      adapter: "xlsx",
+      file: fixture("single.xlsx"),
+      delimiter: ",",
+      encoding: "utf-8",
+    };
     await adapter.connect(config);
     const result = await adapter.extract(config, store, BASE_RUN, () => {});
     expect(result.rowsExtracted).toBe(2);
     expect(result.columns.map((c) => c.name)).toEqual(["id", "name"]);
+    expect(result.columns.every((c) => c.duckDbType === "VARCHAR")).toBe(true);
     await adapter.disconnect();
   });
 
   it("warns when multiple sheets exist and sheet is unset", async () => {
-    const file = join(tmp, "multi.xlsx");
-    await writeXlsx(file, { Alpha: [{ x: "1" }], Beta: [{ x: "2" }] });
     const warnSpy = vi.spyOn(
       await import("../../../../src/utils/logger.js").then((m) => m.logger),
       "warn",
     );
     const adapter = new XlsxSourceAdapter();
-    const config: SourceConfig = { adapter: "xlsx", file, delimiter: ",", encoding: "utf-8" };
+    const config: SourceConfig = {
+      adapter: "xlsx",
+      file: fixture("multi.xlsx"),
+      delimiter: ",",
+      encoding: "utf-8",
+    };
     await adapter.connect(config);
     await adapter.extract(config, store, BASE_RUN, () => {});
     expect(warnSpy).toHaveBeenCalled();
   });
 
   it("reads a named sheet when specified", async () => {
-    const file = join(tmp, "multi.xlsx");
-    await writeXlsx(file, { Alpha: [{ x: "one" }], Beta: [{ x: "two" }] });
     const adapter = new XlsxSourceAdapter();
     const config: SourceConfig = {
       adapter: "xlsx",
-      file,
+      file: fixture("multi.xlsx"),
       sheet: "Beta",
       delimiter: ",",
       encoding: "utf-8",
@@ -100,11 +85,42 @@ describe("XlsxSourceAdapter", () => {
     expect(rows[0]!.x).toBe("two");
   });
 
-  it("honours a custom targetTable (Phase 3 prep Change 1)", async () => {
-    const file = join(tmp, "single.xlsx");
-    await writeXlsx(file, { Data: [{ a: "x" }] });
+  it("reads a sheet by zero-based index", async () => {
     const adapter = new XlsxSourceAdapter();
-    const config: SourceConfig = { adapter: "xlsx", file, delimiter: ",", encoding: "utf-8" };
+    const config: SourceConfig = {
+      adapter: "xlsx",
+      file: fixture("multi.xlsx"),
+      sheet: 1,
+      delimiter: ",",
+      encoding: "utf-8",
+    };
+    await adapter.connect(config);
+    await adapter.extract(config, store, BASE_RUN, () => {});
+    const rows = await store.query<{ x: string }>("SELECT * FROM stg_raw");
+    expect(rows[0]!.x).toBe("two");
+  });
+
+  it("throws when the named sheet is absent", async () => {
+    const adapter = new XlsxSourceAdapter();
+    const config: SourceConfig = {
+      adapter: "xlsx",
+      file: fixture("multi.xlsx"),
+      sheet: "Nope",
+      delimiter: ",",
+      encoding: "utf-8",
+    };
+    await adapter.connect(config);
+    await expect(adapter.extract(config, store, BASE_RUN, () => {})).rejects.toThrow(/not found/);
+  });
+
+  it("honours a custom targetTable (Phase 3 prep Change 1)", async () => {
+    const adapter = new XlsxSourceAdapter();
+    const config: SourceConfig = {
+      adapter: "xlsx",
+      file: fixture("single-col.xlsx"),
+      delimiter: ",",
+      encoding: "utf-8",
+    };
     await adapter.connect(config);
     const result = await adapter.extract(config, store, BASE_RUN, () => {}, "stg_raw_excel");
     expect(result.tableName).toBe("stg_raw_excel");

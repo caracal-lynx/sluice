@@ -1,6 +1,6 @@
 ![Sluice](./images/sluice_banner.png)
 
-> *"A sluice is a channel that controls the flow of water. Sluice is a toolkit that controls the flow of data. Except data doesn't flood your basement. Usually."*
+> _"A sluice is a channel that controls the flow of water. Sluice is a toolkit that controls the flow of data. Except data doesn't flood your basement. Usually."_
 
 **`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Limited](https://caracallynx.com).
 
@@ -16,9 +16,9 @@
 
 > **Data quality is the hidden blocker for both migrations and AI adoption.**
 >
-> Sluice is a data migration and data quality tool that validates your data *before* it reaches its destination — not after. You describe the entire migration as a YAML file: where the data comes from, the quality rules it has to pass, how each field maps to the target. Sluice validates the source, transforms it, and loads only the clean records — the bad rows go to a rejection report so you can fix the source.
+> Sluice is a data migration and data quality tool that validates your data _before_ it reaches its destination — not after. You describe the entire migration as a YAML file: where the data comes from, the quality rules it has to pass, how each field maps to the target. Sluice validates the source, transforms it, and loads only the clean records — the bad rows go to a rejection report so you can fix the source.
 >
-> *Clean data flows through.*
+> _Clean data flows through._
 
 ---
 
@@ -100,21 +100,21 @@ flowchart LR
 
 ## 🧰 Tech Stack
 
-| What | Package | Why |
-|------|---------|-----|
-| 🔤 Language | TypeScript 5.x `strict` | Because `any` is a cry for help |
-| 🟢 Runtime | Node.js 24 LTS | Active LTS until April 2028; OpenSSL 3.5; ESM-stable |
-| 📋 Config | `js-yaml` + `zod` | YAML in, typed objects out |
-| 🗄️ SQL Server | `mssql` | Because the legacy DB is always SQL Server |
-| 📊 Staging | `@duckdb/node-api` (embedded) | Promise-native, ABI-stable — no server, no `npm rebuild` after Node version bumps |
-| 📁 CSV | `csv-parse` + `csv-stringify` | Streaming, handles BOM, the works |
-| 📈 Excel | `exceljs` | Read-only — we're migrating away from it, after all |
-| 🌐 HTTP | `axios` + `axios-retry` | 3 retries, exponential backoff, rate limit respect |
-| 📅 Dates | `dayjs` | Because time zones are already somebody else's problem |
-| 🖥️ CLI | `commander` v12 | Clean commands, sane flags |
-| 📝 Logging | `pino` | Structured JSON logs — pretty in dev, parseable in CI |
-| 🧪 Testing | `vitest` | Not Jest. Never Jest. |
-| 🔒 Expressions | `expr-eval` | Safe expression parsing — no `eval()` here, thank you very much |
+| What           | Package                       | Why                                                                               |
+| -------------- | ----------------------------- | --------------------------------------------------------------------------------- |
+| 🔤 Language    | TypeScript 5.x `strict`       | Because `any` is a cry for help                                                   |
+| 🟢 Runtime     | Node.js 24 LTS                | Active LTS until April 2028; OpenSSL 3.5; ESM-stable                              |
+| 📋 Config      | `js-yaml` + `zod`             | YAML in, typed objects out                                                        |
+| 🗄️ SQL Server  | `mssql`                       | Because the legacy DB is always SQL Server                                        |
+| 📊 Staging     | `@duckdb/node-api` (embedded) | Promise-native, ABI-stable — no server, no `npm rebuild` after Node version bumps |
+| 📁 CSV         | `csv-parse` + `csv-stringify` | Streaming, handles BOM, the works                                                 |
+| 📈 Excel       | `read-excel-file`             | Read-only — we're migrating away from it, after all                               |
+| 🌐 HTTP        | `axios` + `axios-retry`       | 3 retries, exponential backoff, rate limit respect                                |
+| 📅 Dates       | `dayjs`                       | Because time zones are already somebody else's problem                            |
+| 🖥️ CLI         | `commander` v12               | Clean commands, sane flags                                                        |
+| 📝 Logging     | `pino`                        | Structured JSON logs — pretty in dev, parseable in CI                             |
+| 🧪 Testing     | `vitest`                      | Not Jest. Never Jest.                                                             |
+| 🔒 Expressions | `expr-eval`                   | Safe expression parsing — no `eval()` here, thank you very much                   |
 
 ---
 
@@ -122,11 +122,11 @@ flowchart LR
 
 Sluice's pipeline schema is fixed by design (readability, reviewability, predictable validation). Anything you can't express in the schema, you add via plugins. Three tiers, scaling from "no code, no install" to "publishable npm package":
 
-| Tier | What it is | Where it lives | Best for |
-|---|---|---|---|
-| **Tier 1** | YAML composite rules — bundle built-in DQ checks under a single ID | `shared/rules.yaml` in your project | Reusing common check combinations across pipelines without writing code |
-| **Tier 2** | TypeScript file plugins — `*.rule.ts` / `*.transform.ts` / `*.merge.ts` | `plugins/` next to your YAML | Custom logic for one project; rapid iteration |
-| **Tier 3** | npm packages exporting `register()` | npmjs.com (public or private) | Distributing rules / adapters / strategies across teams or as paid products |
+| Tier       | What it is                                                              | Where it lives                      | Best for                                                                    |
+| ---------- | ----------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
+| **Tier 1** | YAML composite rules — bundle built-in DQ checks under a single ID      | `shared/rules.yaml` in your project | Reusing common check combinations across pipelines without writing code     |
+| **Tier 2** | TypeScript file plugins — `*.rule.ts` / `*.transform.ts` / `*.merge.ts` | `plugins/` next to your YAML        | Custom logic for one project; rapid iteration                               |
+| **Tier 3** | npm packages exporting `register()`                                     | npmjs.com (public or private)       | Distributing rules / adapters / strategies across teams or as paid products |
 
 See **[PLUGINS.md](PLUGINS.md)** for the full author's guide with worked examples for all three tiers.
 
@@ -152,12 +152,12 @@ dq:
     - field: email
       checks:
         - { type: notNull, severity: critical }
-        - { type: email,   severity: warning  }
+        - { type: email, severity: warning }
 
 transform:
   fields:
-    - { from: name,    to: Name,    type: string, cleanse: trim }
-    - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+    - { from: name, to: Name, type: string, cleanse: trim }
+    - { from: email, to: Email, type: string, cleanse: trim|lowercase }
     - { from: country, to: Country, type: string, default: GB }
 
 target:
@@ -201,25 +201,25 @@ sluice merge info coalesce
 
 ### CLI flags
 
-| Flag | What it does |
-|------|-------------|
-| `--log-level debug\|info\|warn\|error` | How chatty do you want the logs? |
-| `--env <file>` | Path to your `.env` file (default: `./.env`) |
-| `--output <dir>` | Override the output directory |
-| `--plugins <dir...>` | Load additional plugin directories (alongside the pipeline `plugins/` folder) |
-| `--dry-run` | Extract + DQ + transform, but don't write a single byte to the target |
+| Flag                                   | What it does                                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `--log-level debug\|info\|warn\|error` | How chatty do you want the logs?                                              |
+| `--env <file>`                         | Path to your `.env` file (default: `./.env`)                                  |
+| `--output <dir>`                       | Override the output directory                                                 |
+| `--plugins <dir...>`                   | Load additional plugin directories (alongside the pipeline `plugins/` folder) |
+| `--dry-run`                            | Extract + DQ + transform, but don't write a single byte to the target         |
 
 When multiple plugin directories resolve to the same absolute path (for example,
 `--plugins ./plugins`), Sluice de-duplicates them before loading.
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | ✅ All good |
-| `1` | ❌ Pipeline error |
-| `2` | 🛑 Critical DQ violations halted the pipeline |
-| `3` | 📋 Config validation failed |
+| Code | Meaning                                       |
+| ---- | --------------------------------------------- |
+| `0`  | ✅ All good                                   |
+| `1`  | ❌ Pipeline error                             |
+| `2`  | 🛑 Critical DQ violations halted the pipeline |
+| `3`  | 📋 Config validation failed                   |
 
 ---
 
@@ -235,47 +235,47 @@ Each migration entity gets its own YAML file. One entity, one file. Nice and tid
 A single-source pipeline has five sections:
 
 ```yaml
-pipeline:   { name, client, version, entity, description }
-source:     { adapter, connection/file/endpoint, ... }
-dq:         { rules, stopOnCritical, rejectionFile }
-transform:  { lookups, fields }
-target:     { adapter, output/baseUrl, ... }
-run:        { mode, batchSize, logLevel, dryRun, ... }  # all optional
+pipeline: { name, client, version, entity, description }
+source: { adapter, connection/file/endpoint, ... }
+dq: { rules, stopOnCritical, rejectionFile }
+transform: { lookups, fields }
+target: { adapter, output/baseUrl, ... }
+run: { mode, batchSize, logLevel, dryRun, ... } # all optional
 ```
 
 A multi-source pipeline swaps `source:` for `sources:` + `merge:`:
 
 ```yaml
-pipeline:   { ... }
-sources:    [ { id, priority, adapter, ..., rename? }, ... ]   # 2+ entries
-merge:      { key, strategy, onUnmatched, fieldStrategies, conflictLog, incrementalSource? }
-dq:         { ... }                 # rules can be scoped via sourceId
-transform:  { ... }
-target:     { ... }
-run:        { ... }
+pipeline: { ... }
+sources: [{ id, priority, adapter, ..., rename? }, ...] # 2+ entries
+merge: { key, strategy, onUnmatched, fieldStrategies, conflictLog, incrementalSource? }
+dq: { ... } # rules can be scoped via sourceId
+transform: { ... }
+target: { ... }
+run: { ... }
 ```
 
-`PipelineSchema` requires *either* `source:` (single) *or* both `sources:` + `merge:` (multi) — never both. The CLI auto-routes based on which shape the YAML has, so there's no flag to remember.
+`PipelineSchema` requires _either_ `source:` (single) _or_ both `sources:` + `merge:` (multi) — never both. The CLI auto-routes based on which shape the YAML has, so there's no flag to remember.
 
 ### 📥 Source Adapters
 
-| Adapter | Use when... |
-|---------|-------------|
-| `mssql` | The legacy system is SQL Server (it's always SQL Server) |
-| `pg` | The legacy system is PostgreSQL (you lucky thing) |
-| `csv` | Someone emailed you a CSV export at 11pm the night before go-live |
-| `xlsx` | Same as above but Excel, complete with merged cells and mystery formatting |
-| `rest` | The source system has an API! Progress! |
+| Adapter | Use when...                                                                |
+| ------- | -------------------------------------------------------------------------- |
+| `mssql` | The legacy system is SQL Server (it's always SQL Server)                   |
+| `pg`    | The legacy system is PostgreSQL (you lucky thing)                          |
+| `csv`   | Someone emailed you a CSV export at 11pm the night before go-live          |
+| `xlsx`  | Same as above but Excel, complete with merged cells and mystery formatting |
+| `rest`  | The source system has an API! Progress!                                    |
 
 ### 🎯 Target Adapters
 
-| Adapter | Loads to... |
-|---------|-------------|
-| `bc` | Microsoft Dynamics 365 Business Central (via OData REST + OAuth2) |
-| `ifs` | IFS ERP (via fixed-format CSV import — no header, specific column order) |
-| `bluecherry` | BlueCherry ERP / CGS (CSV import, US-format dates, headers required) |
-| `csv` | Generic CSV — for anything else or for manual inspection |
-| `pg` | PostgreSQL — useful for intermediate staging or custom targets |
+| Adapter      | Loads to...                                                              |
+| ------------ | ------------------------------------------------------------------------ |
+| `bc`         | Microsoft Dynamics 365 Business Central (via OData REST + OAuth2)        |
+| `ifs`        | IFS ERP (via fixed-format CSV import — no header, specific column order) |
+| `bluecherry` | BlueCherry ERP / CGS (CSV import, US-format dates, headers required)     |
+| `csv`        | Generic CSV — for anything else or for manual inspection                 |
+| `pg`         | PostgreSQL — useful for intermediate staging or custom targets           |
 
 ### 🔍 Data Quality Rules
 
@@ -287,63 +287,63 @@ dq:
   rules:
     - field: CUST_CODE
       checks:
-        - { type: notNull,       severity: critical }  # 💥 stops the pipeline
-        - { type: unique,        severity: critical }
-        - { type: pattern,       value: "^[A-Z0-9]{3,10}$", severity: warning }
+        - { type: notNull, severity: critical } # 💥 stops the pipeline
+        - { type: unique, severity: critical }
+        - { type: pattern, value: "^[A-Z0-9]{3,10}$", severity: warning }
 
     - field: EMAIL
       checks:
-        - { type: email,         severity: warning }   # ⚠️  flagged but not rejected
+        - { type: email, severity: warning } # ⚠️  flagged but not rejected
 
     - field: POST_CODE
       checks:
-        - { type: ukPostcode,    severity: warning }   # 🇬🇧 all UK formats
+        - { type: ukPostcode, severity: warning } # 🇬🇧 all UK formats
 ```
 
-| Rule | What it checks |
-|------|---------------|
-| `notNull` | Not null, not empty, not just whitespace |
-| `unique` | No duplicates across the whole dataset |
-| `pattern` | ECMAScript regex |
-| `email` | RFC 5322-ish email validation |
-| `ukPostcode` | All current UK postcode formats |
-| `maxLength` | String length cap |
-| `min` / `max` | Numeric range |
-| `allowedValues` | Enum-style allowed value list |
+| Rule            | What it checks                           |
+| --------------- | ---------------------------------------- |
+| `notNull`       | Not null, not empty, not just whitespace |
+| `unique`        | No duplicates across the whole dataset   |
+| `pattern`       | ECMAScript regex                         |
+| `email`         | RFC 5322-ish email validation            |
+| `ukPostcode`    | All current UK postcode formats          |
+| `maxLength`     | String length cap                        |
+| `min` / `max`   | Numeric range                            |
+| `allowedValues` | Enum-style allowed value list            |
 
 Severity levels: `critical` (row rejected, pipeline can halt) · `warning` (flagged in report, row kept) · `info` (summary only)
 
 ### ✨ Transform: Field Mapping Types
 
-| Type | What it does |
-|------|-------------|
-| `string` | Cast + optional cleanse ops + optional truncation |
-| `number` | Integer coercion (NaN = error) |
-| `decimal` | Fixed-precision decimal stored as string |
-| `boolean` | `'1','true','yes','y','t'` → true. Everything else → false |
-| `date` | Parse source date, output in target format |
-| `lookup` | Resolve via a CSV or SQL lookup table |
-| `concat` | Join multiple source fields with a separator |
-| `constant` | Emit a fixed value (e.g. `CustomerGroup: DOMESTIC`) |
-| `expression` | Evaluate an expression against the source row |
-| `custom` | Delegate to a `TransformPlugin` via `customOp` (Phase 2) |
+| Type         | What it does                                               |
+| ------------ | ---------------------------------------------------------- |
+| `string`     | Cast + optional cleanse ops + optional truncation          |
+| `number`     | Integer coercion (NaN = error)                             |
+| `decimal`    | Fixed-precision decimal stored as string                   |
+| `boolean`    | `'1','true','yes','y','t'` → true. Everything else → false |
+| `date`       | Parse source date, output in target format                 |
+| `lookup`     | Resolve via a CSV or SQL lookup table                      |
+| `concat`     | Join multiple source fields with a separator               |
+| `constant`   | Emit a fixed value (e.g. `CustomerGroup: DOMESTIC`)        |
+| `expression` | Evaluate an expression against the source row              |
+| `custom`     | Delegate to a `TransformPlugin` via `customOp` (Phase 2)   |
 
 ### 🧹 Cleanse Operations
 
 Pipe-chain them: `cleanse: trim|titleCase|normaliseUnicode`
 
-| Op | Before | After |
-|----|--------|-------|
-| `trim` | `"  hello  "` | `"hello"` |
-| `uppercase` | `"hello"` | `"HELLO"` |
-| `lowercase` | `"HELLO"` | `"hello"` |
-| `titleCase` | `"john smith"` | `"John Smith"` |
-| `stripNonAlpha` | `"AB-12!"` | `"AB"` |
-| `stripNonNumeric` | `"AB-12!"` | `"12"` |
-| `padStart:6:0` | `"42"` | `"000042"` |
-| `nullIfEmpty` | `""` | `null` |
-| `normaliseUnicode` | `"café"` | `"cafe"` |
-| `normaliseQuotes` | `"it's"` | `"it's"` |
+| Op                 | Before         | After          |
+| ------------------ | -------------- | -------------- |
+| `trim`             | `"  hello  "`  | `"hello"`      |
+| `uppercase`        | `"hello"`      | `"HELLO"`      |
+| `lowercase`        | `"HELLO"`      | `"hello"`      |
+| `titleCase`        | `"john smith"` | `"John Smith"` |
+| `stripNonAlpha`    | `"AB-12!"`     | `"AB"`         |
+| `stripNonNumeric`  | `"AB-12!"`     | `"12"`         |
+| `padStart:6:0`     | `"42"`         | `"000042"`     |
+| `nullIfEmpty`      | `""`           | `null`         |
+| `normaliseUnicode` | `"café"`       | `"cafe"`       |
+| `normaliseQuotes`  | `"it's"`       | `"it's"`       |
 
 ---
 
@@ -413,8 +413,8 @@ Name a bundle of checks in a shared rules file and reference them like built-ins
 rules:
   - id: style-coStyleNo
     checks:
-      - { type: notNull,   severity: critical }
-      - { type: pattern,   value: "^[A-Z]{2}[0-9]{4}$", severity: critical }
+      - { type: notNull, severity: critical }
+      - { type: pattern, value: "^[A-Z]{2}[0-9]{4}$", severity: critical }
       - { type: maxLength, value: 6, severity: critical }
 ```
 
@@ -425,7 +425,7 @@ dq:
   rules:
     - field: STYLE_NO
       checks:
-        - { type: style-coStyleNo }   # expands to the three checks above ✨
+        - { type: style-coStyleNo } # expands to the three checks above ✨
 ```
 
 ### Tier 2 — Plugin Files (TypeScript) 🔌
@@ -435,12 +435,20 @@ Drop a `*.rule.ts`, `*.transform.ts`, or `*.merge.ts` file into a `plugins/` fol
 ```typescript
 // plugins/ukVatNumber.rule.ts
 export const rule: RulePlugin = {
-  id: 'ukVatNumber',
+  id: "ukVatNumber",
   validate(value, config, rowIndex, field) {
     const valid = /^GB([0-9]{9}|[0-9]{12}|(GD|HA)[0-9]{3})$/.test(String(value));
-    return valid ? null : { field, rowIndex, value, rule: 'ukVatNumber',
-      severity: config.severity, message: 'Invalid UK VAT number' };
-  }
+    return valid
+      ? null
+      : {
+          field,
+          rowIndex,
+          value,
+          rule: "ukVatNumber",
+          severity: config.severity,
+          message: "Invalid UK VAT number",
+        };
+  },
 };
 ```
 
@@ -468,6 +476,7 @@ sluice plugins --plugins ./shared/plugins ./team/plugins
 ```
 
 Output:
+
 ```
 📋 Data Quality Rules:
   • ukVatNumber
@@ -505,12 +514,12 @@ Phase 3 lets a single pipeline extract from **2+ sources** and merge them on a k
 
 ### Built-in merge strategies
 
-| Strategy | Behaviour | When to use |
-|---|---|---|
-| `coalesce` | First non-null value wins (priority-ordered; whitespace treated as blank) | Enriching a primary source with fallback data from lower-priority sources |
-| `priority-override` | Highest-priority source wins, even if null or blank | Strict priority — the trusted source is the trusted source, full stop |
-| `union` | All rows from all sources, deduplicated by key | Combining independent datasets (e.g. multi-warehouse inventory) |
-| `intersect` | Only rows present in **all** sources | Reconciliation / "find the records that agree" |
+| Strategy            | Behaviour                                                                 | When to use                                                               |
+| ------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `coalesce`          | First non-null value wins (priority-ordered; whitespace treated as blank) | Enriching a primary source with fallback data from lower-priority sources |
+| `priority-override` | Highest-priority source wins, even if null or blank                       | Strict priority — the trusted source is the trusted source, full stop     |
+| `union`             | All rows from all sources, deduplicated by key                            | Combining independent datasets (e.g. multi-warehouse inventory)           |
+| `intersect`         | Only rows present in **all** sources                                      | Reconciliation / "find the records that agree"                            |
 
 Custom strategies can be dropped in as `*.merge.ts` plugins or shipped as npm packages — same three-tier model as DQ rules and transforms.
 
@@ -524,8 +533,8 @@ pipeline:
   entity: Style
 
 sources:
-  - id: sql-server              # staging table: stg_raw_sql-server
-    priority: 1                 # lower = higher precedence
+  - id: sql-server # staging table: stg_raw_sql-server
+    priority: 1 # lower = higher precedence
     adapter: mssql
     connection: ${SOURCE_2_MSSQL}
     query: "SELECT STYLE_NO, STYLE_DESC, COST_PRICE FROM dbo.Styles WHERE Active = 1"
@@ -535,31 +544,31 @@ sources:
     adapter: xlsx
     file: ./data/product-data.xlsx
     sheet: "Products"
-    rename:                     # applied in-place after extract, before DQ
+    rename: # applied in-place after extract, before DQ
       Style Number: STYLE_NO
       Description: STYLE_DESC
       Fibre: FIBRE_CONTENT
 
 merge:
-  key: STYLE_NO                 # single column or array for composite keys
+  key: STYLE_NO # single column or array for composite keys
   strategy: coalesce
-  onUnmatched: include          # include | exclude | warn | error
-  fieldStrategies:              # per-field overrides
-    - { field: FIBRE_CONTENT, source: excel }          # pin to one source
-    - { field: COST_PRICE,    strategy: priority-override }
-  conflictLog: ./output/style-co-products-conflicts.csv   # optional CSV of field disagreements
+  onUnmatched: include # include | exclude | warn | error
+  fieldStrategies: # per-field overrides
+    - { field: FIBRE_CONTENT, source: excel } # pin to one source
+    - { field: COST_PRICE, strategy: priority-override }
+  conflictLog: ./output/style-co-products-conflicts.csv # optional CSV of field disagreements
 
 dq:
   stopOnCritical: true
   rules:
-    - field: STYLE_NO           # 🎯 pre-merge: scoped to one source
+    - field: STYLE_NO # 🎯 pre-merge: scoped to one source
       sourceId: sql-server
-      checks: [ { type: notNull, severity: critical }, { type: unique, severity: critical } ]
-    - field: STYLE_DESC         # 🎯 post-merge: runs against stg_merged
-      checks: [ { type: notNull, severity: critical } ]
+      checks: [{ type: notNull, severity: critical }, { type: unique, severity: critical }]
+    - field: STYLE_DESC # 🎯 post-merge: runs against stg_merged
+      checks: [{ type: notNull, severity: critical }]
 
 transform: { ... }
-target:    { ... }
+target: { ... }
 ```
 
 Pre-merge rules (`sourceId: …`) run against each source's staging table before merging and generate per-source rejection CSVs (suffixed `-{sourceId}`). Post-merge rules (no `sourceId`) run once against `stg_merged`.
@@ -568,7 +577,7 @@ Pre-merge rules (`sourceId: …`) run against each source's staging table before
 
 ```yaml
 merge:
-  incrementalSource: sql-server   # must match a source id; required in incremental mode
+  incrementalSource: sql-server # must match a source id; required in incremental mode
 run:
   mode: incremental
   incrementalField: UPDATED_AT
@@ -634,14 +643,14 @@ pnpm dev run customers.pipeline.yaml | pnpm exec pino-pretty
 
 The Sluice core CLI is open-source and free to use. Caracal Lynx offers additional paid services built on top of it:
 
-| Service | What it is |
-|---|---|
-| **Enrichment Service** | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data |
-| **Application Adapters** | Pre-built ERP adapters (IFS, Business Central, BlueCherry) |
-| **Domain Rule Packages** | UK compliance rules, fashion/retail data standards |
-| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model |
-| **Sluice MCP Server** 🚧 | AI-assisted migration using Claude — agentic pipeline authoring, live schema inspection, automatic DQ iteration. *Coming soon — Phase 9.* |
-| **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
+| Service                     | What it is                                                                                                                                |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Enrichment Service**      | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data                                                              |
+| **Application Adapters**    | Pre-built ERP adapters (IFS, Business Central, BlueCherry)                                                                                |
+| **Domain Rule Packages**    | UK compliance rules, fashion/retail data standards                                                                                        |
+| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model                                                                             |
+| **Sluice MCP Server** 🚧    | AI-assisted migration using Claude — agentic pipeline authoring, live schema inspection, automatic DQ iteration. _Coming soon — Phase 9._ |
+| **Migration Delivery**      | Full end-to-end data migration, delivered by Caracal Lynx                                                                                 |
 
 📧 **sluice@caracallynx.com**
 🌐 **[caracallynx.com](https://caracallynx.com)**
@@ -682,4 +691,4 @@ maintainers:  Michael Scott, Carolyn Scott, Andrew Scott, Duncan Scott
 
 ---
 
-*Clean data flows through.* 💧
+_Clean data flows through._ 💧
