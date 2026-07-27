@@ -1,5 +1,22 @@
 # @caracal-lynx/sluice
 
+## 0.9.1
+
+### Patch Changes
+
+- [#279](https://github.com/caracal-lynx/sluice/pull/279) [`3379d93`](https://github.com/caracal-lynx/sluice/commit/3379d937912ea1410cdb9bf1b50221b0eb5e82c1) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Fix xlsx error cells staging as `#ERROR_#DIV/0!` instead of `#DIV/0!`.
+
+  `read-excel-file` prefixes Excel error codes with its own `#ERROR_` marker,
+  which leaked into staged data in 0.9.0. The xlsx source adapter now strips it,
+  restoring the value emitted before the reader swap (DAG-207).
+
+  Found by adding the fixture coverage that 0.9.0 shipped without. Rich text,
+  hyperlinks and formulas were verified to render identically to the previous
+  reader — rich text concatenates its runs, hyperlinks yield their visible text
+  rather than the target URL, formulas yield their cached result — and all four
+  are now pinned by a test so a future reader upgrade cannot change extracted
+  values silently.
+
 ## 0.9.0
 
 ### Minor Changes
