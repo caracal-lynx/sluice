@@ -136,6 +136,7 @@ manage these; review and drop each when its parent ships a patched release.
 - **`uuid >=11.1.1`** — [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) (buffer bounds check, via `exceljs`, which still pins `uuid@^8`). Safe here: exceljs uses only `uuid.v4` on a write path, and Sluice reads Excel only.
 - **`esbuild >=0.28.1`** — [GHSA-gv7w-rqvm-qjhr](https://github.com/advisories/GHSA-gv7w-rqvm-qjhr) (binary integrity, dev-only via `tsx`/`vitest`/`astro`). Surfaced by pnpm's workspace-wide audit.
 - **`devalue >=5.8.1`** — docs-site (`astro`) transitive.
+- **`brace-expansion >=5.0.8`** — [GHSA-mh99-v99m-4gvg](https://github.com/advisories/GHSA-mh99-v99m-4gvg) (DoS via unbounded expansion, high). Reached via `exceljs > archiver|unzipper > glob > minimatch`. Unusual: the advisory declares one range (`<=5.0.7`, patched `5.0.8`), so the legacy `1.x`/`2.x` lines old `minimatch` pulls are flagged with **no patch on their branch** — a version bump alone cannot clear it, hence the override forcing every consumer onto `5.x`. Safe: `5.0.8` ships a dual CJS/ESM build with a `require` condition, so CJS `minimatch@3` resolves it; verified by the xlsx adapter tests, which write a real workbook (archiver path) and read it back (unzipper path).
 
 ### pnpm build-script allowlist (`allowBuilds`)
 
