@@ -128,13 +128,24 @@ export class XlsxSourceAdapter implements SourceAdapter {
 }
 
 /**
+ * read-excel-file marks error cells by prefixing the Excel error code, so
+ * `#DIV/0!` arrives as `#ERROR_#DIV/0!`. Strip it so the staged value stays
+ * the bare Excel code, matching what the exceljs-based adapter emitted before
+ * DAG-207 and what a user sees in the spreadsheet.
+ */
+const ERROR_CELL_PREFIX = "#ERROR_";
+
+/**
  * Render a cell value as a flat string — the conventional "displayed text"
- * view. read-excel-file hands back primitives, `Date`s, and formula results
- * already resolved to their cached value, so this stays deliberately thin.
+ * view. read-excel-file hands back primitives, `Date`s, formula results
+ * already resolved to their cached value, rich text already concatenated, and
+ * hyperlinks already reduced to their visible text, so this stays thin.
  */
 function cellToString(v: unknown): string {
   if (v === null || v === undefined) return "";
-  if (typeof v === "string") return v;
+  if (typeof v === "string") {
+    return v.startsWith(ERROR_CELL_PREFIX) ? v.slice(ERROR_CELL_PREFIX.length) : v;
+  }
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   if (v instanceof Date) return v.toISOString();
   return stringifyValue(v);
