@@ -105,17 +105,28 @@ the deprecated chain guarantees more.
 
 **Negative / accepted risks**
 
-- **Exotic cell types may render differently.** The old `cellToString` had
-  explicit branches for rich text, hyperlinks, and error cells.
-  `read-excel-file` flattens these to primitives before we see them, so the
-  handler is now thin. Plain values, numbers, dates, and formulas are verified
-  identical; rich text and hyperlinks are expected to yield their visible text
-  but are not covered by a fixture.
+- **~~Exotic cell types may render differently.~~** _Resolved 2026-07-27 —
+  closed by `tests/fixtures/xlsx/rich.xlsx` and a test pinning all four
+  renderings._ Measured rather than assumed:
+
+  | Cell type                    | exceljs (before) | read-excel-file (after)     |
+  | ---------------------------- | ---------------- | --------------------------- |
+  | Rich text (3 formatted runs) | `Caracal Lynx`   | `Caracal Lynx` ✅           |
+  | Hyperlink (text ≠ target)    | `Company site`   | `Company site` ✅           |
+  | Formula (cached result)      | `2`              | `2` ✅                      |
+  | Error cell                   | `#DIV/0!`        | `#ERROR_#DIV/0!` ❌ → fixed |
+
+  Three matched exactly. The error cell did not: read-excel-file prefixes the
+  Excel code with its own `#ERROR_` marker, which leaked into staged data.
+  `cellToString` now strips that prefix, restoring the pre-DAG-207 output.
+
 - **Test fixtures are now committed binaries.** The suite previously generated
-  workbooks at test time with exceljs. With no writer in the tree, the three
+  workbooks at test time with exceljs. With no writer in the tree, the four
   fixtures under `tests/fixtures/xlsx/` are committed `.xlsx` files. This is a
   truer test (it pins the exact bytes parsed) but regenerating them requires a
-  writer, which is no longer a dependency.
+  writer, which is no longer a dependency — the procedure is a temporary
+  `pnpm add -D -w exceljs`, generate, then `pnpm remove -w exceljs`, checking
+  `package.json` and `pnpm-lock.yaml` return byte-identical afterwards.
 - **Writing Excel is now impossible.** Deliberate — the non-negotiable is that
   Sluice reads Excel only. Any future Excel _target_ adapter needs a new
   decision, not a quiet dependency addition.
@@ -125,4 +136,6 @@ the deprecated chain guarantees more.
 - `pnpm audit --prod --audit-level=high` — exits 0
 - `pnpm audit` (full) — no known vulnerabilities
 - `pnpm typecheck`, `pnpm lint` — clean
-- `pnpm test` — 556/556, including two new cases (sheet-by-index, absent sheet)
+- `pnpm test` — 557/557, including three new cases (sheet-by-index, absent
+  sheet, and the rich text / hyperlink / formula / error-cell rendering test
+  added in the follow-up)

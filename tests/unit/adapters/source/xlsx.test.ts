@@ -113,6 +113,40 @@ describe("XlsxSourceAdapter", () => {
     await expect(adapter.extract(config, store, BASE_RUN, () => {})).rejects.toThrow(/not found/);
   });
 
+  // DAG-207 follow-up. These four cell types were the acknowledged gap when
+  // exceljs was replaced: the old adapter had explicit branches for them, the
+  // new reader flattens them upstream. This pins the rendering so a reader
+  // upgrade cannot change extracted values silently.
+  it("renders rich text, hyperlinks, formulas and error cells as displayed text", async () => {
+    const adapter = new XlsxSourceAdapter();
+    const config: SourceConfig = {
+      adapter: "xlsx",
+      file: fixture("rich.xlsx"),
+      delimiter: ",",
+      encoding: "utf-8",
+    };
+    await adapter.connect(config);
+    await adapter.extract(config, store, BASE_RUN, () => {});
+    const rows = await store.query<{
+      plain: string;
+      rich: string;
+      link: string;
+      formula: string;
+      err: string;
+    }>("SELECT * FROM stg_raw");
+    const row = rows[0]!;
+
+    expect(row.plain).toBe("ordinary");
+    // Rich text: runs concatenated, formatting dropped.
+    expect(row.rich).toBe("Caracal Lynx");
+    // Hyperlink: visible text, not the target URL.
+    expect(row.link).toBe("Company site");
+    // Formula: cached result, not the expression.
+    expect(row.formula).toBe("2");
+    // Error: the bare Excel code, with the reader's `#ERROR_` marker stripped.
+    expect(row.err).toBe("#DIV/0!");
+  });
+
   it("honours a custom targetTable (Phase 3 prep Change 1)", async () => {
     const adapter = new XlsxSourceAdapter();
     const config: SourceConfig = {
