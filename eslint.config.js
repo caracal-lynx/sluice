@@ -24,4 +24,18 @@ export default tseslint.config(
       },
     },
   },
+
+  // 3. Root config files belong to no tsconfig project (tsconfig.json includes
+  //    only src, tsconfig.test.json only src + tests), so type-aware rules
+  //    cannot parse them: "was not found by the project service".
+  //
+  //    `pnpm lint` hides this — it runs `eslint src tests` and never touches
+  //    them. lefthook's pre-commit lints *staged files individually*, so any
+  //    commit touching vitest.config.ts failed while CI stayed green. Disabling
+  //    type-aware rules for these files is the documented fix; they get the
+  //    syntactic rules, which is all a config file needs.
+  {
+    files: ["*.config.ts", "*.config.js"],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
 );

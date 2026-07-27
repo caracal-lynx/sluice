@@ -98,6 +98,13 @@ not listed here follows the programme stack.
   `tsconfig.test.json` is used solely as the ESLint parser project, so test type
   errors are latent. Wiring tests into the typecheck gate (and clearing the backlog)
   is tracked in **DAG-169** — don't assume test type-safety until it lands.
+- **Two vitest projects, `unit` and `integration`** (DAG-208). Unit keeps the 5s
+  default so a hung test fails fast; integration gets 30s for `testTimeout` _and_
+  `hookTimeout` because it stands up real DuckDB staging and drives the CLI — on
+  Windows those were running at 60–110% of the 5s default and flaking. Run one
+  with `pnpm vitest run --project unit|integration`. **A new test directory needs
+  adding to a project's `include`** or it silently runs nowhere; after touching
+  `vitest.config.ts`, check the file/test counts still match.
 
 ## Targets
 
