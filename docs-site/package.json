@@ -19,7 +19,7 @@
     "sharp": "^0.35.0"
   },
   "devDependencies": {
-    "tsx": "^4.22.4",
+    "tsx": "catalog:",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.25.2"
   }
