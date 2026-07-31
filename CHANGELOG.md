@@ -1,5 +1,19 @@
 # @caracal-lynx/sluice
 
+## 0.9.2
+
+### Patch Changes
+
+- [#4](https://github.com/caracal-lynx/data-gubbins/pull/4) [`e953593`](https://github.com/caracal-lynx/data-gubbins/commit/e9535931cf36eb0cdf63573f559d5460cad3fa11) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Stop emitting npm provenance attestations.
+
+  sluice now publishes from the private `caracal-lynx/data-gubbins` monorepo rather than the public
+  `caracal-lynx/sluice` repo. npm requires the `repository` field to be public **and** to match the
+  repo publishing with provenance, and no value satisfies both: the public mirror does not match the
+  publisher, and the publisher is private. Pointing `repository` at the monorepo would also write a
+  private repo's name and commit SHAs into the public Sigstore transparency log.
+
+  `repository` continues to point at the public mirror, which is where the source is actually readable.
+
 ## 0.9.1
 
 ### Patch Changes
