@@ -3,6 +3,12 @@ dist/
 # generated types
 .astro/
 
+# generated content — rebuilt by `pnpm gen` (pre-dev, pre-build, pre-start).
+# Tracking these meant every release left the committed copy stale and dirtied
+# the working tree on the next build.
+src/content/docs/changelog.md
+src/content/docs/reference/pipeline-yaml.mdx
+
 # dependencies
 node_modules/
 

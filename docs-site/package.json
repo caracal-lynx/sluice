@@ -6,6 +6,7 @@
   "scripts": {
     "predev": "pnpm gen",
     "dev": "astro dev",
+    "prestart": "pnpm gen",
     "start": "astro dev",
     "prebuild": "pnpm gen",
     "build": "astro build",
