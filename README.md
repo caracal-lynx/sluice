@@ -4,6 +4,10 @@
 
 **`@caracal-lynx/sluice`** — a config-driven ETL toolkit for ERP data migrations, built by [Caracal Lynx Limited](https://caracallynx.com).
 
+> **This repository is a read-only mirror.** Development happens in the Data Gubbins platform
+> monorepo and this copy is replaced on every release, so pull requests opened here cannot be merged.
+> Issues and discussions are very welcome.
+
 [![npm](https://img.shields.io/npm/v/@caracal-lynx/sluice)](https://www.npmjs.com/package/@caracal-lynx/sluice)
 [![Node 24](https://img.shields.io/badge/Node-24_LTS-green)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.x-blue)](https://www.typescriptlang.org)
