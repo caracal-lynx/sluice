@@ -38,7 +38,8 @@
     "PLUGINS.md"
   ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": false
   },
   "prettier": "@caracal-lynx/eslint-config/prettier",
   "engines": {
