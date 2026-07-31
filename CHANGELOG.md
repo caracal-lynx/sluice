@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.9.3
+
+### Patch Changes
+
+- [#9](https://github.com/caracal-lynx/data-gubbins/pull/9) [`e41e82b`](https://github.com/caracal-lynx/data-gubbins/commit/e41e82b09ecc3846f238fa544b9d3303cefb05cb) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Canary release validating a mixed public/restricted publish. No functional change.
+
 ## 0.9.2
 
 ### Patch Changes
