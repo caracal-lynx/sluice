@@ -5,7 +5,7 @@ template: splash
 tableOfContents: false
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 <section class="sluice-hero not-content">
   <img
@@ -32,20 +32,22 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 > **Data quality is the hidden blocker for both migrations and AI adoption.**
 >
-> Sluice is a data migration and data quality tool that validates your data *before* it reaches its destination — not after. You describe the entire migration as a YAML file: where the data comes from, the quality rules it has to pass, how each field maps to the target. Sluice validates the source, transforms it, and loads only the clean records — the bad rows go to a rejection report so you can fix the source.
+> Sluice is a data migration and data quality tool that validates your data _before_ it reaches its destination — not after. You describe the entire migration as a YAML file: where the data comes from, the quality rules it has to pass, how each field maps to the target. Sluice validates the source, transforms it, and loads only the clean records — the bad rows go to a rejection report so you can fix the source.
 
 <CardGrid>
   <Card title="Config-driven" icon="document">
     Pipelines defined in YAML, no code required for standard migrations.
   </Card>
   <Card title="Source & target agnostic" icon="random">
-    Built-in adapters for **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, **REST**. ERP connectors (IFS, Business Central, BlueCherry) available as paid add-ons.
+    Built-in adapters for **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, **REST**. ERP connectors
+    (IFS, Business Central, BlueCherry) available as paid add-ons.
   </Card>
   <Card title="Data quality first" icon="approve-check-circle">
     Validate before you load. Rejection CSVs and DQ summary reports built in.
   </Card>
   <Card title="AI data readiness" icon="rocket">
-    Use `sluice validate` as a pre-AI quality gate — know your data is fit for Copilot, Power BI, or any LLM tool *before* it causes damage.
+    Use `sluice validate` as a pre-AI quality gate — know your data is fit for Copilot, Power BI, or
+    any LLM tool *before* it causes damage.
   </Card>
 </CardGrid>
 
@@ -69,12 +71,12 @@ dq:
     - field: email
       checks:
         - { type: notNull, severity: critical }
-        - { type: email,   severity: warning  }
+        - { type: email, severity: warning }
 
 transform:
   fields:
-    - { from: name,    to: Name,    type: string, cleanse: trim|titleCase }
-    - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+    - { from: name, to: Name, type: string, cleanse: trim|titleCase }
+    - { from: email, to: Email, type: string, cleanse: trim|lowercase }
     - { from: country, to: Country, type: string, default: GB }
 
 target:
@@ -93,24 +95,36 @@ That's the whole product. Read the [Quickstart](/sluice/getting-started/quicksta
 ## Where to go next
 
 <CardGrid>
-  <LinkCard title="Quickstart"
-            description="Working pipeline in under ten minutes"
-            href="/sluice/getting-started/quickstart/" />
-  <LinkCard title="Core Concepts"
-            description="Mental model: pipeline, source, DQ, transform, target"
-            href="/sluice/getting-started/core-concepts/" />
-  <LinkCard title="Pipeline YAML Schema"
-            description="Definitive reference for every key in a pipeline"
-            href="/sluice/reference/pipeline-yaml/" />
-  <LinkCard title="How It Works"
-            description="The runtime architecture and the six pipeline phases"
-            href="/sluice/architecture/how-it-works/" />
-  <LinkCard title="Plugin System"
-            description="Extend Sluice with custom rules, adapters, and transforms"
-            href="/sluice/guides/plugin-system/" />
-  <LinkCard title="Commercial Support"
-            description="Caracal Lynx's paid services for Sluice users"
-            href="/sluice/commercial-support/" />
+  <LinkCard
+    title="Quickstart"
+    description="Working pipeline in under ten minutes"
+    href="/sluice/getting-started/quickstart/"
+  />
+  <LinkCard
+    title="Core Concepts"
+    description="Mental model: pipeline, source, DQ, transform, target"
+    href="/sluice/getting-started/core-concepts/"
+  />
+  <LinkCard
+    title="Pipeline YAML Schema"
+    description="Definitive reference for every key in a pipeline"
+    href="/sluice/reference/pipeline-yaml/"
+  />
+  <LinkCard
+    title="How It Works"
+    description="The runtime architecture and the six pipeline phases"
+    href="/sluice/architecture/how-it-works/"
+  />
+  <LinkCard
+    title="Plugin System"
+    description="Extend Sluice with custom rules, adapters, and transforms"
+    href="/sluice/guides/plugin-system/"
+  />
+  <LinkCard
+    title="Commercial Support"
+    description="Caracal Lynx's paid services for Sluice users"
+    href="/sluice/commercial-support/"
+  />
 </CardGrid>
 
 ---

@@ -1,13 +1,13 @@
 {
-    "level": 50,
-    "time": 1776700374983,
-    "pid": 41552,
-    "hostname": "MU-TH-UR-9000",
-    "err": {
-        "type": "ConfigError",
-        "message": "Invalid YAML in pipeline file: examples/tm2-example.pipeline.yaml: missed comma between flow collection entries (68:15)\n\n 65 |   includeHeader: true\n 66 |   delimiter: \",\"\n 67 |   encoding: utf-8\n 68 |   nullValue: \"\"\n--------------------^\n 69 | \n 70 | run:",
-        "stack": "ConfigError: Invalid YAML in pipeline file: examples/tm2-example.pipeline.yaml\n    at ConfigLoader.load (file:///C:/Dev/Projects/TypeScript/sluice/dist/config/loader.js:32:19)\n    at async createRunnerForPipeline (file:///C:/Dev/Projects/TypeScript/sluice/dist/cli.js:57:20)\n    at async cmdRun (file:///C:/Dev/Projects/TypeScript/sluice/dist/cli.js:65:24)\ncaused by: YAMLException: missed comma between flow collection entries (68:15)\n\n 65 |   includeHeader: true\n 66 |   delimiter: \",\"\n 67 |   encoding: utf-8\n 68 |   nullValue: \"\"\n--------------------^\n 69 | \n 70 | run:\n    at generateError (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readFlowCollection (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:1854:7)\n    at composeNode (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2538:11)\n    at readBlockMapping (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2260:11)\n    at composeNode (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readBlockMapping (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2260:11)\n    at composeNode (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)",
-        "name": "ConfigError"
-    },
-    "msg": "sluice run: failed"
+  "level": 50,
+  "time": 1776700374983,
+  "pid": 41552,
+  "hostname": "MU-TH-UR-9000",
+  "err": {
+    "type": "ConfigError",
+    "message": "Invalid YAML in pipeline file: examples/tm2-example.pipeline.yaml: missed comma between flow collection entries (68:15)\n\n 65 |   includeHeader: true\n 66 |   delimiter: \",\"\n 67 |   encoding: utf-8\n 68 |   nullValue: \"\"\n--------------------^\n 69 | \n 70 | run:",
+    "stack": "ConfigError: Invalid YAML in pipeline file: examples/tm2-example.pipeline.yaml\n    at ConfigLoader.load (file:///C:/Dev/Projects/TypeScript/sluice/dist/config/loader.js:32:19)\n    at async createRunnerForPipeline (file:///C:/Dev/Projects/TypeScript/sluice/dist/cli.js:57:20)\n    at async cmdRun (file:///C:/Dev/Projects/TypeScript/sluice/dist/cli.js:65:24)\ncaused by: YAMLException: missed comma between flow collection entries (68:15)\n\n 65 |   includeHeader: true\n 66 |   delimiter: \",\"\n 67 |   encoding: utf-8\n 68 |   nullValue: \"\"\n--------------------^\n 69 | \n 70 | run:\n    at generateError (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readFlowCollection (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:1854:7)\n    at composeNode (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2538:11)\n    at readBlockMapping (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2260:11)\n    at composeNode (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readBlockMapping (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2260:11)\n    at composeNode (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///C:/Dev/Projects/TypeScript/sluice/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)",
+    "name": "ConfigError"
+  },
+  "msg": "sluice run: failed"
 }

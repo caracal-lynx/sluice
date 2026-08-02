@@ -6,12 +6,12 @@
 
 ## The Core Tension
 
-| Use Case | Allowed? |
-|----------|---------|
-| A business runs Sluice internally for their own migration | ✅ Yes |
-| A business embeds Sluice in their own internal tooling | ✅ Yes |
-| A consultant uses Sluice to deliver a migration project for a client | ❌ No |
-| Someone white-labels Sluice and sells it as a product | ❌ No |
+| Use Case                                                             | Allowed? |
+| -------------------------------------------------------------------- | -------- |
+| A business runs Sluice internally for their own migration            | ✅ Yes   |
+| A business embeds Sluice in their own internal tooling               | ✅ Yes   |
+| A consultant uses Sluice to deliver a migration project for a client | ❌ No    |
+| Someone white-labels Sluice and sells it as a product                | ❌ No    |
 
 The tricky bit legally is that "using software to deliver a service" and "selling the software" are different things, and most licences only restrict the latter.
 
@@ -19,16 +19,16 @@ The tricky bit legally is that "using software to deliver a service" and "sellin
 
 ## Options
 
-### Option 1 — Apache 2.0 + Commons Clause *(simplest)*
+### Option 1 — Apache 2.0 + Commons Clause _(simplest)_
 
-The [Commons Clause](https://commonsclause.com/) is an addendum bolted onto a permissive licence. It adds one restriction: you cannot *sell* the software. "Sell" is defined broadly enough to cover "providing it to third parties as a service."
+The [Commons Clause](https://commonsclause.com/) is an addendum bolted onto a permissive licence. It adds one restriction: you cannot _sell_ the software. "Sell" is defined broadly enough to cover "providing it to third parties as a service."
 
 ```
 Apache 2.0 + Commons Clause (the "Clause")
 
-The Clause: the licence granted above does not include the right 
-to Sell the Software. "Sell" means providing to third parties, 
-for a fee or otherwise, a product or service whose primary value 
+The Clause: the licence granted above does not include the right
+to Sell the Software. "Sell" means providing to third parties,
+for a fee or otherwise, a product or service whose primary value
 comes from the Software.
 ```
 
@@ -38,23 +38,23 @@ comes from the Software.
 
 ---
 
-### Option 2 — Elastic Licence 2.0 (ELv2) *(clean and modern)*
+### Option 2 — Elastic Licence 2.0 (ELv2) _(clean and modern)_
 
 The [Elastic Licence 2.0](https://www.elastic.co/licensing/elastic-license) is a purpose-built "source available" licence. Its key restriction:
 
-> *You may not provide the Software to third parties as a hosted or managed service, where the service provides users with access to any substantial set of the features or functionality of the Software.*
+> _You may not provide the Software to third parties as a hosted or managed service, where the service provides users with access to any substantial set of the features or functionality of the Software._
 
 **Pros:** Short (one page), clear language, written specifically to prevent competing services. Widely understood in the developer community.
 
-**Cons:** Not OSI "open source." A pure-play consultant running Sluice pipelines for a client could argue they're providing *migration services* and Sluice is just a tool — a lawyer would need to test that edge.
+**Cons:** Not OSI "open source." A pure-play consultant running Sluice pipelines for a client could argue they're providing _migration services_ and Sluice is just a tool — a lawyer would need to test that edge.
 
 ---
 
-### Option 3 — Functional Source Licence (FSL) *(with a sunset)*
+### Option 3 — Functional Source Licence (FSL) _(with a sunset)_
 
 The [Functional Source Licence](https://fsl.software/) (2023, used by Gitbutler) is explicit about the non-compete angle:
 
-> *You may not use the Software to provide a competing service.*
+> _You may not use the Software to provide a competing service._
 
 It also has a **4-year sunset** — after 4 years the code automatically converts to Apache 2.0. A reasonable fit for a consultancy tool: competitive advantage will have evolved by then.
 
@@ -64,14 +64,14 @@ It also has a **4-year sunset** — after 4 years the code automatically convert
 
 ---
 
-### Option 4 — Dual Licence *(most control, most complexity)*
+### Option 4 — Dual Licence _(most control, most complexity)_
 
 Offer two licences simultaneously:
 
 - **AGPL-3.0** for free use — copyleft means anyone who modifies and distributes must open-source their changes. Makes it unattractive for commercial consultancies to use without paying, because they'd have to open-source their client deliverables.
 - **Commercial Licence** from Caracal Lynx — pays a fee, removes copyleft restrictions, allows proprietary use.
 
-Businesses using Sluice internally likely won't trigger AGPL (internal use doesn't require distribution). Consultants delivering to clients *do* trigger it — they'd need a commercial licence.
+Businesses using Sluice internally likely won't trigger AGPL (internal use doesn't require distribution). Consultants delivering to clients _do_ trigger it — they'd need a commercial licence.
 
 **Pros:** OSI-compliant (AGPL is a real open source licence). Strong legal precedent. Creates a revenue stream.
 
@@ -81,14 +81,14 @@ Businesses using Sluice internally likely won't trigger AGPL (internal use doesn
 
 ## Licence Comparison
 
-| | Apache 2.0 + Commons Clause | ELv2 | FSL | Dual (AGPL + Commercial) |
-|--|--|--|--|--|
-| OSI "open source" | ❌ | ❌ | ❌ | ✅ (AGPL tier) |
-| Blocks competing consultants | ⚠️ Partial | ✅ | ✅ | ✅ |
-| Allows internal business use | ✅ | ✅ | ✅ | ✅ |
-| Legal precedent | Medium | Medium | Low (new) | High |
-| Admin complexity | Low | Low | Low | High (CLA needed) |
-| Revenue potential | ❌ | ❌ | ❌ | ✅ |
+|                              | Apache 2.0 + Commons Clause | ELv2   | FSL       | Dual (AGPL + Commercial) |
+| ---------------------------- | --------------------------- | ------ | --------- | ------------------------ |
+| OSI "open source"            | ❌                          | ❌     | ❌        | ✅ (AGPL tier)           |
+| Blocks competing consultants | ⚠️ Partial                  | ✅     | ✅        | ✅                       |
+| Allows internal business use | ✅                          | ✅     | ✅        | ✅                       |
+| Legal precedent              | Medium                      | Medium | Low (new) | High                     |
+| Admin complexity             | Low                         | Low    | Low       | High (CLA needed)        |
+| Revenue potential            | ❌                          | ❌     | ❌        | ✅                       |
 
 ---
 

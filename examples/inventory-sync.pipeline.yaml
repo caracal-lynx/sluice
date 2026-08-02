@@ -60,24 +60,24 @@ dq:
     # Critical: style number required
     - field: STYLE_NO
       checks:
-        - { type: notNull,   severity: critical }
-        - { type: pattern,   value: "^[A-Z0-9]{4,10}$", severity: warning }
-    
+        - { type: notNull, severity: critical }
+        - { type: pattern, value: "^[A-Z0-9]{4,10}$", severity: warning }
+
     # Critical: warehouse identifier
     - field: WAREHOUSE_ID
       checks:
-        - { type: notNull,     severity: critical }
+        - { type: notNull, severity: critical }
         - { type: allowedValues, value: [UK, EU, US], severity: critical }
-    
+
     # Warning: color/size codes
     - field: COLOUR_CODE
       checks:
         - { type: maxLength, value: 10, severity: warning }
-    
+
     - field: SIZE_CODE
       checks:
         - { type: maxLength, value: 5, severity: warning }
-    
+
     # Warning: quantity on hand
     - field: QTY_ON_HAND
       checks:
@@ -93,7 +93,7 @@ transform:
         file: ./lookups/warehouses.csv
       key: warehouse_id
       value: warehouse_name
-    
+
     # Resolve style descriptions
     - name: style-catalog
       source:
@@ -104,25 +104,31 @@ transform:
 
   fields:
     # Key fields — composite key for identifying unique SKU at each location
-    - { from: WAREHOUSE_ID,  to: WAREHOUSE_ID,   type: string,  max: 3 }
-    - { from: STYLE_NO,      to: STYLE_NO,       type: string,  max: 10, cleanse: trim|uppercase }
-    - { from: COLOUR_CODE,   to: COLOUR_CODE,    type: string,  max: 10, cleanse: trim|uppercase }
-    - { from: SIZE_CODE,     to: SIZE_CODE,      type: string,  max: 5,  cleanse: trim|uppercase }
-    
+    - { from: WAREHOUSE_ID, to: WAREHOUSE_ID, type: string, max: 3 }
+    - { from: STYLE_NO, to: STYLE_NO, type: string, max: 10, cleanse: trim|uppercase }
+    - { from: COLOUR_CODE, to: COLOUR_CODE, type: string, max: 10, cleanse: trim|uppercase }
+    - { from: SIZE_CODE, to: SIZE_CODE, type: string, max: 5, cleanse: trim|uppercase }
+
     # Inventory quantities
-    - { from: QTY_ON_HAND,        to: QTY_ON_HAND,        type: number }
-    - { from: QTY_RESERVED,       to: QTY_RESERVED,       type: number, default: 0 }
-    - { from: QTY_AVAILABLE,      to: QTY_AVAILABLE,      type: number, default: 0 }
-    - { from: QTY_ON_ORDER,       to: QTY_ON_ORDER,       type: number, default: 0 }
-    
+    - { from: QTY_ON_HAND, to: QTY_ON_HAND, type: number }
+    - { from: QTY_RESERVED, to: QTY_RESERVED, type: number, default: 0 }
+    - { from: QTY_AVAILABLE, to: QTY_AVAILABLE, type: number, default: 0 }
+    - { from: QTY_ON_ORDER, to: QTY_ON_ORDER, type: number, default: 0 }
+
     # Enrichments
-    - { from: WAREHOUSE_ID,    to: WAREHOUSE_NAME,   type: lookup, lookup: warehouse-names, optional: true }
-    - { from: STYLE_NO,        to: STYLE_DESC,       type: lookup, lookup: style-catalog,   optional: true }
-    
+    - {
+        from: WAREHOUSE_ID,
+        to: WAREHOUSE_NAME,
+        type: lookup,
+        lookup: warehouse-names,
+        optional: true,
+      }
+    - { from: STYLE_NO, to: STYLE_DESC, type: lookup, lookup: style-catalog, optional: true }
+
     # Derived/computed fields
-    - { to: total_inventory,      type: expression, value: "row.QTY_ON_HAND + row.QTY_ON_ORDER" }
-    - { to: sync_timestamp,       type: expression, value: "new Date().toISOString()" }
-    - { to: sync_source,          type: expression, value: "row.WAREHOUSE_ID" }
+    - { to: total_inventory, type: expression, value: "row.QTY_ON_HAND + row.QTY_ON_ORDER" }
+    - { to: sync_timestamp, type: expression, value: "new Date().toISOString()" }
+    - { to: sync_source, type: expression, value: "row.WAREHOUSE_ID" }
 
 target:
   adapter: csv

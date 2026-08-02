@@ -3,7 +3,7 @@ title: Quickstart
 description: Go from npm install to a working CSV-to-CSV pipeline with data quality validation in under ten minutes.
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps } from "@astrojs/starlight/components";
 
 This page takes you from a clean machine to a working pipeline run with data quality validation, transformation, and a rejection report — all in **under ten minutes**.
 
@@ -73,17 +73,17 @@ Install the CLI globally if you haven't already — see [Installation](/sluice/g
        - field: email
          checks:
            - { type: notNull, severity: critical }
-           - { type: email,   severity: warning  }
+           - { type: email, severity: warning }
        - field: country
          checks:
            - { type: allowedValues, value: [GB, US, FI, DE, FR, IE], severity: warning }
 
    transform:
      fields:
-       - { from: name,    to: Name,    type: string, cleanse: trim|titleCase }
-       - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+       - { from: name, to: Name, type: string, cleanse: trim|titleCase }
+       - { from: email, to: Email, type: string, cleanse: trim|lowercase }
        - { from: country, to: Country, type: string, default: GB, cleanse: trim|uppercase }
-       - { to: Source,    type: constant, value: "quickstart" }
+       - { to: Source, type: constant, value: "quickstart" }
 
    target:
      adapter: csv

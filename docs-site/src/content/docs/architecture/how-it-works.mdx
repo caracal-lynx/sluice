@@ -135,14 +135,14 @@ sequenceDiagram
 
 Each phase is its own engine module:
 
-| Phase | Module | Responsibility |
-|---|---|---|
-| 1. Config load | `src/config/` | YAML → `${ENV_VAR}` resolution → Zod validation → composite-rule expansion |
-| 2. Extract | `src/adapters/source/` | Stream source data into DuckDB `stg_raw` |
-| 3. DQ | `src/dq/` | Run rules against `stg_raw`; write rejection CSV + summary JSON |
-| 4. Transform | `src/transform/` | Apply field mappings, lookups, cleanse ops, expressions → `stg_transformed` |
-| 5. Load | `src/adapters/target/` | Stream `stg_transformed` to the target adapter |
-| 6. Run state | `src/runner.ts` | Write `{outputDir}/{pipeline.name}-state.json` for incremental mode |
+| Phase          | Module                 | Responsibility                                                              |
+| -------------- | ---------------------- | --------------------------------------------------------------------------- |
+| 1. Config load | `src/config/`          | YAML → `${ENV_VAR}` resolution → Zod validation → composite-rule expansion  |
+| 2. Extract     | `src/adapters/source/` | Stream source data into DuckDB `stg_raw`                                    |
+| 3. DQ          | `src/dq/`              | Run rules against `stg_raw`; write rejection CSV + summary JSON             |
+| 4. Transform   | `src/transform/`       | Apply field mappings, lookups, cleanse ops, expressions → `stg_transformed` |
+| 5. Load        | `src/adapters/target/` | Stream `stg_transformed` to the target adapter                              |
+| 6. Run state   | `src/runner.ts`        | Write `{outputDir}/{pipeline.name}-state.json` for incremental mode         |
 
 ## Multi-source runtime
 

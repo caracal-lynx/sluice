@@ -11,15 +11,15 @@ This page is the reference for every built-in transform type, every cleanse oper
 
 These keys are valid on most transform types:
 
-| Key | Type | Notes |
-|---|---|---|
-| `from` | string \| string[] | Source field name(s). Required for most types; omitted for `constant`, `expression`, and `custom`. |
-| `to` | string | Destination field name (required for every transform). |
-| `type` | enum | The transform type — see below. |
-| `cleanse` | string | Pipe-separated cleanse ops (e.g. `trim\|titleCase\|normaliseUnicode`). |
-| `default` | any | Fallback value when source is null/empty. |
-| `optional` | boolean | If `true`, null result is allowed without raising a `TransformError`. Default: `false`. |
-| `max` | number | Truncate string output to N characters **after** cleanse. |
+| Key        | Type               | Notes                                                                                              |
+| ---------- | ------------------ | -------------------------------------------------------------------------------------------------- |
+| `from`     | string \| string[] | Source field name(s). Required for most types; omitted for `constant`, `expression`, and `custom`. |
+| `to`       | string             | Destination field name (required for every transform).                                             |
+| `type`     | enum               | The transform type — see below.                                                                    |
+| `cleanse`  | string             | Pipe-separated cleanse ops (e.g. `trim\|titleCase\|normaliseUnicode`).                             |
+| `default`  | any                | Fallback value when source is null/empty.                                                          |
+| `optional` | boolean            | If `true`, null result is allowed without raising a `TransformError`. Default: `false`.            |
+| `max`      | number             | Truncate string output to N characters **after** cleanse.                                          |
 
 ## Transform types
 
@@ -90,8 +90,8 @@ Resolves a value via a named lookup table loaded at the start of the transform p
   to: CurrencyCode
   type: lookup
   lookup: currencyMap
-  default: GBP        # used when key is missing AND optional is false
-  optional: false     # default: false. true = null on miss, no error.
+  default: GBP # used when key is missing AND optional is false
+  optional: false # default: false. true = null on miss, no error.
 ```
 
 The named `lookup` must match a `transform.lookups[].name`:
@@ -173,20 +173,20 @@ Custom transforms are how the Enrich service (`@caracal-lynx/sluice-enrich`) shi
 
 Apply via the `cleanse:` key on any transform that produces a string. Operations are applied **left-to-right** in the pipe chain.
 
-| Op | Example input | Example output |
-|---|---|---|
-| `trim` | `"  hello  "` | `"hello"` |
-| `uppercase` | `"hello"` | `"HELLO"` |
-| `lowercase` | `"HELLO"` | `"hello"` |
-| `titleCase` | `"john smith"` | `"John Smith"` |
-| `stripNonAlpha` | `"AB-12!"` | `"AB"` |
-| `stripNonNumeric` | `"AB-12!"` | `"12"` |
-| `stripWhitespace` | `"h e l l o"` | `"hello"` |
-| `padStart:6:0` | `"42"` | `"000042"` |
-| `truncate:20` | 21-char string | 20-char string |
-| `nullIfEmpty` | `""` | `null` |
-| `normaliseQuotes` | `"it's"` (curly apostrophe) | `"it's"` (straight) |
-| `normaliseUnicode` | `"café"` | `"cafe"` (NFD → ASCII) |
+| Op                 | Example input               | Example output         |
+| ------------------ | --------------------------- | ---------------------- |
+| `trim`             | `"  hello  "`               | `"hello"`              |
+| `uppercase`        | `"hello"`                   | `"HELLO"`              |
+| `lowercase`        | `"HELLO"`                   | `"hello"`              |
+| `titleCase`        | `"john smith"`              | `"John Smith"`         |
+| `stripNonAlpha`    | `"AB-12!"`                  | `"AB"`                 |
+| `stripNonNumeric`  | `"AB-12!"`                  | `"12"`                 |
+| `stripWhitespace`  | `"h e l l o"`               | `"hello"`              |
+| `padStart:6:0`     | `"42"`                      | `"000042"`             |
+| `truncate:20`      | 21-char string              | 20-char string         |
+| `nullIfEmpty`      | `""`                        | `null`                 |
+| `normaliseQuotes`  | `"it's"` (curly apostrophe) | `"it's"` (straight)    |
+| `normaliseUnicode` | `"café"`                    | `"cafe"` (NFD → ASCII) |
 
 Operations that take arguments use `:` as a separator: `padStart:6:0` means "pad start to 6 characters with `0`".
 

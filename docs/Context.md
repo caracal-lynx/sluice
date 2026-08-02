@@ -2,13 +2,9 @@
 
 <!-- Sluice project memory — updated 2026-05-04 -->
 
-
-
 \## Project summary
 
 Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migrations, built and maintained by Caracal Lynx Limited (Michael Scott). The engine is written once in TypeScript; each client engagement is delivered as a folder of YAML pipeline configs. It replaces one-off migration scripts with a reusable, testable, CLI-driven pipeline that covers extract, data quality, transform, and load — with no UI, no server, and no cloud dependency. Sluice is general-purpose: any data migration from any source to any target. Caracal Lynx's paid adapter packages add ERP-specific connectors (IFS, Business Central, BlueCherry) on top of the open-source core.
-
-
 
 \## Key decisions made
 
@@ -48,8 +44,6 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- \*\*Implementation sequencing:\*\* ✅ Phase 0 — Governance & Prerequisites: COMPLETE | ✅ Phase 1 — Node v24 + DuckDB Neo upgrade: COMPLETE (PR #8, 3 May 2026) | 🟢 Phase 2 — TypeScript v6 upgrade: READY (3–5 hours, after Phase 1; current next-action) | ✅ Phase 3 — Plugin System (three-tier extension model): COMPLETE | 🔵 Phase 4a — Enrich Framework (private `sluice-enrich` repo): After Phase 2 | 🔵 Phase 4b — Built-in Enrich Providers (VIES, HMRC VAT, UK Trade Tariff): After Phase 4a | 🔴 Phase 5 — Repo Restructure & Open-Source Launch: Blocked by Phase 4a + Phase 0 | 🔴 Phase 6 — README & Marketing: Blocked by Phase 5 | 🔴 Phase 7 — git/npm Workflow (Changesets, Renovate, release cascade): Blocked by Phase 5 | 🔴 Phase 8 — GitHub Pages Documentation Site: Blocked by Phase 5 | 🟡 Phase 9 — Sluice MCP Server (private paid): NOW UNBLOCKED (Phase 3 complete) | 🔵 Phase 10 — Node v26 upgrade: Deferred to Oct 2026 LTS cut | 🟡 Phase 11a — tsgo parallel CI type-check: After Phase 2, ~1 hour | 🟡 Phase 11b — Full TS 7 / tsgo compiler switch: Deferred until tsgo emit is byte-stable | Full sequence in `SLUICE-IMPLEMENTATION-PLAN.md`
 
-
-
 \## Facts \& constraints
 
 \- \*\*Owner:\*\* Michael Scott, Caracal Lynx Limited (SC826823), Gretna, Scotland
@@ -73,8 +67,6 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 \- \*\*Coverage target:\*\* 80% line coverage across `src/dq/` and `src/transform/`
 
 \- \*\*npm package namespace:\*\* `@caracal-lynx/` for all published packages
-
-
 
 \## Open questions / next steps
 
@@ -112,8 +104,6 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 
 \- Acme Corp and Style Co client pipeline configs exist as examples; real `.env` files and lookups not yet in place.
 
-
-
 \## Artifacts produced
 
 | File | Purpose | State |
@@ -127,8 +117,6 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 | `customers.pipeline.yaml` | Acme Corp customer migration example (MSSQL → IFS) | Complete |
 
 | `pipeline.schema.ts` | Canonical Zod schema — seeds `src/config/schema.ts` | Complete |
-
-
 
 \## Glossary
 
@@ -163,4 +151,3 @@ Sluice (`@caracal-lynx/sluice`) is a config-driven ETL toolkit for data migratio
 | BlueCherry | BlueCherry ERP by CGS (target for Style Co) |
 
 | Caracal Lynx | Michael's consultancy company — owner of the Sluice toolkit |
-

@@ -29,13 +29,13 @@ target:
   nullValue: ""
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `output` | string | — | Path to write. |
-| `includeHeader` | boolean | `true` | Write column names on the first row. |
-| `delimiter` | string | `,` | Field delimiter. |
-| `encoding` | string | `utf-8` | File encoding. |
-| `nullValue` | string | `""` | How nulls are rendered. |
+| Key             | Type    | Default | Notes                                |
+| --------------- | ------- | ------- | ------------------------------------ |
+| `output`        | string  | —       | Path to write.                       |
+| `includeHeader` | boolean | `true`  | Write column names on the first row. |
+| `delimiter`     | string  | `,`     | Field delimiter.                     |
+| `encoding`      | string  | `utf-8` | File encoding.                       |
+| `nullValue`     | string  | `""`    | How nulls are rendered.              |
 
 ## `pg` — PostgreSQL bulk insert (built-in)
 
@@ -51,13 +51,13 @@ target:
   upsertKey: [customer_no]
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `connection` | string | — | PostgreSQL connection string. Resolved from `${ENV_VAR}` at runtime. |
-| `table` | string | — | Target table name. |
-| `schema` | string | `public` | Target schema. |
-| `onConflict` | enum | `fail` | `fail` \| `upsert` \| `ignore`. |
-| `upsertKey` | string[] | — | **Required** when `onConflict: upsert`. Column names that form the conflict key. |
+| Key          | Type     | Default  | Notes                                                                            |
+| ------------ | -------- | -------- | -------------------------------------------------------------------------------- |
+| `connection` | string   | —        | PostgreSQL connection string. Resolved from `${ENV_VAR}` at runtime.             |
+| `table`      | string   | —        | Target table name.                                                               |
+| `schema`     | string   | `public` | Target schema.                                                                   |
+| `onConflict` | enum     | `fail`   | `fail` \| `upsert` \| `ignore`.                                                  |
+| `upsertKey`  | string[] | —        | **Required** when `onConflict: upsert`. Column names that form the conflict key. |
 
 ## `ifs` — IFS ERP CSV import (paid add-on)
 
@@ -78,15 +78,15 @@ target:
   dateFormat: YYYY-MM-DD
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `entity` | string | — | IFS entity name (e.g. `CustomerInfo`, `Supplier`). Recorded in the load log. |
-| `output` | string | — | Path to write. |
-| `includeHeader` | boolean | `false` | IFS expects no header. |
-| `columnOrder` | string[] | — | Forces the column order. Must match transform `to:` field names. |
-| `dateFormat` | string | `YYYY-MM-DD` | dayjs format token. |
-| `delimiter` | string | `,` | Field delimiter. |
-| `encoding` | string | `utf-8` | File encoding. |
+| Key             | Type     | Default      | Notes                                                                        |
+| --------------- | -------- | ------------ | ---------------------------------------------------------------------------- |
+| `entity`        | string   | —            | IFS entity name (e.g. `CustomerInfo`, `Supplier`). Recorded in the load log. |
+| `output`        | string   | —            | Path to write.                                                               |
+| `includeHeader` | boolean  | `false`      | IFS expects no header.                                                       |
+| `columnOrder`   | string[] | —            | Forces the column order. Must match transform `to:` field names.             |
+| `dateFormat`    | string   | `YYYY-MM-DD` | dayjs format token.                                                          |
+| `delimiter`     | string   | `,`          | Field delimiter.                                                             |
+| `encoding`      | string   | `utf-8`      | File encoding.                                                               |
 
 **Notes:**
 
@@ -108,25 +108,25 @@ target:
   nullValue: ""
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `entity` | enum | — | One of `Style`, `Vendor`, `PurchaseOrder`, `PODetail`, `Season`, `ColourSize`. |
-| `output` | string | — | Path to write. |
-| `template` | string | `default` | `default` uses built-in column order; or path to a header-only template CSV. |
-| `includeHeader` | boolean | `true` | BlueCherry expects headers. |
-| `dateFormat` | string | `MM/DD/YYYY` | BlueCherry is US-origin; default is US date format. |
-| `nullValue` | string | `""` | How nulls are rendered. |
+| Key             | Type    | Default      | Notes                                                                          |
+| --------------- | ------- | ------------ | ------------------------------------------------------------------------------ |
+| `entity`        | enum    | —            | One of `Style`, `Vendor`, `PurchaseOrder`, `PODetail`, `Season`, `ColourSize`. |
+| `output`        | string  | —            | Path to write.                                                                 |
+| `template`      | string  | `default`    | `default` uses built-in column order; or path to a header-only template CSV.   |
+| `includeHeader` | boolean | `true`       | BlueCherry expects headers.                                                    |
+| `dateFormat`    | string  | `MM/DD/YYYY` | BlueCherry is US-origin; default is US date format.                            |
+| `nullValue`     | string  | `""`         | How nulls are rendered.                                                        |
 
 **Required columns per entity** (validated at `connect()`):
 
-| Entity | Required columns |
-|---|---|
-| `Style` | `StyleNo`, `StyleDesc`, `Division`, `Season`, `CostPrice`, `RetailPrice`, `ActiveFlag` |
-| `Vendor` | `VendorNo`, `VendorName`, `Country`, `CurrencyCode` |
-| `PurchaseOrder` | `PONumber`, `VendorNo`, `Season`, `OrderDate`, `DeliveryDate` |
-| `PODetail` | `PONumber`, `StyleNo`, `ColourCode`, `SizeCode`, `Quantity`, `CostPrice` |
-| `Season` | `SeasonCode`, `SeasonDesc`, `StartDate`, `EndDate` |
-| `ColourSize` | `StyleNo`, `ColourCode`, `ColourDesc`, `SizeCode`, `SizeDesc` |
+| Entity          | Required columns                                                                       |
+| --------------- | -------------------------------------------------------------------------------------- |
+| `Style`         | `StyleNo`, `StyleDesc`, `Division`, `Season`, `CostPrice`, `RetailPrice`, `ActiveFlag` |
+| `Vendor`        | `VendorNo`, `VendorName`, `Country`, `CurrencyCode`                                    |
+| `PurchaseOrder` | `PONumber`, `VendorNo`, `Season`, `OrderDate`, `DeliveryDate`                          |
+| `PODetail`      | `PONumber`, `StyleNo`, `ColourCode`, `SizeCode`, `Quantity`, `CostPrice`               |
+| `Season`        | `SeasonCode`, `SeasonDesc`, `StartDate`, `EndDate`                                     |
+| `ColourSize`    | `StyleNo`, `ColourCode`, `ColourDesc`, `SizeCode`, `SizeDesc`                          |
 
 **Notes:**
 
@@ -149,14 +149,14 @@ target:
   batchEndpoint: true
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `baseUrl` | string | — | Resolved from `${ENV_VAR}`. |
-| `company` | string | — | BC company GUID or name. |
-| `entity` | string | — | OData entity name (lowercase, plural — e.g. `customers`, `salesInvoices`). |
-| `apiVersion` | string | `v2.0` | OData API version. |
-| `onConflict` | enum | `fail` | `fail` \| `upsert` \| `ignore`. With `upsert`, a `409` triggers a `PATCH`. |
-| `batchEndpoint` | boolean | `true` | Use OData `$batch` (max 100 ops per batch). |
+| Key             | Type    | Default | Notes                                                                      |
+| --------------- | ------- | ------- | -------------------------------------------------------------------------- |
+| `baseUrl`       | string  | —       | Resolved from `${ENV_VAR}`.                                                |
+| `company`       | string  | —       | BC company GUID or name.                                                   |
+| `entity`        | string  | —       | OData entity name (lowercase, plural — e.g. `customers`, `salesInvoices`). |
+| `apiVersion`    | string  | `v2.0`  | OData API version.                                                         |
+| `onConflict`    | enum    | `fail`  | `fail` \| `upsert` \| `ignore`. With `upsert`, a `409` triggers a `PATCH`. |
+| `batchEndpoint` | boolean | `true`  | Use OData `$batch` (max 100 ops per batch).                                |
 
 **Notes:**
 

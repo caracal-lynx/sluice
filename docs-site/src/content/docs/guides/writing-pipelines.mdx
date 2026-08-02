@@ -46,12 +46,12 @@ dq:
   rules:
     - field: CUST_CODE
       checks:
-        - { type: notNull,   severity: critical }
-        - { type: unique,    severity: critical }
+        - { type: notNull, severity: critical }
+        - { type: unique, severity: critical }
         - { type: pattern, value: "^[A-Z0-9]{3,10}$", severity: warning }
     - field: CUST_NAME
       checks:
-        - { type: notNull,   severity: critical }
+        - { type: notNull, severity: critical }
         - { type: maxLength, value: 100, severity: warning }
     - field: POST_CODE
       checks:
@@ -61,8 +61,8 @@ dq:
         - { type: email, severity: warning }
     - field: CREDIT_LIMIT
       checks:
-        - { type: min, value: 0,      severity: critical }
-        - { type: max, value: 500000, severity: warning  }
+        - { type: min, value: 0, severity: critical }
+        - { type: max, value: 500000, severity: warning }
     - field: COUNTRY
       checks:
         - { type: allowedValues, value: [GB, IE, US, DE, FR], severity: warning }
@@ -90,17 +90,17 @@ transform:
       value: value
 
   fields:
-    - { from: CUST_CODE,      to: CustomerNo,   type: string,  max: 20 }
-    - { from: CUST_NAME,      to: Name,         type: string,  max: 100, cleanse: trim|titleCase }
-    - { from: [ADDR1, ADDR2], to: Address1,     type: concat,  separator: ", ", cleanse: trim }
-    - { from: POST_CODE,      to: ZipCode,      type: string,  cleanse: trim|uppercase }
-    - { from: COUNTRY,        to: Country,      type: string,  default: GB }
-    - { from: CURRENCY,       to: CurrencyCode, type: lookup,  lookup: currencyMap, default: GBP }
-    - { from: ACCT_MGR_ID,    to: SalesmanCode, type: lookup,  lookup: acctMgrMap,  optional: true }
-    - { from: CREDIT_LIMIT,   to: CreditLimit,  type: decimal, precision: 2 }
-    - { from: EMAIL,          to: Email,        type: string,  cleanse: trim|lowercase }
-    - { to: CustomerGroup,    type: constant,   value: DOMESTIC }
-    - { to: SearchName,       type: expression, value: "row.CUST_NAME.toUpperCase().substring(0, 20)" }
+    - { from: CUST_CODE, to: CustomerNo, type: string, max: 20 }
+    - { from: CUST_NAME, to: Name, type: string, max: 100, cleanse: trim|titleCase }
+    - { from: [ADDR1, ADDR2], to: Address1, type: concat, separator: ", ", cleanse: trim }
+    - { from: POST_CODE, to: ZipCode, type: string, cleanse: trim|uppercase }
+    - { from: COUNTRY, to: Country, type: string, default: GB }
+    - { from: CURRENCY, to: CurrencyCode, type: lookup, lookup: currencyMap, default: GBP }
+    - { from: ACCT_MGR_ID, to: SalesmanCode, type: lookup, lookup: acctMgrMap, optional: true }
+    - { from: CREDIT_LIMIT, to: CreditLimit, type: decimal, precision: 2 }
+    - { from: EMAIL, to: Email, type: string, cleanse: trim|lowercase }
+    - { to: CustomerGroup, type: constant, value: DOMESTIC }
+    - { to: SearchName, type: expression, value: "row.CUST_NAME.toUpperCase().substring(0, 20)" }
 ```
 
 Three things to notice:
@@ -159,11 +159,11 @@ pipeline:
   entity: CustomerInfo
   description: Customer master — legacy SQL to IFS ERP
 
-source: { ... }     # Step 1
-dq:     { ... }     # Step 2
-transform: { ... }  # Step 3
-target: { ... }     # Step 4
-run:    { ... }     # Step 5
+source: { ... } # Step 1
+dq: { ... } # Step 2
+transform: { ... } # Step 3
+target: { ... } # Step 4
+run: { ... } # Step 5
 ```
 
 ## Iterating

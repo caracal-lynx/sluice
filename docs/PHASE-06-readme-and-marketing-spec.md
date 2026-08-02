@@ -43,16 +43,16 @@ The "& Marketing" half is deliberately small in scope: this phase covers the REA
 
 ## Prerequisites (must be true before starting Phase 6)
 
-| # | Prerequisite | Owned by | Verify with |
-|---|---|---|---|
-| 1 | Repo `caracal-lynx/sluice` is **public** on GitHub | Phase 5 | `gh repo view caracal-lynx/sluice --json visibility` |
-| 2 | `LICENSE` (Elastic-2.0 text) committed at repo root | Phase 5 | `test -f LICENSE` |
-| 3 | `LICENCE-FAQ.md` committed at repo root | Phase 5 | `test -f LICENCE-FAQ.md` |
-| 4 | `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` committed | Phase 5 | `ls CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md` |
-| 5 | Every `.ts` file in `src/` carries the `SPDX-License-Identifier: Elastic-2.0` header | Phase 5 | `grep -L "SPDX-License-Identifier: Elastic-2.0" src/**/*.ts` (must return empty) |
-| 6 | `package.json` `"license"` field is `"Elastic-2.0"` | Phase 5 | `jq -r .license package.json` |
-| 7 | _Historical: canonical elevator-pitch text was at `docs/elevator-pitch.md` (now removed; positioning copy lives directly in `README.md`)._ | Phase 5 / Phase 6 | n/a — completed |
-| 8 | Banner and logo images render on github.com | Pre-existing | Open `README.md` on github.com and visually confirm |
+| #   | Prerequisite                                                                                                                               | Owned by          | Verify with                                                                      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------------------------------------------------------------------------------- |
+| 1   | Repo `caracal-lynx/sluice` is **public** on GitHub                                                                                         | Phase 5           | `gh repo view caracal-lynx/sluice --json visibility`                             |
+| 2   | `LICENSE` (Elastic-2.0 text) committed at repo root                                                                                        | Phase 5           | `test -f LICENSE`                                                                |
+| 3   | `LICENCE-FAQ.md` committed at repo root                                                                                                    | Phase 5           | `test -f LICENCE-FAQ.md`                                                         |
+| 4   | `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` committed                                                                           | Phase 5           | `ls CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md`                              |
+| 5   | Every `.ts` file in `src/` carries the `SPDX-License-Identifier: Elastic-2.0` header                                                       | Phase 5           | `grep -L "SPDX-License-Identifier: Elastic-2.0" src/**/*.ts` (must return empty) |
+| 6   | `package.json` `"license"` field is `"Elastic-2.0"`                                                                                        | Phase 5           | `jq -r .license package.json`                                                    |
+| 7   | _Historical: canonical elevator-pitch text was at `docs/elevator-pitch.md` (now removed; positioning copy lives directly in `README.md`)._ | Phase 5 / Phase 6 | n/a — completed                                                                  |
+| 8   | Banner and logo images render on github.com                                                                                                | Pre-existing      | Open `README.md` on github.com and visually confirm                              |
 
 If any prerequisite is missing when this phase begins, **stop and resolve it before editing the README**.
 
@@ -75,20 +75,20 @@ The current `README.md` is in good shape. The Phase 6 changes are largely **addi
 
 ## Section-by-section README delta
 
-| Section | Action | Detail |
-|---|---|---|
-| Badge row (lines ~7–9) | **Modify** | Remove the `License: private` badge. Add `License: Elastic-2.0` badge linking to `LICENCE-FAQ.md`. Add npm-version badge (`https://img.shields.io/npm/v/@caracal-lynx/sluice`). Conditionally add a `Docs` badge once Phase 8 ships (TODO marker until then). |
-| Above "🤔 What is this thing?" | **Add** | Elevator-pitch hero block. _(Originally sourced from `docs/elevator-pitch.md`; that file was retired post-Phase 6. The pitch text now lives directly in `README.md`.)_ |
-| Banner / tagline | Keep | No change. |
-| "🤔 What is this thing?" | Keep | No change. |
-| "✨ What it does" | Keep | No change. |
-| "🏗️ Architecture" | Keep | No change. |
-| "🧰 Tech Stack" | Keep | No change. |
-| **After Tech Stack, before Quick Start** | **Add** | New section: "🧩 Extension model" — three-tier callout (Tier 1 YAML composite rules / Tier 2 file-based plugins / Tier 3 npm-package plugins). Links to [PLUGINS.md](../PLUGINS.md). One-paragraph framing + 3-row table. |
-| **Above the existing CLI commands inside "🚀 Quick Start"** | **Add** | Minimal "Hello world" YAML snippet (csv → csv, ≤ 20 lines) — see §"Quickstart YAML snippet" below. |
-| Existing "🚀 Quick Start" CLI block | Keep | No change to CLI commands themselves. |
-| "📄 Pipeline Config Format" → end | Keep | No change. |
-| **At end of README** | **Add** | New sections (in this order): "🏢 Caracal Lynx Professional Services" (paid services) · "🤝 Community" · "🔐 Security" · "⚖️ Licence" · "🏷️ About". |
+| Section                                                     | Action     | Detail                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Badge row (lines ~7–9)                                      | **Modify** | Remove the `License: private` badge. Add `License: Elastic-2.0` badge linking to `LICENCE-FAQ.md`. Add npm-version badge (`https://img.shields.io/npm/v/@caracal-lynx/sluice`). Conditionally add a `Docs` badge once Phase 8 ships (TODO marker until then). |
+| Above "🤔 What is this thing?"                              | **Add**    | Elevator-pitch hero block. _(Originally sourced from `docs/elevator-pitch.md`; that file was retired post-Phase 6. The pitch text now lives directly in `README.md`.)_                                                                                        |
+| Banner / tagline                                            | Keep       | No change.                                                                                                                                                                                                                                                    |
+| "🤔 What is this thing?"                                    | Keep       | No change.                                                                                                                                                                                                                                                    |
+| "✨ What it does"                                           | Keep       | No change.                                                                                                                                                                                                                                                    |
+| "🏗️ Architecture"                                           | Keep       | No change.                                                                                                                                                                                                                                                    |
+| "🧰 Tech Stack"                                             | Keep       | No change.                                                                                                                                                                                                                                                    |
+| **After Tech Stack, before Quick Start**                    | **Add**    | New section: "🧩 Extension model" — three-tier callout (Tier 1 YAML composite rules / Tier 2 file-based plugins / Tier 3 npm-package plugins). Links to [PLUGINS.md](../PLUGINS.md). One-paragraph framing + 3-row table.                                     |
+| **Above the existing CLI commands inside "🚀 Quick Start"** | **Add**    | Minimal "Hello world" YAML snippet (csv → csv, ≤ 20 lines) — see §"Quickstart YAML snippet" below.                                                                                                                                                            |
+| Existing "🚀 Quick Start" CLI block                         | Keep       | No change to CLI commands themselves.                                                                                                                                                                                                                         |
+| "📄 Pipeline Config Format" → end                           | Keep       | No change.                                                                                                                                                                                                                                                    |
+| **At end of README**                                        | **Add**    | New sections (in this order): "🏢 Caracal Lynx Professional Services" (paid services) · "🤝 Community" · "🔐 Security" · "⚖️ Licence" · "🏷️ About".                                                                                                           |
 
 ---
 
@@ -137,7 +137,7 @@ dq:
     - field: email
       checks:
         - { type: notNull, severity: critical }
-        - { type: email,   severity: warning  }
+        - { type: email, severity: warning }
 
 transform:
   fields:
@@ -162,14 +162,14 @@ Insert as a top-level `##` section at the end of the README, between "📄 Pipel
 
 **Table (verbatim from [SLUICE-IMPLEMENTATION-PLAN.md §10](./SLUICE-IMPLEMENTATION-PLAN.md#10-phase-6--readme--marketing)):**
 
-| Service | What it is |
-|---|---|
-| **Enrichment Service** | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data |
-| **Application Adapters** | Pre-built ERP adapters (IFS, Business Central, BlueCherry) |
-| **Domain Rule Packages** | UK compliance rules, fashion/retail data standards |
-| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model |
-| **Sluice MCP Server** | AI-assisted migration using Claude — agentic pipeline authoring, live schema inspection, automatic DQ iteration |
-| **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
+| Service                     | What it is                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Enrichment Service**      | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data                                    |
+| **Application Adapters**    | Pre-built ERP adapters (IFS, Business Central, BlueCherry)                                                      |
+| **Domain Rule Packages**    | UK compliance rules, fashion/retail data standards                                                              |
+| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model                                                   |
+| **Sluice MCP Server**       | AI-assisted migration using Claude — agentic pipeline authoring, live schema inspection, automatic DQ iteration |
+| **Migration Delivery**      | Full end-to-end data migration, delivered by Caracal Lynx                                                       |
 
 **Contact block (under the table):**
 
@@ -211,7 +211,7 @@ Sluice is licensed under the [Elastic License 2.0](LICENSE). See [LICENCE-FAQ.md
 
 ```markdown
 Built and maintained by [Caracal Lynx Limited](https://caracallynx.com) (SC826823) — Gretna, Scotland.
-*Clean data flows through.*
+_Clean data flows through._
 ```
 
 ---
@@ -220,19 +220,19 @@ Built and maintained by [Caracal Lynx Limited](https://caracallynx.com) (SC82682
 
 Beyond the README itself, Phase 6 owns the following one-off setup tasks:
 
-| # | Artefact | Action | Verify |
-|---|---|---|---|
-| M1 | GitHub repo description | Set to: *"Config-driven ETL toolkit for ERP data migrations. Clean data flows through."* | `gh repo view caracal-lynx/sluice --json description` |
-| M2 | GitHub repo "About" website URL | Set to `https://caracallynx.com` (swap to docs site once Phase 8 ships) | `gh repo view caracal-lynx/sluice --json homepageUrl` |
-| M3 | GitHub topics | Confirm Phase 5 set: `etl`, `data-migration`, `erp`, `typescript`, `yaml`, `duckdb`, `cli`. Add any missing ones. | `gh repo view caracal-lynx/sluice --json repositoryTopics` |
-| M4 | GitHub Sponsors | Explicitly **opt out**. No `FUNDING.yml`. Caracal Lynx routes commercial conversations through the paid-services contact, not Sponsors. | `test ! -f .github/FUNDING.yml` |
-| M5 | `package.json` `description` | Match the GitHub repo description (M1) for consistency. | `jq -r .description package.json` |
-| M6 | `package.json` `keywords` | At minimum: `["etl", "data-migration", "erp", "yaml", "duckdb", "cli", "typescript"]`. | `jq -r .keywords package.json` |
-| M7 | `package.json` `homepage` | `https://github.com/caracal-lynx/sluice#readme` (swap to docs site once Phase 8 ships). | `jq -r .homepage package.json` |
-| M8 | `package.json` `bugs` | `{ "url": "https://github.com/caracal-lynx/sluice/issues" }` | `jq -r .bugs package.json` |
-| M9 | `package.json` `repository` | `{ "type": "git", "url": "git+https://github.com/caracal-lynx/sluice.git" }` | `jq -r .repository package.json` |
-| M10 | npm package preview | `npm pack --dry-run` shows the README will render correctly on npmjs.com (no broken images, no dangling relative links). | Visual check of the dry-run output |
-| M11 | Banner / logo accessibility | `images/sluice_banner.png`, `images/sluice-for-gold.jpg`, `images/sluice-logo.png` are committed (not gitignored) and resolve over npm's image proxy. | `git ls-files images/` and a smoke-test render via `npm view @caracal-lynx/sluice` |
+| #   | Artefact                        | Action                                                                                                                                                | Verify                                                                             |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| M1  | GitHub repo description         | Set to: _"Config-driven ETL toolkit for ERP data migrations. Clean data flows through."_                                                              | `gh repo view caracal-lynx/sluice --json description`                              |
+| M2  | GitHub repo "About" website URL | Set to `https://caracallynx.com` (swap to docs site once Phase 8 ships)                                                                               | `gh repo view caracal-lynx/sluice --json homepageUrl`                              |
+| M3  | GitHub topics                   | Confirm Phase 5 set: `etl`, `data-migration`, `erp`, `typescript`, `yaml`, `duckdb`, `cli`. Add any missing ones.                                     | `gh repo view caracal-lynx/sluice --json repositoryTopics`                         |
+| M4  | GitHub Sponsors                 | Explicitly **opt out**. No `FUNDING.yml`. Caracal Lynx routes commercial conversations through the paid-services contact, not Sponsors.               | `test ! -f .github/FUNDING.yml`                                                    |
+| M5  | `package.json` `description`    | Match the GitHub repo description (M1) for consistency.                                                                                               | `jq -r .description package.json`                                                  |
+| M6  | `package.json` `keywords`       | At minimum: `["etl", "data-migration", "erp", "yaml", "duckdb", "cli", "typescript"]`.                                                                | `jq -r .keywords package.json`                                                     |
+| M7  | `package.json` `homepage`       | `https://github.com/caracal-lynx/sluice#readme` (swap to docs site once Phase 8 ships).                                                               | `jq -r .homepage package.json`                                                     |
+| M8  | `package.json` `bugs`           | `{ "url": "https://github.com/caracal-lynx/sluice/issues" }`                                                                                          | `jq -r .bugs package.json`                                                         |
+| M9  | `package.json` `repository`     | `{ "type": "git", "url": "git+https://github.com/caracal-lynx/sluice.git" }`                                                                          | `jq -r .repository package.json`                                                   |
+| M10 | npm package preview             | `npm pack --dry-run` shows the README will render correctly on npmjs.com (no broken images, no dangling relative links).                              | Visual check of the dry-run output                                                 |
+| M11 | Banner / logo accessibility     | `images/sluice_banner.png`, `images/sluice-for-gold.jpg`, `images/sluice-logo.png` are committed (not gitignored) and resolve over npm's image proxy. | `git ls-files images/` and a smoke-test render via `npm view @caracal-lynx/sluice` |
 
 ---
 
@@ -289,13 +289,13 @@ A reviewer should be able to tick every box below before Phase 6 closes.
 
 ## Open questions / risks
 
-| # | Item | Risk | Mitigation |
-|---|---|---|---|
-| Q1 | Quickstart `Docs` badge target | Phase 8 may not be live when Phase 6 runs — there's no docs site to link to | Insert `<!-- TODO -->` HTML comment instead of a broken badge; add the badge in a follow-up PR when Phase 8 ships |
-| Q2 | Logo / banner asset paths on npmjs.com | npm uses a CDN image proxy that occasionally fails on relative paths | Verify M11 with `npm pack --dry-run` *and* a real publish to a scratch package name first if uncertain |
-| Q3 | Paid-services copy not legally reviewed | Phase 0 covered open-sourcing decisions, not marketing copy. Risk of claiming services that aren't yet contractually deliverable (e.g. "Sluice MCP Server" before Phase 9 ships) | Get Michael to sign off on the table specifically before merge. Consider adding a "🚧 Coming soon" tag against MCP Server until Phase 9 is in beta |
-| Q4 | Elevator-pitch ownership | _(Resolved during Phase 6 — `docs/elevator-pitch.md` was authored as part of the rewrite, then retired post-phase. Canonical pitch now lives directly in `README.md`.)_ | n/a — closed |
-| Q5 | "Phase 6.5 — Launch Announcement" not yet specced | Phase 6 closes with the README live but no amplification (HN, Reddit, blog) | Out of scope for this doc; flagged here so it's tracked. A separate `PHASE-06.5-launch-announcement-spec.md` should be authored when Phase 6 nears completion |
+| #   | Item                                              | Risk                                                                                                                                                                             | Mitigation                                                                                                                                                    |
+| --- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Quickstart `Docs` badge target                    | Phase 8 may not be live when Phase 6 runs — there's no docs site to link to                                                                                                      | Insert `<!-- TODO -->` HTML comment instead of a broken badge; add the badge in a follow-up PR when Phase 8 ships                                             |
+| Q2  | Logo / banner asset paths on npmjs.com            | npm uses a CDN image proxy that occasionally fails on relative paths                                                                                                             | Verify M11 with `npm pack --dry-run` _and_ a real publish to a scratch package name first if uncertain                                                        |
+| Q3  | Paid-services copy not legally reviewed           | Phase 0 covered open-sourcing decisions, not marketing copy. Risk of claiming services that aren't yet contractually deliverable (e.g. "Sluice MCP Server" before Phase 9 ships) | Get Michael to sign off on the table specifically before merge. Consider adding a "🚧 Coming soon" tag against MCP Server until Phase 9 is in beta            |
+| Q4  | Elevator-pitch ownership                          | _(Resolved during Phase 6 — `docs/elevator-pitch.md` was authored as part of the rewrite, then retired post-phase. Canonical pitch now lives directly in `README.md`.)_          | n/a — closed                                                                                                                                                  |
+| Q5  | "Phase 6.5 — Launch Announcement" not yet specced | Phase 6 closes with the README live but no amplification (HN, Reddit, blog)                                                                                                      | Out of scope for this doc; flagged here so it's tracked. A separate `PHASE-06.5-launch-announcement-spec.md` should be authored when Phase 6 nears completion |
 
 ---
 
@@ -305,5 +305,5 @@ When this spec is created, [SLUICE-IMPLEMENTATION-PLAN.md §16 Document Inventor
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
-*"Clean data flows through."*
+_Caracal Lynx Limited — SC826823 — Gretna, Scotland_
+_"Clean data flows through."_

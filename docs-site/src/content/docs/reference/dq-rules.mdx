@@ -11,11 +11,11 @@ This page is the reference for every built-in rule. To wire DQ into a pipeline, 
 
 Every check declares a `severity`. Severity decides what happens when a row fails:
 
-| Severity | Effect on the row | Effect on the run |
-|---|---|---|
-| `critical` | **Removed** from the output. | Halts the pipeline if `dq.stopOnCritical: true` (the default). |
-| `warning` | **Kept** in the output, but logged in the rejection CSV. | Run continues. |
-| `info` | Kept in the output. | Recorded in the DQ summary JSON only — not in the rejection CSV. |
+| Severity   | Effect on the row                                        | Effect on the run                                                |
+| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| `critical` | **Removed** from the output.                             | Halts the pipeline if `dq.stopOnCritical: true` (the default).   |
+| `warning`  | **Kept** in the output, but logged in the rejection CSV. | Run continues.                                                   |
+| `info`     | Kept in the output.                                      | Recorded in the DQ summary JSON only — not in the rejection CSV. |
 
 The default `dq.stopOnCritical: true` makes Sluice fail loud on any critical violation, so a failing pipeline never silently drops half its data. Set it to `false` in pipelines where you'd rather emit the clean rows and inspect rejections out-of-band.
 
@@ -163,7 +163,7 @@ Alongside the rejection CSV, Sluice writes `{outputDir}/{pipeline.name}-dq-summa
   "violations": { "critical": 0, "warning": 38, "info": 3 },
   "byField": {
     "POST_CODE": { "critical": 0, "warning": 22 },
-    "EMAIL":     { "critical": 0, "warning": 16 }
+    "EMAIL": { "critical": 0, "warning": 16 }
   }
 }
 ```
@@ -177,14 +177,14 @@ In a multi-source pipeline (with `sources` + `merge`), each rule can be scoped t
 ```yaml
 dq:
   rules:
-    - field: STYLE_NO            # Pre-merge: runs against stg_raw_sql-server only.
+    - field: STYLE_NO # Pre-merge: runs against stg_raw_sql-server only.
       sourceId: sql-server
       checks:
         - { type: notNull, severity: critical }
-        - { type: unique,  severity: critical }
-    - field: STYLE_DESC          # Post-merge: runs against stg_merged.
+        - { type: unique, severity: critical }
+    - field: STYLE_DESC # Post-merge: runs against stg_merged.
       checks:
-        - { type: notNull,   severity: critical }
+        - { type: notNull, severity: critical }
         - { type: maxLength, value: 255, severity: warning }
 ```
 

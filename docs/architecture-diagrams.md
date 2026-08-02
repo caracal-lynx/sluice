@@ -4,7 +4,7 @@ Visual reference for the Sluice ETL toolkit. All diagrams are Mermaid and
 render natively in GitHub, VS Code, and most docs portals. A FigJam
 blueprint at the bottom mirrors the same structure for whiteboard use.
 
-> *Clean data flows through.*
+> _Clean data flows through._
 
 ---
 
@@ -691,40 +691,40 @@ flowchart LR
 To mirror these diagrams on a whiteboard, create one board with the
 following frames (left-to-right, then wrap):
 
-| # | Frame title | Content | Connector style |
-|---|---|---|---|
-| 1 | System Context | Diagram 1 | Left → right |
-| 2 | Component Architecture | Diagram 2 | Top → bottom |
-| 3 | Runtime — Single-Source | Diagram 3 (sequence) | Vertical lifelines |
-| 4 | Runtime — Multi-Source Merge | Diagram 4 + strategy legend | Top → bottom |
-| 5 | DQ Engine | Diagram 5 | Top → bottom |
-| 6 | Transform Engine | Diagram 6 + cleanse chain | Top → bottom |
-| 7 | Plugin Architecture | Diagram 7 | Left → right |
-| 8 | Staging Tables | Diagram 8 | Left → right |
-| 9 | Incremental & State | Diagram 9 | Left → right |
-| 10 | CLI & Exit Codes | Diagram 10 | Radial |
-| 11 | Error Hierarchy | Diagram 11 (class diagram) | Inheritance arrows |
-| 12 | Client Deployments | Diagram 12 | Per-client cluster |
+| #   | Frame title                  | Content                     | Connector style    |
+| --- | ---------------------------- | --------------------------- | ------------------ |
+| 1   | System Context               | Diagram 1                   | Left → right       |
+| 2   | Component Architecture       | Diagram 2                   | Top → bottom       |
+| 3   | Runtime — Single-Source      | Diagram 3 (sequence)        | Vertical lifelines |
+| 4   | Runtime — Multi-Source Merge | Diagram 4 + strategy legend | Top → bottom       |
+| 5   | DQ Engine                    | Diagram 5                   | Top → bottom       |
+| 6   | Transform Engine             | Diagram 6 + cleanse chain   | Top → bottom       |
+| 7   | Plugin Architecture          | Diagram 7                   | Left → right       |
+| 8   | Staging Tables               | Diagram 8                   | Left → right       |
+| 9   | Incremental & State          | Diagram 9                   | Left → right       |
+| 10  | CLI & Exit Codes             | Diagram 10                  | Radial             |
+| 11  | Error Hierarchy              | Diagram 11 (class diagram)  | Inheritance arrows |
+| 12  | Client Deployments           | Diagram 12                  | Per-client cluster |
 
 **Sticky-note callouts to add alongside the frames:**
 
-- *DuckDB is the single source of truth mid-run — tables persist after the
-  run for debugging.*
-- *Per-source DQ runs **before** merge; post-merge DQ runs **after**. Same
-  rule library, different scope.*
-- *The `${ENV_VAR}` interpolation happens in `ConfigLoader.load()` — the
-  CLI is responsible for calling `loadEnv()` first.*
-- *`type: custom` fields and `dq.rulesFile` references are resolved by the
-  plugin loader **before** Zod sees them.*
-- *Exit code 2 is reserved for DQ-driven failure — CI can distinguish
-  data-quality blockers from infrastructure errors.*
+- _DuckDB is the single source of truth mid-run — tables persist after the
+  run for debugging._
+- _Per-source DQ runs **before** merge; post-merge DQ runs **after**. Same
+  rule library, different scope._
+- _The `${ENV_VAR}` interpolation happens in `ConfigLoader.load()` — the
+  CLI is responsible for calling `loadEnv()` first._
+- _`type: custom` fields and `dq.rulesFile` references are resolved by the
+  plugin loader **before** Zod sees them._
+- _Exit code 2 is reserved for DQ-driven failure — CI can distinguish
+  data-quality blockers from infrastructure errors._
 
 ---
 
 ## Rendering tips
 
 - **GitHub:** Mermaid renders natively in `.md` files.
-- **VS Code:** install *Markdown Preview Mermaid Support*.
+- **VS Code:** install _Markdown Preview Mermaid Support_.
 - **Static export:** `npx @mermaid-js/mermaid-cli -i docs/architecture-diagrams.md -o docs/arch.pdf`
 - **FigJam:** paste each Mermaid block as a text node beside its frame for
   source-of-truth reference.

@@ -7,13 +7,13 @@
  * never hand-edit it.
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SOURCE = join(__dirname, '..', '..', 'CHANGELOG.md');
-const OUTPUT = join(__dirname, '..', 'src', 'content', 'docs', 'changelog.md');
+const SOURCE = join(__dirname, "..", "..", "CHANGELOG.md");
+const OUTPUT = join(__dirname, "..", "src", "content", "docs", "changelog.md");
 
 const FRONTMATTER = `---
 title: Changelog
@@ -29,12 +29,12 @@ description: Release history for the @caracal-lynx/sluice npm package.
 
 `;
 
-const raw = readFileSync(SOURCE, 'utf-8');
+const raw = readFileSync(SOURCE, "utf-8");
 
 // Strip the Changesets-emitted top-level heading "# @caracal-lynx/sluice" —
 // Starlight already shows the page title from the frontmatter.
-const stripped = raw.replace(/^#\s+@caracal-lynx\/sluice\s*\n+/m, '');
+const stripped = raw.replace(/^#\s+@caracal-lynx\/sluice\s*\n+/m, "");
 
 mkdirSync(dirname(OUTPUT), { recursive: true });
-writeFileSync(OUTPUT, FRONTMATTER + stripped, 'utf-8');
+writeFileSync(OUTPUT, FRONTMATTER + stripped, "utf-8");
 console.log(`✓ Synced CHANGELOG.md → ${OUTPUT}`);

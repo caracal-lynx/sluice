@@ -7,14 +7,14 @@ Every migration looks unique up close, but a small set of patterns shows up in e
 
 ## Common migration challenges
 
-| Challenge | The Sluice answer |
-|---|---|
-| **Data quality in legacy systems** | Front-load the rules. Configure `dq:` so rejections are caught before the load, not after. |
-| **Date format mismatches** | `type: date` with explicit `format:` (dayjs tokens). Targets reformat with `target.dateFormat`. |
-| **Lookup / enum mapping** | `type: lookup` with a CSV or SQL-backed lookup table. Cached in memory once per run. |
-| **Encoding issues** | `source.encoding` accepts any Node-supported encoding (`utf-8`, `latin1`, `windows-1252`). |
-| **Duplicate records** | `dq.rules` with a `unique` check on the primary-key field, severity `critical`. |
-| **Broken referential integrity** | `notNull` + `pattern` on FK fields, severity `critical`. Catches orphaned rows. |
+| Challenge                          | The Sluice answer                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Data quality in legacy systems** | Front-load the rules. Configure `dq:` so rejections are caught before the load, not after.      |
+| **Date format mismatches**         | `type: date` with explicit `format:` (dayjs tokens). Targets reformat with `target.dateFormat`. |
+| **Lookup / enum mapping**          | `type: lookup` with a CSV or SQL-backed lookup table. Cached in memory once per run.            |
+| **Encoding issues**                | `source.encoding` accepts any Node-supported encoding (`utf-8`, `latin1`, `windows-1252`).      |
+| **Duplicate records**              | `dq.rules` with a `unique` check on the primary-key field, severity `critical`.                 |
+| **Broken referential integrity**   | `notNull` + `pattern` on FK fields, severity `critical`. Catches orphaned rows.                 |
 
 ## Pattern 1 — Legacy database modernisation
 
@@ -64,13 +64,13 @@ sources:
     sheet: Categories
     rename:
       Customer Number: CUST_CODE
-      Tier:            CATEGORY
+      Tier: CATEGORY
 
 merge:
   key: CUST_CODE
   strategy: coalesce
   fieldStrategies:
-    - { field: CATEGORY, source: finance }   # always take CATEGORY from finance
+    - { field: CATEGORY, source: finance } # always take CATEGORY from finance
   conflictLog: ./output/customer-merge-conflicts.csv
 ```
 

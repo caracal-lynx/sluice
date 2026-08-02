@@ -12,12 +12,12 @@ mechanics (how the rulesets gate merges, what auto-fires, how to bypass).
 
 ## TL;DR
 
-| Author of PR | Approval path | Merge command |
-|---|---|---|
-| You (admin) | Admin bypass | `gh pr merge <num> --squash --admin --delete-branch` |
-| `renovate[bot]` | Bypassed | Auto, on Renovate's schedule |
-| `caracal-lynx-releaser[bot]` (release PR) | Bypassed | Auto, once `test` is green |
-| Future human contributor | Your approve | `gh pr review <num> --approve` then `gh pr merge` |
+| Author of PR                              | Approval path | Merge command                                        |
+| ----------------------------------------- | ------------- | ---------------------------------------------------- |
+| You (admin)                               | Admin bypass  | `gh pr merge <num> --squash --admin --delete-branch` |
+| `renovate[bot]`                           | Bypassed      | Auto, on Renovate's schedule                         |
+| `caracal-lynx-releaser[bot]` (release PR) | Bypassed      | Auto, once `test` is green                           |
+| Future human contributor                  | Your approve  | `gh pr review <num> --approve` then `gh pr merge`    |
 
 Every PR — regardless of author — must pass the `test` status check
 and have all conversations resolved. Neither rule is bypassable.
@@ -34,34 +34,34 @@ is versioned for reproducibility and disaster recovery.
 
 Bypass list **empty**. Applies to everyone with no exceptions.
 
-| Rule | Effect |
-|---|---|
-| `deletion` | `master` cannot be deleted |
-| `non_fast_forward` | Force-pushes to `master` blocked |
-| `required_linear_history` | Merge commits blocked — squash/rebase only |
-| `pull_request` (approvals = 0) | Direct push blocked; PR is required |
-| `required_review_thread_resolution` | All conversations must be resolved before merge |
-| `required_status_checks: [test]` | The `test` CI job must pass |
-| `copilot_code_review` | Copilot is auto-requested as reviewer on every PR |
+| Rule                                | Effect                                            |
+| ----------------------------------- | ------------------------------------------------- |
+| `deletion`                          | `master` cannot be deleted                        |
+| `non_fast_forward`                  | Force-pushes to `master` blocked                  |
+| `required_linear_history`           | Merge commits blocked — squash/rebase only        |
+| `pull_request` (approvals = 0)      | Direct push blocked; PR is required               |
+| `required_review_thread_resolution` | All conversations must be resolved before merge   |
+| `required_status_checks: [test]`    | The `test` CI job must pass                       |
+| `copilot_code_review`               | Copilot is auto-requested as reviewer on every PR |
 
 ### B. `Master review gate` — id `16544434`
 
 Layered on top. Adds the formal-approval gate with a bypass list.
 
-| Rule | Effect (for non-bypass actors) |
-|---|---|
-| `required_approving_review_count: 1` | One approving review required |
-| `dismiss_stale_reviews_on_push: true` | Push after approval re-opens the gate |
-| `require_last_push_approval: true` | The approver must have seen the most recent push |
+| Rule                                  | Effect (for non-bypass actors)                   |
+| ------------------------------------- | ------------------------------------------------ |
+| `required_approving_review_count: 1`  | One approving review required                    |
+| `dismiss_stale_reviews_on_push: true` | Push after approval re-opens the gate            |
+| `require_last_push_approval: true`    | The approver must have seen the most recent push |
 
 **Bypass list** (all with `bypass_mode: pull_request` — bypass applies
 to PR merges only; direct/force pushes still blocked by Ruleset A):
 
-| Actor | `actor_type` | `actor_id` |
-|---|---|---|
-| Repository admins | `RepositoryRole` | `5` |
-| `renovate[bot]` | `Integration` | `2740` |
-| `caracal-lynx-releaser` | `Integration` | `3756937` |
+| Actor                   | `actor_type`     | `actor_id` |
+| ----------------------- | ---------------- | ---------- |
+| Repository admins       | `RepositoryRole` | `5`        |
+| `renovate[bot]`         | `Integration`    | `2740`     |
+| `caracal-lynx-releaser` | `Integration`    | `3756937`  |
 
 ---
 
@@ -85,12 +85,12 @@ Emoji conventions in the recent commit log: 🛡️ security/policy,
 
 ### What runs automatically when you open the PR
 
-| Action | When | Source |
-|---|---|---|
-| `test` job (lint + typecheck + build + test:cov) | every PR | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) |
-| `Analyze (javascript-typescript)` / `Analyze (actions)` (CodeQL) | every PR | GitHub default security setup |
-| `Build` (Astro docs site) | only PRs touching `docs-site/**`, `src/config/schema.ts`, `CHANGELOG.md`, `PLUGINS.md`, `README.md`, or the docs workflow | [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) |
-| Copilot code review | every PR | Ruleset A `copilot_code_review` rule |
+| Action                                                           | When                                                                                                                      | Source                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `test` job (lint + typecheck + build + test:cov)                 | every PR                                                                                                                  | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)     |
+| `Analyze (javascript-typescript)` / `Analyze (actions)` (CodeQL) | every PR                                                                                                                  | GitHub default security setup                                 |
+| `Build` (Astro docs site)                                        | only PRs touching `docs-site/**`, `src/config/schema.ts`, `CHANGELOG.md`, `PLUGINS.md`, `README.md`, or the docs workflow | [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) |
+| Copilot code review                                              | every PR                                                                                                                  | Ruleset A `copilot_code_review` rule                          |
 
 Only `test` is a **required** status check. The others are informative.
 
@@ -129,7 +129,7 @@ Or use the UI Files-changed → "Start a review" flow.
 
 GitHub forbids self-`APPROVE`. The `Approve` option is hidden in the UI
 for your own PRs, and `gh pr review --approve` returns 422
-*"Can not approve your own pull request"*. That's why the
+_"Can not approve your own pull request"_. That's why the
 `RepositoryRole: admin` bypass exists on Ruleset B — without it, every
 solo-authored PR would be permanently blocked.
 
@@ -148,7 +148,7 @@ gh pr merge <num> --squash --admin --delete-branch
 
 The `--admin` flag is **required**. Without it, `gh` refuses because
 `mergeStateStatus` reports `BLOCKED` (the approval gate is not
-satisfied; admins are *allowed* to bypass it but `gh` doesn't
+satisfied; admins are _allowed_ to bypass it but `gh` doesn't
 auto-detect that without the flag).
 
 UI equivalent: scroll to the merge box at the bottom of the PR → look
@@ -193,6 +193,7 @@ Workflow:
 [`.github/workflows/release.yml`](../.github/workflows/release.yml)
 
 App credentials:
+
 - `vars.RELEASER_APP_ID` = `3756937`
 - `secrets.RELEASER_PRIVATE_KEY` (RSA private key)
 
@@ -246,9 +247,9 @@ Notes:
   their own PRs but cannot bypass `test`, conversation resolution, or
   the linear-history / force-push restrictions.
 - **`github-actions[bot]` cannot be added as a bypass actor at the
-  repo level.** GitHub rejects it with *"Actor GitHub Actions
+  repo level.** GitHub rejects it with _"Actor GitHub Actions
   integration must be part of the ruleset source or owner
-  organization"*. That's why the release flow uses the dedicated
+  organization"_. That's why the release flow uses the dedicated
   `caracal-lynx-releaser` GitHub App instead of the default
   `GITHUB_TOKEN`.
 - **`renovate[bot]`** is on (B) so dep-bump PRs auto-merge without
@@ -258,18 +259,18 @@ Notes:
 
 ## Reference
 
-| Thing | Value / link |
-|---|---|
-| Live rulesets UI | https://github.com/caracal-lynx/sluice/rules |
-| Structural ruleset id | `16544364` |
-| Review-gate ruleset id | `16544434` |
-| Required check name | `test` |
-| Renovate app id | `2740` |
-| caracal-lynx-releaser app id | `3756937` |
-| Repository admin role id | `5` |
-| Renovate config | [`renovate.json`](../renovate.json) |
-| CI workflow | [`ci.yml`](../.github/workflows/ci.yml) |
-| Docs workflow | [`docs.yml`](../.github/workflows/docs.yml) |
-| Release workflow | [`release.yml`](../.github/workflows/release.yml) |
-| Ruleset JSON (A) | [`.github/rulesets/protect-master-structural.json`](../.github/rulesets/protect-master-structural.json) |
-| Ruleset JSON (B) | [`.github/rulesets/master-review-gate.json`](../.github/rulesets/master-review-gate.json) |
+| Thing                        | Value / link                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Live rulesets UI             | https://github.com/caracal-lynx/sluice/rules                                                            |
+| Structural ruleset id        | `16544364`                                                                                              |
+| Review-gate ruleset id       | `16544434`                                                                                              |
+| Required check name          | `test`                                                                                                  |
+| Renovate app id              | `2740`                                                                                                  |
+| caracal-lynx-releaser app id | `3756937`                                                                                               |
+| Repository admin role id     | `5`                                                                                                     |
+| Renovate config              | [`renovate.json`](../renovate.json)                                                                     |
+| CI workflow                  | [`ci.yml`](../.github/workflows/ci.yml)                                                                 |
+| Docs workflow                | [`docs.yml`](../.github/workflows/docs.yml)                                                             |
+| Release workflow             | [`release.yml`](../.github/workflows/release.yml)                                                       |
+| Ruleset JSON (A)             | [`.github/rulesets/protect-master-structural.json`](../.github/rulesets/protect-master-structural.json) |
+| Ruleset JSON (B)             | [`.github/rulesets/master-review-gate.json`](../.github/rulesets/master-review-gate.json)               |

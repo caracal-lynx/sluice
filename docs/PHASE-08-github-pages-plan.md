@@ -26,16 +26,16 @@ The schema doc is your biggest asset because it's what developers will be search
 
 ### For a Consultancy Specifically
 
-- A *Use Cases* page covering the range of data migration scenarios Sluice supports — not limited to ERP (no client names)
-- A *Commercial Support* page making it clear Caracal Lynx builds and supports this — GitHub Pages is a quiet but effective lead-generation channel
+- A _Use Cases_ page covering the range of data migration scenarios Sluice supports — not limited to ERP (no client names)
+- A _Commercial Support_ page making it clear Caracal Lynx builds and supports this — GitHub Pages is a quiet but effective lead-generation channel
 
 ### Tooling Recommendation
 
-| Tool | Notes |
-|------|-------|
+| Tool          | Notes                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
 | **VitePress** | Current favourite for TypeScript project docs. Fast, Markdown-based, deploys to GitHub Pages trivially. |
-| **Astro** | Also excellent — you're already familiar with it, so zero learning curve. |
-| **TypeDoc** | Auto-generates API docs from TypeScript source. Near-free given your codebase. |
+| **Astro**     | Also excellent — you're already familiar with it, so zero learning curve.                               |
+| **TypeDoc**   | Auto-generates API docs from TypeScript source. Near-free given your codebase.                          |
 
 > **The single most important page:** the **Quickstart**. If someone can go from `npm install -g @caracal-lynx/sluice` to a working pipeline run in under 10 minutes, you'll get stars. If they can't, they'll leave.
 
@@ -81,6 +81,7 @@ sluice docs/
 **Goal:** Grab attention, explain the value proposition, and funnel visitors to the Quickstart.
 
 **Content:**
+
 - Hero: **elevator pitch** — lead with the problem (data quality is the hidden blocker for both migrations and AI adoption), the solution ("Sluice is a data migration and data quality tool that validates your data before it reaches its destination — not after"), and the value proposition ("Clean data flows through."). Use the full 30-second pitch: you tell it where the data comes from, the quality rules it has to pass, and how each field maps to the destination; Sluice validates before the load, handles all the reformatting and field mapping along the way, and loads the clean records to your destination. Also surface the AI readiness angle: AI tools amplify your data quality — for better or worse. _(Originally sourced from `docs/elevator-pitch.md`; that file was retired post-Phase 6/8. The canonical pitch text now lives directly in [`README.md`](../README.md) and the docs site's hero block pulls from the same place.)_
 - Three-column value props:
   - **Config-driven** — pipelines defined in YAML, no code required for standard migrations
@@ -98,6 +99,7 @@ sluice docs/
 **Goal:** Zero-to-installed in under two minutes.
 
 **Content:**
+
 - Prerequisites: Node.js 24 LTS
 - Install via npm: `npm install -g @caracal-lynx/sluice`
 - Verify: `sluice --version`
@@ -111,6 +113,7 @@ sluice docs/
 **Goal:** Working pipeline run in under 10 minutes. This is the most important page on the site.
 
 **Content:**
+
 1. Create a minimal pipeline YAML (CSV source → CSV target, one transform, one DQ rule)
 2. Run `sluice check pipeline.yaml` — validate config
 3. Run `sluice run pipeline.yaml` — full run
@@ -125,6 +128,7 @@ sluice docs/
 **Goal:** Build a mental model before diving into the reference docs.
 
 **Content:**
+
 - **Pipeline** — the unit of work; one YAML file = one migration job
 - **Source adapter** — where data comes from (`mssql`, `pg`, `csv`, `xlsx`, `rest`)
 - **Staging** — data lands in an embedded DuckDB store between phases
@@ -150,6 +154,7 @@ flowchart LR
 **Goal:** Definitive, searchable reference for every key in a pipeline YAML.
 
 **Content:**
+
 - Full annotated schema (auto-generated from Zod where possible, with human descriptions added)
 - Organised by top-level section: `name`, `source`, `dq`, `transform`, `target`, `options`
 - Each key: type, required/optional, default, description, example value
@@ -163,13 +168,13 @@ flowchart LR
 
 **Adapters to document:**
 
-| Adapter | Key config fields |
-|---------|-------------------|
+| Adapter | Key config fields                                                  |
+| ------- | ------------------------------------------------------------------ |
 | `mssql` | `host`, `port`, `database`, `user`, `password`, `query` or `table` |
-| `pg` | `connectionString`, `query` or `table` |
-| `csv` | `path`, `delimiter`, `hasHeader`, `encoding` |
-| `xlsx` | `path`, `sheet`, `headerRow` |
-| `rest` | `url`, `method`, `headers`, `pagination`, `responseField` |
+| `pg`    | `connectionString`, `query` or `table`                             |
+| `csv`   | `path`, `delimiter`, `hasHeader`, `encoding`                       |
+| `xlsx`  | `path`, `sheet`, `headerRow`                                       |
+| `rest`  | `url`, `method`, `headers`, `pagination`, `responseField`          |
 
 Each adapter gets: config key table, a minimal YAML example, and any gotchas (e.g. XLSX is read-only, REST pagination modes).
 
@@ -181,13 +186,13 @@ Each adapter gets: config key table, a minimal YAML example, and any gotchas (e.
 
 **Adapters to document:**
 
-| Adapter | Notes |
-|---------|-------|
-| `bc` | OData REST + OAuth2; Business Central |
-| `ifs` | CSV output, no header row |
+| Adapter      | Notes                                        |
+| ------------ | -------------------------------------------- |
+| `bc`         | OData REST + OAuth2; Business Central        |
+| `ifs`        | CSV output, no header row                    |
 | `bluecherry` | CSV output, US date format, headers required |
-| `csv` | Generic CSV output |
-| `pg` | PostgreSQL bulk insert |
+| `csv`        | Generic CSV output                           |
+| `pg`         | PostgreSQL bulk insert                       |
 
 Each adapter gets: config key table, a minimal YAML example, and format-specific notes (e.g. IFS no-header requirement, BlueCherry US date format).
 
@@ -199,21 +204,22 @@ Each adapter gets: config key table, a minimal YAML example, and format-specific
 
 **Rules to document:**
 
-| Rule | Description |
-|------|-------------|
-| `notNull` | Field must have a value |
-| `unique` | Field value must be unique across all rows |
-| `pattern` | Field must match a regex |
-| `email` | Field must be a valid email address |
-| `ukPostcode` | Field must be a valid UK postcode |
-| `maxLength` | Field length must not exceed N characters |
-| `min` | Numeric value must be ≥ N |
-| `max` | Numeric value must be ≤ N |
+| Rule            | Description                                  |
+| --------------- | -------------------------------------------- |
+| `notNull`       | Field must have a value                      |
+| `unique`        | Field value must be unique across all rows   |
+| `pattern`       | Field must match a regex                     |
+| `email`         | Field must be a valid email address          |
+| `ukPostcode`    | Field must be a valid UK postcode            |
+| `maxLength`     | Field length must not exceed N characters    |
+| `min`           | Numeric value must be ≥ N                    |
+| `max`           | Numeric value must be ≤ N                    |
 | `allowedValues` | Field must be one of a defined set of values |
 
 Each rule gets: config syntax, what a failure looks like in the rejection CSV, and a YAML example.
 
 **Also cover:**
+
 - `severity` levels (`warn` vs `critical`) and their effect on exit codes
 - The rejection CSV format
 - The DQ summary JSON format
@@ -226,19 +232,20 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 
 **Types to document:**
 
-| Type | Description |
-|------|-------------|
-| `string` | Cast to string |
-| `number` | Cast to integer |
-| `decimal` | Cast to decimal (with precision) |
-| `boolean` | Cast to boolean |
-| `date` | Parse and reformat dates (uses `dayjs`) |
-| `lookup` | Map a value via a lookup table |
-| `concat` | Concatenate multiple fields |
-| `constant` | Output a fixed value |
+| Type         | Description                                                          |
+| ------------ | -------------------------------------------------------------------- |
+| `string`     | Cast to string                                                       |
+| `number`     | Cast to integer                                                      |
+| `decimal`    | Cast to decimal (with precision)                                     |
+| `boolean`    | Cast to boolean                                                      |
+| `date`       | Parse and reformat dates (uses `dayjs`)                              |
+| `lookup`     | Map a value via a lookup table                                       |
+| `concat`     | Concatenate multiple fields                                          |
+| `constant`   | Output a fixed value                                                 |
 | `expression` | Evaluate an `expr-eval` expression; `js:` prefix for VM escape hatch |
 
 **Also cover:**
+
 - Cleanse operations: `trim`, `titleCase`, `normaliseUnicode` etc., and how they pipe-chain (e.g. `trim|titleCase|normaliseUnicode`)
 - The `expression` type safety note (no `eval()`, `vm.runInNewContext` for `js:` prefix)
 
@@ -249,6 +256,7 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 **Goal:** Demonstrate Sluice's value across a range of real-world data migration scenarios without exposing client detail.
 
 **Content:**
+
 - Common migration challenges: data quality in legacy systems, date format mismatches, lookup/enum mapping, encoding issues, duplicate records, broken referential integrity
 - How Sluice's pipeline phases address each challenge
 - Pattern: extract → profile (`sluice profile`) → iterate DQ rules → transform → load
@@ -263,6 +271,7 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 **Goal:** Practical walkthrough for someone building their first real pipeline.
 
 **Content:**
+
 - Start from a real source schema (example: a legacy `Customers` table)
 - Step-by-step: define source → add DQ rules → define transforms → configure target
 - Common mistakes: missing `notNull` on FK fields, date format assumptions, encoding
@@ -270,18 +279,19 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 
 ---
 
-### Guides — Using the Plugin System *(Phase 2)*
+### Guides — Using the Plugin System _(Phase 2)_
 
 **Goal:** Explain the three-tier extension system and how to write a plugin.
 
 **Content:**
+
 - Overview of the three tiers: YAML composite rules / TypeScript plugin files / npm packages
 - How to write a custom source adapter as a TS plugin
 - How to write a custom DQ rule
 - How to publish a plugin as `sluice-adapter-*` on npm
 - Plugin discovery and the registry
 
-> *This page can be a stub ("coming in v2") until Phase 2 is complete.*
+> _This page can be a stub ("coming in v2") until Phase 2 is complete._
 
 ---
 
@@ -290,6 +300,7 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 **Goal:** Show how to run Sluice in GitHub Actions (the primary CI target).
 
 **Content:**
+
 - Example GitHub Actions workflow: `sluice validate` on PR, `sluice run` on merge
 - Exit code reference (0 = ok, 1 = error, 2 = DQ critical, 3 = config)
 - Handling secrets: connection strings via GitHub Actions secrets + ENV var resolution in YAML
@@ -302,6 +313,7 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 **Goal:** Satisfy the technically curious; build trust with engineering audiences.
 
 **Content:**
+
 - The six pipeline phases with a detailed Mermaid diagram
 - Why DuckDB: embedded, no server, fast columnar staging
 - Why YAML + Zod: human-readable config with compile-time and runtime type safety
@@ -310,17 +322,18 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 
 ---
 
-### Architecture — Extension Points *(Phase 2)*
+### Architecture — Extension Points _(Phase 2)_
 
 **Goal:** Document the plugin architecture for would-be contributors.
 
 **Content:**
+
 - The plugin registry (`src/plugins/registry.ts`)
 - The three extension tiers and their interfaces
 - How to register a custom adapter
 - The resolution order: built-in → YAML composite → TS file → npm package
 
-> *Can be a stub until Phase 2 is complete.*
+> _Can be a stub until Phase 2 is complete._
 
 ---
 
@@ -329,6 +342,7 @@ Each rule gets: config syntax, what a failure looks like in the rejection CSV, a
 **Goal:** Help prospective clients and users self-identify. No client names — keep it generic.
 
 **Content:**
+
 - **Legacy system migration** — moving data from an ageing SQL Server or flat-file system into a modern platform
 - **Platform-to-platform migration** — switching systems; field mapping, format translation, and data quality enforcement
 - **ERP data migration** — structured migration into ERP systems such as IFS, Business Central, or BlueCherry (ERP-specific adapters available as paid add-ons from Caracal Lynx)
@@ -347,6 +361,7 @@ Each use case: 2–3 sentences describing the problem, and which Sluice features
 **Goal:** Auto-generated TypeScript API docs for contributors and plugin authors.
 
 **Content:**
+
 - Generated by TypeDoc from source
 - Focus on the public API surface: adapter interfaces, DQ rule interfaces, transform interfaces, plugin hooks (Phase 2)
 - Linked from the plugin authoring guide
@@ -358,6 +373,7 @@ Each use case: 2–3 sentences describing the problem, and which Sluice features
 **Goal:** Signal active maintenance and give users a reason to upgrade.
 
 **Content:**
+
 - Semantic versioning (`MAJOR.MINOR.PATCH`)
 - One entry per release: date, version, what changed (features, fixes, breaking changes)
 - Keep `CHANGELOG.md` in the repo root; render it here
@@ -370,6 +386,7 @@ Each use case: 2–3 sentences describing the problem, and which Sluice features
 **Goal:** Quiet but effective lead generation for Caracal Lynx.
 
 **Content:**
+
 - One paragraph: Sluice is built and maintained by Caracal Lynx Limited, an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools
 - What Caracal Lynx offers (table format):
   - **AI Data Readiness Audit** — Caracal Lynx connects Sluice to your data sources, builds the quality ruleset, runs it, and delivers a clear report on what's AI-ready and what needs fixing first

@@ -34,14 +34,14 @@ Sluice will be open-sourced as a best-in-class, YAML-driven ETL pipeline CLI for
 
 The strategic split is deliberate:
 
-| Layer | Visibility | Rationale |
-|-------|-----------|-----------|
-| **Core CLI engine** | 🌍 Public (ELv2) | Community credibility, ecosystem growth, marketing asset |
-| **Enrichment service** | 🔒 Private (paid) | Premium async API lookups — not a commodity |
-| **Country/region rule packages** | 🔒 Private (paid) | Domain expertise — part of Caracal Lynx's service value |
-| **Application adapter packages** | 🔒 Private (paid) | ERP-specific knowledge — not a commodity |
-| **Client-specific plugins** | 🔒 Private (paid) | Bespoke per-engagement deliverables |
-| **Sluice MCP Server** | 🔒 Private (paid) | AI-assisted migration — premium agentic service |
+| Layer                            | Visibility        | Rationale                                                |
+| -------------------------------- | ----------------- | -------------------------------------------------------- |
+| **Core CLI engine**              | 🌍 Public (ELv2)  | Community credibility, ecosystem growth, marketing asset |
+| **Enrichment service**           | 🔒 Private (paid) | Premium async API lookups — not a commodity              |
+| **Country/region rule packages** | 🔒 Private (paid) | Domain expertise — part of Caracal Lynx's service value  |
+| **Application adapter packages** | 🔒 Private (paid) | ERP-specific knowledge — not a commodity                 |
+| **Client-specific plugins**      | 🔒 Private (paid) | Bespoke per-engagement deliverables                      |
+| **Sluice MCP Server**            | 🔒 Private (paid) | AI-assisted migration — premium agentic service          |
 
 This is the "commoditise the platform, sell the expertise" model: the engine is open, the knowledge is not.
 
@@ -183,22 +183,22 @@ flowchart TD
 
 ### 3.2 Estimated Timeline
 
-| Phase | What | Duration | Can start |
-|-------|------|----------|-----------|
-| **Phase 0** | Governance & legal | ✅ **COMPLETE** | — |
-| **Phase 1** | Node v24 + DuckDB Neo | ✅ **COMPLETE** (3 May 2026, PR #8) | — |
-| **Phase 2** | TypeScript v6 | ✅ **COMPLETE** (4 May 2026, PR #13) | — |
-| **Phase 3** | Plugin system | ✅ **COMPLETE** | — |
-| **Phase 4a** | Enrich framework (OSC scaffolding + private framework) | ✅ **COMPLETE** (5–6 May 2026, OSC commit `3ccfd8e` + `@caracal-lynx/sluice-enrich@0.1.0` / `0.1.1`) | — |
-| **Phase 4b** | Built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`) | ✅ **COMPLETE** (7 May 2026, `@caracal-lynx/sluice-enrich@1.0.0` published; sluice-enrich PRs #19, #21, #22, #23, #25) | — |
-| **Phase 5** | Restructure & launch | ✅ **COMPLETE** (4 May 2026, PRs [#18–#22](https://github.com/caracal-lynx/sluice/pulls?q=is%3Apr+is%3Amerged+phase-5)) | — |
-| **Phase 6** | README & marketing | ✅ **COMPLETE** (4 May 2026, [PR #27](https://github.com/caracal-lynx/sluice/pull/27)) | — |
-| **Phase 7** | git/npm workflow | ✅ **COMPLETE** (5 May 2026, PRs [#29](https://github.com/caracal-lynx/sluice/pull/29) · [#31](https://github.com/caracal-lynx/sluice/pull/31) · [#33](https://github.com/caracal-lynx/sluice/pull/33) · [#34](https://github.com/caracal-lynx/sluice/pull/34) · [#35](https://github.com/caracal-lynx/sluice/pull/35) · [#36](https://github.com/caracal-lynx/sluice/pull/36)) | — |
-| **Phase 8** | GitHub Pages | ✅ **COMPLETE** (5 May 2026, PRs [#41](https://github.com/caracal-lynx/sluice/pull/41) · [#42](https://github.com/caracal-lynx/sluice/pull/42) · [#43](https://github.com/caracal-lynx/sluice/pull/43) · [#44](https://github.com/caracal-lynx/sluice/pull/44) · [#45](https://github.com/caracal-lynx/sluice/pull/45)) | — |
-| **Phase 9** | MCP Server | 8–12 weeks | **Now unblocked** (Phase 3 complete) |
-| **Phase 10** | Node v26 | 1–2 days | Oct 2026 (LTS cut) |
-| **Phase 11a** | tsgo CI type-check | ✅ **MERGED — IN SOAK** (4 May 2026, PR #15) | — |
-| **Phase 11b** | TypeScript v7 (full switch) | 1–2 hours | When tsgo emit stable (mid/late 2026) |
+| Phase         | What                                                       | Duration                                                                                                                                                                                                                                                                                                                                                                        | Can start                             |
+| ------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **Phase 0**   | Governance & legal                                         | ✅ **COMPLETE**                                                                                                                                                                                                                                                                                                                                                                 | —                                     |
+| **Phase 1**   | Node v24 + DuckDB Neo                                      | ✅ **COMPLETE** (3 May 2026, PR #8)                                                                                                                                                                                                                                                                                                                                             | —                                     |
+| **Phase 2**   | TypeScript v6                                              | ✅ **COMPLETE** (4 May 2026, PR #13)                                                                                                                                                                                                                                                                                                                                            | —                                     |
+| **Phase 3**   | Plugin system                                              | ✅ **COMPLETE**                                                                                                                                                                                                                                                                                                                                                                 | —                                     |
+| **Phase 4a**  | Enrich framework (OSC scaffolding + private framework)     | ✅ **COMPLETE** (5–6 May 2026, OSC commit `3ccfd8e` + `@caracal-lynx/sluice-enrich@0.1.0` / `0.1.1`)                                                                                                                                                                                                                                                                            | —                                     |
+| **Phase 4b**  | Built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`) | ✅ **COMPLETE** (7 May 2026, `@caracal-lynx/sluice-enrich@1.0.0` published; sluice-enrich PRs #19, #21, #22, #23, #25)                                                                                                                                                                                                                                                          | —                                     |
+| **Phase 5**   | Restructure & launch                                       | ✅ **COMPLETE** (4 May 2026, PRs [#18–#22](https://github.com/caracal-lynx/sluice/pulls?q=is%3Apr+is%3Amerged+phase-5))                                                                                                                                                                                                                                                         | —                                     |
+| **Phase 6**   | README & marketing                                         | ✅ **COMPLETE** (4 May 2026, [PR #27](https://github.com/caracal-lynx/sluice/pull/27))                                                                                                                                                                                                                                                                                          | —                                     |
+| **Phase 7**   | git/npm workflow                                           | ✅ **COMPLETE** (5 May 2026, PRs [#29](https://github.com/caracal-lynx/sluice/pull/29) · [#31](https://github.com/caracal-lynx/sluice/pull/31) · [#33](https://github.com/caracal-lynx/sluice/pull/33) · [#34](https://github.com/caracal-lynx/sluice/pull/34) · [#35](https://github.com/caracal-lynx/sluice/pull/35) · [#36](https://github.com/caracal-lynx/sluice/pull/36)) | —                                     |
+| **Phase 8**   | GitHub Pages                                               | ✅ **COMPLETE** (5 May 2026, PRs [#41](https://github.com/caracal-lynx/sluice/pull/41) · [#42](https://github.com/caracal-lynx/sluice/pull/42) · [#43](https://github.com/caracal-lynx/sluice/pull/43) · [#44](https://github.com/caracal-lynx/sluice/pull/44) · [#45](https://github.com/caracal-lynx/sluice/pull/45))                                                         | —                                     |
+| **Phase 9**   | MCP Server                                                 | 8–12 weeks                                                                                                                                                                                                                                                                                                                                                                      | **Now unblocked** (Phase 3 complete)  |
+| **Phase 10**  | Node v26                                                   | 1–2 days                                                                                                                                                                                                                                                                                                                                                                        | Oct 2026 (LTS cut)                    |
+| **Phase 11a** | tsgo CI type-check                                         | ✅ **MERGED — IN SOAK** (4 May 2026, PR #15)                                                                                                                                                                                                                                                                                                                                    | —                                     |
+| **Phase 11b** | TypeScript v7 (full switch)                                | 1–2 hours                                                                                                                                                                                                                                                                                                                                                                       | When tsgo emit stable (mid/late 2026) |
 
 ### 3.3 Gantt Chart
 
@@ -307,11 +307,11 @@ Two changes done together in a single PR:
 
 ### Why Node 24 Not 26?
 
-| | Node 24 LTS | Node 26 LTS |
-|-|-------------|-------------|
-| Released | April 2025 | April 2026 |
-| LTS start | October 2025 | October 2026 |
-| EOL | April 2028 | April 2030 |
+|            | Node 24 LTS   | Node 26 LTS              |
+| ---------- | ------------- | ------------------------ |
+| Released   | April 2025    | April 2026               |
+| LTS start  | October 2025  | October 2026             |
+| EOL        | April 2028    | April 2030               |
 | Status now | ✅ Active LTS | 🔵 Current (not yet LTS) |
 
 Node 26 is "Current" until October 2026 — not recommended for production. Node 24 is the correct LTS target today.
@@ -411,10 +411,10 @@ flowchart LR
 
 TypeScript 7 uses a native Go compiler (`tsgo`) — 10× faster type-checking. The migration is two-phased to avoid disruption:
 
-| Stage | When | What | Impact |
-|-------|------|------|--------|
-| **11A — Parallel type-check** | After Phase 2 | Add `tsgo --noEmit` to CI alongside `tsc` | Zero disruption. Free speed benefit on CI. |
-| **11 — Full switch** | When tsgo emit stable (mid/late 2026) | Retire `tsc`, use `tsgo` for both type-check and build | Under-second type-check for ~50 source files |
+| Stage                         | When                                  | What                                                   | Impact                                       |
+| ----------------------------- | ------------------------------------- | ------------------------------------------------------ | -------------------------------------------- |
+| **11A — Parallel type-check** | After Phase 2                         | Add `tsgo --noEmit` to CI alongside `tsc`              | Zero disruption. Free speed benefit on CI.   |
+| **11 — Full switch**          | When tsgo emit stable (mid/late 2026) | Retire `tsc`, use `tsgo` for both type-check and build | Under-second type-check for ~50 source files |
 
 ### Success Criteria
 
@@ -480,22 +480,22 @@ flowchart TB
 
 ### 8.1 Package Architecture
 
-| Component | Location | Visibility |
-|-----------|----------|-----------|
-| `EnrichPlugin` interface | `@caracal-lynx/sluice` core | 🌍 Public (types only) |
-| `EnrichResult` / `EnrichConfig` Zod schemas | `@caracal-lynx/sluice` core | 🌍 Public (schema stubs) |
-| `registerEnrichPhase()` hook | `@caracal-lynx/sluice` core runner | 🌍 Public (hook only) |
-| `EnrichRegistry` | `@caracal-lynx/sluice-enrich` | 🔒 Private |
-| `EnrichmentRunner` | `@caracal-lynx/sluice-enrich` | 🔒 Private |
-| `EnrichCache` | `@caracal-lynx/sluice-enrich` | 🔒 Private |
-| CLI extensions (`sluice enrich *`) | `@caracal-lynx/sluice-enrich` | 🔒 Private |
-| Built-in providers (Phase 4b) | `@caracal-lynx/sluice-enrich` | 🔒 Private |
+| Component                                   | Location                           | Visibility               |
+| ------------------------------------------- | ---------------------------------- | ------------------------ |
+| `EnrichPlugin` interface                    | `@caracal-lynx/sluice` core        | 🌍 Public (types only)   |
+| `EnrichResult` / `EnrichConfig` Zod schemas | `@caracal-lynx/sluice` core        | 🌍 Public (schema stubs) |
+| `registerEnrichPhase()` hook                | `@caracal-lynx/sluice` core runner | 🌍 Public (hook only)    |
+| `EnrichRegistry`                            | `@caracal-lynx/sluice-enrich`      | 🔒 Private               |
+| `EnrichmentRunner`                          | `@caracal-lynx/sluice-enrich`      | 🔒 Private               |
+| `EnrichCache`                               | `@caracal-lynx/sluice-enrich`      | 🔒 Private               |
+| CLI extensions (`sluice enrich *`)          | `@caracal-lynx/sluice-enrich`      | 🔒 Private               |
+| Built-in providers (Phase 4b)               | `@caracal-lynx/sluice-enrich`      | 🔒 Private               |
 
 The `registerEnrichPhase()` pattern keeps the runner clean:
 
 ```typescript
 // In open-source PipelineRunner (src/runner/runner.ts)
-import type { EnrichPhaseFactory } from './types.js';
+import type { EnrichPhaseFactory } from "./types.js";
 let enrichPhaseFactory: EnrichPhaseFactory | undefined;
 
 export function registerEnrichPhase(factory: EnrichPhaseFactory): void {
@@ -522,6 +522,7 @@ flowchart LR
 ```
 
 **Key constraints:**
+
 - `EnrichPlugin.enrich()` is **async** (unlike DQ/Transform plugins which are sync) — network I/O is the whole point
 - Cache backed by DuckDB (same instance as staging) — no external cache service
 - Batch lookups: group rows by lookup key to minimise API calls
@@ -531,11 +532,11 @@ flowchart LR
 
 The three built-in providers are a **separate development phase** within the private `sluice-enrich` package. They are not part of Phase 4a and may be released independently:
 
-| Provider | API | What it enriches |
-|----------|-----|-----------------|
-| `vies` | EU VIES SOAP API | VAT registration validation + company name |
-| `hmrc-vat` | HMRC VAT Number API | UK VAT registration validation |
-| `uk-trade-tariff` | UK Global Tariff API | Commodity code descriptions + duty rates |
+| Provider          | API                  | What it enriches                           |
+| ----------------- | -------------------- | ------------------------------------------ |
+| `vies`            | EU VIES SOAP API     | VAT registration validation + company name |
+| `hmrc-vat`        | HMRC VAT Number API  | UK VAT registration validation             |
+| `uk-trade-tariff` | UK Global Tariff API | Commodity code descriptions + duty rates   |
 
 All three providers are behind the `@caracal-lynx/sluice-enrich` paywall. They are not open-source.
 
@@ -592,16 +593,16 @@ AFTER (separate repos):
 
 ### 5.2 Open-Source Hygiene Files for `caracal-lynx/sluice`
 
-| File | Purpose |
-|------|---------|
-| `LICENSE` | Elastic Licence 2.0 text |
-| `LICENCE-FAQ.md` | Plain-English licence explainer (already written) |
-| `CONTRIBUTING.md` | How to submit PRs and issues |
-| `CODE_OF_CONDUCT.md` | Community standards (Contributor Covenant v2.1) |
-| `SECURITY.md` | Vulnerability disclosure process |
-| `README.md` | Elevator pitch + quick start + paid services signpost |
-| `.github/ISSUE_TEMPLATE/` | Bug report + feature request templates |
-| `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist |
+| File                               | Purpose                                               |
+| ---------------------------------- | ----------------------------------------------------- |
+| `LICENSE`                          | Elastic Licence 2.0 text                              |
+| `LICENCE-FAQ.md`                   | Plain-English licence explainer (already written)     |
+| `CONTRIBUTING.md`                  | How to submit PRs and issues                          |
+| `CODE_OF_CONDUCT.md`               | Community standards (Contributor Covenant v2.1)       |
+| `SECURITY.md`                      | Vulnerability disclosure process                      |
+| `README.md`                        | Elevator pitch + quick start + paid services signpost |
+| `.github/ISSUE_TEMPLATE/`          | Bug report + feature request templates                |
+| `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist                                          |
 
 ### 5.3 Apply ELv2 Licence to Source Files
 
@@ -613,6 +614,7 @@ AFTER (separate repos):
 Add to the top of every `.ts` file in `packages/core/src/`.
 
 Update `package.json`:
+
 ```json
 {
   "license": "Elastic-2.0"
@@ -621,14 +623,14 @@ Update `package.json`:
 
 ### 5.4 npm Publishing
 
-| Package | Visibility | Registry |
-|---------|-----------|----------|
-| `@caracal-lynx/sluice` | **Public** | npmjs.com (public) |
-| `@caracal-lynx/sluice-enrich` | Private | npmjs.com (Pro plan, private) |
-| `@caracal-lynx/etl-rules-uk` | Private | npmjs.com (Pro plan, private) |
-| `@caracal-lynx/etl-rules-fashion` | Private | npmjs.com (Pro plan, private) |
-| All adapter packages | Private | npmjs.com (Pro plan, private) |
-| `@caracal-lynx/sluice-mcp` | Private | npmjs.com (Pro plan, private) |
+| Package                           | Visibility | Registry                      |
+| --------------------------------- | ---------- | ----------------------------- |
+| `@caracal-lynx/sluice`            | **Public** | npmjs.com (public)            |
+| `@caracal-lynx/sluice-enrich`     | Private    | npmjs.com (Pro plan, private) |
+| `@caracal-lynx/etl-rules-uk`      | Private    | npmjs.com (Pro plan, private) |
+| `@caracal-lynx/etl-rules-fashion` | Private    | npmjs.com (Pro plan, private) |
+| All adapter packages              | Private    | npmjs.com (Pro plan, private) |
+| `@caracal-lynx/sluice-mcp`        | Private    | npmjs.com (Pro plan, private) |
 
 ### 5.5 Make the GitHub Repository Public
 
@@ -657,7 +659,7 @@ Update `package.json`:
 - README rewrite: elevator-pitch hero block, npm-version badge, three-tier Extension Model callout, copy-pasteable Quickstart YAML referencing `examples/hello-world.pipeline.yaml`, four-step bash quickstart, Paid Services section (with 🚧 Coming soon tag on the MCP Server), Community / Security / Licence / About sections.
 - **NEW [PLUGINS.md](../PLUGINS.md)** (~12 KB) — full Tier 1/2/3 plugin author guide. Closes the Phase 3 deferred deliverable.
 - **NEW [examples/hello-world.pipeline.yaml](../examples/hello-world.pipeline.yaml)** + matching CSV — newcomer-runnable end-to-end demo.
-- GitHub repo About panel: description set to *"Config-driven ETL toolkit for ERP data migrations. Clean data flows through."*; homepage URL `https://caracallynx.com`.
+- GitHub repo About panel: description set to _"Config-driven ETL toolkit for ERP data migrations. Clean data flows through."_; homepage URL `https://caracallynx.com`.
 - `package.json` `files` array now includes `PLUGINS.md` so it ships in the npm tarball.
 
 **Reference:** `docs/PHASE-06-readme-and-marketing-spec.md` — execution plan (executed; see PR #27)
@@ -679,15 +681,15 @@ The `README.md` in `caracal-lynx/sluice` is the first thing anyone sees. It must
 The Sluice core CLI is open-source and free to use.
 Caracal Lynx offers additional paid services built on top of it:
 
-| Service | What it is |
-|---------|-----------|
-| **Enrichment Service** | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data |
-| **Application Adapters** | Pre-built ERP adapters (IFS, Business Central, BlueCherry) |
-| **Domain Rule Packages** | UK compliance rules, fashion/retail data standards |
-| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model |
-| **Sluice MCP Server** | AI-assisted migration using Claude — agentic pipeline authoring, |
-|                         | live schema inspection, automatic DQ iteration |
-| **Migration Delivery** | Full end-to-end data migration, delivered by Caracal Lynx |
+| Service                     | What it is                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| **Enrichment Service**      | Async API lookups (EU VAT, UK VAT, trade tariff) — fills gaps in source data |
+| **Application Adapters**    | Pre-built ERP adapters (IFS, Business Central, BlueCherry)                   |
+| **Domain Rule Packages**    | UK compliance rules, fashion/retail data standards                           |
+| **Client-Specific Plugins** | Bespoke plugins tailored to your source system and data model                |
+| **Sluice MCP Server**       | AI-assisted migration using Claude — agentic pipeline authoring,             |
+|                             | live schema inspection, automatic DQ iteration                               |
+| **Migration Delivery**      | Full end-to-end data migration, delivered by Caracal Lynx                    |
 
 📧 sluice@caracallynx.com
 🌐 caracallynx.com
@@ -771,6 +773,7 @@ flowchart LR
 **PRs:** [#41](https://github.com/caracal-lynx/sluice/pull/41) (initial Astro Starlight scaffold + 17 content pages + Zod-driven schema auto-gen + GitHub Pages workflow) · [#42](https://github.com/caracal-lynx/sluice/pull/42) and [#43](https://github.com/caracal-lynx/sluice/pull/43) (hero banner cropping — root cause: Astro's image pipeline was cropping `hero.image.file` to a 400×400 square; fix uses `image.html` to bypass processing) · [#44](https://github.com/caracal-lynx/sluice/pull/44) (full-width banner hero layout, drops Starlight's split-column hero in favour of a custom `.sluice-hero` block) · [#45](https://github.com/caracal-lynx/sluice/pull/45) (CTA button styling — Starlight's `.sl-link-button` styles are scoped to Astro component instances, so we roll our own under `.sluice-cta`).
 
 **Acceptance verification:**
+
 - Quickstart end-to-end on a clean PowerShell 7 shell — verified by Michael Scott on 5 May 2026 (under the implementation plan's 10-minute target)
 - Link health — `npx linkinator https://caracal-lynx.github.io/sluice/ --recurse` reports zero broken internal links (31 links scanned, external domains skipped)
 - Lighthouse — home page 98/96/100/100 (Performance/Accessibility/Best Practices/SEO); Quickstart page 100/100/100/100. All comfortably above the ≥ 90 target.
@@ -862,20 +865,20 @@ WITH MCP server:
 
 ### 16 MCP Tools (from the spec)
 
-| Category | Tools |
-|----------|-------|
-| **Pipeline** | `validate_pipeline`, `dry_run_pipeline`, `run_pipeline`, `get_run_logs` |
-| **Schema Inspection** | `inspect_source_schema`, `list_tables`, `get_sample_rows`, `diff_schemas` |
-| **Config** | `read_pipeline_yaml`, `write_pipeline_yaml`, `list_pipelines`, `get_run_state` |
-| **Scaffolding** | `scaffold_rule`, `scaffold_plugin`, `scaffold_adapter`, `list_plugins` |
+| Category              | Tools                                                                          |
+| --------------------- | ------------------------------------------------------------------------------ |
+| **Pipeline**          | `validate_pipeline`, `dry_run_pipeline`, `run_pipeline`, `get_run_logs`        |
+| **Schema Inspection** | `inspect_source_schema`, `list_tables`, `get_sample_rows`, `diff_schemas`      |
+| **Config**            | `read_pipeline_yaml`, `write_pipeline_yaml`, `list_pipelines`, `get_run_state` |
+| **Scaffolding**       | `scaffold_rule`, `scaffold_plugin`, `scaffold_adapter`, `list_plugins`         |
 
 ### Implementation Phases (from spec)
 
-| Phase | What | Effort |
-|-------|------|--------|
+| Phase           | What                                                           | Effort  |
+| --------------- | -------------------------------------------------------------- | ------- |
 | **MCP Phase 1** | Config tools + scaffold tools — no DB deps, immediately useful | ~2 days |
-| **MCP Phase 2** | Live schema inspection tools (mssql/pg) | ~2 days |
-| **MCP Phase 3** | Pipeline execution tools (validate, dry-run, run, logs) | ~3 days |
+| **MCP Phase 2** | Live schema inspection tools (mssql/pg)                        | ~2 days |
+| **MCP Phase 3** | Pipeline execution tools (validate, dry-run, run, logs)        | ~3 days |
 
 ### Repository
 
@@ -952,65 +955,65 @@ Sluice is an excellent candidate for `tsgo` — ~50 source files, no decorators,
 
 ### Existing Documents (Sluice project folder)
 
-| Document | Status | Notes |
-|----------|--------|-------|
-| `open-sourcing-sluice.md` | ✅ Good | Decision confirmed (ELv2). |
-| `licensing-strategy.md` | ✅ Good | ELv2 confirmed as decision. |
-| `docs/licensing-faq.md` | ✅ Good | Minor clarification on what's in the open-source core. _(Originally at repo root as `LICENCE-FAQ.md`; relocated to `docs/` so GitHub's licensee tool stops reporting a spurious second "Unknown licence found" detection.)_ |
-| `docs/PHASE-08-github-pages-plan.md` | ✅ Good | Enrich Service mention to add when updating. (Renamed from `github-pages-plan.md`.) |
-| `docs/PHASE-09-sluice-mcp-spec.md` | ✅ Good | Private paid service note added prominently. (Renamed from `SLUICE-MCP-SPEC.md`.) |
-| `docs/Context.md` | ✅ Good | Open-source decision, Node 24, TS upgrade path, MCP plans. |
-| `docs/archive/node24-upgrade-plan.md` | ✅ EXECUTED | Node 20→24 + DuckDB Neo plan — shipped in PR #8 (3 May 2026). Retained as implementation reference. References to `typescript6-upgrade-plan.md` and `PHASE2.5-ENRICH.md` inside this archived doc point to the pre-rename filenames; that is intentional. |
-| `docs/archive/node26-upgrade-plan.md` | 📦 Archived | Original Node 20→26 single-step strategy. Superseded — when Phase 10 runs, baseline is Node 24 and DuckDB migration is already done. |
-| `docs/archive/typescript-upgrade-plan.md` | 📦 Archived | Exact duplicate of the active `docs/PHASE-02-typescript-v6-upgrade.md`. |
-| `docs/archive/PHASE2-EXTENSIONS.md` | 📦 Archived | Full plugin system spec — implemented in Phase 3. `PLUGINS.md` is the canonical author guide. |
-| `docs/archive/phase1-3-release-packaging.md`, `docs/archive/phase3-multi-source-merge.md`, `docs/archive/phase3-prep-phase{1,2}.md` | 📦 Archived | Old phase-numbering design notes; technical content retained for reference. Multi-source merge has shipped. |
-| `docs/PHASE-02-typescript-v6-upgrade.md` | ✅ EXECUTED | Comprehensive. Phase 2 shipped on 4 May 2026 ([PR #13](https://github.com/BCGubbins/sluice/pull/13)). Retained as implementation reference. (Renamed from `typescript6-upgrade-plan.md`.) |
-| `docs/PHASE-04-enrich-phase.md` | ✅ EXECUTED | Phase 4 shipped 5–7 May 2026. OSC scaffolding in `@caracal-lynx/sluice@0.2.0`/`0.2.1`; private framework + three built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`) in `@caracal-lynx/sluice-enrich@1.0.0`. Spec retained as implementation reference. |
-| `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md` | ✅ Good | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference. |
-| `docs/branching-strategy.md` | ✅ Good | Working branching convention for all Sluice repos: single protected `master`, short-lived `feat/`/`fix/`/`docs/`/`chore/`/`hotfix/` branches, `[<branch-name>] - ` commit prefix. Lifted out of PHASE-05 during the 2026-05-04 rewrite. |
-| `docs/PHASE-06-readme-and-marketing-spec.md` | ✅ EXECUTED | Phase 6 shipped 4 May 2026 ([PR #27](https://github.com/caracal-lynx/sluice/pull/27)). Retained as implementation reference. |
-| `docs/PHASE-07-git-npm-workflow-spec.md` | ✅ EXECUTED | Phase 7 shipped 5 May 2026 (PRs [#29](https://github.com/caracal-lynx/sluice/pull/29), [#31](https://github.com/caracal-lynx/sluice/pull/31), [#33](https://github.com/caracal-lynx/sluice/pull/33), [#34](https://github.com/caracal-lynx/sluice/pull/34), [#35](https://github.com/caracal-lynx/sluice/pull/35), [#36](https://github.com/caracal-lynx/sluice/pull/36)). Auth model deviated from the spec: Classic Automation tokens were retired by npm in November 2025, so PR #36 switched to npm Trusted Publishing (OIDC). Spec retained as implementation reference; closing changelog notes are appended in-doc. |
-| `docs/PHASE-10-node26-upgrade.md` | ✅ Good | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.) |
-| `docs/PHASE-11-typescript-v7-spec.md` | ✅ 11a EXECUTED | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable. |
-| `SLUICE-IMPLEMENTATION-PLAN.md` | ✅ **This document** | Master plan — updated 4 May 2026 (post Phase 5 — open-source launch). |
-| `LICENSE` | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)) | ELv2 text verbatim from elastic.co |
-| `docs/licensing-faq.md` | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)); relocated from repo root post-Phase 4 | Plain-English ELv2 explainer. _Originally at repo root as `LICENCE-FAQ.md`; the `LICEN[CS]E*`-pattern filename triggered GitHub's licensee tool to report it as a second "Unknown licence found" file alongside `LICENSE`, hence the move._ |
-| `CONTRIBUTING.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | PR process + branching ref + sign-off |
-| `CODE_OF_CONDUCT.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | Contributor Covenant v2.1 verbatim; reporting → conduct@caracallynx.com |
-| `SECURITY.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | security@caracallynx.com; 48 hr ack / 90-day SLA |
-| `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}.yml` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | GitHub form schemas |
-| `.github/PULL_REQUEST_TEMPLATE.md` | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19)) | PR checklist (type, public-API impact, tests, sign-off) |
+| Document                                                                                                                            | Status                                                                                                               | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open-sourcing-sluice.md`                                                                                                           | ✅ Good                                                                                                              | Decision confirmed (ELv2).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `licensing-strategy.md`                                                                                                             | ✅ Good                                                                                                              | ELv2 confirmed as decision.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `docs/licensing-faq.md`                                                                                                             | ✅ Good                                                                                                              | Minor clarification on what's in the open-source core. _(Originally at repo root as `LICENCE-FAQ.md`; relocated to `docs/` so GitHub's licensee tool stops reporting a spurious second "Unknown licence found" detection.)_                                                                                                                                                                                                                                                                                                                                                                                                |
+| `docs/PHASE-08-github-pages-plan.md`                                                                                                | ✅ Good                                                                                                              | Enrich Service mention to add when updating. (Renamed from `github-pages-plan.md`.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `docs/PHASE-09-sluice-mcp-spec.md`                                                                                                  | ✅ Good                                                                                                              | Private paid service note added prominently. (Renamed from `SLUICE-MCP-SPEC.md`.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `docs/Context.md`                                                                                                                   | ✅ Good                                                                                                              | Open-source decision, Node 24, TS upgrade path, MCP plans.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `docs/archive/node24-upgrade-plan.md`                                                                                               | ✅ EXECUTED                                                                                                          | Node 20→24 + DuckDB Neo plan — shipped in PR #8 (3 May 2026). Retained as implementation reference. References to `typescript6-upgrade-plan.md` and `PHASE2.5-ENRICH.md` inside this archived doc point to the pre-rename filenames; that is intentional.                                                                                                                                                                                                                                                                                                                                                                  |
+| `docs/archive/node26-upgrade-plan.md`                                                                                               | 📦 Archived                                                                                                          | Original Node 20→26 single-step strategy. Superseded — when Phase 10 runs, baseline is Node 24 and DuckDB migration is already done.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `docs/archive/typescript-upgrade-plan.md`                                                                                           | 📦 Archived                                                                                                          | Exact duplicate of the active `docs/PHASE-02-typescript-v6-upgrade.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `docs/archive/PHASE2-EXTENSIONS.md`                                                                                                 | 📦 Archived                                                                                                          | Full plugin system spec — implemented in Phase 3. `PLUGINS.md` is the canonical author guide.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `docs/archive/phase1-3-release-packaging.md`, `docs/archive/phase3-multi-source-merge.md`, `docs/archive/phase3-prep-phase{1,2}.md` | 📦 Archived                                                                                                          | Old phase-numbering design notes; technical content retained for reference. Multi-source merge has shipped.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `docs/PHASE-02-typescript-v6-upgrade.md`                                                                                            | ✅ EXECUTED                                                                                                          | Comprehensive. Phase 2 shipped on 4 May 2026 ([PR #13](https://github.com/BCGubbins/sluice/pull/13)). Retained as implementation reference. (Renamed from `typescript6-upgrade-plan.md`.)                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `docs/PHASE-04-enrich-phase.md`                                                                                                     | ✅ EXECUTED                                                                                                          | Phase 4 shipped 5–7 May 2026. OSC scaffolding in `@caracal-lynx/sluice@0.2.0`/`0.2.1`; private framework + three built-in providers (`vies`, `hmrc-vat`, `uk-trade-tariff`) in `@caracal-lynx/sluice-enrich@1.0.0`. Spec retained as implementation reference.                                                                                                                                                                                                                                                                                                                                                             |
+| `docs/PHASE-05-DEVELOPMENT-WORKFLOW.md`                                                                                             | ✅ Good                                                                                                              | Reauthored 2026-05-04 to match the current open-source split design — public `@caracal-lynx/sluice` + 8 sibling private repos (`sluice-enrich`, `sluice-rules`, three adapter repos, `sluice-mcp`, two client repos). Spec format mirrors PHASE-06 / PHASE-07. Branching conventions extracted to `branching-strategy.md`; release-cascade content moved to PHASE-07. §11 (Client Local Setup) retained for Phase 9 cross-reference.                                                                                                                                                                                       |
+| `docs/branching-strategy.md`                                                                                                        | ✅ Good                                                                                                              | Working branching convention for all Sluice repos: single protected `master`, short-lived `feat/`/`fix/`/`docs/`/`chore/`/`hotfix/` branches, `[<branch-name>] - ` commit prefix. Lifted out of PHASE-05 during the 2026-05-04 rewrite.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `docs/PHASE-06-readme-and-marketing-spec.md`                                                                                        | ✅ EXECUTED                                                                                                          | Phase 6 shipped 4 May 2026 ([PR #27](https://github.com/caracal-lynx/sluice/pull/27)). Retained as implementation reference.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `docs/PHASE-07-git-npm-workflow-spec.md`                                                                                            | ✅ EXECUTED                                                                                                          | Phase 7 shipped 5 May 2026 (PRs [#29](https://github.com/caracal-lynx/sluice/pull/29), [#31](https://github.com/caracal-lynx/sluice/pull/31), [#33](https://github.com/caracal-lynx/sluice/pull/33), [#34](https://github.com/caracal-lynx/sluice/pull/34), [#35](https://github.com/caracal-lynx/sluice/pull/35), [#36](https://github.com/caracal-lynx/sluice/pull/36)). Auth model deviated from the spec: Classic Automation tokens were retired by npm in November 2025, so PR #36 switched to npm Trusted Publishing (OIDC). Spec retained as implementation reference; closing changelog notes are appended in-doc. |
+| `docs/PHASE-10-node26-upgrade.md`                                                                                                   | ✅ Good                                                                                                              | Paused execution plan; awaiting Node 26 LTS cut (Oct 2026). (Renamed from `node26-upgrade-execution-plan.md`.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `docs/PHASE-11-typescript-v7-spec.md`                                                                                               | ✅ 11a EXECUTED                                                                                                      | Phase 11a (tsgo parallel CI type-check) shipped 4 May 2026 ([PR #15](https://github.com/BCGubbins/sluice/pull/15)) and is currently in soak. Phase 11b (full compiler switch) remains deferred until `tsgo` emit is byte-stable.                                                                                                                                                                                                                                                                                                                                                                                           |
+| `SLUICE-IMPLEMENTATION-PLAN.md`                                                                                                     | ✅ **This document**                                                                                                 | Master plan — updated 4 May 2026 (post Phase 5 — open-source launch).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `LICENSE`                                                                                                                           | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18))                                        | ELv2 text verbatim from elastic.co                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `docs/licensing-faq.md`                                                                                                             | ✅ Shipped Phase 5 (PR [#18](https://github.com/caracal-lynx/sluice/pull/18)); relocated from repo root post-Phase 4 | Plain-English ELv2 explainer. _Originally at repo root as `LICENCE-FAQ.md`; the `LICEN[CS]E*`-pattern filename triggered GitHub's licensee tool to report it as a second "Unknown licence found" file alongside `LICENSE`, hence the move._                                                                                                                                                                                                                                                                                                                                                                                |
+| `CONTRIBUTING.md`                                                                                                                   | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19))                                        | PR process + branching ref + sign-off                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `CODE_OF_CONDUCT.md`                                                                                                                | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19))                                        | Contributor Covenant v2.1 verbatim; reporting → conduct@caracallynx.com                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `SECURITY.md`                                                                                                                       | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19))                                        | security@caracallynx.com; 48 hr ack / 90-day SLA                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}.yml`                                                                    | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19))                                        | GitHub form schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `.github/PULL_REQUEST_TEMPLATE.md`                                                                                                  | ✅ Shipped Phase 5 (PR [#19](https://github.com/caracal-lynx/sluice/pull/19))                                        | PR checklist (type, public-API impact, tests, sign-off)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ### Documents shipped in Phase 6
 
-| Document | Notes |
-|----------|-------|
-| `README.md` rewrite | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Hero block, npm badge, Extension Model callout, Quickstart YAML, Paid Services section with 🚧 MCP tag, Community / Security / Licence / About sections. |
-| `PLUGINS.md` (new) | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Full Tier 1/2/3 plugin author guide; closes the Phase 3 deferred deliverable. |
-| `examples/hello-world.pipeline.yaml` + `examples/data/hello-world.csv` (new) | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Newcomer-runnable end-to-end demo referenced from the Quickstart. |
+| Document                                                                     | Notes                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `README.md` rewrite                                                          | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Hero block, npm badge, Extension Model callout, Quickstart YAML, Paid Services section with 🚧 MCP tag, Community / Security / Licence / About sections. |
+| `PLUGINS.md` (new)                                                           | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Full Tier 1/2/3 plugin author guide; closes the Phase 3 deferred deliverable.                                                                            |
+| `examples/hello-world.pipeline.yaml` + `examples/data/hello-world.csv` (new) | Shipped Phase 6 (PR [#27](https://github.com/caracal-lynx/sluice/pull/27)). Newcomer-runnable end-to-end demo referenced from the Quickstart.                                                                                        |
 
 ### Documents to Create
 
-| Document | When | Notes |
-|----------|------|-------|
+| Document          | When    | Notes                                                                                                                |
+| ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
 | GitHub Pages site | Phase 8 | Astro + Starlight (Pages currently serves `/docs` markdown as placeholder at https://caracal-lynx.github.io/sluice/) |
 
 ---
 
 ## 17. Key Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Acme Corp SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x) | ✅ **MITIGATED** | High | Pre-flight TLS check passed cleanly under Node 24 / OpenSSL 3.5; no `cryptoCredentialsDetails` workaround required. |
-| Client contract blocks open-sourcing | Low | High | Phase 0 legal audit before any public action. |
+| Risk                                                           | Likelihood       | Impact | Mitigation                                                                                                                                  |
+| -------------------------------------------------------------- | ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Acme Corp SQL Server rejects TLS 1.2 (Node 24 OpenSSL 3.x)     | ✅ **MITIGATED** | High   | Pre-flight TLS check passed cleanly under Node 24 / OpenSSL 3.5; no `cryptoCredentialsDetails` workaround required.                         |
+| Client contract blocks open-sourcing                           | Low              | High   | Phase 0 legal audit before any public action.                                                                                               |
 | DuckDB `@duckdb/node-api` API differences larger than expected | ✅ **MITIGATED** | Medium | Phase 1 shipped successfully; full rewrite landed in PR #8. `docs/archive/node24-upgrade-plan.md` retained as the implementation reference. |
-| TypeScript 7 tsgo emit not stable before target date | Medium | Low | Phase 11a (type-check only) has zero risk. Phase 11b (full switch) deferred. |
-| Community engagement lower than expected post-launch | Low | Low | Docs quality (Quickstart) is the primary driver of adoption. |
-| Enrich API rate limits causing pipeline slowdowns | Medium | Medium | EnrichCache backed by DuckDB; batch lookups; configurable concurrency. |
-| `sluice-enrich` scope creep during Phase 4a | Medium | Medium | Phase 4a = framework only. Providers are Phase 4b — separate, not blocking launch. |
+| TypeScript 7 tsgo emit not stable before target date           | Medium           | Low    | Phase 11a (type-check only) has zero risk. Phase 11b (full switch) deferred.                                                                |
+| Community engagement lower than expected post-launch           | Low              | Low    | Docs quality (Quickstart) is the primary driver of adoption.                                                                                |
+| Enrich API rate limits causing pipeline slowdowns              | Medium           | Medium | EnrichCache backed by DuckDB; batch lookups; configurable concurrency.                                                                      |
+| `sluice-enrich` scope creep during Phase 4a                    | Medium           | Medium | Phase 4a = framework only. Providers are Phase 4b — separate, not blocking launch.                                                          |
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
-*"Clean data flows through."*
+_Caracal Lynx Limited — SC826823 — Gretna, Scotland_
+_"Clean data flows through."_

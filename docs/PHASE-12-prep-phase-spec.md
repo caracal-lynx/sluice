@@ -1,7 +1,11 @@
 # Sluice — Phase 12: Prep Phase (pre-enrich data fixup)
+
 # Open-source feature in @caracal-lynx/sluice
+
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+
 # Depends on: CLAUDE.md, PHASE-04-enrich-phase.md (Phase 4 complete)
+
 # Last updated: 2026-05-12
 
 ---
@@ -14,7 +18,7 @@ columns of `stg_raw` (single-source) or each `stg_raw_{sourceId}` and
 Enrich and DQ both consume already-fixed data.
 
 The phase exists to handle two recurring problems that the existing Transform
-phase cannot solve, because Transform runs *after* DQ and *after* Enrich:
+phase cannot solve, because Transform runs _after_ DQ and _after_ Enrich:
 
 1. **Format drift** — the same logical value held in different shapes across
    source systems (e.g. legacy 8-character HS codes that must be padded to the
@@ -31,28 +35,28 @@ in a breaking way.
 
 ### Why a separate phase, not part of Transform?
 
-Transform runs at step 7–8 of the runner pipeline (CLAUDE.md, *Pipeline Runner
-— Execution Order*). Enrich runs at step 5b and DQ at step 6. Any fix applied
+Transform runs at step 7–8 of the runner pipeline (CLAUDE.md, _Pipeline Runner
+— Execution Order_). Enrich runs at step 5b and DQ at step 6. Any fix applied
 in Transform is invisible to both Enrich (which would call external APIs with
 broken input) and DQ (which would reject rows that prep could have salvaged).
 
 Prep is therefore positioned **between Extract and Enrich**, mutating the same
 staging table that Enrich and DQ read from. The output column names equal the
-input column names — prep is *in-place* fixup, not a mapping layer.
+input column names — prep is _in-place_ fixup, not a mapping layer.
 
 ### Relationship with the Transform phase
 
 Prep and Transform deliberately share three building blocks:
 
-| Building block | Prep | Transform |
-|---|---|---|
-| Cleanse ops (`src/transform/cleanse.ts`) | ✓ reused | ✓ |
-| Expression evaluator (`src/transform/expression.ts`) | ✓ reused | ✓ |
-| Lookup loader (the **mechanism** in `transform/lookup.ts`) | ✓ reused | ✓ |
-| Lookup **cache instance** | separate (v1) | separate (v1) |
-| Output | mutates source columns | maps to new target columns |
+| Building block                                             | Prep                   | Transform                  |
+| ---------------------------------------------------------- | ---------------------- | -------------------------- |
+| Cleanse ops (`src/transform/cleanse.ts`)                   | ✓ reused               | ✓                          |
+| Expression evaluator (`src/transform/expression.ts`)       | ✓ reused               | ✓                          |
+| Lookup loader (the **mechanism** in `transform/lookup.ts`) | ✓ reused               | ✓                          |
+| Lookup **cache instance**                                  | separate (v1)          | separate (v1)              |
+| Output                                                     | mutates source columns | maps to new target columns |
 
-The lookup *mechanism* is shared; the lookup *cache* is not. A lookup table
+The lookup _mechanism_ is shared; the lookup _cache_ is not. A lookup table
 declared in `prep.lookups` is loaded into a separate resolver from one
 declared in `transform.lookups`, even if the underlying YAML source is the
 same. This is a v1 simplification; future work may collapse them into a single
@@ -182,10 +186,10 @@ multi-source pipelines.
 
 ### Rule scoping in multi-source
 
-| Rule has `sourceId`? | Fires at | Table |
-|---|---|---|
+| Rule has `sourceId`?         | Fires at                        | Table                |
+| ---------------------------- | ------------------------------- | -------------------- |
 | Yes (`sourceId: sql-server`) | Pre-merge, only for that source | `stg_raw_sql-server` |
-| No | Post-merge, once | `stg_merged` |
+| No                           | Post-merge, once                | `stg_merged`         |
 
 A rule without `sourceId` does **not** run per-source. If a fixup needs to be
 applied to every source individually (e.g. before per-source DQ inspects it),
@@ -206,7 +210,7 @@ prep:
   # ── Lookups (loaded once, cached in a prep-only resolver) ───
   lookups:
     - name: hcCodeFixups
-      source:                        # SourceConfig — any source adapter
+      source: # SourceConfig — any source adapter
         adapter: csv
         file: ./lookups/hc-code-fixups.csv
       key: invalid_code
@@ -214,32 +218,38 @@ prep:
 
   # ── Rules (applied top-to-bottom against the target table) ──
   rules:
-    - field: HC_CODE                 # REQUIRED. Existing column to mutate.
-      sourceId: excel                # OPTIONAL. Multi-source only. Restricts
-                                     # this rule to one named pre-merge source.
-      when: "row.HC_CODE.length === 8"
-                                     # OPTIONAL. expr-eval predicate (or 'js:'
-                                     # prefix). Rule is skipped for any row
-                                     # where this evaluates to a falsy value.
-                                     # Errors are treated per run.onError.
-      cleanse: padEnd:10:0           # ONE OF: cleanse | expression | lookup
-                                     # cleanse: pipe-separated op chain,
-                                     # same syntax as transform.fields.cleanse.
+    - field: HC_CODE # REQUIRED. Existing column to mutate.
+      sourceId:
+        excel # OPTIONAL. Multi-source only. Restricts
+        # this rule to one named pre-merge source.
+      when:
+        "row.HC_CODE.length === 8"
+        # OPTIONAL. expr-eval predicate (or 'js:'
+        # prefix). Rule is skipped for any row
+        # where this evaluates to a falsy value.
+        # Errors are treated per run.onError.
+      cleanse:
+        padEnd:10:0 # ONE OF: cleanse | expression | lookup
+        # cleanse: pipe-separated op chain,
+        # same syntax as transform.fields.cleanse.
 
     - field: HC_CODE
-      expression: "row.HC_CODE.trim().toUpperCase()"
-                                     # ONE OF. expr-eval expression, or
-                                     # 'js:' prefix for vm sandbox.
+      expression:
+        "row.HC_CODE.trim().toUpperCase()"
+        # ONE OF. expr-eval expression, or
+        # 'js:' prefix for vm sandbox.
 
     - field: HC_CODE
-      lookup: hcCodeFixups           # ONE OF. Name of a prep.lookups entry.
-      onMiss: keep                   # OPTIONAL. keep | null | error.
-                                     # Default: keep.
+      lookup: hcCodeFixups # ONE OF. Name of a prep.lookups entry.
+      onMiss:
+        keep # OPTIONAL. keep | null | error.
+        # Default: keep.
 
   # ── Output ───────────────────────────────────────────────
-  summaryFile: ./output/{name}-prep-summary.json
-                                     # OPTIONAL. Default:
-                                     # {outputDir}/{name}-prep-summary.json
+  summaryFile:
+    ./output/{name}-prep-summary.json
+    # OPTIONAL. Default:
+    # {outputDir}/{name}-prep-summary.json
 ```
 
 ### Field semantics
@@ -251,7 +261,7 @@ prep:
 - `when` — optional row predicate. Same evaluation rules as transform
   expressions (expr-eval by default; `js:` prefix for the vm sandbox; the row
   object is exposed as `row`). A truthy result → apply the rule; falsy →
-  skip. A *runtime error* in `when` is escalated per `run.onError`
+  skip. A _runtime error_ in `when` is escalated per `run.onError`
   (`continue` logs `warn`, skips the rule for that row; `stop` throws
   `PrepError`).
 - Exactly one of `cleanse`, `expression`, `lookup` must be set (refine
@@ -278,7 +288,7 @@ rules:
     onMiss: keep
 ```
 
-The lookup rule's input is the *already padded* value.
+The lookup rule's input is the _already padded_ value.
 
 ---
 
@@ -318,26 +328,25 @@ prep: PrepSchema.optional(),
 ```typescript
 // Single-source pipelines must not declare sourceId on any prep rule.
 PipelineSchema = PipelineSchema.refine(
-  p => !p.prep
-    || isMultiSource(p)
-    || p.prep.rules.every(r => !r.sourceId),
-  { message: 'prep.rules[].sourceId is only valid in multi-source pipelines' },
+  (p) => !p.prep || isMultiSource(p) || p.prep.rules.every((r) => !r.sourceId),
+  { message: "prep.rules[].sourceId is only valid in multi-source pipelines" },
 );
 
 // Multi-source: every prep.rules[].sourceId must match a declared source id.
 PipelineSchema = PipelineSchema.refine(
-  p => !p.prep || !isMultiSource(p) || p.prep.rules.every(
-    r => !r.sourceId || p.sources!.some(s => s.id === r.sourceId),
-  ),
-  { message: 'prep.rules[].sourceId must match a declared source id' },
+  (p) =>
+    !p.prep ||
+    !isMultiSource(p) ||
+    p.prep.rules.every((r) => !r.sourceId || p.sources!.some((s) => s.id === r.sourceId)),
+  { message: "prep.rules[].sourceId must match a declared source id" },
 );
 ```
 
 ### Inferred type
 
 ```typescript
-export type Prep      = z.infer<typeof PrepSchema>;
-export type PrepRule  = z.infer<typeof PrepRuleSchema>;
+export type Prep = z.infer<typeof PrepSchema>;
+export type PrepRule = z.infer<typeof PrepRuleSchema>;
 ```
 
 Re-export both from `src/config/types.ts`.
@@ -368,30 +377,30 @@ Re-export both from `src/config/types.ts`.
 
 ```typescript
 export interface PrepRunResult {
-  table:        string;             // 'stg_raw' | 'stg_raw_{sourceId}' | 'stg_merged'
+  table: string; // 'stg_raw' | 'stg_raw_{sourceId}' | 'stg_merged'
   rulesApplied: number;
   rules: Array<{
-    field:       string;
-    op:          string;            // 'cleanse:padEnd:10:0' | 'expression' | 'lookup:hcCodeFixups'
+    field: string;
+    op: string; // 'cleanse:padEnd:10:0' | 'expression' | 'lookup:hcCodeFixups'
     rowsChanged: number;
-    rowsSkipped: number;            // rows skipped by `when` predicate
-    rowsFailed:  number;            // rows where the rule errored (only > 0 when run.onError === 'continue')
+    rowsSkipped: number; // rows skipped by `when` predicate
+    rowsFailed: number; // rows where the rule errored (only > 0 when run.onError === 'continue')
   }>;
 }
 
 export class PrepEngine {
   constructor(
-    private readonly store:    StagingStore,
+    private readonly store: StagingStore,
     private readonly resolver: PrepLookupResolver,
-    private readonly evaluator: ExpressionEvaluator,   // shared instance
-    private readonly logger:   Logger,
+    private readonly evaluator: ExpressionEvaluator, // shared instance
+    private readonly logger: Logger,
   ) {}
 
   async run(
-    table:   string,
-    prep:    Prep,
+    table: string,
+    prep: Prep,
     sourceId: string | undefined,
-    runCfg:  RunConfig,
+    runCfg: RunConfig,
   ): Promise<PrepRunResult>;
 }
 ```
@@ -421,10 +430,10 @@ export class PrepEngine {
 
 ### `onMiss` semantics
 
-| `onMiss` | Lookup miss → |
-|---|---|
-| `keep` (default) | leave the existing value unchanged |
-| `null`           | overwrite with SQL `NULL` |
+| `onMiss`         | Lookup miss →                                                    |
+| ---------------- | ---------------------------------------------------------------- |
+| `keep` (default) | leave the existing value unchanged                               |
+| `null`           | overwrite with SQL `NULL`                                        |
 | `error`          | throw `PrepError` immediately (halts run; ignores `run.onError`) |
 
 `error` is intentionally non-overridable. If the operator wants the pipeline
@@ -467,14 +476,14 @@ export class PrepError extends PipelineError {}
 
 Exit codes (extends CLAUDE.md → CLI section):
 
-| Code | Cause |
-|---|---|
-| 0 | Success |
-| 1 | Generic pipeline error |
-| 2 | Critical DQ violations |
-| 3 | Config error |
-| 4 | Enrich error |
-| **5** | **Prep error** |
+| Code  | Cause                  |
+| ----- | ---------------------- |
+| 0     | Success                |
+| 1     | Generic pipeline error |
+| 2     | Critical DQ violations |
+| 3     | Config error           |
+| 4     | Enrich error           |
+| **5** | **Prep error**         |
 
 `PrepError` is thrown for:
 
@@ -490,13 +499,13 @@ Exit codes (extends CLAUDE.md → CLI section):
 
 ### Log levels
 
-| Level | Event |
-|---|---|
-| `info` | "Prep phase: N rules applied to {table} — M rows changed, K skipped, F failed" |
-| `info` | Per-rule one-liner with the same shape |
-| `debug` | Per-row diff (only at debug; high volume) |
-| `warn` | `when` runtime error with `onError: continue`; lookup miss with `onMiss: keep` (sampled, not per row); `js:` evaluation |
-| `error` | Pre-throw log for any `PrepError` |
+| Level   | Event                                                                                                                   |
+| ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `info`  | "Prep phase: N rules applied to {table} — M rows changed, K skipped, F failed"                                          |
+| `info`  | Per-rule one-liner with the same shape                                                                                  |
+| `debug` | Per-row diff (only at debug; high volume)                                                                               |
+| `warn`  | `when` runtime error with `onError: continue`; lookup miss with `onMiss: keep` (sampled, not per row); `js:` evaluation |
+| `error` | Pre-throw log for any `PrepError`                                                                                       |
 
 ### Summary file shape
 
@@ -505,23 +514,41 @@ Written to `prep.summaryFile` (or `{outputDir}/{name}-prep-summary.json`):
 ```json
 {
   "pipeline": "style-co-styles",
-  "runAt":    "2026-05-12T14:22:00.000Z",
+  "runAt": "2026-05-12T14:22:00.000Z",
   "firings": [
     {
-      "table":        "stg_raw_excel",
-      "sourceId":     "excel",
+      "table": "stg_raw_excel",
+      "sourceId": "excel",
       "rulesApplied": 2,
       "rules": [
-        { "field": "HC_CODE", "op": "cleanse:padEnd:10:0", "rowsChanged": 412, "rowsSkipped": 18, "rowsFailed": 0 },
-        { "field": "HC_CODE", "op": "lookup:hcCodeFixups", "rowsChanged": 38,  "rowsSkipped": 0,  "rowsFailed": 0 }
+        {
+          "field": "HC_CODE",
+          "op": "cleanse:padEnd:10:0",
+          "rowsChanged": 412,
+          "rowsSkipped": 18,
+          "rowsFailed": 0
+        },
+        {
+          "field": "HC_CODE",
+          "op": "lookup:hcCodeFixups",
+          "rowsChanged": 38,
+          "rowsSkipped": 0,
+          "rowsFailed": 0
+        }
       ]
     },
     {
-      "table":        "stg_merged",
-      "sourceId":     null,
+      "table": "stg_merged",
+      "sourceId": null,
       "rulesApplied": 1,
       "rules": [
-        { "field": "STYLE_NO", "op": "expression", "rowsChanged": 12, "rowsSkipped": 0, "rowsFailed": 0 }
+        {
+          "field": "STYLE_NO",
+          "op": "expression",
+          "rowsChanged": 12,
+          "rowsSkipped": 0,
+          "rowsFailed": 0
+        }
       ]
     }
   ]
@@ -545,29 +572,29 @@ sluice validate <pipeline.yaml> [--no-prep]
 
 ### Existing commands
 
-| Command | Runs prep? |
-|---|---|
-| `sluice run` | Yes (skippable via `--no-prep`) |
-| `sluice validate` | Yes — DQ depends on prep's output (skippable via `--no-prep`) |
-| `sluice profile` | **No** — profile is for raw source data |
-| `sluice check` | No execution; validates the `prep:` block schema |
-| `sluice plugins` | Unchanged |
-| `sluice merge ...` | Unchanged |
+| Command            | Runs prep?                                                    |
+| ------------------ | ------------------------------------------------------------- |
+| `sluice run`       | Yes (skippable via `--no-prep`)                               |
+| `sluice validate`  | Yes — DQ depends on prep's output (skippable via `--no-prep`) |
+| `sluice profile`   | **No** — profile is for raw source data                       |
+| `sluice check`     | No execution; validates the `prep:` block schema              |
+| `sluice plugins`   | Unchanged                                                     |
+| `sluice merge ...` | Unchanged                                                     |
 
 ### Progress bar
 
 `src/utils/progress.ts → ProgressReporter` gains a new phase between
 extract/merge and enrich:
 
-| Phase | Icon | Label |
-|---|---|---|
-| extract | 🔎 | "Extract" |
-| (merge — multi-source only) | 🔀 | "Merge" |
-| **prep** | **🧽** | **"Prep"** |
-| enrich | 🌐 | "Enrich" |
-| DQ | 🛡️ | "DQ" |
-| transform | 🔧 | "Transform" |
-| load | 📤 | "Load" |
+| Phase                       | Icon   | Label       |
+| --------------------------- | ------ | ----------- |
+| extract                     | 🔎     | "Extract"   |
+| (merge — multi-source only) | 🔀     | "Merge"     |
+| **prep**                    | **🧽** | **"Prep"**  |
+| enrich                      | 🌐     | "Enrich"    |
+| DQ                          | 🛡️     | "DQ"        |
+| transform                   | 🔧     | "Transform" |
+| load                        | 📤     | "Load"      |
 
 Prep is a determinate phase (rows × rules); the bar tracks total rule
 applications across all firings.
@@ -684,7 +711,7 @@ existing enrich files do not need to change.
 
 - Pre-merge rules run only against their `sourceId` table.
 - Post-merge rules run once against `stg_merged`.
-- Pre-merge prep runs *after* `source.rename`, so rules reference renamed
+- Pre-merge prep runs _after_ `source.rename`, so rules reference renamed
   columns.
 - Rules with `sourceId` referencing a missing source → ConfigError at load
   time (covered in config tests but verified end-to-end here).
@@ -734,13 +761,14 @@ dq:
   rules:
     - field: HC_CODE
       checks:
-        - { type: notNull,   severity: critical }
+        - { type: notNull, severity: critical }
         - { type: pattern, value: "^[0-9]{10}$", severity: critical }
 
 # ... transform, target, run as normal
 ```
 
 After prep:
+
 - Rows whose HC_CODE was exactly 8 chars are padded to 10.
 - Any row whose (now-padded) HC_CODE appears in `hc-code-fixups.csv` is
   swapped for the correct value.
@@ -796,7 +824,7 @@ After prep:
 - [ ] Implement all `onMiss` branches.
 - [ ] Implement `when` evaluation with `run.onError` semantics.
 - [ ] Unit tests in `tests/unit/prep/engine.test.ts` covering every bullet
-      under *Testing requirements → Unit — engine*.
+      under _Testing requirements → Unit — engine_.
 - [ ] `npm run build && npm test` clean.
 
 ### Stage 4 — single-source runner integration
@@ -824,14 +852,7 @@ After prep:
 
 ### Stage 6 — documentation
 
-- [ ] Update CLAUDE.md:
-      - Add `prep:` section under "YAML PIPELINE CONFIG SPECIFICATION"
-      - Update single-source execution order (step 5a½)
-      - Update multi-source execution order (steps 4c½ and 5a)
-      - Add `padEnd` to cleanse table
-      - Add exit code 5 and `--no-prep` flag to CLI section
-      - Add 🧽 to progress-bar phase list
-      - Add `PrepError` to error-types code block
+- [ ] Update CLAUDE.md: - Add `prep:` section under "YAML PIPELINE CONFIG SPECIFICATION" - Update single-source execution order (step 5a½) - Update multi-source execution order (steps 4c½ and 5a) - Add `padEnd` to cleanse table - Add exit code 5 and `--no-prep` flag to CLI section - Add 🧽 to progress-bar phase list - Add `PrepError` to error-types code block
 - [ ] Update `docs/architecture-diagrams.md` Mermaid flows to include prep.
 - [ ] Update `MEMORY.md` phase queue entry to reflect Phase 12 status.
 - [ ] (Optional) Add a one-paragraph mention to README's quick-start, if
@@ -843,11 +864,11 @@ After prep:
       breaking changes).
 - [ ] Update CHANGELOG (if maintained — confirm before adding).
 - [ ] Open PR titled along the lines of `feat(prep): add pre-enrich data
-      fixup phase`; squash-merge per the standard git workflow.
+fixup phase`; squash-merge per the standard git workflow.
 
 ---
 
-*This file is the authoritative specification for Phase 12 (Prep Phase). If
+_This file is the authoritative specification for Phase 12 (Prep Phase). If
 anything in the codebase contradicts this file, the codebase is wrong. Update
 this file whenever the design changes — then tell Claude Code to re-read it
-before continuing.*
+before continuing._

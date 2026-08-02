@@ -2,9 +2,9 @@
 
 > ⏸️ **STATUS: PAUSED — AWAITING NODE 26 LTS (October 2026)** — This plan covers the Node 24 → 26 upgrade (Phase 10). The starting point is Node 24 LTS (already current — Phase 1 complete). When Node 26 becomes LTS in October 2026, remove the DuckDB migration phase below (it was completed in Phase 1) and resume from the remaining steps.
 
-*Complements [node26-upgrade-plan.md](archive/node26-upgrade-plan.md) — the strategy doc (archived as of Phase 1 ship)
+_Complements [node26-upgrade-plan.md](archive/node26-upgrade-plan.md) — the strategy doc (archived as of Phase 1 ship)
 — with concrete, file-level changes adjusted for what the codebase actually
-looks like today.*
+looks like today._
 
 **Status:** Paused 2026-04-24 — Node 26 is not yet available via nvm-windows
 (strategy doc claimed a 2026-04-22 release, but `nvm install 26` reports "not
@@ -31,14 +31,14 @@ YAML-facing behaviour.
 ## Current state vs. the upgrade doc
 
 Exploration revealed three meaningful differences from the doc's assumptions.
-All three make the upgrade *easier*, not harder:
+All three make the upgrade _easier_, not harder:
 
-| Doc assumption | Actual state | Impact |
-|---|---|---|
-| Sluice is CommonJS/TS compiled to CJS | `package.json` has `"type": "module"` — it's already ESM | No ESM/CJS migration pain. DuckDB CJS import at [store.ts:8-13](../src/staging/store.ts) already uses the correct default-import-and-destructure interop pattern. |
-| Need to verify `mssql` is on v10+ | Already on `^11.0.1` | Skip the version bump; just re-pin lockfile. |
-| Need to ensure `'node:vm'` is used | Already imported from `'node:vm'` at [expression.ts:11](../src/transform/expression.ts) | Nothing to change on that line. |
-| Ensure `timeout` option is NOT passed to `vm.runInNewContext` | **It currently IS passed** (`timeout: 1000`, [expression.ts:37](../src/transform/expression.ts)) | **Concrete change required** — remove the `timeout` option (see Phase 4). |
+| Doc assumption                                                | Actual state                                                                                     | Impact                                                                                                                                                            |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sluice is CommonJS/TS compiled to CJS                         | `package.json` has `"type": "module"` — it's already ESM                                         | No ESM/CJS migration pain. DuckDB CJS import at [store.ts:8-13](../src/staging/store.ts) already uses the correct default-import-and-destructure interop pattern. |
+| Need to verify `mssql` is on v10+                             | Already on `^11.0.1`                                                                             | Skip the version bump; just re-pin lockfile.                                                                                                                      |
+| Need to ensure `'node:vm'` is used                            | Already imported from `'node:vm'` at [expression.ts:11](../src/transform/expression.ts)          | Nothing to change on that line.                                                                                                                                   |
+| Ensure `timeout` option is NOT passed to `vm.runInNewContext` | **It currently IS passed** (`timeout: 1000`, [expression.ts:37](../src/transform/expression.ts)) | **Concrete change required** — remove the `timeout` option (see Phase 4).                                                                                         |
 
 No `engines` field currently exists in `package.json` — it must be **added**, not just updated.
 
@@ -58,8 +58,8 @@ lockfiles" concern is moot. Current Node is v24.15.0 LTS.
    - SQL Server 2012/2014 unpatched → TLS 1.0 → will fail under OpenSSL SL2
      unless mitigated in-code (Phase 3).
 2. **Install Node 26 locally** via `nvm-windows`; confirm `node --version`.
-   *(Currently blocked — not yet published to nvm-windows registry as of
-   2026-04-24.)*
+   _(Currently blocked — not yet published to nvm-windows registry as of
+   2026-04-24.)_
 3. **Confirm branch:** we are already on `features/node26-upgrade`. Good.
 
 ---
@@ -92,10 +92,12 @@ lockfiles" concern is moot. Current Node is v24.15.0 LTS.
 (barrel), any caller of `StagingStore` — the public surface stays identical.
 
 **Dep swap:**
+
 ```
 npm uninstall duckdb
 npm install @duckdb/node-api
 ```
+
 (`duckdb-async` is not currently installed — no uninstall needed.)
 
 **Rewrite plan for `src/staging/store.ts`:**
@@ -104,21 +106,22 @@ The current file is 200 lines with a single internal `exec()` callback-wrapper
 ([store.ts:182-198](../src/staging/store.ts)) feeding every public method. All
 11 public methods keep identical signatures; only their bodies change.
 
-| Public method (current → keep) | New-API call |
-|---|---|
-| `open()` [store.ts:35](../src/staging/store.ts) | `await DuckDBInstance.create(dbPath)` → `await instance.connect()` |
-| `close()` [store.ts:57](../src/staging/store.ts) | `await connection.closeSync()` → `await instance.closeSync()` |
-| `createTable(name, cols)` [store.ts:70](../src/staging/store.ts) | `await connection.run(buildCreateTableSql(...))` — reuses existing `buildCreateTableSql` from `src/staging/schema.ts` |
-| `insertBatch(table, rows)` [store.ts:78](../src/staging/store.ts) | `connection.prepare(sql)` + bind params; or parameterised `run()` — preserve the batched multi-VALUES shape for perf |
-| `query<T>(sql, params)` [store.ts:95](../src/staging/store.ts) | `const r = await connection.runAndReadAll(sql, params); return r.getRowObjectsJson() as T[]` |
-| `tableExists(name)` [store.ts:100](../src/staging/store.ts) | Same SQL; swap result-shape helpers |
-| `dropTable(name)` [store.ts:109](../src/staging/store.ts) | `await connection.run(...)` |
-| `rowCount(table)` [store.ts:113](../src/staging/store.ts) | Same SQL; `Number(bigint)` coercion still needed |
-| `columnNames(table)` [store.ts:120](../src/staging/store.ts) | Same SQL; unpack via new result API |
-| `exportToCsv(...)` [store.ts:132](../src/staging/store.ts) | `COPY TO` SQL is unchanged across DuckDB versions; just `connection.run(...)` |
-| `renameColumns(...)` [store.ts:157](../src/staging/store.ts) | `CREATE OR REPLACE TABLE ... AS SELECT` is unchanged; `connection.run(...)` |
+| Public method (current → keep)                                    | New-API call                                                                                                          |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `open()` [store.ts:35](../src/staging/store.ts)                   | `await DuckDBInstance.create(dbPath)` → `await instance.connect()`                                                    |
+| `close()` [store.ts:57](../src/staging/store.ts)                  | `await connection.closeSync()` → `await instance.closeSync()`                                                         |
+| `createTable(name, cols)` [store.ts:70](../src/staging/store.ts)  | `await connection.run(buildCreateTableSql(...))` — reuses existing `buildCreateTableSql` from `src/staging/schema.ts` |
+| `insertBatch(table, rows)` [store.ts:78](../src/staging/store.ts) | `connection.prepare(sql)` + bind params; or parameterised `run()` — preserve the batched multi-VALUES shape for perf  |
+| `query<T>(sql, params)` [store.ts:95](../src/staging/store.ts)    | `const r = await connection.runAndReadAll(sql, params); return r.getRowObjectsJson() as T[]`                          |
+| `tableExists(name)` [store.ts:100](../src/staging/store.ts)       | Same SQL; swap result-shape helpers                                                                                   |
+| `dropTable(name)` [store.ts:109](../src/staging/store.ts)         | `await connection.run(...)`                                                                                           |
+| `rowCount(table)` [store.ts:113](../src/staging/store.ts)         | Same SQL; `Number(bigint)` coercion still needed                                                                      |
+| `columnNames(table)` [store.ts:120](../src/staging/store.ts)      | Same SQL; unpack via new result API                                                                                   |
+| `exportToCsv(...)` [store.ts:132](../src/staging/store.ts)        | `COPY TO` SQL is unchanged across DuckDB versions; just `connection.run(...)`                                         |
+| `renameColumns(...)` [store.ts:157](../src/staging/store.ts)      | `CREATE OR REPLACE TABLE ... AS SELECT` is unchanged; `connection.run(...)`                                           |
 
 **Things to watch for during the rewrite:**
+
 - The top-of-file comment at [store.ts:11-13](../src/staging/store.ts) about
   CJS interop becomes stale — `@duckdb/node-api` ships native ESM.
 - `TableData` type import disappears; use the new API's result types.
@@ -219,15 +222,15 @@ Skip the version matrix the doc suggests; we're committing to Node 26 only.
 
 ## Critical files
 
-| File | Change |
-|---|---|
-| [package.json](../package.json) | Add `engines.node`, swap `duckdb` → `@duckdb/node-api`, bump `@types/node`, float non-critical deps |
-| [package-lock.json](../package-lock.json) | Delete and regenerate under npm 11 |
-| [src/staging/store.ts](../src/staging/store.ts) | Full rewrite against `@duckdb/node-api`; public surface preserved |
-| [src/adapters/source/mssql.ts](../src/adapters/source/mssql.ts) | Add `cryptoCredentialsDetails.minVersion: 'TLSv1.2'` |
-| [src/transform/expression.ts](../src/transform/expression.ts) | Remove `{ timeout: 1000 }` option |
-| [.github/workflows/ci.yml](../.github/workflows/ci.yml) | `node-version: '26'` |
-| [CLAUDE.md](../CLAUDE.md) | Tech-stack table: Node 26, `@duckdb/node-api` |
+| File                                                            | Change                                                                                              |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [package.json](../package.json)                                 | Add `engines.node`, swap `duckdb` → `@duckdb/node-api`, bump `@types/node`, float non-critical deps |
+| [package-lock.json](../package-lock.json)                       | Delete and regenerate under npm 11                                                                  |
+| [src/staging/store.ts](../src/staging/store.ts)                 | Full rewrite against `@duckdb/node-api`; public surface preserved                                   |
+| [src/adapters/source/mssql.ts](../src/adapters/source/mssql.ts) | Add `cryptoCredentialsDetails.minVersion: 'TLSv1.2'`                                                |
+| [src/transform/expression.ts](../src/transform/expression.ts)   | Remove `{ timeout: 1000 }` option                                                                   |
+| [.github/workflows/ci.yml](../.github/workflows/ci.yml)         | `node-version: '26'`                                                                                |
+| [CLAUDE.md](../CLAUDE.md)                                       | Tech-stack table: Node 26, `@duckdb/node-api`                                                       |
 
 **Unchanged** (confirmed by exploration): `src/staging/schema.ts`,
 `src/staging/index.ts`, all runner/adapter/DQ/transform/merge modules,
@@ -242,20 +245,24 @@ special attention to `tests/unit/staging/` (rewritten layer) and
 `tests/unit/transform/expression*` (behaviour-preserving change).
 
 **Integration:**
+
 ```
 npx vitest run tests/integration/
 ```
+
 - `csv-to-csv-mvp.test.ts` — end-to-end single-source round trip.
 - `multi-source-runner.test.ts` — exercises `renameColumns` + merge SQL.
 - `merge-strategies.test.ts` — exercises all four built-in strategies
   against the new DuckDB layer.
 
 **Manual CLI:**
+
 ```
 npx tsx src/cli.ts run tests/fixtures/acme-corp-customers.pipeline.yaml --dry-run
 npx tsx src/cli.ts run tests/fixtures/style-co-styles.pipeline.yaml --dry-run
 npx tsx src/cli.ts check tests/fixtures/acme-corp-customers.pipeline.yaml
 ```
+
 Exit codes: 0 success · 1 pipeline error · 2 DQ critical · 3 config error.
 
 **CI:** after merging Phase 5 CI change, let GitHub Actions run lint +

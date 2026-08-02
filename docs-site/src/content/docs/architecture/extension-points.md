@@ -59,7 +59,7 @@ export interface MergeStrategyPlugin {
   readonly description?: string;
   merge(
     store: StagingStore,
-    sources: MergeSourceMeta[],   // priority-ordered (priority 1 first)
+    sources: MergeSourceMeta[], // priority-ordered (priority 1 first)
     config: MergeConfig,
   ): Promise<MergeResult>;
 }

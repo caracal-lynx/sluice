@@ -31,21 +31,21 @@ source:
     WHERE c.Active = 1
 ```
 
-| Key | Type | Notes |
-|---|---|---|
+| Key          | Type   | Notes                                                                                                                                            |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `connection` | string | Connection string. Either `mssql://user:pass@host/database` or a JSON string for trusted/advanced config. Resolved from `${ENV_VAR}` at runtime. |
-| `query` | string | The full SELECT statement to stream. **Required** unless `table` is set in a future release. |
+| `query`      | string | The full SELECT statement to stream. **Required** unless `table` is set in a future release.                                                     |
 
 **Type mapping (SQL Server → DuckDB):**
 
-| SQL Server | DuckDB |
-|---|---|
-| `varchar`, `nvarchar`, `char` | `VARCHAR` |
-| `int`, `bigint` | `BIGINT` |
-| `decimal`, `numeric`, `money` | `DOUBLE` |
-| `bit` | `BOOLEAN` |
-| `datetime`, `date` | `TIMESTAMP` |
-| `float`, `real` | `DOUBLE` |
+| SQL Server                    | DuckDB      |
+| ----------------------------- | ----------- |
+| `varchar`, `nvarchar`, `char` | `VARCHAR`   |
+| `int`, `bigint`               | `BIGINT`    |
+| `decimal`, `numeric`, `money` | `DOUBLE`    |
+| `bit`                         | `BOOLEAN`   |
+| `datetime`, `date`            | `TIMESTAMP` |
+| `float`, `real`               | `DOUBLE`    |
 
 **Notes:**
 
@@ -61,10 +61,10 @@ source:
   query: SELECT id, name, email FROM customers WHERE active = true
 ```
 
-| Key | Type | Notes |
-|---|---|---|
+| Key          | Type   | Notes                                                                         |
+| ------------ | ------ | ----------------------------------------------------------------------------- |
 | `connection` | string | Standard PostgreSQL connection string. Resolved from `${ENV_VAR}` at runtime. |
-| `query` | string | The SELECT statement to stream. |
+| `query`      | string | The SELECT statement to stream.                                               |
 
 ## `csv` — CSV files
 
@@ -78,11 +78,11 @@ source:
   encoding: utf-8
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `file` | string | — | Path or glob (e.g. `./data/export-*.csv`). |
-| `delimiter` | string | `,` | Field delimiter. |
-| `encoding` | string | `utf-8` | File encoding. |
+| Key         | Type   | Default | Notes                                      |
+| ----------- | ------ | ------- | ------------------------------------------ |
+| `file`      | string | —       | Path or glob (e.g. `./data/export-*.csv`). |
+| `delimiter` | string | `,`     | Field delimiter.                           |
+| `encoding`  | string | `utf-8` | File encoding.                             |
 
 **Notes:**
 
@@ -100,10 +100,10 @@ source:
   sheet: "Customer Export"
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `file` | string | — | Path to the workbook. |
-| `sheet` | string \| number | `0` | Sheet name or 0-based index. |
+| Key     | Type             | Default | Notes                        |
+| ------- | ---------------- | ------- | ---------------------------- |
+| `file`  | string           | —       | Path to the workbook.        |
+| `sheet` | string \| number | `0`     | Sheet name or 0-based index. |
 
 **Notes:**
 
@@ -132,11 +132,11 @@ source:
 
 ### Top-level keys
 
-| Key | Type | Notes |
-|---|---|---|
-| `endpoint` | string | Full URL. `${ENV_VAR}` tokens are resolved at runtime. |
-| `headers` | object | Optional. Added to every request. |
-| `pagination` | object | Optional. Omit for single-page responses. |
+| Key          | Type   | Notes                                                  |
+| ------------ | ------ | ------------------------------------------------------ |
+| `endpoint`   | string | Full URL. `${ENV_VAR}` tokens are resolved at runtime. |
+| `headers`    | object | Optional. Added to every request.                      |
+| `pagination` | object | Optional. Omit for single-page responses.              |
 
 ### Pagination modes
 
@@ -146,9 +146,9 @@ source:
 pagination:
   type: offset
   pageSize: 100
-  pageParam: skip          # query param name for the offset
-  totalField: data.total   # dot-path to total count in the response
-  dataField: data.items    # dot-path to the records array
+  pageParam: skip # query param name for the offset
+  totalField: data.total # dot-path to total count in the response
+  dataField: data.items # dot-path to the records array
 ```
 
 Sluice issues `?skip=0&top=100`, `?skip=100&top=100`, … until it has fetched `data.total` records.
@@ -159,7 +159,7 @@ Sluice issues `?skip=0&top=100`, `?skip=100&top=100`, … until it has fetched `
 pagination:
   type: page
   pageSize: 50
-  pageParam: page          # query param name for the page number
+  pageParam: page # query param name for the page number
   totalField: meta.totalPages
   dataField: results
 ```
@@ -173,8 +173,8 @@ pagination:
   type: cursor
   pageSize: 100
   pageParam: limit
-  cursorField: nextCursor  # field in response body to read next cursor from
-  cursorParam: cursor      # query param name to send the cursor in
+  cursorField: nextCursor # field in response body to read next cursor from
+  cursorParam: cursor # query param name to send the cursor in
   dataField: items
 ```
 
@@ -203,8 +203,8 @@ sources:
     sheet: "Products"
     rename:
       Style Number: STYLE_NO
-      Description:  STYLE_DESC
-      Fibre:        FIBRE_CONTENT
+      Description: STYLE_DESC
+      Fibre: FIBRE_CONTENT
 ```
 
 Combined with the [`merge:`](/sluice/reference/pipeline-yaml/) block, sources can be joined with strategies like `coalesce`, `priority-override`, `union`, or `intersect`. See [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/) for a worked multi-source example.

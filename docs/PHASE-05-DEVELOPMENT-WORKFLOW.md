@@ -14,7 +14,7 @@ Today the entire Sluice ecosystem lives inside one private GitHub repository (`c
 
 The strategic intent is the "commoditise the platform, sell the expertise" model captured in [SLUICE-IMPLEMENTATION-PLAN.md §1](./SLUICE-IMPLEMENTATION-PLAN.md#1-the-vision): the engine becomes a free, auditable, community-credible asset; the consultancy keeps everything that represents accumulated client knowledge and bespoke delivery as paid services. Phase 5 is the irreversible flip that makes that split real.
 
-Phase 5 is **not** a monorepo-split. The current repo is already a flat single-package layout (no `packages/` directory). The work is mostly in-place open-sourcing of `caracal-lynx/sluice` plus the *creation* of new sibling private repos — a smaller, lower-risk migration than the master plan's "before / after" diagram (which carries an aspirational pre-state) might suggest.
+Phase 5 is **not** a monorepo-split. The current repo is already a flat single-package layout (no `packages/` directory). The work is mostly in-place open-sourcing of `caracal-lynx/sluice` plus the _creation_ of new sibling private repos — a smaller, lower-risk migration than the master plan's "before / after" diagram (which carries an aspirational pre-state) might suggest.
 
 ---
 
@@ -42,16 +42,16 @@ Phase 5 is **not** a monorepo-split. The current repo is already a flat single-p
 
 ## Prerequisites (must be true before starting)
 
-| # | Prerequisite | Owned by | Verify with |
-|---|---|---|---|
-| 1 | Phase 0 board resolution minuted; ELv2 decision recorded | Phase 0 | Caracal Lynx board minutes |
-| 2 | Phase 0 client contract audit clean (no IP / confidentiality blockers) | Phase 0 | Legal review record |
-| 3 | Phase 0 GDPR audit clean across HEAD **and history** | Phase 0 | `git log -S "acme-corp"` etc. — see §2.1 below |
-| 4 | Phase 0 dependency licence audit clean (MIT / Apache 2.0 / BSD / ISC only) | Phase 0 | `npx license-checker --summary --excludePrivatePackages` |
-| 5 | npm `@caracal-lynx` org confirmed, Pro plan active | Phase 0 | `npm whoami && npm access list packages @caracal-lynx` |
-| 6 | Phase 4a complete — `caracal-lynx/sluice-enrich` exists as a private repo | Phase 4a | `gh repo view caracal-lynx/sluice-enrich --json visibility` |
-| 7 | All Vitest suites green on master | continuous | `npm test` |
-| 8 | Working tree clean; no uncommitted changes | continuous | `git status` |
+| #   | Prerequisite                                                               | Owned by   | Verify with                                                 |
+| --- | -------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------- |
+| 1   | Phase 0 board resolution minuted; ELv2 decision recorded                   | Phase 0    | Caracal Lynx board minutes                                  |
+| 2   | Phase 0 client contract audit clean (no IP / confidentiality blockers)     | Phase 0    | Legal review record                                         |
+| 3   | Phase 0 GDPR audit clean across HEAD **and history**                       | Phase 0    | `git log -S "acme-corp"` etc. — see §2.1 below              |
+| 4   | Phase 0 dependency licence audit clean (MIT / Apache 2.0 / BSD / ISC only) | Phase 0    | `npx license-checker --summary --excludePrivatePackages`    |
+| 5   | npm `@caracal-lynx` org confirmed, Pro plan active                         | Phase 0    | `npm whoami && npm access list packages @caracal-lynx`      |
+| 6   | Phase 4a complete — `caracal-lynx/sluice-enrich` exists as a private repo  | Phase 4a   | `gh repo view caracal-lynx/sluice-enrich --json visibility` |
+| 7   | All Vitest suites green on master                                          | continuous | `npm test`                                                  |
+| 8   | Working tree clean; no uncommitted changes                                 | continuous | `git status`                                                |
 
 If any row is not green, do not start Phase 5.
 
@@ -158,7 +158,7 @@ git rm -r clients/
 git commit -m "[master] - chore: remove clients/ from public repo (now in client-specific private repos)"
 ```
 
-The deletion does **not** by itself remove client data from history. That's why §2.1's history audit is a prerequisite — if it's clean, the recipe-only YAML configs that lived in `clients/` are not a confidentiality concern (they're not real data, they describe migration mappings). If §2.1 surfaced anything sensitive, it must be removed via a history rewrite *before* the flip.
+The deletion does **not** by itself remove client data from history. That's why §2.1's history audit is a prerequisite — if it's clean, the recipe-only YAML configs that lived in `clients/` are not a confidentiality concern (they're not real data, they describe migration mappings). If §2.1 surfaced anything sensitive, it must be removed via a history rewrite _before_ the flip.
 
 ### 2.3 — Final HEAD scrub
 
@@ -185,17 +185,17 @@ The fresh-start alternative (squash to a single commit before flipping) is only 
 
 Author and commit these at the repo root before flipping public.
 
-| File | Source / template | Acceptance criterion |
-|---|---|---|
-| `LICENSE` | Verbatim ELv2 text from [elastic.co/licensing/elastic-license](https://www.elastic.co/licensing/elastic-license) | First line: `Elastic License 2.0`; last line includes `Limitations` |
-| `LICENCE-FAQ.md` | Already authored; verify it's current | Mentions `@caracal-lynx/sluice` by name and gives the plain-English "may I…?" answers |
-| `CONTRIBUTING.md` | New — author per template below | Covers PR process, conventional commits convention, DCO sign-off requirement, link to `branching-strategy.md` |
-| `CODE_OF_CONDUCT.md` | [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) verbatim | Reporting email is `conduct@caracallynx.com` |
-| `SECURITY.md` | New — author per template below | Reporting channel: `security@caracallynx.com`; SLA: 48-hour acknowledgement, 90-day disclosure |
-| `.github/ISSUE_TEMPLATE/bug_report.yml` | GitHub form schema | Captures: Sluice version, Node version, OS, pipeline YAML excerpt, expected vs actual |
-| `.github/ISSUE_TEMPLATE/feature_request.yml` | GitHub form schema | Captures: use case, proposed YAML / API shape, willingness to PR |
-| `.github/ISSUE_TEMPLATE/config.yml` | Routing config | Disables blank issues; routes commercial enquiries to `sluice@caracallynx.com` |
-| `.github/PULL_REQUEST_TEMPLATE.md` | New — short checklist | Covers: tests added, CHANGELOG updated, breaks public API? |
+| File                                         | Source / template                                                                                                | Acceptance criterion                                                                                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `LICENSE`                                    | Verbatim ELv2 text from [elastic.co/licensing/elastic-license](https://www.elastic.co/licensing/elastic-license) | First line: `Elastic License 2.0`; last line includes `Limitations`                                           |
+| `LICENCE-FAQ.md`                             | Already authored; verify it's current                                                                            | Mentions `@caracal-lynx/sluice` by name and gives the plain-English "may I…?" answers                         |
+| `CONTRIBUTING.md`                            | New — author per template below                                                                                  | Covers PR process, conventional commits convention, DCO sign-off requirement, link to `branching-strategy.md` |
+| `CODE_OF_CONDUCT.md`                         | [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) verbatim          | Reporting email is `conduct@caracallynx.com`                                                                  |
+| `SECURITY.md`                                | New — author per template below                                                                                  | Reporting channel: `security@caracallynx.com`; SLA: 48-hour acknowledgement, 90-day disclosure                |
+| `.github/ISSUE_TEMPLATE/bug_report.yml`      | GitHub form schema                                                                                               | Captures: Sluice version, Node version, OS, pipeline YAML excerpt, expected vs actual                         |
+| `.github/ISSUE_TEMPLATE/feature_request.yml` | GitHub form schema                                                                                               | Captures: use case, proposed YAML / API shape, willingness to PR                                              |
+| `.github/ISSUE_TEMPLATE/config.yml`          | Routing config                                                                                                   | Disables blank issues; routes commercial enquiries to `sluice@caracallynx.com`                                |
+| `.github/PULL_REQUEST_TEMPLATE.md`           | New — short checklist                                                                                            | Covers: tests added, CHANGELOG updated, breaks public API?                                                    |
 
 `CONTRIBUTING.md` skeleton:
 
@@ -289,7 +289,7 @@ find src -name "*.ts" -type f -exec grep -L "SPDX-License-Identifier: Elastic-2.
 
 ## §5 — npm publishing setup
 
-Phase 5 only sets up the *access*. The publish *workflow* (Changesets bot, GitHub Actions, automated tagging) is wired up in Phase 7.
+Phase 5 only sets up the _access_. The publish _workflow_ (Changesets bot, GitHub Actions, automated tagging) is wired up in Phase 7.
 
 ### 5.1 — Public package configuration
 
@@ -370,15 +370,15 @@ GitHub web UI:
 
 Done immediately after the flip, in the same window:
 
-| Setting | Value |
-|---|---|
-| Pages | Source: `master` branch · `/docs` folder (placeholder until Phase 8 fills the site). Custom domain: `sluice.caracallynx.com` if/when DNS ready. |
-| Discussions | Enable (community Q&A channel) |
-| Topics | `etl`, `data-migration`, `erp`, `typescript`, `yaml`, `duckdb`, `cli`, `data-quality`, `pipeline` |
-| Default branch protection on `master` | Require PR before merge · Require 1 approval · Require CI to pass · Restrict force-push |
-| Issue labels | Add `area/dq`, `area/transform`, `area/adapter-source`, `area/adapter-target`, `area/staging`, `good-first-issue`, `help-wanted` |
-| About panel (sidebar) | Description copy lifted from [PHASE-06](./PHASE-06-readme-and-marketing-spec.md); website link to docs (Phase 8) |
-| Sponsorship | Off — paid services are pitched in the README, not via GitHub Sponsors |
+| Setting                               | Value                                                                                                                                           |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pages                                 | Source: `master` branch · `/docs` folder (placeholder until Phase 8 fills the site). Custom domain: `sluice.caracallynx.com` if/when DNS ready. |
+| Discussions                           | Enable (community Q&A channel)                                                                                                                  |
+| Topics                                | `etl`, `data-migration`, `erp`, `typescript`, `yaml`, `duckdb`, `cli`, `data-quality`, `pipeline`                                               |
+| Default branch protection on `master` | Require PR before merge · Require 1 approval · Require CI to pass · Restrict force-push                                                         |
+| Issue labels                          | Add `area/dq`, `area/transform`, `area/adapter-source`, `area/adapter-target`, `area/staging`, `good-first-issue`, `help-wanted`                |
+| About panel (sidebar)                 | Description copy lifted from [PHASE-06](./PHASE-06-readme-and-marketing-spec.md); website link to docs (Phase 8)                                |
+| Sponsorship                           | Off — paid services are pitched in the README, not via GitHub Sponsors                                                                          |
 
 The README copy itself is Phase 6's deliverable; Phase 5 leaves the existing internal README in place as a placeholder. The visible defects (a `License: private` badge, no commercial-services section) are acceptable for the few weeks between Phase 5 and Phase 6.
 
@@ -553,17 +553,17 @@ For "we changed our minds about open-sourcing" — there is no rollback. ELv2 ve
 
 Anything not covered in §§1–9 belongs to a sibling phase doc. This section exists so future readers don't grep this file looking for what's not here.
 
-| Topic | Owning doc |
-|---|---|
-| Branching strategy, PR conventions, hotfix flow | [`docs/branching-strategy.md`](./branching-strategy.md) |
-| Changesets, GitHub Actions release workflow, Renovate cascade, breaking-change policy | [`docs/PHASE-07-git-npm-workflow-spec.md`](./PHASE-07-git-npm-workflow-spec.md) |
+| Topic                                                                                         | Owning doc                                                                              |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Branching strategy, PR conventions, hotfix flow                                               | [`docs/branching-strategy.md`](./branching-strategy.md)                                 |
+| Changesets, GitHub Actions release workflow, Renovate cascade, breaking-change policy         | [`docs/PHASE-07-git-npm-workflow-spec.md`](./PHASE-07-git-npm-workflow-spec.md)         |
 | README hero, paid-services section, marketing artefacts (logo, social card, About panel copy) | [`docs/PHASE-06-readme-and-marketing-spec.md`](./PHASE-06-readme-and-marketing-spec.md) |
-| GitHub Pages docs site (Astro / Starlight) | [`docs/PHASE-08-github-pages-plan.md`](./PHASE-08-github-pages-plan.md) |
-| Enrich service architecture & providers | [`docs/PHASE-04-enrich-phase.md`](./PHASE-04-enrich-phase.md) |
-| MCP server tools and implementation | [`docs/PHASE-09-sluice-mcp-spec.md`](./PHASE-09-sluice-mcp-spec.md) |
-| Node 24 + DuckDB Neo upgrade (already shipped) | [`docs/archive/node24-upgrade-plan.md`](./archive/node24-upgrade-plan.md) |
-| TypeScript v6 upgrade (Phase 2) | [`docs/PHASE-02-typescript-v6-upgrade.md`](./PHASE-02-typescript-v6-upgrade.md) |
-| TypeScript v7 / tsgo migration (Phase 11) | [`docs/PHASE-11-typescript-v7-spec.md`](./PHASE-11-typescript-v7-spec.md) |
+| GitHub Pages docs site (Astro / Starlight)                                                    | [`docs/PHASE-08-github-pages-plan.md`](./PHASE-08-github-pages-plan.md)                 |
+| Enrich service architecture & providers                                                       | [`docs/PHASE-04-enrich-phase.md`](./PHASE-04-enrich-phase.md)                           |
+| MCP server tools and implementation                                                           | [`docs/PHASE-09-sluice-mcp-spec.md`](./PHASE-09-sluice-mcp-spec.md)                     |
+| Node 24 + DuckDB Neo upgrade (already shipped)                                                | [`docs/archive/node24-upgrade-plan.md`](./archive/node24-upgrade-plan.md)               |
+| TypeScript v6 upgrade (Phase 2)                                                               | [`docs/PHASE-02-typescript-v6-upgrade.md`](./PHASE-02-typescript-v6-upgrade.md)         |
+| TypeScript v7 / tsgo migration (Phase 11)                                                     | [`docs/PHASE-11-typescript-v7-spec.md`](./PHASE-11-typescript-v7-spec.md)               |
 
 ---
 
@@ -573,12 +573,12 @@ This section is the canonical reference for getting a client engagement running 
 
 ### 11.1 — Prerequisites
 
-| Tool | Required version | Notes |
-|---|---|---|
-| Node.js | 24 LTS or later | Phase 1 raised the floor from Node 20 to Node 24. The `engines` field in `package.json` enforces this. |
-| npm | 10.x (ships with Node 24) | No separate install. |
-| Git | Any recent | 2.30+ for `--filter` support if the client ever needs `filter-repo`. |
-| PowerShell 7 (Windows) or zsh/bash (macOS/Linux) | Any | Sluice runs on all three; Caracal Lynx develops on Windows / PowerShell 7. |
+| Tool                                             | Required version          | Notes                                                                                                  |
+| ------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Node.js                                          | 24 LTS or later           | Phase 1 raised the floor from Node 20 to Node 24. The `engines` field in `package.json` enforces this. |
+| npm                                              | 10.x (ships with Node 24) | No separate install.                                                                                   |
+| Git                                              | Any recent                | 2.30+ for `--filter` support if the client ever needs `filter-repo`.                                   |
+| PowerShell 7 (Windows) or zsh/bash (macOS/Linux) | Any                       | Sluice runs on all three; Caracal Lynx develops on Windows / PowerShell 7.                             |
 
 Verification:
 
@@ -685,10 +685,10 @@ Convenience scripts in `package.json`:
 ```json
 {
   "scripts": {
-    "sluice:check":     "sluice check pipelines/*.pipeline.yaml",
-    "sluice:validate":  "sluice validate pipelines/*.pipeline.yaml",
-    "sluice:dry-run":   "sluice run --dry-run pipelines/*.pipeline.yaml",
-    "sluice:run":       "sluice run pipelines/*.pipeline.yaml"
+    "sluice:check": "sluice check pipelines/*.pipeline.yaml",
+    "sluice:validate": "sluice validate pipelines/*.pipeline.yaml",
+    "sluice:dry-run": "sluice run --dry-run pipelines/*.pipeline.yaml",
+    "sluice:run": "sluice run pipelines/*.pipeline.yaml"
   }
 }
 ```
@@ -703,12 +703,12 @@ npm run sluice:run
 
 After a run, `${SLUICE_OUTPUT_DIR}` contains:
 
-| File | Description |
-|---|---|
-| `{name}-state.json` | Run summary: row counts, durations, status, `lastRunAt` for incremental mode |
-| `{name}-rejected.csv` | Rows that failed DQ rules — one row per violation, with field/rule/severity columns |
-| `{name}-dq-summary.json` | Aggregate DQ statistics — counts by rule, counts by severity, by-field breakdown |
-| `{name}.duckdb` | DuckDB staging file (deleted at end of run unless `--keep-staging`) |
+| File                     | Description                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `{name}-state.json`      | Run summary: row counts, durations, status, `lastRunAt` for incremental mode        |
+| `{name}-rejected.csv`    | Rows that failed DQ rules — one row per violation, with field/rule/severity columns |
+| `{name}-dq-summary.json` | Aggregate DQ statistics — counts by rule, counts by severity, by-field breakdown    |
+| `{name}.duckdb`          | DuckDB staging file (deleted at end of run unless `--keep-staging`)                 |
 
 ### 11.7 — Updating Sluice
 
@@ -749,4 +749,4 @@ flowchart TD
 
 ---
 
-*Document maintained by Caracal Lynx Limited. Update this file when Phase 5 sub-tasks complete, when the post-launch topology changes, or when client setup steps shift. The matching master-plan section is [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch).*
+_Document maintained by Caracal Lynx Limited. Update this file when Phase 5 sub-tasks complete, when the post-launch topology changes, or when client setup steps shift. The matching master-plan section is [SLUICE-IMPLEMENTATION-PLAN.md §9](./SLUICE-IMPLEMENTATION-PLAN.md#9-phase-5--repo-restructure--open-source-launch)._

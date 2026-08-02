@@ -39,13 +39,13 @@ There is **no `develop` branch.** The earlier draft of [PHASE-05-DEVELOPMENT-WOR
 
 ## Branch naming
 
-| Prefix | Use for | Example |
-|---|---|---|
-| `feat/` | New behaviour visible to users (CLI flag, YAML schema field, adapter, transform type) | `feat/multi-source-merge` |
-| `fix/` | Bug fix that doesn't change the public API | `fix/duckdb-bom-handling` |
-| `docs/` | Documentation only — no `src/` changes | `docs/branching-strategy` |
-| `chore/` | Tooling, CI, lockfile, dependency bumps | `chore/eslint-9-upgrade` |
-| `hotfix/` | Urgent fix that needs to ship the same day | `hotfix/credential-leak` |
+| Prefix     | Use for                                                                                                          | Example                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `feat/`    | New behaviour visible to users (CLI flag, YAML schema field, adapter, transform type)                            | `feat/multi-source-merge`  |
+| `fix/`     | Bug fix that doesn't change the public API                                                                       | `fix/duckdb-bom-handling`  |
+| `docs/`    | Documentation only — no `src/` changes                                                                           | `docs/branching-strategy`  |
+| `chore/`   | Tooling, CI, lockfile, dependency bumps                                                                          | `chore/eslint-9-upgrade`   |
+| `hotfix/`  | Urgent fix that needs to ship the same day                                                                       | `hotfix/credential-leak`   |
 | `feature/` | (Legacy spelling — see existing branches in the log) Same meaning as `feat/`; new branches should prefer `feat/` | `feature/upgrade-node-v24` |
 
 Use lowercase + hyphens. Avoid issue numbers in branch names (they go in PR titles / commit bodies, where they're navigable).
@@ -160,4 +160,4 @@ The model above is closest to **trunk-based-without-flags**, with short-lived br
 
 ---
 
-*Document maintained by Caracal Lynx Limited. If this convention changes — e.g. a `develop` branch is reintroduced for a coordinated multi-week effort — update this file before opening the first branch under the new shape.*
+_Document maintained by Caracal Lynx Limited. If this convention changes — e.g. a `develop` branch is reintroduced for a coordinated multi-week effort — update this file before opening the first branch under the new shape._

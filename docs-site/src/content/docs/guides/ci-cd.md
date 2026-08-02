@@ -7,13 +7,13 @@ Sluice is built to run in CI. The CLI emits structured pino logs to stderr, the 
 
 ## Exit codes
 
-| Code | Meaning |
-|---|---|
-| `0` | Success — pipeline completed cleanly. |
-| `1` | Pipeline error (adapter failure, DuckDB error, expression error, …). |
-| `2` | DQ critical violations — at least one row failed a `critical` rule and `stopOnCritical: true`. |
-| `3` | Config error — YAML parse failed or Zod validation failed. |
-| `4` | Enrich error — Phase 4a private-add-on path. |
+| Code | Meaning                                                                                        |
+| ---- | ---------------------------------------------------------------------------------------------- |
+| `0`  | Success — pipeline completed cleanly.                                                          |
+| `1`  | Pipeline error (adapter failure, DuckDB error, expression error, …).                           |
+| `2`  | DQ critical violations — at least one row failed a `critical` rule and `stopOnCritical: true`. |
+| `3`  | Config error — YAML parse failed or Zod validation failed.                                     |
+| `4`  | Enrich error — Phase 4a private-add-on path.                                                   |
 
 Most CI rules want **`exit 0` only**. A `2` or `3` should fail the job; a `1` indicates an infrastructure problem.
 
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
       - run: npm ci
       - name: Validate every pipeline against fixtures
@@ -64,13 +64,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24', cache: npm }
+        with: { node-version: "24", cache: npm }
       - run: npm ci
       - name: Run pipelines against real source/target
         env:
           SOURCE_MSSQL: ${{ secrets.SOURCE_MSSQL }}
-          TARGET_PG:    ${{ secrets.TARGET_PG }}
-          API_TOKEN:    ${{ secrets.API_TOKEN }}
+          TARGET_PG: ${{ secrets.TARGET_PG }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
         run: |
           for pipeline in pipelines/*.pipeline.yaml; do
             npx sluice run "$pipeline"
@@ -94,7 +94,7 @@ Connection strings and API tokens go through `${ENV_VAR}` references in the YAML
 # pipeline.yaml
 source:
   adapter: mssql
-  connection: ${SOURCE_MSSQL}    # resolved from process.env at runtime
+  connection: ${SOURCE_MSSQL} # resolved from process.env at runtime
 ```
 
 ```yaml
@@ -113,7 +113,7 @@ The most useful per-PR artefact is the DQ summary JSON. Pair `sluice validate` w
 
 ```yaml
 - name: Upload DQ summaries
-  if: always()           # upload even when validate failed (exit 2)
+  if: always() # upload even when validate failed (exit 2)
   uses: actions/upload-artifact@v4
   with:
     name: dq-summaries
@@ -132,8 +132,8 @@ jobs:
     environment: uat
     steps:
       - env:
-          SOURCE_MSSQL: ${{ secrets.SOURCE_MSSQL }}   # resolved from `uat` environment
-          TARGET_PG:    ${{ secrets.TARGET_PG }}
+          SOURCE_MSSQL: ${{ secrets.SOURCE_MSSQL }} # resolved from `uat` environment
+          TARGET_PG: ${{ secrets.TARGET_PG }}
         run: npx sluice run customers.pipeline.yaml
 ```
 
@@ -144,7 +144,7 @@ Use a `schedule:` trigger for periodic syncs. Pair with `mode: incremental` so e
 ```yaml
 on:
   schedule:
-    - cron: '0 2 * * *'   # 02:00 UTC every day
+    - cron: "0 2 * * *" # 02:00 UTC every day
 
 # pipeline.yaml
 run:

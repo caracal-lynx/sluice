@@ -49,8 +49,8 @@ across N repos defeats the point of having a checked-in template.
 
 Without it, Renovate's default `rangeStrategy` for caret-ranged dependencies
 (`^0.1.2`) is `replace` (or `widen` for peer deps), which only opens a PR
-when the new version is *outside* the current range. A patch bump like
-`0.1.2 → 0.1.3` falls *inside* `^0.1.2`, so by default no PR is created and
+when the new version is _outside_ the current range. A patch bump like
+`0.1.2 → 0.1.3` falls _inside_ `^0.1.2`, so by default no PR is created and
 consumers pick up the new version silently on their next `npm install`.
 
 For Phase 7's cascade to be visible — which is the whole point of having a
@@ -73,7 +73,7 @@ visible.
 `"branch"` was the original Phase 7 choice, but it has a quiet trap: if the
 downstream repo has **no required status checks** (a stub repo with no
 workflows, or a repo whose CI hasn't been wired up yet), Renovate creates
-the branch and waits *forever* for checks that will never run. The cascade
+the branch and waits _forever_ for checks that will never run. The cascade
 appears dead from outside.
 
 `"pr"` doesn't have this failure mode. Even on a repo with no CI, the PR

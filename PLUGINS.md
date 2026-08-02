@@ -1,6 +1,6 @@
 # Sluice — Plugin Author Guide
 
-Sluice's pipeline configs are intentionally constrained — the schema is fixed, the field types are enumerated, the DQ check types are an explicit list. That keeps configs readable and reviewable. But every real migration eventually needs *something* the built-ins don't cover: a regex pattern that only makes sense for one client's data, a date format only one ERP uses, a merge strategy with custom precedence rules.
+Sluice's pipeline configs are intentionally constrained — the schema is fixed, the field types are enumerated, the DQ check types are an explicit list. That keeps configs readable and reviewable. But every real migration eventually needs _something_ the built-ins don't cover: a regex pattern that only makes sense for one client's data, a date format only one ERP uses, a merge strategy with custom precedence rules.
 
 Plugins fill that gap without forcing you to fork the engine. Sluice exposes a **three-tier extension model** that scales from "I just want a reusable composite rule for this client" to "I want to publish a paid adapter package on npm."
 
@@ -8,11 +8,11 @@ Plugins fill that gap without forcing you to fork the engine. Sluice exposes a *
 
 ## The three tiers at a glance
 
-| Tier | What it is | Where it lives | Who writes it | Distribution |
-|---|---|---|---|---|
-| **Tier 1 — Composite YAML rules** | A named bundle of built-in DQ checks | YAML files in your project | Anyone — no code | In your repo |
-| **Tier 2 — File-based plugins** | TypeScript module exporting a `RulePlugin`, `TransformPlugin`, or `MergeStrategyPlugin` | `plugins/*.{rule,transform,merge}.ts` in your project | Anyone with TypeScript | In your repo |
-| **Tier 3 — npm package plugins** | A published npm package with a `register()` function | Anywhere installable via `npm install` | Plugin authors | npmjs.com (public or private) |
+| Tier                              | What it is                                                                              | Where it lives                                        | Who writes it          | Distribution                  |
+| --------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------- | ----------------------------- |
+| **Tier 1 — Composite YAML rules** | A named bundle of built-in DQ checks                                                    | YAML files in your project                            | Anyone — no code       | In your repo                  |
+| **Tier 2 — File-based plugins**   | TypeScript module exporting a `RulePlugin`, `TransformPlugin`, or `MergeStrategyPlugin` | `plugins/*.{rule,transform,merge}.ts` in your project | Anyone with TypeScript | In your repo                  |
+| **Tier 3 — npm package plugins**  | A published npm package with a `register()` function                                    | Anywhere installable via `npm install`                | Plugin authors         | npmjs.com (public or private) |
 
 You can mix tiers freely — a single pipeline can pull composite rules (Tier 1), a local dev's file plugin (Tier 2), and an installed npm rule pack (Tier 3) all at once.
 
@@ -40,8 +40,8 @@ rules:
     description: Price must be a non-negative number with sensible upper bound
     checks:
       - { type: notNull, severity: critical }
-      - { type: min,     value: 0,       severity: critical }
-      - { type: max,     value: 99999.99, severity: warning  }
+      - { type: min, value: 0, severity: critical }
+      - { type: max, value: 99999.99, severity: warning }
 ```
 
 ### Use in a pipeline
@@ -49,15 +49,15 @@ rules:
 ```yaml
 # customers.pipeline.yaml
 dq:
-  rulesFile: ./shared/rules.yaml   # tell ConfigLoader where to find composite rules
+  rulesFile: ./shared/rules.yaml # tell ConfigLoader where to find composite rules
   rules:
     - field: VAT_NUMBER
       checks:
-        - { type: ukVatNumber }    # expands to the pattern check above at load time
+        - { type: ukVatNumber } # expands to the pattern check above at load time
 
     - field: COST_PRICE
       checks:
-        - { type: positivePrice }  # expands to all three checks at load time
+        - { type: positivePrice } # expands to all three checks at load time
 ```
 
 `ConfigLoader` expands composite-rule references into their underlying built-in checks **before** Zod validation runs, so the DQ engine only ever sees standard check types.
@@ -83,30 +83,30 @@ Plugins are auto-discovered from a `plugins/` directory next to your pipeline YA
 
 ### File naming convention
 
-| Filename suffix | Plugin type | Exported symbol |
-|---|---|---|
-| `*.rule.ts` (or `.rule.js`) | DQ rule | `export const rule: RulePlugin` |
-| `*.transform.ts` (or `.transform.js`) | Field transform | `export const transform: TransformPlugin` |
-| `*.merge.ts` (or `.merge.js`) | Merge strategy | `export const mergeStrategy: MergeStrategyPlugin` |
+| Filename suffix                       | Plugin type     | Exported symbol                                   |
+| ------------------------------------- | --------------- | ------------------------------------------------- |
+| `*.rule.ts` (or `.rule.js`)           | DQ rule         | `export const rule: RulePlugin`                   |
+| `*.transform.ts` (or `.transform.js`) | Field transform | `export const transform: TransformPlugin`         |
+| `*.merge.ts` (or `.merge.js`)         | Merge strategy  | `export const mergeStrategy: MergeStrategyPlugin` |
 
 ### Example — DQ rule plugin
 
 ```typescript
 // plugins/ifs-customer-no.rule.ts
-import type { RulePlugin } from '@caracal-lynx/sluice';
+import type { RulePlugin } from "@caracal-lynx/sluice";
 
 export const rule: RulePlugin = {
-  id: 'ifsCustomerNo',
-  description: 'IFS customer number — three uppercase letters followed by 4–7 digits',
+  id: "ifsCustomerNo",
+  description: "IFS customer number — three uppercase letters followed by 4–7 digits",
 
   validate(value, config, rowIndex, field) {
-    if (typeof value !== 'string') return null;
+    if (typeof value !== "string") return null;
     if (/^[A-Z]{3}[0-9]{4,7}$/.test(value)) return null;
     return {
       field,
       rowIndex,
       value,
-      rule: 'ifsCustomerNo',
+      rule: "ifsCustomerNo",
       severity: config.severity,
       message: config.message ?? `${value} is not a valid IFS customer number`,
     };
@@ -128,14 +128,14 @@ dq:
 
 ```typescript
 // plugins/season-from-date.transform.ts
-import type { TransformPlugin } from '@caracal-lynx/sluice';
+import type { TransformPlugin } from "@caracal-lynx/sluice";
 
 export const transform: TransformPlugin = {
-  id: 'seasonFromDate',
-  description: 'Derives a fashion season code (SS25, AW25 …) from a YYYY-MM-DD launch date',
+  id: "seasonFromDate",
+  description: "Derives a fashion season code (SS25, AW25 …) from a YYYY-MM-DD launch date",
 
   apply(value, row, config) {
-    if (typeof value !== 'string') return null;
+    if (typeof value !== "string") return null;
     const match = /^(\d{4})-(\d{2})-/.exec(value);
     if (!match) return null;
     const [, year, month] = match;
@@ -158,15 +158,15 @@ transform:
 
 ```typescript
 // plugins/max-cost.merge.ts
-import type { MergeStrategyPlugin } from '@caracal-lynx/sluice';
+import type { MergeStrategyPlugin } from "@caracal-lynx/sluice";
 
 export const mergeStrategy: MergeStrategyPlugin = {
-  id: 'max-cost',
-  description: 'Coalesce by key, picking the highest COST_PRICE across all sources',
+  id: "max-cost",
+  description: "Coalesce by key, picking the highest COST_PRICE across all sources",
   async merge(store, sources, config) {
     // Implementation uses the StagingStore SQL surface — see docs for full example
     // ...
-    return { rowsMerged: 0, conflicts: 0, unmatched: 0, tableName: 'stg_merged' };
+    return { rowsMerged: 0, conflicts: 0, unmatched: 0, tableName: "stg_merged" };
   },
 };
 ```
@@ -204,10 +204,10 @@ import type {
   RuleRegistry,
   TransformRegistry,
   MergeStrategyRegistry,
-} from '@caracal-lynx/sluice';
-import { ukVatNumber } from './rules/uk-vat-number.js';
-import { ukPostcode } from './rules/uk-postcode-strict.js';
-import { sortCodeAccount } from './rules/sort-code-account.js';
+} from "@caracal-lynx/sluice";
+import { ukVatNumber } from "./rules/uk-vat-number.js";
+import { ukPostcode } from "./rules/uk-postcode-strict.js";
+import { sortCodeAccount } from "./rules/sort-code-account.js";
 
 export const plugin: PluginPackage = {
   register(rules: RuleRegistry, transforms: TransformRegistry, options, merges) {
@@ -242,10 +242,10 @@ Each Sluice project can declare its npm plugin packages in a top-level `sluice.c
 version: "1.0"
 
 plugins:
-  - package: '@your-org/sluice-rules-uk'
-    options:                          # passed verbatim to register()
+  - package: "@your-org/sluice-rules-uk"
+    options: # passed verbatim to register()
       enableExperimental: false
-  - package: '@your-org/sluice-rules-fashion'
+  - package: "@your-org/sluice-rules-fashion"
 ```
 
 Then `npm install` the packages and `sluice run` will load them automatically:

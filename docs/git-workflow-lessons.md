@@ -25,9 +25,9 @@
 
 **Recovery friction.**
 
-- `gh pr edit <child> --base master` was rejected with *"Cannot change the base branch of a closed pull request"*. There is no `gh pr reopen --retarget` flow.
+- `gh pr edit <child> --base master` was rejected with _"Cannot change the base branch of a closed pull request"_. There is no `gh pr reopen --retarget` flow.
 - Solution: create a fresh PR from the same head branch, targeting `master` directly. The original PR stays closed in history; the replacement PR carries the same commits forward.
-- After fixing the base, the first merge attempt failed with *"merge commit cannot be cleanly created"*. Stacked-history confused git's 3-way merge. Recovery: `git rebase origin/master` locally (cherry-pick detection cleanly skipped already-applied commits), then `git push --force-with-lease`.
+- After fixing the base, the first merge attempt failed with _"merge commit cannot be cleanly created"_. Stacked-history confused git's 3-way merge. Recovery: `git rebase origin/master` locally (cherry-pick detection cleanly skipped already-applied commits), then `git push --force-with-lease`.
 
 **Root cause.** A wrong default. We assumed GitHub would auto-retarget child PRs the way it does for `main`/`master`-prefixed flows in some contexts. The actual behaviour is: **if a child's base branch ceases to exist, the child PR closes, period.** No warning at parent merge time.
 
@@ -83,7 +83,7 @@
 
 **When:** Discovered 7 May 2026; had been present for several days.
 
-**What happened.** A Claude Code session created `.claude/worktrees/angry-brown-99e75e` holding `master` open in a subdirectory of the main `sluice` checkout. The session ended without removing the worktree. Routine `git checkout master` in the main worktree failed with *"'master' is already used by worktree at ..."* — a confusing error if you don't know what's holding it.
+**What happened.** A Claude Code session created `.claude/worktrees/angry-brown-99e75e` holding `master` open in a subdirectory of the main `sluice` checkout. The session ended without removing the worktree. Routine `git checkout master` in the main worktree failed with _"'master' is already used by worktree at ..."_ — a confusing error if you don't know what's holding it.
 
 **Recovery.** `git worktree remove .claude/worktrees/angry-brown-99e75e` after verifying it had no uncommitted changes.
 
@@ -95,7 +95,7 @@
 
 **When:** Discovered 7 May 2026 during this retrospective.
 
-**What happened.** `docs/LICENCE-FAQ.md` AND `docs/licensing-faq.md` both existed in the repo, with effectively identical content. PR #57 had correctly `git mv`'d the root `LICENCE-FAQ.md` to `docs/licensing-faq.md` to dodge GitHub's `licensee` filename-pattern detection — but there was *already* a `docs/LICENCE-FAQ.md` from a much earlier "Add comprehensive documentation" big-bang commit (`aa72c28`). The duplicate was never noticed because `licensee` only scans the repo root, not `docs/`.
+**What happened.** `docs/LICENCE-FAQ.md` AND `docs/licensing-faq.md` both existed in the repo, with effectively identical content. PR #57 had correctly `git mv`'d the root `LICENCE-FAQ.md` to `docs/licensing-faq.md` to dodge GitHub's `licensee` filename-pattern detection — but there was _already_ a `docs/LICENCE-FAQ.md` from a much earlier "Add comprehensive documentation" big-bang commit (`aa72c28`). The duplicate was never noticed because `licensee` only scans the repo root, not `docs/`.
 
 **Recovery.** This very PR (`chore/git-retro-followup`) deletes `docs/LICENCE-FAQ.md`.
 
@@ -105,17 +105,17 @@
 
 ## Patterns that worked — keep doing these
 
-| Habit | Why it paid off |
-|---|---|
-| `--force-with-lease`, never bare `--force` | The safety net was always there; zero accidental overwrites |
-| Squash-merge by default | Linear `master` history; per-commit detail kept on PR record |
-| CI as merge gate (lint + typecheck + test required) | Prevented bug compounding across the cascade |
-| `gh pr merge --auto` for CI-bound PRs | Used successfully on PR #56; no polling needed |
-| Stage-cut releases (`0.1.0` framework → `0.2.0` provider 1 → `1.0.0` full) | Each ship validated framework correctness before adding integration risk |
-| Pre-flight verification before drafting plans | Found that DuckDB's built-in `rowid` was sufficient — collapsed an entire planned OSC PR |
-| `[<branch-name>] - ` commit prefix | Made `git log` scannable as work-streams in retrospect |
-| Memory-driven session continuity | Phase queue + cascade lesson notes carried context across context-window compactions |
-| OIDC Trusted Publishing | Survived the November 2025 Classic Automation token retirement gracefully |
+| Habit                                                                      | Why it paid off                                                                          |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `--force-with-lease`, never bare `--force`                                 | The safety net was always there; zero accidental overwrites                              |
+| Squash-merge by default                                                    | Linear `master` history; per-commit detail kept on PR record                             |
+| CI as merge gate (lint + typecheck + test required)                        | Prevented bug compounding across the cascade                                             |
+| `gh pr merge --auto` for CI-bound PRs                                      | Used successfully on PR #56; no polling needed                                           |
+| Stage-cut releases (`0.1.0` framework → `0.2.0` provider 1 → `1.0.0` full) | Each ship validated framework correctness before adding integration risk                 |
+| Pre-flight verification before drafting plans                              | Found that DuckDB's built-in `rowid` was sufficient — collapsed an entire planned OSC PR |
+| `[<branch-name>] - ` commit prefix                                         | Made `git log` scannable as work-streams in retrospect                                   |
+| Memory-driven session continuity                                           | Phase queue + cascade lesson notes carried context across context-window compactions     |
+| OIDC Trusted Publishing                                                    | Survived the November 2025 Classic Automation token retirement gracefully                |
 
 ---
 
@@ -204,4 +204,4 @@ for ($n in <pr-numbers>) {
 
 ---
 
-*This document is updated only when a new incident teaches a new lesson. Keep it as a small set of high-signal entries — not a generic git tutorial.*
+_This document is updated only when a new incident teaches a new lesson. Keep it as a small set of high-signal entries — not a generic git tutorial._

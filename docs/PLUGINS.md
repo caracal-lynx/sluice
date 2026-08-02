@@ -8,19 +8,19 @@ Plugins extend Sluice with custom functionality without modifying the core engin
 
 ### Plugin types
 
-| Type | Purpose | File pattern | Used in YAML as |
-|------|---------|--------------|-----------------|
-| **Rule Plugin** | Custom DQ validation | `*.rule.{ts,js}` | `dq.rules[].checks[].type: <rule-id>` |
-| **Transform Plugin** | Custom field transformation | `*.transform.{ts,js}` | `transform.fields[].type: custom` + `customOp: <id>` |
-| **Merge Strategy Plugin** | Custom multi-source merge strategy | `*.merge.{ts,js}` | `merge.strategy: <strategy-id>` |
+| Type                      | Purpose                            | File pattern          | Used in YAML as                                      |
+| ------------------------- | ---------------------------------- | --------------------- | ---------------------------------------------------- |
+| **Rule Plugin**           | Custom DQ validation               | `*.rule.{ts,js}`      | `dq.rules[].checks[].type: <rule-id>`                |
+| **Transform Plugin**      | Custom field transformation        | `*.transform.{ts,js}` | `transform.fields[].type: custom` + `customOp: <id>` |
+| **Merge Strategy Plugin** | Custom multi-source merge strategy | `*.merge.{ts,js}`     | `merge.strategy: <strategy-id>`                      |
 
 ### Loading tiers
 
-| Tier | Mechanism | Reuse scope |
-|------|-----------|-------------|
-| **Tier 1** | Composite rules in a shared YAML file (`dq.rulesFile`) | Per client — DQ rules only, no TypeScript |
-| **Tier 2** | Plugin files in a `plugins/` directory alongside the pipeline YAML | Per client |
-| **Tier 3** | npm packages declared in `sluice.config.yaml` | Across all clients |
+| Tier       | Mechanism                                                          | Reuse scope                               |
+| ---------- | ------------------------------------------------------------------ | ----------------------------------------- |
+| **Tier 1** | Composite rules in a shared YAML file (`dq.rulesFile`)             | Per client — DQ rules only, no TypeScript |
+| **Tier 2** | Plugin files in a `plugins/` directory alongside the pipeline YAML | Per client                                |
+| **Tier 3** | npm packages declared in `sluice.config.yaml`                      | Across all clients                        |
 
 Tier 1 is documented in the main [README](./README.md#tier-1--composite-rules-yaml-). This guide covers Tiers 2 and 3.
 
@@ -29,7 +29,7 @@ Tier 1 is documented in the main [README](./README.md#tier-1--composite-rules-ya
 All plugins must be **pure and synchronous**:
 
 - `validate()` and `apply()` and `merge()` must not perform I/O (no file reads, no HTTP, no DB queries outside the `StagingStore` provided to `merge()`).
-- `validate()` and `apply()` must be synchronous — no `async`, no returned Promises. The engines call them without `await`. *(Merge strategies are async — they receive the `StagingStore` and issue queries against it.)*
+- `validate()` and `apply()` must be synchronous — no `async`, no returned Promises. The engines call them without `await`. _(Merge strategies are async — they receive the `StagingStore` and issue queries against it.)_
 - Plugins must not mutate the `row` object passed to `apply()` — treat it as read-only.
 - Plugin `id` must be unique across all loaded plugins; duplicates throw `ConfigError` at registration time. This includes built-in check types and built-in merge strategies — plugins cannot shadow them.
 - Data a plugin needs (e.g. a list of valid codes) should come through the pipeline config via `options`, loaded once by the runner rather than by the plugin on every call.
@@ -112,16 +112,16 @@ The four merge strategies in the output are built-ins — pre-registered at star
 
 ```typescript
 // my-rule.rule.ts
-import type { RulePlugin, RuleViolation } from '@caracal-lynx/sluice';
-import type { CheckConfig } from '@caracal-lynx/sluice';
+import type { RulePlugin, RuleViolation } from "@caracal-lynx/sluice";
+import type { CheckConfig } from "@caracal-lynx/sluice";
 
 export const rule: RulePlugin = {
-  id: 'my-rule',                              // must be unique across all rule plugins
-                                              // and must not collide with a built-in:
-                                              // notNull, unique, pattern, email, ukPostcode,
-                                              // maxLength, min, max, allowedValues
+  id: "my-rule", // must be unique across all rule plugins
+  // and must not collide with a built-in:
+  // notNull, unique, pattern, email, ukPostcode,
+  // maxLength, min, max, allowedValues
 
-  description: 'Optional one-line description',  // optional; used in logs
+  description: "Optional one-line description", // optional; used in logs
 
   validate(
     value: unknown,
@@ -137,9 +137,9 @@ export const rule: RulePlugin = {
       field,
       rowIndex,
       value,
-      rule: 'my-rule',
-      severity: config.severity,              // 'critical' | 'warning' | 'info'
-      message: config.message ?? 'Custom validation failed',
+      rule: "my-rule",
+      severity: config.severity, // 'critical' | 'warning' | 'info'
+      message: config.message ?? "Custom validation failed",
     };
   },
 };
@@ -149,18 +149,18 @@ export const rule: RulePlugin = {
 
 ```typescript
 // uk-phone.rule.ts
-import type { RulePlugin, RuleViolation } from '@caracal-lynx/sluice';
-import type { CheckConfig } from '@caracal-lynx/sluice';
+import type { RulePlugin, RuleViolation } from "@caracal-lynx/sluice";
+import type { CheckConfig } from "@caracal-lynx/sluice";
 
 const UK_PHONE = /^(?:\+44\s?7\d{3}|01\d{3,4})[\s-]?\d{3,4}[\s-]?\d{3,4}$/;
 
 export const rule: RulePlugin = {
-  id: 'uk-phone',
-  description: 'UK mobile or landline number (E.164 or national format)',
+  id: "uk-phone",
+  description: "UK mobile or landline number (E.164 or national format)",
 
   validate(value, config, rowIndex, field): RuleViolation | null {
     // Skip null/empty — let the built-in `notNull` rule handle required-ness.
-    if (value === null || value === undefined || String(value).trim() === '') return null;
+    if (value === null || value === undefined || String(value).trim() === "") return null;
 
     const phone = String(value).trim();
     if (UK_PHONE.test(phone)) return null;
@@ -169,7 +169,7 @@ export const rule: RulePlugin = {
       field,
       rowIndex,
       value,
-      rule: 'uk-phone',
+      rule: "uk-phone",
       severity: config.severity,
       message: config.message ?? `"${phone}" is not a valid UK phone number`,
     };
@@ -186,7 +186,7 @@ dq:
     - field: PhoneNumber
       checks:
         - { type: uk-phone, severity: warning }
-        - { type: notNull,  severity: critical }   # built-in still works
+        - { type: notNull, severity: critical } # built-in still works
 ```
 
 ### Working examples in the repo
@@ -203,25 +203,25 @@ dq:
 
 ```typescript
 // my-transform.transform.ts
-import type { TransformPlugin, CustomFieldMapping } from '@caracal-lynx/sluice';
+import type { TransformPlugin, CustomFieldMapping } from "@caracal-lynx/sluice";
 
 export const transform: TransformPlugin = {
-  id: 'my-transform',                       // must be unique across all transform plugins
+  id: "my-transform", // must be unique across all transform plugins
 
-  description: 'Optional one-line description',
+  description: "Optional one-line description",
 
   apply(
-    value: unknown,                         // the value at `field.from` (may be null/undefined)
-    row: Record<string, unknown>,           // the full source row — READ-ONLY
-    config: CustomFieldMapping,             // the field mapping; user options live in config.options
+    value: unknown, // the value at `field.from` (may be null/undefined)
+    row: Record<string, unknown>, // the full source row — READ-ONLY
+    config: CustomFieldMapping, // the field mapping; user options live in config.options
   ): unknown {
     // Return the transformed value. Return null to emit a null in the output.
     // Throw TransformError (or any Error) for unrecoverable failures.
     // Must be pure and synchronous.
 
     if (value === null || value === undefined) return null;
-    const setting = config.options?.['someSetting'];
-    return /* transformed value */;
+    const setting = config.options?.["someSetting"];
+    return; /* transformed value */
   },
 };
 ```
@@ -230,19 +230,19 @@ export const transform: TransformPlugin = {
 
 ```typescript
 // title-case.transform.ts
-import type { TransformPlugin, CustomFieldMapping } from '@caracal-lynx/sluice';
+import type { TransformPlugin, CustomFieldMapping } from "@caracal-lynx/sluice";
 
 export const transform: TransformPlugin = {
-  id: 'title-case',
-  description: 'Title-case a string, optionally preserving all-caps acronyms',
+  id: "title-case",
+  description: "Title-case a string, optionally preserving all-caps acronyms",
 
   apply(value, _row, config: CustomFieldMapping): unknown {
     if (value === null || value === undefined) return null;
 
     const str = String(value).trim();
-    if (str === '') return null;
+    if (str === "") return null;
 
-    const preserveAcronyms = (config.options?.['preserveAcronyms'] as boolean) ?? false;
+    const preserveAcronyms = (config.options?.["preserveAcronyms"] as boolean) ?? false;
 
     return str
       .split(/\s+/)
@@ -252,7 +252,7 @@ export const transform: TransformPlugin = {
         }
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
       })
-      .join(' ');
+      .join(" ");
   },
 };
 ```
@@ -274,19 +274,19 @@ transform:
 
 ```typescript
 // full-name.transform.ts
-import type { TransformPlugin, CustomFieldMapping } from '@caracal-lynx/sluice';
+import type { TransformPlugin, CustomFieldMapping } from "@caracal-lynx/sluice";
 
 export const transform: TransformPlugin = {
-  id: 'full-name',
-  description: 'Concatenate two source fields into a single name string',
+  id: "full-name",
+  description: "Concatenate two source fields into a single name string",
 
   apply(_value, row, config: CustomFieldMapping): unknown {
-    const firstKey = (config.options?.['firstField'] as string) ?? 'FIRST_NAME';
-    const lastKey  = (config.options?.['lastField']  as string) ?? 'LAST_NAME';
-    const first    = String(row[firstKey] ?? '').trim();
-    const last     = String(row[lastKey]  ?? '').trim();
-    const full     = [first, last].filter(Boolean).join(' ');
-    return full === '' ? null : full;
+    const firstKey = (config.options?.["firstField"] as string) ?? "FIRST_NAME";
+    const lastKey = (config.options?.["lastField"] as string) ?? "LAST_NAME";
+    const first = String(row[firstKey] ?? "").trim();
+    const last = String(row[lastKey] ?? "").trim();
+    const full = [first, last].filter(Boolean).join(" ");
+    return full === "" ? null : full;
   },
 };
 ```
@@ -311,27 +311,27 @@ Unlike rule and transform plugins, merge strategies **are async**, receive a liv
 
 ```typescript
 interface MergeStrategyPlugin {
-  readonly id: string;              // must match merge.strategy in YAML
-  readonly description?: string;    // optional; shown by `sluice merge list-strategies`
+  readonly id: string; // must match merge.strategy in YAML
+  readonly description?: string; // optional; shown by `sluice merge list-strategies`
 
   merge(
-    store:   StagingStore,
-    sources: MergeSourceMeta[],     // priority-ordered (priority 1 first)
-    config:  MergeConfig,
+    store: StagingStore,
+    sources: MergeSourceMeta[], // priority-ordered (priority 1 first)
+    config: MergeConfig,
   ): Promise<MergeResult>;
 }
 
 interface MergeSourceMeta {
-  id:        string;
-  priority:  number;
-  tableName: string;                // e.g. 'stg_raw_sql-server'
+  id: string;
+  priority: number;
+  tableName: string; // e.g. 'stg_raw_sql-server'
 }
 
 interface MergeResult {
   rowsMerged: number;
-  conflicts:  number;
-  unmatched:  number;
-  tableName:  'stg_merged';
+  conflicts: number;
+  unmatched: number;
+  tableName: "stg_merged";
 }
 ```
 
@@ -350,17 +350,13 @@ The SQL builder helpers in [src/merge/sql-builder.ts](src/merge/sql-builder.ts) 
 
 ```typescript
 // weighted-merge.merge.ts
-import type {
-  MergeStrategyPlugin,
-  MergeSourceMeta,
-  MergeResult,
-} from '@caracal-lynx/sluice';
-import type { MergeConfig } from '@caracal-lynx/sluice';
-import type { StagingStore } from '@caracal-lynx/sluice';
+import type { MergeStrategyPlugin, MergeSourceMeta, MergeResult } from "@caracal-lynx/sluice";
+import type { MergeConfig } from "@caracal-lynx/sluice";
+import type { StagingStore } from "@caracal-lynx/sluice";
 
 export const mergeStrategy: MergeStrategyPlugin = {
-  id: 'weighted-merge',
-  description: 'Merge by weighted average of numeric fields',
+  id: "weighted-merge",
+  description: "Merge by weighted average of numeric fields",
 
   async merge(
     store: StagingStore,
@@ -381,10 +377,10 @@ export const mergeStrategy: MergeStrategyPlugin = {
     // 5. Optionally populate stg_merge_conflicts and export to config.conflictLog.
 
     return {
-      rowsMerged: await store.rowCount('stg_merged'),
-      conflicts:  0,
-      unmatched:  0,
-      tableName:  'stg_merged',
+      rowsMerged: await store.rowCount("stg_merged"),
+      conflicts: 0,
+      unmatched: 0,
+      tableName: "stg_merged",
     };
   },
 };
@@ -418,13 +414,13 @@ Transform and merge plugins receive user-supplied options through the pipeline c
 
 ```typescript
 export const transform: TransformPlugin = {
-  id: 'slugify',
+  id: "slugify",
   apply(value, _row, config): unknown {
-    const maxLength = (config.options?.['maxLength'] as number) ?? 100;
-    const separator = (config.options?.['separator'] as string) ?? '-';
-    const lowercase = (config.options?.['lowercase'] as boolean) ?? true;
+    const maxLength = (config.options?.["maxLength"] as number) ?? 100;
+    const separator = (config.options?.["separator"] as string) ?? "-";
+    const lowercase = (config.options?.["lowercase"] as boolean) ?? true;
 
-    let result = String(value ?? '').trim();
+    let result = String(value ?? "").trim();
     if (lowercase) result = result.toLowerCase();
     result = result.replace(/\s+/g, separator).slice(0, maxLength);
 
@@ -461,18 +457,18 @@ Return a `RuleViolation` if validation fails; return `null` if valid. Throwing f
 Throw `TransformError` (or any `Error`) for unrecoverable failures. The engine catches per-row errors and either skips the row (`run.onError: continue`, the default) or aborts (`run.onError: stop`):
 
 ```typescript
-import type { TransformPlugin } from '@caracal-lynx/sluice';
-import { TransformError } from '@caracal-lynx/sluice';
+import type { TransformPlugin } from "@caracal-lynx/sluice";
+import { TransformError } from "@caracal-lynx/sluice";
 
 export const transform: TransformPlugin = {
-  id: 'json-extract',
+  id: "json-extract",
   apply(value, _row, config): unknown {
     if (value === null || value === undefined) return null;
 
     try {
       const obj = JSON.parse(String(value));
-      const key = config.options?.['key'] as string;
-      if (!key) throw new TransformError('json-extract: missing required option `key`');
+      const key = config.options?.["key"] as string;
+      if (!key) throw new TransformError("json-extract: missing required option `key`");
       return obj[key] ?? null;
     } catch (err) {
       throw new TransformError(`json-extract: ${String(err)}`, err);
@@ -494,25 +490,25 @@ Throw `ConfigError` for validation problems (missing key column on a source, bad
 `validate()` is pure and synchronous — call it directly:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import type { CheckConfig } from '@caracal-lynx/sluice';
-import { rule as ukPhone } from './uk-phone.rule.js';
+import { describe, it, expect } from "vitest";
+import type { CheckConfig } from "@caracal-lynx/sluice";
+import { rule as ukPhone } from "./uk-phone.rule.js";
 
-const cfg: CheckConfig = { type: 'pattern', severity: 'warning' };
+const cfg: CheckConfig = { type: "pattern", severity: "warning" };
 
-describe('uk-phone', () => {
-  it('accepts valid UK numbers', () => {
-    expect(ukPhone.validate('+447700900000', cfg, 0, 'phone')).toBeNull();
+describe("uk-phone", () => {
+  it("accepts valid UK numbers", () => {
+    expect(ukPhone.validate("+447700900000", cfg, 0, "phone")).toBeNull();
   });
 
-  it('rejects invalid numbers', () => {
-    const result = ukPhone.validate('12345', cfg, 0, 'phone');
+  it("rejects invalid numbers", () => {
+    const result = ukPhone.validate("12345", cfg, 0, "phone");
     expect(result).not.toBeNull();
-    expect(result?.severity).toBe('warning');
+    expect(result?.severity).toBe("warning");
   });
 
-  it('skips null values', () => {
-    expect(ukPhone.validate(null, cfg, 0, 'phone')).toBeNull();
+  it("skips null values", () => {
+    expect(ukPhone.validate(null, cfg, 0, "phone")).toBeNull();
   });
 });
 ```
@@ -522,26 +518,25 @@ describe('uk-phone', () => {
 `apply()` is synchronous and takes three arguments — `(value, row, config)`:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import type { CustomFieldMapping } from '@caracal-lynx/sluice';
-import { transform as titleCase } from './title-case.transform.js';
+import { describe, it, expect } from "vitest";
+import type { CustomFieldMapping } from "@caracal-lynx/sluice";
+import { transform as titleCase } from "./title-case.transform.js";
 
 function cfg(options: Record<string, unknown> = {}): CustomFieldMapping {
-  return { to: 'X', type: 'custom', customOp: 'title-case', options };
+  return { to: "X", type: "custom", customOp: "title-case", options };
 }
 
-describe('title-case', () => {
-  it('title-cases words', () => {
-    expect(titleCase.apply('hello world', {}, cfg())).toBe('Hello World');
+describe("title-case", () => {
+  it("title-cases words", () => {
+    expect(titleCase.apply("hello world", {}, cfg())).toBe("Hello World");
   });
 
-  it('preserves acronyms when requested', () => {
-    expect(titleCase.apply('USA today', {}, cfg({ preserveAcronyms: true })))
-      .toBe('USA Today');
+  it("preserves acronyms when requested", () => {
+    expect(titleCase.apply("USA today", {}, cfg({ preserveAcronyms: true }))).toBe("USA Today");
   });
 
-  it('returns null for empty strings', () => {
-    expect(titleCase.apply('', {}, cfg())).toBeNull();
+  it("returns null for empty strings", () => {
+    expect(titleCase.apply("", {}, cfg())).toBeNull();
   });
 });
 ```
@@ -600,18 +595,18 @@ import type {
   TransformRegistry,
   MergeStrategyRegistry,
   PluginPackage,
-} from '@caracal-lynx/sluice';
+} from "@caracal-lynx/sluice";
 
-import { rule as emailRule }     from './rules/email.js';
-import { rule as phoneRule }     from './rules/phone.js';
-import { transform as slug }     from './transforms/slug.js';
-import { mergeStrategy as avg }  from './strategies/avg.js';
+import { rule as emailRule } from "./rules/email.js";
+import { rule as phoneRule } from "./rules/phone.js";
+import { transform as slug } from "./transforms/slug.js";
+import { mergeStrategy as avg } from "./strategies/avg.js";
 
 export const plugin: PluginPackage = {
   register(
-    rules:            RuleRegistry,
-    transforms:       TransformRegistry,
-    options?:         Record<string, unknown>,   // from sluice.config.yaml
+    rules: RuleRegistry,
+    transforms: TransformRegistry,
+    options?: Record<string, unknown>, // from sluice.config.yaml
     mergeStrategies?: typeof MergeStrategyRegistry,
   ): void {
     rules.register(emailRule);
@@ -634,7 +629,7 @@ version: "1.0"
 plugins:
   - package: "@my-org/sluice-my-rules"
     options:
-      strictMode: true           # passed to register() as the `options` arg
+      strictMode: true # passed to register() as the `options` arg
 ```
 
 Then:
@@ -672,10 +667,10 @@ checks:
 
 ```typescript
 // ✅ Good
-message: `"${value}" does not match expected format: ${pattern}`
+message: `"${value}" does not match expected format: ${pattern}`;
 
 // ❌ Avoid
-message: 'Invalid'
+message: "Invalid";
 ```
 
 ### 4. Use TypeScript strict mode
@@ -689,8 +684,8 @@ message: 'Invalid'
 
 ```typescript
 export const transform: TransformPlugin = {
-  id: 'slugify',
-  description: 'URL-safe slug generator',
+  id: "slugify",
+  description: "URL-safe slug generator",
   /**
    * Options:
    *   - maxLength (number, default 100): truncate after N chars
@@ -702,19 +697,21 @@ export const transform: TransformPlugin = {
    *   customOp: slugify
    *   options: { maxLength: 50, separator: '_' }
    */
-  apply(value, _row, config): unknown { /* ... */ },
+  apply(value, _row, config): unknown {
+    /* ... */
+  },
 };
 ```
 
 ### 6. Test edge cases
 
 ```typescript
-it('handles unicode characters', () => {
-  expect(transform.apply('Café', {}, cfg())).toBe('cafe');
+it("handles unicode characters", () => {
+  expect(transform.apply("Café", {}, cfg())).toBe("cafe");
 });
 
-it('handles very long strings', () => {
-  const long = 'a'.repeat(10000);
+it("handles very long strings", () => {
+  const long = "a".repeat(10000);
   expect(transform.apply(long, {}, cfg({ maxLength: 100 }))).toHaveLength(100);
 });
 ```

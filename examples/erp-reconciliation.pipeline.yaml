@@ -39,7 +39,7 @@ merge:
   onUnmatched: exclude
   # Log all unmatched records to a separate file for manual review
   conflictLog: ./output/reconciliation-unmatched.csv
-  
+
   # Field-level strategy: use IFS as source of truth for master data
   fieldStrategies:
     - field: CUSTOMER_NAME
@@ -56,14 +56,14 @@ dq:
     # Critical: customer number must be present and unique
     - field: CUSTOMER_NO
       checks:
-        - { type: notNull,  severity: critical }
-        - { type: unique,   severity: critical }
-    
+        - { type: notNull, severity: critical }
+        - { type: unique, severity: critical }
+
     # Warning: validate country codes
     - field: COUNTRY_CODE
       checks:
         - { type: allowedValues, value: [GB, IE, US, DE, FR, NL, BE], severity: warning }
-    
+
     # Warning: postal codes
     - field: POST_CODE
       checks:
@@ -72,20 +72,20 @@ dq:
 transform:
   # No lookups needed for reconciliation
   lookups: []
-  
+
   fields:
     # Key field — required for matching
-    - { from: CUSTOMER_NO,   to: CUSTOMER_NO,   type: string,  max: 20 }
-    
+    - { from: CUSTOMER_NO, to: CUSTOMER_NO, type: string, max: 20 }
+
     # Master data from IFS (priority source)
-    - { from: CUSTOMER_NAME, to: CUSTOMER_NAME, type: string,  max: 100, cleanse: trim|titleCase }
-    - { from: ADDRESS_1,     to: ADDRESS_1,     type: string,  max: 100, cleanse: trim }
-    - { from: COUNTRY_CODE,  to: COUNTRY_CODE,  type: string,  default: GB }
-    - { from: POST_CODE,     to: POST_CODE,     type: string,  cleanse: trim|uppercase }
-    
+    - { from: CUSTOMER_NAME, to: CUSTOMER_NAME, type: string, max: 100, cleanse: trim|titleCase }
+    - { from: ADDRESS_1, to: ADDRESS_1, type: string, max: 100, cleanse: trim }
+    - { from: COUNTRY_CODE, to: COUNTRY_CODE, type: string, default: GB }
+    - { from: POST_CODE, to: POST_CODE, type: string, cleanse: trim|uppercase }
+
     # Status fields for reconciliation reporting
     - { to: reconciliation_status, type: constant, value: MATCHED }
-    - { to: reconciliation_date,   type: expression, value: "new Date().toISOString().split('T')[0]" }
+    - { to: reconciliation_date, type: expression, value: "new Date().toISOString().split('T')[0]" }
 
 target:
   adapter: csv

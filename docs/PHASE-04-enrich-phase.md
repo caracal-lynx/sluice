@@ -1,7 +1,11 @@
 # Sluice — Phase 4: External Validation / Enrich Phase
-# npm package: @caracal-lynx/sluice-enrich  ⚠️ PRIVATE — NOT OPEN SOURCE
+
+# npm package: @caracal-lynx/sluice-enrich ⚠️ PRIVATE — NOT OPEN SOURCE
+
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+
 # Depends on: CLAUDE.md (Phase 1 complete), archive/PHASE2-EXTENSIONS.md (Phase 3 complete)
+
 # Last updated: 2026-05-01
 
 ---
@@ -15,6 +19,7 @@
 > **It is NOT part of the open-source `@caracal-lynx/sluice` core.**
 >
 > The open-source core (`@caracal-lynx/sluice`) contains only:
+>
 > - `EnrichPlugin`, `EnrichResult`, `EnrichOptions` **interface types** (for third-party plugin authors)
 > - `EnrichSchema`, `EnrichLookupSchema` **Zod stubs** (for config validation)
 > - The `registerEnrichPhase()` **injection hook** in `PipelineRunner` (one function, no logic)
@@ -110,6 +115,7 @@ src/
 ```
 
 Also: implements the three `StagingStore` stub methods added during Phase 1 (Node 24 upgrade):
+
 - `selectDistinct()` — reads distinct non-null field values from stg_raw
 - `addColumnIfNotExists()` — adds a column to stg_raw for enrich results
 - `batchUpdateColumns()` — writes enrich results back to stg_raw rows
@@ -155,7 +161,9 @@ package.json               ← NO new dependencies for open-source core (stubs o
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## ZOD SCHEMA ADDITIONS
+
 ## ═══════════════════════════════════════════════════════════
 
 ### New schemas (src/config/schema.ts)
@@ -175,37 +183,37 @@ package.json               ← NO new dependencies for open-source core (stubs o
  *     country: vat_country      ← string: country code from API response
  */
 const EnrichWriteColumnsSchema = z
-  .object({ valid: z.string() })   // 'valid' key is required
-  .catchall(z.string());           // additional data-field mappings are optional
+  .object({ valid: z.string() }) // 'valid' key is required
+  .catchall(z.string()); // additional data-field mappings are optional
 
 const EnrichLookupSchema = z.object({
-  field:        z.string(),        // source column in stg_raw
-  provider:     z.string(),        // built-in id or EnrichPlugin id
+  field: z.string(), // source column in stg_raw
+  provider: z.string(), // built-in id or EnrichPlugin id
   writeColumns: EnrichWriteColumnsSchema,
-  preValidate:  z.string().optional(),  // regex; skip API call if value does not match
-  onError:      z.enum(['flag', 'skip', 'fail']).optional(),  // overrides global default
-  cache:        z.boolean().optional(),
+  preValidate: z.string().optional(), // regex; skip API call if value does not match
+  onError: z.enum(["flag", "skip", "fail"]).optional(), // overrides global default
+  cache: z.boolean().optional(),
   //   Per-lookup cache override.
   //   true  = use cache (inherits global setting — default behaviour)
   //   false = NEVER cache this lookup; always call the API fresh each run.
   //           Use this for lookups that return run-specific reference values
   //           (e.g. HMRC consultationNumber) that must not be reused across runs.
-  options:      z.record(z.unknown()).optional(),  // passed to provider.enrich()
+  options: z.record(z.unknown()).optional(), // passed to provider.enrich()
 });
 
 export const EnrichSchema = z.object({
-  cache:   z.union([z.boolean(), z.literal('persist')]).default(true),
+  cache: z.union([z.boolean(), z.literal("persist")]).default(true),
   //         true     = in-memory cache for this run (default)
   //         false    = no caching; always call the API
   //         'persist'= cache stored in DuckDB enrich_cache table; survives between runs
-  onError: z.enum(['flag', 'skip', 'fail']).default('flag'),
+  onError: z.enum(["flag", "skip", "fail"]).default("flag"),
   //         flag  = write valid: false for API failures; continue pipeline (default)
   //         skip  = move failed rows to rejection CSV; continue with remaining rows
   //         fail  = throw EnrichError; abort pipeline immediately
   lookups: z.array(EnrichLookupSchema).min(1),
 });
 
-export type EnrichConfig       = z.infer<typeof EnrichSchema>;
+export type EnrichConfig = z.infer<typeof EnrichSchema>;
 export type EnrichLookupConfig = z.infer<typeof EnrichLookupSchema>;
 ```
 
@@ -213,13 +221,13 @@ export type EnrichLookupConfig = z.infer<typeof EnrichLookupSchema>;
 
 ```typescript
 export const PipelineSchema = z.object({
-  pipeline:  { /* ... unchanged ... */ },
-  source:    SourceSchema,
-  enrich:    EnrichSchema.optional(),   // ← NEW — Phase 4
-  dq:        DqSchema,
+  pipeline: {/* ... unchanged ... */},
+  source: SourceSchema,
+  enrich: EnrichSchema.optional(), // ← NEW — Phase 4
+  dq: DqSchema,
   transform: TransformSchema,
-  target:    TargetSchema,
-  run:       RunSchema.default({}),
+  target: TargetSchema,
+  run: RunSchema.default({}),
 });
 ```
 
@@ -230,9 +238,9 @@ export const RunSchema = z.object({
   // ... existing fields unchanged ...
   enrichConcurrency: z.number().int().positive().default(5),
   //   Max parallel API calls across all providers. Default: 5.
-  enrichTimeoutMs:   z.number().int().positive().default(5000),
+  enrichTimeoutMs: z.number().int().positive().default(5000),
   //   Per-call timeout in milliseconds. Default: 5000.
-  enrichMaxRetries:  z.number().int().min(0).max(5).default(3),
+  enrichMaxRetries: z.number().int().min(0).max(5).default(3),
   //   Retries per call (uses axios-retry exponential backoff). Default: 3.
 });
 ```
@@ -240,7 +248,9 @@ export const RunSchema = z.object({
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## YAML SPEC — enrich section
+
 ## ═══════════════════════════════════════════════════════════
 
 ### Full annotated example
@@ -252,14 +262,13 @@ export const RunSchema = z.object({
 # using standard checks (notNull, allowedValues, etc.).
 
 enrich:
-  cache: true                  # true (default) | false | persist
-  onError: flag                # flag (default) | skip | fail
+  cache: true # true (default) | false | persist
+  onError: flag # flag (default) | skip | fail
 
   lookups:
-
     # ── VAT number validation (HMRC — with consultation reference) ────
-    - field: VAT_NUMBER         # source column in stg_raw
-      provider: hmrc-vat        # built-in provider id
+    - field: VAT_NUMBER # source column in stg_raw
+      provider: hmrc-vat # built-in provider id
       preValidate: "^GB([0-9]{9}|[0-9]{12}|(GD|HA)[0-9]{3})$"
       #  Optional regex. If the value does not match, skip the API call
       #  and write valid: false immediately (saves API quota).
@@ -268,31 +277,31 @@ enrich:
       #  The HMRC API issues a new reference on every call — persisting a stale
       #  reference from a previous run would invalidate the audit trail.
       writeColumns:
-        valid:            vat_valid         # bool — true if HMRC confirms registration
-        name:             vat_name          # string — registered business name
-        address_line1:    vat_address1      # string — first line of registered address
-        address_line2:    vat_address2      # string — second line (may be empty)
-        address_postcode: vat_postcode      # string — registered postcode
-        consultation_ref: vat_consult_ref   # string — HMRC reference proving the check
-        processing_date:  vat_checked_at    # string — ISO timestamp of the check
-      onError: flag             # override global default for this lookup
+        valid: vat_valid # bool — true if HMRC confirms registration
+        name: vat_name # string — registered business name
+        address_line1: vat_address1 # string — first line of registered address
+        address_line2: vat_address2 # string — second line (may be empty)
+        address_postcode: vat_postcode # string — registered postcode
+        consultation_ref: vat_consult_ref # string — HMRC reference proving the check
+        processing_date: vat_checked_at # string — ISO timestamp of the check
+      onError: flag # override global default for this lookup
       options:
-        bearerToken: ${HMRC_BEARER_TOKEN}   # OAuth2 token — resolved from .env at runtime
+        bearerToken: ${HMRC_BEARER_TOKEN} # OAuth2 token — resolved from .env at runtime
 
     # ── HS code validation (UK Trade Tariff) ───────────────────────────
     - field: HS_CODE
       provider: uk-trade-tariff
       writeColumns:
-        valid:       hs_code_valid    # bool — true if commodity code exists in tariff
-        description: hs_description  # string — goods description from tariff API
+        valid: hs_code_valid # bool — true if commodity code exists in tariff
+        description: hs_description # string — goods description from tariff API
       onError: flag
 
     # ── Custom provider (Tier 2 plugin) ───────────────────────────────
     - field: SUPPLIER_DUNS
-      provider: dnb-duns              # *.enrich.ts plugin file in client plugins/
+      provider: dnb-duns # *.enrich.ts plugin file in client plugins/
       writeColumns:
         valid: duns_valid
-      onError: skip                   # move invalid rows to rejection CSV
+      onError: skip # move invalid rows to rejection CSV
 ```
 
 ### DQ rules that consume enriched columns
@@ -307,27 +316,38 @@ dq:
     # Gate 1 — format check (sync, free, always runs even if enrich is disabled)
     - field: VAT_NUMBER
       checks:
-        - { type: ukVatNumber, severity: warning }    # composite rule from shared/rules.yaml
+        - { type: ukVatNumber, severity: warning } # composite rule from shared/rules.yaml
 
     # Gate 2 — HMRC existence check
     - field: vat_valid
       checks:
-        - { type: notNull,       severity: warning }
-        - { type: allowedValues, value: [true], severity: warning,
-            message: "VAT number not confirmed by HMRC — check manually before migrating" }
+        - { type: notNull, severity: warning }
+        - {
+            type: allowedValues,
+            value: [true],
+            severity: warning,
+            message: "VAT number not confirmed by HMRC — check manually before migrating",
+          }
 
     # Consultation reference — proves the check was performed for this run
     - field: vat_consult_ref
       checks:
-        - { type: notNull, severity: warning,
-            message: "No HMRC consultation reference — VAT check may not have completed" }
+        - {
+            type: notNull,
+            severity: warning,
+            message: "No HMRC consultation reference — VAT check may not have completed",
+          }
 
     # HS code existence check
     - field: hs_code_valid
       checks:
-        - { type: notNull,       severity: critical }
-        - { type: allowedValues, value: [true], severity: critical,
-            message: "HS code not found in UK Trade Tariff — shipment will be blocked at customs" }
+        - { type: notNull, severity: critical }
+        - {
+            type: allowedValues,
+            value: [true],
+            severity: critical,
+            message: "HS code not found in UK Trade Tariff — shipment will be blocked at customs",
+          }
 ```
 
 ### Transform fields consuming enriched columns
@@ -339,28 +359,30 @@ dq:
 transform:
   fields:
     # Use HMRC-verified name as the authoritative business name in the target
-    - { from: vat_name,         to: VerifiedName,    type: string,  optional: true }
+    - { from: vat_name, to: VerifiedName, type: string, optional: true }
 
     # Carry the consultation reference into the ERP record as audit evidence
-    - { from: vat_consult_ref,  to: VatConsultRef,   type: string,  optional: true }
+    - { from: vat_consult_ref, to: VatConsultRef, type: string, optional: true }
 
     # Carry the check timestamp
-    - { from: vat_checked_at,   to: VatCheckedAt,    type: string,  optional: true }
+    - { from: vat_checked_at, to: VatCheckedAt, type: string, optional: true }
 
     # Address fields — use as-is or combine via concat
     - from: [vat_address1, vat_address2]
-      to:   VerifiedAddress
+      to: VerifiedAddress
       type: concat
       separator: ", "
       optional: true
 
-    - { from: vat_postcode,     to: VerifiedPostcode, type: string, optional: true }
+    - { from: vat_postcode, to: VerifiedPostcode, type: string, optional: true }
 ```
 
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## ENRICHPLUGIN INTERFACE  (open-source: src/enrich/types.ts)
+
+## ENRICHPLUGIN INTERFACE (open-source: src/enrich/types.ts)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Location:** `@caracal-lynx/sluice` open-source core — `src/enrich/types.ts`
@@ -429,7 +451,7 @@ export interface EnrichResult {
 }
 
 export interface EnrichOptions extends Record<string, unknown> {
-  timeoutMs:  number;
+  timeoutMs: number;
   maxRetries: number;
 }
 ```
@@ -437,7 +459,9 @@ export interface EnrichOptions extends Record<string, unknown> {
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## ENRICHREGISTRY  (PRIVATE — sluice-enrich/src/registry.ts)
+
+## ENRICHREGISTRY (PRIVATE — sluice-enrich/src/registry.ts)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Location:** `@caracal-lynx/sluice-enrich` private package — `src/registry.ts`
@@ -445,8 +469,8 @@ export interface EnrichOptions extends Record<string, unknown> {
 
 ```typescript
 // private: sluice-enrich/src/registry.ts
-import type { EnrichPlugin } from '@caracal-lynx/sluice';
-import { ConfigError } from '@caracal-lynx/sluice/utils';
+import type { EnrichPlugin } from "@caracal-lynx/sluice";
+import { ConfigError } from "@caracal-lynx/sluice/utils";
 
 export class EnrichRegistry {
   private readonly plugins = new Map<string, EnrichPlugin>();
@@ -455,7 +479,7 @@ export class EnrichRegistry {
     if (this.plugins.has(plugin.id)) {
       throw new ConfigError(
         `Duplicate enrich provider id "${plugin.id}". ` +
-        `Check plugins/ folder for conflicts with built-in providers.`
+          `Check plugins/ folder for conflicts with built-in providers.`,
       );
     }
     this.plugins.set(plugin.id, plugin);
@@ -478,7 +502,9 @@ export class EnrichRegistry {
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## ENRICHCACHE  (PRIVATE — sluice-enrich/src/cache.ts)
+
+## ENRICHCACHE (PRIVATE — sluice-enrich/src/cache.ts)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Location:** `@caracal-lynx/sluice-enrich` private package — `src/cache.ts`
@@ -486,7 +512,7 @@ export class EnrichRegistry {
 
 ```typescript
 // private: sluice-enrich/src/cache.ts
-import type { EnrichResult } from '@caracal-lynx/sluice';
+import type { EnrichResult } from "@caracal-lynx/sluice";
 
 /**
  * Cache key: `${providerId}:${value}` (lowercased value for case-insensitive APIs)
@@ -539,12 +565,12 @@ export class EnrichCache {
     //
     // DuckDB is accessed via the StagingStore instance injected into
     // EnrichmentRunner — NOT imported directly (see tech conventions).
-    throw new Error('Not yet implemented — placeholder for DuckDB integration');
+    throw new Error("Not yet implemented — placeholder for DuckDB integration");
   }
 
   async flushToDuckDB(db: unknown, pipelineName: string): Promise<void> {
     // Implementation: UPSERT all store entries into enrich_cache table.
-    throw new Error('Not yet implemented — placeholder for DuckDB integration');
+    throw new Error("Not yet implemented — placeholder for DuckDB integration");
   }
 }
 ```
@@ -556,7 +582,9 @@ Never import DuckDB directly in enrich modules — that import is restricted to
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## ENRICHMENTRUNNER  (PRIVATE — sluice-enrich/src/runner.ts)
+
+## ENRICHMENTRUNNER (PRIVATE — sluice-enrich/src/runner.ts)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Location:** `@caracal-lynx/sluice-enrich` private package — `src/runner.ts`
@@ -564,22 +592,27 @@ Never import DuckDB directly in enrich modules — that import is restricted to
 
 ```typescript
 // private: sluice-enrich/src/runner.ts
-import pLimit from 'p-limit';
-import type { EnrichConfig, EnrichLookupConfig, EnrichResult, EnrichOptions } from '@caracal-lynx/sluice';
-import type { EnrichRegistry } from './registry';
-import type { EnrichCache } from './cache';
-import type { StagingStore } from '@caracal-lynx/sluice/staging';
-import { logger } from '@caracal-lynx/sluice/utils';
-import { EnrichError } from '@caracal-lynx/sluice/utils';
+import pLimit from "p-limit";
+import type {
+  EnrichConfig,
+  EnrichLookupConfig,
+  EnrichResult,
+  EnrichOptions,
+} from "@caracal-lynx/sluice";
+import type { EnrichRegistry } from "./registry";
+import type { EnrichCache } from "./cache";
+import type { StagingStore } from "@caracal-lynx/sluice/staging";
+import { logger } from "@caracal-lynx/sluice/utils";
+import { EnrichError } from "@caracal-lynx/sluice/utils";
 
 export class EnrichmentRunner {
   constructor(
     private readonly registry: EnrichRegistry,
-    private readonly cache:    EnrichCache,
-    private readonly staging:  StagingStore,
+    private readonly cache: EnrichCache,
+    private readonly staging: StagingStore,
     private readonly concurrency: number = 5,
-    private readonly timeoutMs:   number = 5000,
-    private readonly maxRetries:  number = 3,
+    private readonly timeoutMs: number = 5000,
+    private readonly maxRetries: number = 3,
   ) {}
 
   async run(config: EnrichConfig): Promise<EnrichSummary> {
@@ -591,10 +624,10 @@ export class EnrichmentRunner {
 
       // If onError: fail and any errors occurred, abort immediately
       const onError = lookup.onError ?? config.onError;
-      if (onError === 'fail' && result.errorCount > 0) {
+      if (onError === "fail" && result.errorCount > 0) {
         throw new EnrichError(
           `Enrich lookup for field "${lookup.field}" via provider "${lookup.provider}" ` +
-          `failed ${result.errorCount} row(s) and onError is set to "fail".`
+            `failed ${result.errorCount} row(s) and onError is set to "fail".`,
         );
       }
     }
@@ -603,15 +636,15 @@ export class EnrichmentRunner {
   }
 
   private async runLookup(
-    lookup:       EnrichLookupConfig,
+    lookup: EnrichLookupConfig,
     globalConfig: EnrichConfig,
   ): Promise<LookupSummary> {
     const provider = this.registry.get(lookup.provider);
     if (!provider) {
       throw new EnrichError(
         `Unknown enrich provider "${lookup.provider}". ` +
-        `Available providers: ${this.registry.list().join(', ')}. ` +
-        `Add a *.enrich.ts plugin file to the client plugins/ directory for custom providers.`
+          `Available providers: ${this.registry.list().join(", ")}. ` +
+          `Add a *.enrich.ts plugin file to the client plugins/ directory for custom providers.`,
       );
     }
 
@@ -621,7 +654,7 @@ export class EnrichmentRunner {
 
     logger.info(
       { provider: lookup.provider, field: lookup.field, distinctValues: distinctValues.length },
-      'Enrich lookup starting'
+      "Enrich lookup starting",
     );
 
     // Step 2: Determine which values need API calls (not in cache, pass preValidate)
@@ -633,7 +666,7 @@ export class EnrichmentRunner {
         if (preValidateRegex && !preValidateRegex.test(value)) {
           // Fails format check — cache as invalid immediately, no API call
           this.cache.set(provider.id, value, { valid: false });
-          logger.debug({ field: lookup.field, value }, 'preValidate failed — skipping API call');
+          logger.debug({ field: lookup.field, value }, "preValidate failed — skipping API call");
         } else {
           toFetch.push(value);
         }
@@ -641,29 +674,35 @@ export class EnrichmentRunner {
     }
 
     logger.info(
-      { provider: lookup.provider, toFetch: toFetch.length, fromCache: distinctValues.length - toFetch.length },
-      'Enrich cache status'
+      {
+        provider: lookup.provider,
+        toFetch: toFetch.length,
+        fromCache: distinctValues.length - toFetch.length,
+      },
+      "Enrich cache status",
     );
 
     // Step 3: Fetch uncached values with controlled concurrency
     const limit = pLimit(this.concurrency);
     const options = {
       ...(lookup.options ?? {}),
-      timeoutMs:  this.timeoutMs,
+      timeoutMs: this.timeoutMs,
       maxRetries: this.maxRetries,
     };
 
     await Promise.allSettled(
-      toFetch.map(value =>
+      toFetch.map((value) =>
         limit(async () => {
           const result = await provider.enrich(value, options);
           this.cache.set(provider.id, value, result);
           if (result.error) {
-            logger.warn({ provider: provider.id, field: lookup.field, value, error: result.error },
-              'Enrich API call failed');
+            logger.warn(
+              { provider: provider.id, field: lookup.field, value, error: result.error },
+              "Enrich API call failed",
+            );
           }
-        })
-      )
+        }),
+      ),
     );
 
     // Step 4: Read ALL rows from stg_raw and apply enrichment results
@@ -672,17 +711,17 @@ export class EnrichmentRunner {
 
     logger.info(
       { provider: lookup.provider, field: lookup.field, ...stats },
-      'Enrich lookup complete'
+      "Enrich lookup complete",
     );
 
     return {
-      provider:   lookup.provider,
-      field:      lookup.field,
-      totalRows:  stats.totalRows,
+      provider: lookup.provider,
+      field: lookup.field,
+      totalRows: stats.totalRows,
       validCount: stats.validCount,
       errorCount: stats.errorCount,
-      skipCount:  stats.skipCount,
-      cacheHits:  stats.cacheHits,
+      skipCount: stats.skipCount,
+      cacheHits: stats.cacheHits,
     };
   }
 
@@ -703,9 +742,9 @@ export class EnrichmentRunner {
    *   - fail: handled by caller (EnrichmentRunner.run) after this method returns
    */
   private async applyResults(
-    lookup:    EnrichLookupConfig,
+    lookup: EnrichLookupConfig,
     providerId: string,
-    onError:   'flag' | 'skip' | 'fail',
+    onError: "flag" | "skip" | "fail",
   ): Promise<ApplyStats> {
     // Implementation detail: use StagingStore batch update API
     // Pseudocode:
@@ -731,7 +770,7 @@ export class EnrichmentRunner {
     //      WHERE rowid = row.rowid
     //
     // 5. Return stats: { totalRows, validCount, errorCount, skipCount, cacheHits }
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   }
 }
 
@@ -740,13 +779,13 @@ export interface EnrichSummary {
 }
 
 export interface LookupSummary {
-  provider:   string;
-  field:      string;
-  totalRows:  number;
+  provider: string;
+  field: string;
+  totalRows: number;
   validCount: number;
   errorCount: number;
-  skipCount:  number;
-  cacheHits:  number;
+  skipCount: number;
+  cacheHits: number;
   /**
    * Populated when writeColumns includes a key whose logical name ends in
    * '_ref' or 'consultation_ref' (i.e. any reference value that must appear
@@ -766,11 +805,11 @@ export interface LookupSummary {
 }
 
 interface ApplyStats {
-  totalRows:  number;
+  totalRows: number;
   validCount: number;
   errorCount: number;
-  skipCount:  number;
-  cacheHits:  number;
+  skipCount: number;
+  cacheHits: number;
   /** Populated from result.data.consultation_ref keyed by source value. */
   consultationRefs: Record<string, string>;
 }
@@ -802,7 +841,9 @@ async batchUpdateColumns(updates: Map<number, Record<string, unknown>>): Promise
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## BUILT-IN PROVIDERS  (PRIVATE — Phase 4b)
+
+## BUILT-IN PROVIDERS (PRIVATE — Phase 4b)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Location:** `@caracal-lynx/sluice-enrich` private package — `src/providers/`
@@ -820,7 +861,7 @@ All built-in providers live under `sluice-enrich/src/providers/`. They are regis
 by `src/providers/index.ts` into the EnrichRegistry at startup, before
 any client plugin files are loaded.
 
-### Provider: `vies`  (sluice-enrich/src/providers/vies.ts)
+### Provider: `vies` (sluice-enrich/src/providers/vies.ts)
 
 EU VAT Information Exchange System — validates VAT numbers for all EU member states.
 
@@ -849,27 +890,28 @@ Status codes:
 
 ```typescript
 // src/enrich/providers/vies.ts
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
-import type { EnrichPlugin, EnrichResult, EnrichOptions } from '../types';
+import axios from "axios";
+import axiosRetry from "axios-retry";
+import type { EnrichPlugin, EnrichResult, EnrichOptions } from "../types";
 
 export const vies: EnrichPlugin = {
-  id: 'vies',
-  description: 'EU VIES VAT validation — validates VAT numbers against EU member state registries',
+  id: "vies",
+  description: "EU VIES VAT validation — validates VAT numbers against EU member state registries",
 
   async enrich(value: string, options: EnrichOptions): Promise<EnrichResult> {
     // Extract country code prefix (first two alpha chars) or use options.countryCode
-    const countryCode = (options.countryCode as string | undefined)
-      ?? value.replace(/[^A-Z]/g, '').substring(0, 2);
-    const vatNumber = value.replace(/^[A-Z]{2}/, '');  // strip country prefix
+    const countryCode =
+      (options.countryCode as string | undefined) ?? value.replace(/[^A-Z]/g, "").substring(0, 2);
+    const vatNumber = value.replace(/^[A-Z]{2}/, ""); // strip country prefix
 
     const client = axios.create({ timeout: options.timeoutMs });
     axiosRetry(client, {
-      retries:      options.maxRetries,
-      retryDelay:   axiosRetry.exponentialDelay,
-      retryCondition: e => axiosRetry.isNetworkOrIdempotentRequestError(e)
-        || e.response?.status === 429
-        || (!!e.response?.status && e.response.status >= 500),
+      retries: options.maxRetries,
+      retryDelay: axiosRetry.exponentialDelay,
+      retryCondition: (e) =>
+        axiosRetry.isNetworkOrIdempotentRequestError(e) ||
+        e.response?.status === 429 ||
+        (!!e.response?.status && e.response.status >= 500),
     });
 
     try {
@@ -878,7 +920,7 @@ export const vies: EnrichPlugin = {
       return {
         valid: res.data.isValid,
         data: {
-          name:    res.data.name    ?? null,
+          name: res.data.name ?? null,
           country: res.data.countryCode ?? countryCode,
         },
       };
@@ -893,15 +935,15 @@ export const vies: EnrichPlugin = {
 };
 
 interface ViesResponse {
-  isValid:     boolean;
-  name?:       string;
-  address?:    string;
-  vatNumber?:  string;
+  isValid: boolean;
+  name?: string;
+  address?: string;
+  vatNumber?: string;
   countryCode?: string;
 }
 ```
 
-### Provider: `hmrc-vat`  (sluice-enrich/src/providers/hmrc-vat.ts)
+### Provider: `hmrc-vat` (sluice-enrich/src/providers/hmrc-vat.ts)
 
 UK HMRC "Check a UK VAT number" API — confirms registration, returns business name,
 registered address, and a consultation reference number as proof the check was made.
@@ -965,39 +1007,39 @@ IMPORTANT — cache: false required:
 
 ```typescript
 // src/enrich/providers/hmrc-vat.ts
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
-import type { EnrichPlugin, EnrichResult, EnrichOptions } from '../types';
+import axios from "axios";
+import axiosRetry from "axios-retry";
+import type { EnrichPlugin, EnrichResult, EnrichOptions } from "../types";
 
 export const hmrcVat: EnrichPlugin = {
-  id: 'hmrc-vat',
+  id: "hmrc-vat",
   description: 'HMRC "Check a UK VAT number" — registration, name, address, consultation reference',
 
   async enrich(value: string, options: EnrichOptions): Promise<EnrichResult> {
     // Strip GB prefix and any whitespace — HMRC expects the 9-digit VRN only
-    const vrn = value.replace(/^GB/i, '').replace(/\s/g, '');
+    const vrn = value.replace(/^GB/i, "").replace(/\s/g, "");
 
     const bearerToken = options.bearerToken as string | undefined;
 
     const headers: Record<string, string> = {
-      Accept: 'application/vnd.hmrc.1.0+json',
+      Accept: "application/vnd.hmrc.1.0+json",
     };
     if (bearerToken) {
-      headers['Authorization'] = `Bearer ${bearerToken}`;
+      headers["Authorization"] = `Bearer ${bearerToken}`;
     }
 
     const client = axios.create({ timeout: options.timeoutMs, headers });
     axiosRetry(client, {
-      retries:    options.maxRetries,
+      retries: options.maxRetries,
       retryDelay: axiosRetry.exponentialDelay,
-      retryCondition: e => axiosRetry.isNetworkOrIdempotentRequestError(e)
-        || e.response?.status === 429
-        || (!!e.response?.status && e.response.status >= 500),
+      retryCondition: (e) =>
+        axiosRetry.isNetworkOrIdempotentRequestError(e) ||
+        e.response?.status === 429 ||
+        (!!e.response?.status && e.response.status >= 500),
     });
 
     try {
-      const baseUrl = (options.baseUrl as string | undefined)
-        ?? 'https://api.service.hmrc.gov.uk';
+      const baseUrl = (options.baseUrl as string | undefined) ?? "https://api.service.hmrc.gov.uk";
       const url = `${baseUrl}/organisations/vat/check-vat-number/lookup/${vrn}`;
       const res = await client.get<HmrcVatResponse>(url);
 
@@ -1005,12 +1047,12 @@ export const hmrcVat: EnrichPlugin = {
       return {
         valid: true,
         data: {
-          name:             res.data.target?.name             ?? null,
-          address_line1:    addr?.line1                       ?? null,
-          address_line2:    addr?.line2 || null,   // coerce empty string → null
-          address_postcode: addr?.postcode                    ?? null,
-          consultation_ref: res.data.consultationNumber       ?? null,
-          processing_date:  res.data.processingDate           ?? null,
+          name: res.data.target?.name ?? null,
+          address_line1: addr?.line1 ?? null,
+          address_line2: addr?.line2 || null, // coerce empty string → null
+          address_postcode: addr?.postcode ?? null,
+          consultation_ref: res.data.consultationNumber ?? null,
+          processing_date: res.data.processingDate ?? null,
         },
       };
     } catch (err: unknown) {
@@ -1022,7 +1064,8 @@ export const hmrcVat: EnrichPlugin = {
         if (status === 401) {
           return {
             valid: false,
-            error: 'HMRC API returned 401 Unauthorised — check options.bearerToken is set and valid',
+            error:
+              "HMRC API returned 401 Unauthorised — check options.bearerToken is set and valid",
           };
         }
       }
@@ -1032,32 +1075,32 @@ export const hmrcVat: EnrichPlugin = {
 };
 
 interface HmrcVatAddress {
-  line1?:       string;
-  line2?:       string;
-  line3?:       string;
-  postcode?:    string;
+  line1?: string;
+  line2?: string;
+  line3?: string;
+  postcode?: string;
   countryCode?: string;
 }
 
 interface HmrcVatResponse {
   target?: {
-    name?:       string;
-    vatNumber?:  string;
-    address?:    HmrcVatAddress;
+    name?: string;
+    vatNumber?: string;
+    address?: HmrcVatAddress;
   };
   consultationNumber?: string;
-  processingDate?:     string;
+  processingDate?: string;
 }
 ```
 
 **Options reference for `hmrc-vat`:**
 
-| Option key    | Type   | Required | Description |
-|---------------|--------|----------|-------------|
+| Option key    | Type   | Required | Description                                                                                                                                                                         |
+| ------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bearerToken` | string | No*      | OAuth2 bearer token. Required to receive `consultationNumber`. Resolve from env var: `${HMRC_BEARER_TOKEN}`. Without it the API still responds but `consultation_ref` will be null. |
-| `baseUrl`     | string | No       | Override API base URL. Default: `https://api.service.hmrc.gov.uk`. Set to `https://test-api.service.hmrc.gov.uk` for sandbox testing. |
+| `baseUrl`     | string | No       | Override API base URL. Default: `https://api.service.hmrc.gov.uk`. Set to `https://test-api.service.hmrc.gov.uk` for sandbox testing.                                               |
 
-### Provider: `uk-trade-tariff`  (sluice-enrich/src/providers/uk-trade-tariff.ts)
+### Provider: `uk-trade-tariff` (sluice-enrich/src/providers/uk-trade-tariff.ts)
 
 UK Global Trade Tariff — validates HS/commodity codes against the UK tariff schedule.
 
@@ -1090,23 +1133,24 @@ Status codes:
 
 ```typescript
 // src/enrich/providers/uk-trade-tariff.ts
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
-import type { EnrichPlugin, EnrichResult, EnrichOptions } from '../types';
+import axios from "axios";
+import axiosRetry from "axios-retry";
+import type { EnrichPlugin, EnrichResult, EnrichOptions } from "../types";
 
 export const ukTradeTariff: EnrichPlugin = {
-  id: 'uk-trade-tariff',
-  description: 'UK Trade Tariff — validates HS/commodity codes against the UK tariff schedule',
+  id: "uk-trade-tariff",
+  description: "UK Trade Tariff — validates HS/commodity codes against the UK tariff schedule",
 
   async enrich(value: string, options: EnrichOptions): Promise<EnrichResult> {
-    const code = String(value).replace(/\s/g, '');
+    const code = String(value).replace(/\s/g, "");
 
     const client = axios.create({ timeout: options.timeoutMs });
     axiosRetry(client, {
-      retries:    options.maxRetries,
+      retries: options.maxRetries,
       retryDelay: axiosRetry.exponentialDelay,
-      retryCondition: e => axiosRetry.isNetworkOrIdempotentRequestError(e)
-        || (!!e.response?.status && e.response.status >= 500),
+      retryCondition: (e) =>
+        axiosRetry.isNetworkOrIdempotentRequestError(e) ||
+        (!!e.response?.status && e.response.status >= 500),
     });
 
     try {
@@ -1114,15 +1158,16 @@ export const ukTradeTariff: EnrichPlugin = {
       const res = await client.get<TariffResponse>(url);
       return {
         valid: true,
-        data:  {
-          description: res.data.data?.attributes?.formatted_description
-            ?? res.data.data?.attributes?.description
-            ?? null,
+        data: {
+          description:
+            res.data.data?.attributes?.formatted_description ??
+            res.data.data?.attributes?.description ??
+            null,
         },
       };
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        return { valid: false };   // commodity not found — not an error
+        return { valid: false }; // commodity not found — not an error
       }
       return { valid: false, error: String(err) };
     }
@@ -1134,14 +1179,14 @@ interface TariffResponse {
 }
 ```
 
-### Provider registration  (sluice-enrich/src/providers/index.ts)
+### Provider registration (sluice-enrich/src/providers/index.ts)
 
 ```typescript
 // private: sluice-enrich/src/providers/index.ts
-import type { EnrichRegistry } from '../registry';
-import { vies }         from './vies';
-import { hmrcVat }      from './hmrc-vat';
-import { ukTradeTariff } from './uk-trade-tariff';
+import type { EnrichRegistry } from "../registry";
+import { vies } from "./vies";
+import { hmrcVat } from "./hmrc-vat";
+import { ukTradeTariff } from "./uk-trade-tariff";
 
 export function registerBuiltInProviders(registry: EnrichRegistry): void {
   registry.register(vies);
@@ -1153,7 +1198,9 @@ export function registerBuiltInProviders(registry: EnrichRegistry): void {
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## PLUGIN FILE LOADER  (PRIVATE — sluice-enrich/src/loader.ts)
+
+## PLUGIN FILE LOADER (PRIVATE — sluice-enrich/src/loader.ts)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Location:** `@caracal-lynx/sluice-enrich` private package — `src/loader.ts`
@@ -1161,12 +1208,12 @@ export function registerBuiltInProviders(registry: EnrichRegistry): void {
 
 ```typescript
 // private: sluice-enrich/src/loader.ts
-import path from 'path';
-import fs   from 'fs';
-import { glob } from 'glob';
-import { logger } from '@caracal-lynx/sluice/utils';
-import { ConfigError } from '@caracal-lynx/sluice/utils';
-import type { EnrichRegistry } from './registry';
+import path from "path";
+import fs from "fs";
+import { glob } from "glob";
+import { logger } from "@caracal-lynx/sluice/utils";
+import { ConfigError } from "@caracal-lynx/sluice/utils";
+import type { EnrichRegistry } from "./registry";
 
 /**
  * Discovers and loads *.enrich.ts plugin files from pluginDir.
@@ -1179,26 +1226,26 @@ import type { EnrichRegistry } from './registry';
  */
 export async function loadEnrichPlugins(
   pluginDir: string,
-  registry:  EnrichRegistry,
+  registry: EnrichRegistry,
 ): Promise<void> {
   if (!fs.existsSync(pluginDir)) return;
 
-  const files = await glob('**/*.enrich.ts', { cwd: pluginDir, absolute: true });
+  const files = await glob("**/*.enrich.ts", { cwd: pluginDir, absolute: true });
 
   for (const file of files) {
     try {
       const mod = await import(file);
       if (!mod.enricher?.id) {
-        throw new Error('Missing export: export const enricher: EnrichPlugin');
+        throw new Error("Missing export: export const enricher: EnrichPlugin");
       }
       registry.register(mod.enricher);
-      logger.debug({ provider: mod.enricher.id, file }, 'Registered enrich plugin');
+      logger.debug({ provider: mod.enricher.id, file }, "Registered enrich plugin");
     } catch (err) {
       throw new ConfigError(`Failed to load enrich plugin ${file}: ${err}`);
     }
   }
 
-  logger.info({ enrichProviders: registry.list().length }, 'Enrich plugins loaded');
+  logger.info({ enrichProviders: registry.list().length }, "Enrich plugins loaded");
 }
 ```
 
@@ -1209,24 +1256,24 @@ export async function loadEnrichPlugins(
 // D&B DUNS number validation via the D&B Direct+ API.
 // Requires options.apiKey set via pipeline YAML or sluice.config.yaml.
 
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
-import type { EnrichPlugin, EnrichResult, EnrichOptions } from '@caracal-lynx/sluice';
+import axios from "axios";
+import axiosRetry from "axios-retry";
+import type { EnrichPlugin, EnrichResult, EnrichOptions } from "@caracal-lynx/sluice";
 
 export const enricher: EnrichPlugin = {
-  id: 'dnb-duns',
-  description: 'D&B DUNS number validation via D&B Direct+ API',
+  id: "dnb-duns",
+  description: "D&B DUNS number validation via D&B Direct+ API",
 
   async enrich(value: string, options: EnrichOptions): Promise<EnrichResult> {
     const apiKey = options.apiKey as string | undefined;
-    if (!apiKey) return { valid: false, error: 'dnb-duns provider requires options.apiKey' };
+    if (!apiKey) return { valid: false, error: "dnb-duns provider requires options.apiKey" };
 
     const client = axios.create({
       timeout: options.timeoutMs,
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     axiosRetry(client, {
-      retries:    options.maxRetries,
+      retries: options.maxRetries,
       retryDelay: axiosRetry.exponentialDelay,
     });
 
@@ -1234,7 +1281,7 @@ export const enricher: EnrichPlugin = {
       const res = await client.get(`https://plus.dnb.com/v1/data/duns/${value}`);
       return {
         valid: res.data?.organization !== undefined,
-        data:  { name: res.data?.organization?.primaryName ?? null },
+        data: { name: res.data?.organization?.primaryName ?? null },
       };
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
@@ -1249,7 +1296,9 @@ export const enricher: EnrichPlugin = {
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## RUNNER CHANGES  (open-source src/runner.ts — hook only)
+
+## RUNNER CHANGES (open-source src/runner.ts — hook only)
+
 ## ═══════════════════════════════════════════════════════════
 
 > **Open-source runner change:** The runner only gains a `registerEnrichPhase()` hook.
@@ -1261,7 +1310,7 @@ export const enricher: EnrichPlugin = {
 ```typescript
 // open-source: src/runner.ts
 
-import type { EnrichPhaseFactory } from './enrich/types.js';
+import type { EnrichPhaseFactory } from "./enrich/types.js";
 
 // Module-level registration slot — undefined until sluice-enrich calls registerEnrichPhase()
 let _enrichPhaseFactory: EnrichPhaseFactory | undefined;
@@ -1275,20 +1324,19 @@ export function registerEnrichPhase(factory: EnrichPhaseFactory): void {
 }
 
 export async function runPipeline(
-  yamlPath:      string,
+  yamlPath: string,
   cliOverrides?: Partial<RunConfig>,
 ): Promise<RunResult> {
-
   // ── 0. Initialise registries ─────────────────────────────────────────
-  const ruleRegistry      = new RuleRegistry();
+  const ruleRegistry = new RuleRegistry();
   const transformRegistry = new TransformRegistry();
 
   // ── 0a. Load npm plugin packages (sluice.config.yaml) ───────────────
-  const toolkitConfigPath = path.join(process.cwd(), 'sluice.config.yaml');
+  const toolkitConfigPath = path.join(process.cwd(), "sluice.config.yaml");
   await loadNpmPlugins(toolkitConfigPath, ruleRegistry, transformRegistry);
 
   // ── 0b. Load plugin files from client plugins/ folder ────────────────
-  const pluginDir = path.join(path.dirname(yamlPath), 'plugins');
+  const pluginDir = path.join(path.dirname(yamlPath), "plugins");
   await loadPlugins(pluginDir, ruleRegistry, transformRegistry);
   // Note: enrich plugin file loading is handled inside sluice-enrich's factory
 
@@ -1307,7 +1355,7 @@ export async function runPipeline(
       pluginDir,
       logger,
     ).run();
-    logger.info({ enrichSummary }, 'Phase 4 (Enrich) complete');
+    logger.info({ enrichSummary }, "Phase 4 (Enrich) complete");
     runResult.enrichSummary = enrichSummary;
   }
   // ── 3–6. DQ, Transform, Load, State — unchanged ──────────────────────
@@ -1324,11 +1372,11 @@ Add this type to the open-source types file alongside `EnrichPlugin`:
 // The private package implements this and registers it via registerEnrichPhase().
 export interface EnrichPhaseFactory {
   (
-    config:     EnrichConfig,
-    runConfig:  RunConfig,
-    staging:    StagingStore,
-    pluginDir:  string,
-    logger:     Logger,
+    config: EnrichConfig,
+    runConfig: RunConfig,
+    staging: StagingStore,
+    pluginDir: string,
+    logger: Logger,
   ): { run(): Promise<EnrichSummary> };
 }
 ```
@@ -1337,10 +1385,10 @@ export interface EnrichPhaseFactory {
 
 ```typescript
 // private: sluice-enrich/src/index.ts
-import { registerEnrichPhase } from '@caracal-lynx/sluice';
+import { registerEnrichPhase } from "@caracal-lynx/sluice";
 
-import { createEnrichPhase }   from './phase.js';
-import { patchStagingStore }   from './staging-patch.js';
+import { createEnrichPhase } from "./phase.js";
+import { patchStagingStore } from "./staging-patch.js";
 
 // Two side-effects run at module-load time. Order matters: the
 // StagingStore prototype must be patched BEFORE the runner ever
@@ -1351,12 +1399,12 @@ registerEnrichPhase(createEnrichPhase);
 // Public surface — callers (notably tests in client repos) may want to
 // construct a registry / cache directly to seed fixture data, drive the
 // CLI's diagnostic surface, etc.
-export { EnrichRegistry }      from './registry.js';
-export { EnrichCache }         from './cache.js';
-export { EnrichmentRunner }    from './runner.js';
-export { loadEnrichPlugins }   from './loader.js';
-export { createEnrichPhase }   from './phase.js';
-export { patchStagingStore }   from './staging-patch.js';
+export { EnrichRegistry } from "./registry.js";
+export { EnrichCache } from "./cache.js";
+export { EnrichmentRunner } from "./runner.js";
+export { loadEnrichPlugins } from "./loader.js";
+export { createEnrichPhase } from "./phase.js";
+export { patchStagingStore } from "./staging-patch.js";
 ```
 
 Clients install `sluice-enrich` and import it in their `sluice.config.yaml` plugin list,
@@ -1375,20 +1423,20 @@ for a pipeline using `hmrc-vat` with `consultation_ref`:
 
 ```json
 {
-  "pipeline":   "acme-corp-customers",
-  "runAt":      "2026-04-29T10:00:00Z",
-  "status":     "ok",
-  "dqSummary":  { "...": "unchanged" },
+  "pipeline": "acme-corp-customers",
+  "runAt": "2026-04-29T10:00:00Z",
+  "status": "ok",
+  "dqSummary": { "...": "unchanged" },
   "enrichSummary": {
     "lookups": [
       {
-        "provider":   "hmrc-vat",
-        "field":      "VAT_NUMBER",
-        "totalRows":  142,
+        "provider": "hmrc-vat",
+        "field": "VAT_NUMBER",
+        "totalRows": 142,
         "validCount": 138,
         "errorCount": 2,
-        "skipCount":  0,
-        "cacheHits":  0,
+        "skipCount": 0,
+        "cacheHits": 0,
         "consultationRefs": {
           "GB553557881": "K6S4S0PT",
           "GB123456789": "M2T9X1KR",
@@ -1416,17 +1464,19 @@ When `--no-enrich` is passed, set `cliOverrides.skipEnrich = true`.
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## ERROR HANDLING MATRIX
+
 ## ═══════════════════════════════════════════════════════════
 
-| Scenario                          | onError: flag         | onError: skip          | onError: fail           |
-|-----------------------------------|-----------------------|------------------------|-------------------------|
-| API returns valid: false (404)    | valid=false written   | valid=false, row kept  | valid=false written (1) |
-| API returns error (5xx, timeout)  | valid=false written   | row → rejection CSV    | EnrichError thrown      |
-| preValidate regex fails           | valid=false written   | valid=false, row kept  | valid=false written (1) |
-| Source field is null / empty      | valid=null written    | valid=null, row kept   | valid=null written      |
-| Provider not found in registry    | ConfigError thrown    | ConfigError thrown     | ConfigError thrown      |
-| All retries exhausted             | valid=false written   | row → rejection CSV    | EnrichError thrown      |
+| Scenario                         | onError: flag       | onError: skip         | onError: fail           |
+| -------------------------------- | ------------------- | --------------------- | ----------------------- |
+| API returns valid: false (404)   | valid=false written | valid=false, row kept | valid=false written (1) |
+| API returns error (5xx, timeout) | valid=false written | row → rejection CSV   | EnrichError thrown      |
+| preValidate regex fails          | valid=false written | valid=false, row kept | valid=false written (1) |
+| Source field is null / empty     | valid=null written  | valid=null, row kept  | valid=null written      |
+| Provider not found in registry   | ConfigError thrown  | ConfigError thrown    | ConfigError thrown      |
+| All retries exhausted            | valid=false written | row → rejection CSV   | EnrichError thrown      |
 
 (1) `onError: fail` only triggers on error conditions — a legitimate "not found" response
 from the API is not an error; it's a valid validation result.
@@ -1434,7 +1484,9 @@ from the API is not an error; it's a valid validation result.
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## UPDATED ERRORS UTILITY  (src/utils/errors.ts)
+
+## UPDATED ERRORS UTILITY (src/utils/errors.ts)
+
 ## ═══════════════════════════════════════════════════════════
 
 Add the following error class:
@@ -1442,7 +1494,7 @@ Add the following error class:
 ```typescript
 /** Thrown when an Enrich phase lookup fails and onError is set to 'fail'. */
 export class EnrichError extends SluiceError {
-  readonly code = 'ENRICH_ERROR';
+  readonly code = "ENRICH_ERROR";
 }
 ```
 
@@ -1459,7 +1511,9 @@ exit 4 = enrich error (Phase 4)     ← NEW
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## CLI ADDITIONS
+
 ## ═══════════════════════════════════════════════════════════
 
 ```
@@ -1501,7 +1555,9 @@ Total API calls: 86
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## PACKAGE DEPENDENCY
+
 ## ═══════════════════════════════════════════════════════════
 
 **Open-source `@caracal-lynx/sluice`** — no new runtime dependencies added for the enrich feature.
@@ -1536,7 +1592,9 @@ Verify with `cat package.json | grep '"type"'` before installing.
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## TESTING
+
 ## ═══════════════════════════════════════════════════════════
 
 ### New test files
@@ -1561,12 +1619,14 @@ tests/
 ### Required test cases
 
 **EnrichRegistry:**
+
 - Register a provider and retrieve by id
 - Duplicate id throws `ConfigError`
 - `list()` returns all registered ids
 - `has()` returns false for unknown id
 
 **EnrichCache:**
+
 - `get()` returns undefined for uncached value
 - `set()` then `get()` returns cached result with `fromCache: true`
 - `has()` returns true after `set()`
@@ -1574,12 +1634,14 @@ tests/
 - `size()` returns correct count
 
 **Enrich plugin loader:**
+
 - Discovers `*.enrich.ts` files in plugins directory
 - Non-existent plugins directory is silently ignored
 - File missing `enricher` export throws `ConfigError`
 - File with `enricher` missing `id` throws `ConfigError`
 
 **EnrichmentRunner:**
+
 - Throws `ConfigError` for unknown provider id (good error message listing available)
 - `preValidate` regex failure writes `valid: false` without calling provider.enrich
 - Null source value writes `valid: null` without calling provider.enrich
@@ -1594,6 +1656,7 @@ tests/
 **Built-in providers (all use nock or axios mock adapter — no live API calls in tests):**
 
 `vies`:
+
 - 200 response with `isValid: true` → `{ valid: true, data: { name: 'ACME LTD', country: 'GB' } }`
 - 200 response with `isValid: false` → `{ valid: false }`
 - 400 response → `{ valid: false }` (bad format)
@@ -1602,6 +1665,7 @@ tests/
 - Timeout → `{ valid: false, error: '...' }`
 
 `hmrc-vat`:
+
 - 200 response with all fields → `{ valid: true, data: { name, address_line1, address_line2, address_postcode, consultation_ref, processing_date } }`
 - 200 response without consultationNumber (no bearer token) → `consultation_ref` is null
 - 404 response → `{ valid: false }` (not registered — not an error)
@@ -1615,17 +1679,20 @@ tests/
 - No bearerToken → request sent without Authorization header (not an error)
 
 `uk-trade-tariff`:
+
 - 200 response → `{ valid: true, data: { description: '...' } }`
 - 404 response → `{ valid: false }` (commodity not found — not an error)
 - 5xx + retries exhausted → `{ valid: false, error: '...' }`
 
 **Per-lookup cache override:**
+
 - `cache: false` on a lookup bypasses the in-memory cache — provider.enrich called every time
 - `cache: false` on a lookup with global `cache: persist` does NOT write that lookup's results to DuckDB
 - Other lookups in the same pipeline with no `cache` override still use the global setting
 - Zod schema: `cache: false` accepted; `cache: 'persist'` on a lookup is rejected (only boolean allowed at lookup level)
 
 **EnrichSummary and consultationRefs:**
+
 - `consultationRefs` is populated in `LookupSummary` when `writeColumns` includes `consultation_ref` key
 - `consultationRefs` is an empty object `{}` for lookups without a `consultation_ref` mapping
 - `consultationRefs` maps source field value → consultation reference string
@@ -1634,6 +1701,7 @@ tests/
 - State file `enrichSummary` is omitted when no `enrich:` section is configured
 
 **Integration: Enrich phase in full pipeline run:**
+
 - Pipeline with `enrich:` section runs enrichment before DQ
 - Pipeline without `enrich:` section skips enrichment entirely and omits `enrichSummary` from state file
 - `--no-enrich` flag bypasses enrichment even when config has `enrich:` section
@@ -1644,7 +1712,9 @@ tests/
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## BUILD ORDER FOR CLAUDE CODE
+
 ## ═══════════════════════════════════════════════════════════
 
 Phase 4 is split across two repositories and two development phases (4a and 4b).
@@ -1765,7 +1835,9 @@ Built-in providers are developed AFTER Phase 4a framework is complete and in use
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## WHAT NOT TO DO
+
 ## ═══════════════════════════════════════════════════════════
 
 - **Do not add async to RulePlugin.validate() or TransformPlugin.apply().**
@@ -1819,7 +1891,9 @@ Built-in providers are developed AFTER Phase 4a framework is complete and in use
 ---
 
 ## ═══════════════════════════════════════════════════════════
+
 ## PIPELINE EXECUTION FLOW (UPDATED)
+
 ## ═══════════════════════════════════════════════════════════
 
 ```mermaid
@@ -1858,7 +1932,7 @@ flowchart TD
 
 ---
 
-*This file specifies Sluice Phase 4 (Enrich Phase) only.*
-*Read CLAUDE.md for Phase 1 baseline and archive/PHASE2-EXTENSIONS.md for Phase 3 (plugin system, COMPLETE).*
-*The enrich subsystem is a private commercial service — see SLUICE-IMPLEMENTATION-PLAN.md §8 for phase overview.*
-*All three files must be present when working on Phase 4.*
+_This file specifies Sluice Phase 4 (Enrich Phase) only._
+_Read CLAUDE.md for Phase 1 baseline and archive/PHASE2-EXTENSIONS.md for Phase 3 (plugin system, COMPLETE)._
+_The enrich subsystem is a private commercial service — see SLUICE-IMPLEMENTATION-PLAN.md §8 for phase overview._
+_All three files must be present when working on Phase 4._

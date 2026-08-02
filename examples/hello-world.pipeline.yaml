@@ -13,12 +13,12 @@ dq:
     - field: email
       checks:
         - { type: notNull, severity: critical }
-        - { type: email,   severity: warning  }
+        - { type: email, severity: warning }
 
 transform:
   fields:
-    - { from: name,    to: Name,    type: string, cleanse: trim }
-    - { from: email,   to: Email,   type: string, cleanse: trim|lowercase }
+    - { from: name, to: Name, type: string, cleanse: trim }
+    - { from: email, to: Email, type: string, cleanse: trim|lowercase }
     - { from: country, to: Country, type: string, default: GB }
 
 target:

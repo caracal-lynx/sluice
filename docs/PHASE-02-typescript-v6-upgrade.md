@@ -5,17 +5,17 @@
 **Prepared for:** Caracal Lynx Limited / Michael Scott  
 **Date:** 2026-04-22  
 **Prerequisite:** Node.js 24 upgrade complete — Phase 1 shipped (see `docs/archive/node24-upgrade-plan.md`)  
-**Audience:** Claude Code — use this document to plan and implement the upgrade  
+**Audience:** Claude Code — use this document to plan and implement the upgrade
 
 ---
 
 ## 1. Version Landscape
 
-| Version | Released | Status | Key Significance |
-|---|---|---|---|
-| TypeScript 5.x | 2023–2025 | ~~Current in Sluice~~ **Superseded** | Last era of incremental strict additions |
-| **TypeScript 6.0** | **March 23, 2026** | ✅ **Current in Sluice** | Last JS-based compiler; defaults tightened; bridge to TS 7 |
-| **TypeScript 7.0** | **January 15, 2026** | **Stable** | Native Go compiler (tsgo); 10× faster; 98% API-compatible |
+| Version            | Released             | Status                               | Key Significance                                           |
+| ------------------ | -------------------- | ------------------------------------ | ---------------------------------------------------------- |
+| TypeScript 5.x     | 2023–2025            | ~~Current in Sluice~~ **Superseded** | Last era of incremental strict additions                   |
+| **TypeScript 6.0** | **March 23, 2026**   | ✅ **Current in Sluice**             | Last JS-based compiler; defaults tightened; bridge to TS 7 |
+| **TypeScript 7.0** | **January 15, 2026** | **Stable**                           | Native Go compiler (tsgo); 10× faster; 98% API-compatible  |
 
 Both target versions are already released. TS 7 actually pre-dates TS 6 in release order, but the intended migration path is **5 → 6 → 7**, with TS 6 acting as the compatibility bridge.
 
@@ -25,13 +25,13 @@ Both target versions are already released. TS 7 actually pre-dates TS 6 in relea
 
 Based on the confirmed tsconfig settings, Sluice is in the **best possible starting position** for this migration:
 
-| Setting | Current | TS 6 requirement | Status |
-|---|---|---|---|
-| `strict` | `true` | Now default (but still respected if explicit) | ✅ No change |
-| `exactOptionalPropertyTypes` | `true` | No change | ✅ No change |
-| `module` | `nodenext` | `node`/`classic` removed; `nodenext` ✅ | ✅ No change |
-| `moduleResolution` | `nodenext` | `node10`/`classic` removed; `nodenext` ✅ | ✅ No change |
-| Decorators | None used | TS 7 tsgo has limited decorator support | ✅ No blocker |
+| Setting                      | Current    | TS 6 requirement                              | Status        |
+| ---------------------------- | ---------- | --------------------------------------------- | ------------- |
+| `strict`                     | `true`     | Now default (but still respected if explicit) | ✅ No change  |
+| `exactOptionalPropertyTypes` | `true`     | No change                                     | ✅ No change  |
+| `module`                     | `nodenext` | `node`/`classic` removed; `nodenext` ✅       | ✅ No change  |
+| `moduleResolution`           | `nodenext` | `node10`/`classic` removed; `nodenext` ✅     | ✅ No change  |
+| Decorators                   | None used  | TS 7 tsgo has limited decorator support       | ✅ No blocker |
 
 The single biggest TS 6 landmine — `moduleResolution: "node"` being removed — is already cleared.
 
@@ -43,23 +43,23 @@ The single biggest TS 6 landmine — `moduleResolution: "node"` being removed �
 
 These are **default** changes that only affect projects that didn't have them set. Sluice already sets them explicitly — no surprises.
 
-| Setting | Old default | New default | Sluice impact |
-|---|---|---|---|
-| `strict` | `false` | `true` | ✅ Already `true` |
-| `target` | `ES3` | `ES2025` | ⚠️ Set explicitly — see §3.3 |
-| `module` | `commonjs` | `esnext` | ✅ Already `nodenext` |
-| `esModuleInterop` | `false` | Always `true` (can't set `false`) | ✅ Almost certainly already `true` |
+| Setting           | Old default | New default                       | Sluice impact                      |
+| ----------------- | ----------- | --------------------------------- | ---------------------------------- |
+| `strict`          | `false`     | `true`                            | ✅ Already `true`                  |
+| `target`          | `ES3`       | `ES2025`                          | ⚠️ Set explicitly — see §3.3       |
+| `module`          | `commonjs`  | `esnext`                          | ✅ Already `nodenext`              |
+| `esModuleInterop` | `false`     | Always `true` (can't set `false`) | ✅ Almost certainly already `true` |
 
 ### 3.2 Options Removed or Broken in TS 6
 
-| Option | Action |
-|---|---|
-| `moduleResolution: "node"` / `"classic"` | **Removed.** Sluice uses `nodenext` — ✅ unaffected |
-| `target: "ES5"` | **Removed.** Minimum is now ES2015. Sluice targets higher. |
-| `outFile` | **Removed.** Sluice doesn't use it. ✅ |
-| `module: "AMD"` / `"UMD"` | **Deprecated.** Sluice doesn't use them. ✅ |
-| `esModuleInterop: false` | **Can no longer be set to `false`.** If present in tsconfig, remove it. |
-| `allowSyntheticDefaultImports: false` | **Same — remove if present.** |
+| Option                                   | Action                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| `moduleResolution: "node"` / `"classic"` | **Removed.** Sluice uses `nodenext` — ✅ unaffected                     |
+| `target: "ES5"`                          | **Removed.** Minimum is now ES2015. Sluice targets higher.              |
+| `outFile`                                | **Removed.** Sluice doesn't use it. ✅                                  |
+| `module: "AMD"` / `"UMD"`                | **Deprecated.** Sluice doesn't use them. ✅                             |
+| `esModuleInterop: false`                 | **Can no longer be set to `false`.** If present in tsconfig, remove it. |
+| `allowSyntheticDefaultImports: false`    | **Same — remove if present.**                                           |
 
 ### 3.3 Target and Lib Update (recommended, not forced)
 
@@ -69,11 +69,11 @@ With Node.js 26 in place, the runtime natively supports ES2025. Update `target` 
 // tsconfig.json — recommended TS 6 values (Node 26 runtime)
 {
   "compilerOptions": {
-    "target": "ES2025",      // was probably ES2022; Node 26 supports ES2025
-    "lib": ["ES2025"],       // adds Temporal, RegExp.escape, Iterator helpers
-    "module": "nodenext",    // unchanged ✅
-    "moduleResolution": "nodenext"  // unchanged ✅
-  }
+    "target": "ES2025", // was probably ES2022; Node 26 supports ES2025
+    "lib": ["ES2025"], // adds Temporal, RegExp.escape, Iterator helpers
+    "module": "nodenext", // unchanged ✅
+    "moduleResolution": "nodenext", // unchanged ✅
+  },
 }
 ```
 
@@ -85,10 +85,10 @@ TS 6 deprecates the old `assert` import syntax in favour of `with`:
 
 ```typescript
 // Deprecated (TS 6 warning, TS 7 error):
-import data from './data.json' assert { type: 'json' };
+import data from "./data.json" assert { type: "json" };
 
 // Correct:
-import data from './data.json' with { type: 'json' };
+import data from "./data.json" with { type: "json" };
 ```
 
 **Sluice impact:** YAML is loaded via `js-yaml` (not import assertions), and JSON configs are handled similarly. Almost certainly **not used** — but run the grep in Phase 1 to confirm.
@@ -100,8 +100,8 @@ TS 6 ships a new flag that pre-adopts TS 7's type ordering behaviour. Enabling i
 ```jsonc
 {
   "compilerOptions": {
-    "stableTypeOrdering": true
-  }
+    "stableTypeOrdering": true,
+  },
 }
 ```
 
@@ -113,24 +113,26 @@ TypeScript 6 improves inference for methods, generic return types, and condition
 
 **Sluice files most likely to see new errors:**
 
-| File | Why |
-|---|---|
-| `src/transform/engine.ts` | Heavy use of generic field-type dispatch (`switch` on `FieldType` enum) and `unknown` narrowing |
-| `src/dq/engine.ts` | `Rule.validate(value: unknown, ...)` return type narrowing; violation array indexing |
-| `src/adapters/source/rest.ts` | Dot-path navigation into untyped JSON (`unknown` → nested access) |
-| `src/staging/store.ts` | DuckDB result row typing (especially after the `@duckdb/node-api` migration) |
-| `src/config/loader.ts` | Dynamic object construction from parsed YAML before Zod validation |
+| File                          | Why                                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| `src/transform/engine.ts`     | Heavy use of generic field-type dispatch (`switch` on `FieldType` enum) and `unknown` narrowing |
+| `src/dq/engine.ts`            | `Rule.validate(value: unknown, ...)` return type narrowing; violation array indexing            |
+| `src/adapters/source/rest.ts` | Dot-path navigation into untyped JSON (`unknown` → nested access)                               |
+| `src/staging/store.ts`        | DuckDB result row typing (especially after the `@duckdb/node-api` migration)                    |
+| `src/config/loader.ts`        | Dynamic object construction from parsed YAML before Zod validation                              |
 
 **Strategy:** Run `npx tsc --noEmit` immediately after installing TS 6. Collect all new errors. Fix systematically — do NOT use `as any` to suppress; use proper narrowing with `unknown` and type guards consistent with the existing error-handling patterns in `src/utils/errors.ts`.
 
 ### 3.7 `@typescript-eslint` Version Compatibility
 
-The `@typescript-eslint` parser and rules packages typically lag a few weeks behind major TypeScript releases. 
+The `@typescript-eslint` parser and rules packages typically lag a few weeks behind major TypeScript releases.
 
 **Action:** Before installing TS 6, check:
+
 ```bash
 npm show @typescript-eslint/parser peerDependencies
 ```
+
 Ensure it lists TypeScript 6 as a supported peer. If not, pin TS 6 and wait for the `@typescript-eslint` update — usually a short wait.
 
 ---
@@ -151,17 +153,17 @@ TypeScript 7 is a **complete rewrite of the compiler in Go** (Project Corsa). Th
 
 ### 4.2 Compatibility: What tsgo Supports
 
-| Feature | Status in tsgo |
-|---|---|
-| All TS 6 type checking | ✅ 98%+ compatible |
-| `nodenext` / `bundler` moduleResolution | ✅ |
-| Path aliases (`@/*`) | ✅ |
-| Zod `z.infer<>` patterns | ✅ (35% faster infer) |
-| `exactOptionalPropertyTypes` | ✅ |
-| `stableTypeOrdering` | ✅ (tsgo native behaviour) |
-| **JavaScript emit** | ⚠️ Supports ES2021+ only; no downlevel compilation |
-| **Decorators (experimentalDecorators)** | ⚠️ Limited / incomplete |
-| **Strada API** (Language Service plugins) | ❌ Not supported |
+| Feature                                   | Status in tsgo                                     |
+| ----------------------------------------- | -------------------------------------------------- |
+| All TS 6 type checking                    | ✅ 98%+ compatible                                 |
+| `nodenext` / `bundler` moduleResolution   | ✅                                                 |
+| Path aliases (`@/*`)                      | ✅                                                 |
+| Zod `z.infer<>` patterns                  | ✅ (35% faster infer)                              |
+| `exactOptionalPropertyTypes`              | ✅                                                 |
+| `stableTypeOrdering`                      | ✅ (tsgo native behaviour)                         |
+| **JavaScript emit**                       | ⚠️ Supports ES2021+ only; no downlevel compilation |
+| **Decorators (experimentalDecorators)**   | ⚠️ Limited / incomplete                            |
+| **Strada API** (Language Service plugins) | ❌ Not supported                                   |
 
 **For Sluice:** Decorators not used ✅. Targeting ES2025 ✅. No Language Service plugins ✅. **Clean adoption.**
 
@@ -183,6 +185,7 @@ This means **zero disruption** to the current build and dev workflow during Phas
 `tsx` (used for `npm run dev` and `npm run sluice`) transpiles TypeScript via esbuild — it is **not coupled to the TypeScript compiler version**. tsx reads `tsconfig.json` for settings like path aliases and target, but performs its own transpilation.
 
 **Action:** Update `tsx` to its latest version before or alongside the TS 7 migration. Check:
+
 ```bash
 npm show tsx version
 npm show tsx engines
@@ -193,6 +196,7 @@ npm show tsx engines
 vitest handles TypeScript via its own Vite-based pipeline. It is TS 7 compatible. No changes to test configuration are expected.
 
 **Action:** Update vitest to latest before TS 7 to pick up any TS 7-aware fixes:
+
 ```bash
 npm install -D vitest@latest
 ```
@@ -205,33 +209,34 @@ In TS 7, `stableTypeOrdering` is no longer a flag — it's the permanent behavio
 
 ## 5. Dependency Impact Matrix
 
-| Package | TS 6 Risk | TS 7 Risk | Action |
-|---|---|---|---|
-| `typescript` | 🔴 Install | 🔴 Install | `npm install -D typescript@6`, then `@7` |
-| `@typescript-eslint/parser` | ⚠️ Peer dep | ⚠️ Peer dep | Check peer deps before each upgrade |
-| `@typescript-eslint/eslint-plugin` | ⚠️ Peer dep | ⚠️ Peer dep | Same |
-| `zod` v3 | 🟢 None | 🟢 Faster | No change |
-| `tsx` | 🟢 None | 🟡 Update | Update to latest before TS 7 |
-| `vitest` | 🟢 None | 🟡 Update | Update to latest |
-| `pino` | 🟢 None | 🟢 None | No change |
-| `@duckdb/node-api` | 🟢 None | 🟢 None | Already migrated in Node 24 upgrade (Phase 1, complete) |
-| `mssql` | 🟢 None | 🟢 None | No change |
-| `axios` | 🟢 None | 🟢 None | No change |
-| `dayjs` | 🟢 None | 🟢 None | No change (Temporal is additive, not replacement) |
-| `commander` | 🟢 None | 🟢 None | No change |
-| `expr-eval` | 🟢 None | 🟢 None | No change |
-| `js-yaml` | 🟢 None | 🟢 None | No change |
-| `prettier` | 🟢 None | 🟢 None | No change |
+| Package                            | TS 6 Risk   | TS 7 Risk   | Action                                                  |
+| ---------------------------------- | ----------- | ----------- | ------------------------------------------------------- |
+| `typescript`                       | 🔴 Install  | 🔴 Install  | `npm install -D typescript@6`, then `@7`                |
+| `@typescript-eslint/parser`        | ⚠️ Peer dep | ⚠️ Peer dep | Check peer deps before each upgrade                     |
+| `@typescript-eslint/eslint-plugin` | ⚠️ Peer dep | ⚠️ Peer dep | Same                                                    |
+| `zod` v3                           | 🟢 None     | 🟢 Faster   | No change                                               |
+| `tsx`                              | 🟢 None     | 🟡 Update   | Update to latest before TS 7                            |
+| `vitest`                           | 🟢 None     | 🟡 Update   | Update to latest                                        |
+| `pino`                             | 🟢 None     | 🟢 None     | No change                                               |
+| `@duckdb/node-api`                 | 🟢 None     | 🟢 None     | Already migrated in Node 24 upgrade (Phase 1, complete) |
+| `mssql`                            | 🟢 None     | 🟢 None     | No change                                               |
+| `axios`                            | 🟢 None     | 🟢 None     | No change                                               |
+| `dayjs`                            | 🟢 None     | 🟢 None     | No change (Temporal is additive, not replacement)       |
+| `commander`                        | 🟢 None     | 🟢 None     | No change                                               |
+| `expr-eval`                        | 🟢 None     | 🟢 None     | No change                                               |
+| `js-yaml`                          | 🟢 None     | 🟢 None     | No change                                               |
+| `prettier`                         | 🟢 None     | 🟢 None     | No change                                               |
 
 ---
 
 ## 6. tsconfig.json Diff — Before and After
 
 ### Current (TypeScript 5 / Node 24)
+
 ```jsonc
 {
   "compilerOptions": {
-    "target": "ES2022",               // assumption — adjust to match actual
+    "target": "ES2022", // assumption — adjust to match actual
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "strict": true,
@@ -239,32 +244,34 @@ In TS 7, `stableTypeOrdering` is no longer a flag — it's the permanent behavio
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": { "@/*": ["./src/*"] },
-    "skipLibCheck": false             // assumption
-  }
+    "skipLibCheck": false, // assumption
+  },
 }
 ```
 
 ### After TypeScript 6 Migration
+
 ```jsonc
 {
   "compilerOptions": {
-    "target": "ES2025",               // ⬆ updated for Node 26
-    "lib": ["ES2025"],                // ⬆ added — Temporal types, ES2025 builtins
-    "module": "nodenext",             // unchanged ✅
-    "moduleResolution": "nodenext",   // unchanged ✅
-    "strict": true,                   // still explicit (good practice)
+    "target": "ES2025", // ⬆ updated for Node 26
+    "lib": ["ES2025"], // ⬆ added — Temporal types, ES2025 builtins
+    "module": "nodenext", // unchanged ✅
+    "moduleResolution": "nodenext", // unchanged ✅
+    "strict": true, // still explicit (good practice)
     "exactOptionalPropertyTypes": true,
-    "stableTypeOrdering": true,       // ⬆ new — pre-adopts TS 7 type ordering
+    "stableTypeOrdering": true, // ⬆ new — pre-adopts TS 7 type ordering
     "outDir": "./dist",
     "rootDir": "./src",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/*": ["./src/*"] },
     // REMOVE if present: "esModuleInterop": false
     // REMOVE if present: "allowSyntheticDefaultImports": false
-  }
+  },
 }
 ```
 
 ### After TypeScript 7 Migration (Phase B — full tsgo emit)
+
 ```jsonc
 {
   "compilerOptions": {
@@ -277,20 +284,21 @@ In TS 7, `stableTypeOrdering` is no longer a flag — it's the permanent behavio
     // "stableTypeOrdering" is permanent in TS 7 — remove the flag (no-op or error)
     "outDir": "./dist",
     "rootDir": "./src",
-    "paths": { "@/*": ["./src/*"] }
-  }
+    "paths": { "@/*": ["./src/*"] },
+  },
 }
 ```
 
 Also update `package.json` scripts in Phase B:
+
 ```json
 {
   "scripts": {
-    "build":      "tsgo -p tsconfig.json",       // was: tsc -p tsconfig.json
-    "typecheck":  "tsgo --noEmit",
-    "dev":        "tsx watch src/cli.ts",         // unchanged — tsx uses esbuild
-    "test":       "vitest run",                   // unchanged
-    "test:cov":   "vitest run --coverage"         // unchanged
+    "build": "tsgo -p tsconfig.json", // was: tsc -p tsconfig.json
+    "typecheck": "tsgo --noEmit",
+    "dev": "tsx watch src/cli.ts", // unchanged — tsx uses esbuild
+    "test": "vitest run", // unchanged
+    "test:cov": "vitest run --coverage" // unchanged
   }
 }
 ```
@@ -302,18 +310,21 @@ Also update `package.json` scripts in Phase B:
 ### Phase 0 — Pre-flight (before installing TS 6)
 
 1. **Check `@typescript-eslint` peer dep compatibility:**
+
    ```bash
    npm show @typescript-eslint/parser peerDependencies | grep typescript
    # Must include TypeScript 6.x. If not, wait for the update.
    ```
 
 2. **Grep for `assert` import syntax (should find nothing):**
+
    ```bash
    grep -r "assert {" src/ tests/
    # Expected: no matches. If any found, change to `with { ... }`.
    ```
 
 3. **Grep for any removed tsconfig options in tsconfig.json:**
+
    ```bash
    grep -E '"esModuleInterop":\s*false|"allowSyntheticDefaultImports":\s*false|"outFile"|moduleResolution.*classic|moduleResolution.*node[^1-9]' tsconfig.json
    # Expected: no matches.
@@ -329,15 +340,18 @@ Also update `package.json` scripts in Phase B:
 ### Phase 1 — Install TypeScript 6 and Fix Build Errors
 
 1. **Install TypeScript 6:**
+
    ```bash
    npm install -D typescript@6
    npx tsc --version  # should print Version 6.x.x
    ```
 
 2. **Run the automated migration tool** (handles most mechanical changes):
+
    ```bash
    npx @andrewbranch/ts5to6
    ```
+
    Review its changes carefully — it handles things like import rewriting for `esModuleInterop` changes.
 
 3. **Update `tsconfig.json`** as per the diff in §6:
@@ -347,9 +361,11 @@ Also update `package.json` scripts in Phase B:
    - Remove `esModuleInterop: false` / `allowSyntheticDefaultImports: false` if present
 
 4. **Run the type checker:**
+
    ```bash
    npx tsc --noEmit
    ```
+
    Collect all errors. Do NOT proceed to build until these are fixed.
 
 5. **Work through type errors systematically by file.** Priority order:
@@ -368,11 +384,13 @@ Also update `package.json` scripts in Phase B:
    - **Align with existing error hierarchy** in `src/utils/errors.ts`
 
 7. **Build and run tests:**
+
    ```bash
    npm run build
    npm run lint
    npm test
    ```
+
    All must pass. If `@typescript-eslint` emits new TS 6-specific lint errors, fix them.
 
 8. **Commit Phase 1:**
@@ -388,14 +406,17 @@ Also update `package.json` scripts in Phase B:
 `stableTypeOrdering` was added in Phase 1 tsconfig but may surface additional ordering-related type errors (usually in union type discrimination).
 
 1. Confirm the flag is in `tsconfig.json`:
+
    ```jsonc
    "stableTypeOrdering": true
    ```
 
 2. Run:
+
    ```bash
    npx tsc --noEmit
    ```
+
    Fix any new errors. These are typically in union type switches or discriminated unions — the pattern used extensively in `FieldType` and `CheckType` handling.
 
 3. Run tests again:
@@ -429,11 +450,13 @@ Merge `feat/typescript6-upgrade` to `main`. TS 6 migration complete.
 This phase adds tsgo as a **parallel type-checker** without changing the build or dev workflow.
 
 1. **Create a new branch:**
+
    ```bash
    git checkout -b feat/typescript7-tsgo
    ```
 
 2. **Install the TypeScript 7 native preview package:**
+
    ```bash
    npm install -D @typescript/native-preview
    # or, when TypeScript 7 is the default package:
@@ -441,23 +464,27 @@ This phase adds tsgo as a **parallel type-checker** without changing the build o
    ```
 
 3. **Run tsgo type-check against Sluice source:**
+
    ```bash
    npx tsgo --noEmit
    ```
+
    The 2% of TS 6 code that tsgo handles differently may surface a small number of errors. Fix them — they represent genuine type improvements.
 
 4. **Add tsgo type-check to `package.json`:**
+
    ```json
    {
      "scripts": {
-       "typecheck:ts6":  "tsc --noEmit",
-       "typecheck:ts7":  "tsgo --noEmit",
-       "typecheck":      "npm run typecheck:ts7"
+       "typecheck:ts6": "tsc --noEmit",
+       "typecheck:ts7": "tsgo --noEmit",
+       "typecheck": "npm run typecheck:ts7"
      }
    }
    ```
 
 5. **Add tsgo job to CI** (runs in parallel with the existing tsc build job):
+
    ```yaml
    jobs:
      test:
@@ -465,11 +492,11 @@ This phase adds tsgo as a **parallel type-checker** without changing the build o
        steps:
          - uses: actions/checkout@v4
          - uses: actions/setup-node@v4
-           with: { node-version: '26', cache: 'npm' }
+           with: { node-version: "26", cache: "npm" }
          - run: npm ci
          - run: npm run lint
-         - run: npm run build           # still uses tsc 6 for emit
-         - run: npm run typecheck:ts7   # tsgo — fast type check
+         - run: npm run build # still uses tsc 6 for emit
+         - run: npm run typecheck:ts7 # tsgo — fast type check
          - run: npm run test:cov
    ```
 
@@ -487,49 +514,58 @@ This phase adds tsgo as a **parallel type-checker** without changing the build o
 **Timing:** Do this when the tsgo emit pipeline is confirmed stable for `module: nodenext`. Monitor the [TypeScript Go GitHub repo](https://github.com/microsoft/typescript-go) for emit completion announcements. Expected: mid-to-late 2026.
 
 **Gate condition:** Before proceeding, verify:
+
 ```bash
 npx tsgo -p tsconfig.json --listEmittedFiles 2>&1 | head -20
 # Should produce a list of .js files in dist/ without errors
 ```
 
 1. **Switch build scripts:**
+
    ```json
    {
      "scripts": {
-       "build":     "tsgo -p tsconfig.json",
+       "build": "tsgo -p tsconfig.json",
        "typecheck": "tsgo --noEmit"
      }
    }
    ```
 
 2. **Remove `stableTypeOrdering`** from `tsconfig.json` (it's now the permanent default; keeping it may cause a warning):
+
    ```bash
    # Remove the stableTypeOrdering line from tsconfig.json
    ```
 
 3. **Update `typescript` package** to v7 if not already:
+
    ```bash
    npm install -D typescript@7
    ```
 
 4. **Full test:**
+
    ```bash
    npm run build
    npm run lint
    npm test
    ```
+
    The build will be noticeably faster. Run `time npm run build` and compare with `time npx tsc -p tsconfig.json`.
 
 5. **Verify dist/ output** is functionally identical to the tsc-generated output:
+
    ```bash
    # Run both and compare critical path files
    npx tsc -p tsconfig.json --outDir dist-tsc/
    tsgo -p tsconfig.json --outDir dist-tsgo/
    diff -r dist-tsc/ dist-tsgo/
    ```
+
    Minor cosmetic differences are expected; functional differences must be investigated.
 
 6. **Remove tsc from CI** (it's no longer used):
+
    ```yaml
    # Remove from package.json devDependencies:
    # "typescript": "7.x"  (tsgo IS typescript 7 — the package ships both binaries)
@@ -544,14 +580,14 @@ npx tsgo -p tsconfig.json --listEmittedFiles 2>&1 | head -20
 
 ## 8. Risk Register
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| New TS 6 inference errors in `transform/engine.ts` | High | Medium — type errors to fix | Budget 2–4 hours; use `unknown` + narrowing |
-| `@typescript-eslint` not yet supporting TS 6 | Low | Low — CI lint fails | Wait for `@typescript-eslint` release (usually < 2 weeks) |
-| tsgo emits subtly different JS in Phase 5 | Low | Medium — runtime behaviour | `diff -r dist-tsc/ dist-tsgo/` gate in Phase 5 |
-| tsgo emit for `nodenext` module not stable | Medium (currently) | Low — blocked Phase 5 only | Phase A/B split means this doesn't block anything |
-| `stableTypeOrdering` surfaces union type errors | Medium | Low — small number of fixes | Fix in Phase 2 before merging |
-| tsx not updated for TS 6 type syntax | Low | Low — dev only, not build | Update tsx before Phase 1 |
+| Risk                                               | Likelihood         | Impact                      | Mitigation                                                |
+| -------------------------------------------------- | ------------------ | --------------------------- | --------------------------------------------------------- |
+| New TS 6 inference errors in `transform/engine.ts` | High               | Medium — type errors to fix | Budget 2–4 hours; use `unknown` + narrowing               |
+| `@typescript-eslint` not yet supporting TS 6       | Low                | Low — CI lint fails         | Wait for `@typescript-eslint` release (usually < 2 weeks) |
+| tsgo emits subtly different JS in Phase 5          | Low                | Medium — runtime behaviour  | `diff -r dist-tsc/ dist-tsgo/` gate in Phase 5            |
+| tsgo emit for `nodenext` module not stable         | Medium (currently) | Low — blocked Phase 5 only  | Phase A/B split means this doesn't block anything         |
+| `stableTypeOrdering` surfaces union type errors    | Medium             | Low — small number of fixes | Fix in Phase 2 before merging                             |
+| tsx not updated for TS 6 type syntax               | Low                | Low — dev only, not build   | Update tsx before Phase 1                                 |
 
 ---
 
@@ -579,10 +615,11 @@ Phase 5:         tsgo takes over full build → tsc retired
                  ─── TS 7 FULLY ADOPTED ───
 ```
 
-**Estimated total effort:**  
-- TS 5 → 6: **3–5 hours** (dominated by type error fixes)  
-- TS 6 → 7 Phase A: **1 hour** (mostly CI config)  
-- TS 6 → 7 Phase B: **1–2 hours** (when tsgo emit is ready)  
+**Estimated total effort:**
+
+- TS 5 → 6: **3–5 hours** (dominated by type error fixes)
+- TS 6 → 7 Phase A: **1 hour** (mostly CI config)
+- TS 6 → 7 Phase B: **1–2 hours** (when tsgo emit is ready)
 
 ---
 
@@ -598,4 +635,4 @@ Phase 5:         tsgo takes over full build → tsc retired
 
 ---
 
-*This document assumes the Node.js 24 upgrade (including the `@duckdb/node-api` migration) is complete — Phase 1 of the [master implementation plan](SLUICE-IMPLEMENTATION-PLAN.md) shipped on 3 May 2026 (PR #8). The DuckDB store rewrite was done under TypeScript 5; the TypeScript 6 migration is applied on top of that clean baseline.*
+_This document assumes the Node.js 24 upgrade (including the `@duckdb/node-api` migration) is complete — Phase 1 of the [master implementation plan](SLUICE-IMPLEMENTATION-PLAN.md) shipped on 3 May 2026 (PR #8). The DuckDB store rewrite was done under TypeScript 5; the TypeScript 6 migration is applied on top of that clean baseline._

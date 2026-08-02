@@ -24,9 +24,9 @@ Sluice is an unusually good candidate for `tsgo`:
 
 The transition is split into **two stages, deliberately decoupled**:
 
-| Stage | Scope | Risk profile |
-|---|---|---|
-| **Phase 11a** | Add `tsgo --noEmit` to CI alongside `tsc`. Type-check only — no emit. | Zero risk to the build. CI gets a free fast-feedback signal. |
+| Stage         | Scope                                                                                              | Risk profile                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Phase 11a** | Add `tsgo --noEmit` to CI alongside `tsc`. Type-check only — no emit.                              | Zero risk to the build. CI gets a free fast-feedback signal.                       |
 | **Phase 11b** | Replace `tsc` with `tsgo` for both type-check **and** build emit. Retire the `typescript` package. | Real risk: `tsgo` emit must be byte-stable vs. `tsc` emit. Defer until verifiable. |
 
 Running 11a first means the production type-checker (`tsc`) stays authoritative while we build confidence in `tsgo`'s judgements. When `tsgo` emit reaches stability, 11b is a small, low-risk swap.
@@ -51,12 +51,12 @@ Running 11a first means the production type-checker (`tsc`) stays authoritative 
 
 ## Prerequisites (must be true before starting either stage)
 
-| # | Prerequisite | Stage | Verify with |
-|---|---|---|---|
-| 1 | Phase 2 (TypeScript v6) merged to master; `package.json` `"typescript": "^6.x"` | 11a, 11b | `jq -r '.devDependencies.typescript' package.json` |
-| 2 | All Vitest suites green on TS 6 | 11a, 11b | `npm test` |
-| 3 | `tsc --noEmit` zero errors on TS 6 | 11a, 11b | `npx tsc --noEmit` |
-| 4 | (11b only) `tsgo` emit declared stable by the TypeScript team **OR** demonstrated byte-stability across at least one tagged release | 11b | TypeScript team blog / GitHub release notes |
+| #   | Prerequisite                                                                                                                        | Stage    | Verify with                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------- |
+| 1   | Phase 2 (TypeScript v6) merged to master; `package.json` `"typescript": "^6.x"`                                                     | 11a, 11b | `jq -r '.devDependencies.typescript' package.json` |
+| 2   | All Vitest suites green on TS 6                                                                                                     | 11a, 11b | `npm test`                                         |
+| 3   | `tsc --noEmit` zero errors on TS 6                                                                                                  | 11a, 11b | `npx tsc --noEmit`                                 |
+| 4   | (11b only) `tsgo` emit declared stable by the TypeScript team **OR** demonstrated byte-stability across at least one tagged release | 11b      | TypeScript team blog / GitHub release notes        |
 
 ---
 
@@ -64,10 +64,10 @@ Running 11a first means the production type-checker (`tsc`) stays authoritative 
 
 ### What changes
 
-| File | Change |
-|---|---|
-| `package.json` | Add `@typescript/native-preview` to `devDependencies`. Add a `typecheck:tsgo` script. |
-| `.github/workflows/ci.yml` | Add a "Type-check (tsgo)" step alongside the existing build/test steps. |
+| File                       | Change                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `package.json`             | Add `@typescript/native-preview` to `devDependencies`. Add a `typecheck:tsgo` script. |
+| `.github/workflows/ci.yml` | Add a "Type-check (tsgo)" step alongside the existing build/test steps.               |
 
 ### Implementation
 
@@ -93,10 +93,10 @@ npm install -D @typescript/native-preview
 ```yaml
 - name: Type-check (tsgo, parallel)
   run: npm run typecheck:tsgo
-  continue-on-error: true   # Promote to required once tsgo output is clean
+  continue-on-error: true # Promote to required once tsgo output is clean
 ```
 
-Place this step *after* `npm test` so the existing pipeline isn't blocked. The `continue-on-error: true` flag means the workflow stays green even if `tsgo` reports issues — the goal of 11a is to surface differences, not to block on them yet.
+Place this step _after_ `npm test` so the existing pipeline isn't blocked. The `continue-on-error: true` flag means the workflow stays green even if `tsgo` reports issues — the goal of 11a is to surface differences, not to block on them yet.
 
 ### Iteration loop
 
@@ -145,11 +145,11 @@ Until any of those is true, **stay on 11a**. The CI speedup is the main win; 11a
 
 ### What changes (when 11b runs)
 
-| File | Change |
-|---|---|
-| `package.json` | Replace `tsc` with `tsgo` in `build` script. Remove the `typescript` dep. Keep `@typescript/native-preview`. |
-| `.github/workflows/ci.yml` | Drop the parallel comparison; `tsgo` is now authoritative. |
-| `tsconfig.json` | Likely no changes (Sluice is already on `module: nodenext` with `strict: true`). Verify against the latest `tsgo` compatibility notes at switch time. |
+| File                       | Change                                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package.json`             | Replace `tsc` with `tsgo` in `build` script. Remove the `typescript` dep. Keep `@typescript/native-preview`.                                          |
+| `.github/workflows/ci.yml` | Drop the parallel comparison; `tsgo` is now authoritative.                                                                                            |
+| `tsconfig.json`            | Likely no changes (Sluice is already on `module: nodenext` with `strict: true`). Verify against the latest `tsgo` compatibility notes at switch time. |
 
 ### Implementation
 
@@ -187,7 +187,7 @@ The riskiest part of 11b is that emit output may differ subtly between `tsc` and
 3. `diff -r /tmp/dist-tsc dist/` — **expect zero differences**.
 4. If differences exist, investigate:
    - Whitespace / source-map differences are cosmetic but worth noting.
-   - Output that *executes* differently is a hard blocker — file an upstream issue, do **not** merge 11b.
+   - Output that _executes_ differently is a hard blocker — file an upstream issue, do **not** merge 11b.
 5. Run full test suite against the `tsgo`-built `dist/`: `npm test`.
 
 ### Phase 11b — Step-by-step checklist
@@ -214,14 +214,14 @@ The riskiest part of 11b is that emit output may differ subtly between `tsc` and
 
 ## Open questions / risks
 
-| # | Item | Risk | Mitigation |
-|---|---|---|---|
-| Q1 | `tsgo` emit not byte-stable when we want to switch | Medium | Phase 11b is deferred until verifiable. Phase 11a doesn't depend on emit at all. |
-| Q2 | TypeScript team renames the package or scope before 7.0 GA | Low | Pin to `@typescript/native-preview` for 11a; revisit at 11b time. |
-| Q3 | `typescript-eslint` requires `typescript` as a peer dep | Low | Keep `typescript` only if peer-required at 11b time; the goal is "no direct dep", not "absent from `node_modules`". |
-| Q4 | New errors surface during 11a soak that block real PRs | Low | `continue-on-error: true` exists exactly to absorb this. Stay in 11a soak until clean. |
-| Q5 | `tsgo --build` (composite project mode) behaves differently from `tsc --build` | N/A | Sluice doesn't use composite projects. |
-| Q6 | Phase 10 (Node 26) interaction | Low | Phase 10 doesn't change TypeScript at all. The two phases are independent. |
+| #   | Item                                                                           | Risk   | Mitigation                                                                                                          |
+| --- | ------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| Q1  | `tsgo` emit not byte-stable when we want to switch                             | Medium | Phase 11b is deferred until verifiable. Phase 11a doesn't depend on emit at all.                                    |
+| Q2  | TypeScript team renames the package or scope before 7.0 GA                     | Low    | Pin to `@typescript/native-preview` for 11a; revisit at 11b time.                                                   |
+| Q3  | `typescript-eslint` requires `typescript` as a peer dep                        | Low    | Keep `typescript` only if peer-required at 11b time; the goal is "no direct dep", not "absent from `node_modules`". |
+| Q4  | New errors surface during 11a soak that block real PRs                         | Low    | `continue-on-error: true` exists exactly to absorb this. Stay in 11a soak until clean.                              |
+| Q5  | `tsgo --build` (composite project mode) behaves differently from `tsc --build` | N/A    | Sluice doesn't use composite projects.                                                                              |
+| Q6  | Phase 10 (Node 26) interaction                                                 | Low    | Phase 10 doesn't change TypeScript at all. The two phases are independent.                                          |
 
 ---
 
@@ -231,5 +231,5 @@ When this spec is created, update [SLUICE-IMPLEMENTATION-PLAN.md §16 Document I
 
 ---
 
-*Caracal Lynx Limited — SC826823 — Gretna, Scotland*
-*"Clean data flows through."*
+_Caracal Lynx Limited — SC826823 — Gretna, Scotland_
+_"Clean data flows through."_

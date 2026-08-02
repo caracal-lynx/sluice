@@ -1,24 +1,43 @@
 # Sluice MCP Server — Specification
+
 # `@caracal-lynx/sluice-mcp`
+
 # Owner: Michael Scott, Caracal Lynx Limited (SC826823)
+
 # Status: Specification — not yet implemented
+
 # Depends on: CLAUDE.md (Phase 1 complete), archive/PHASE2-EXTENSIONS.md (Phase 3 complete)
+
 # Last updated: 2026-04-28
 
-# ⚠️  COMMERCIAL STATUS: PRIVATE PAID SERVICE
+# ⚠️ COMMERCIAL STATUS: PRIVATE PAID SERVICE
+
 # ─────────────────────────────────────────────────────────────────────────────
+
 # @caracal-lynx/sluice-mcp is NOT part of the open-source Sluice CLI.
+
 # It is a PRIVATE commercial offering from Caracal Lynx Limited.
+
 #
+
 # - GitHub repository: caracal-lynx/sluice-mcp (PRIVATE)
+
 # - npm package: @caracal-lynx/sluice-mcp (PRIVATE — Pro plan)
+
 # - Not published to the public npm registry
+
 # - Provided to clients under a paid engagement with Caracal Lynx
+
 # - Clients receive a read-only NPM_TOKEN to install the package
+
 #
+
 # The open-source @caracal-lynx/sluice core package does NOT include
+
 # the MCP server. The MCP server depends on the core (peer dep) but
+
 # is developed, versioned, and distributed separately.
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 ---
@@ -61,10 +80,10 @@ The MCP server is a **sibling package** in the monorepo. It imports from `@carac
 
 Sluice uses two complementary AI integration mechanisms:
 
-| Mechanism | Layer | What it does |
-|-----------|-------|--------------|
+| Mechanism                                   | Layer        | What it does                                                                          |
+| ------------------------------------------- | ------------ | ------------------------------------------------------------------------------------- |
 | Skills (`skills/create-sluice-rule/`, etc.) | Intelligence | Prompt-based guidance: teaches Claude _how_ to write valid Sluice YAML and TypeScript |
-| MCP server (this package) | Execution | Tool-based access: gives Claude _hands_ to execute, inspect, and iterate |
+| MCP server (this package)                   | Execution    | Tool-based access: gives Claude _hands_ to execute, inspect, and iterate              |
 
 Skills tell the AI what to do. The MCP server lets it actually do it. Both are required for the full agentic intake-to-migration workflow.
 
@@ -85,30 +104,30 @@ Before implementing this package, ensure the following are true:
 
 This package follows the same conventions as `@caracal-lynx/sluice`. **Do not deviate from these rules.**
 
-| Rule | Detail |
-|------|--------|
-| Language | TypeScript 6 strict mode |
-| Runtime | Node.js 24 LTS (`engines.node >= 24`) |
-| Module system | ESM (`"type": "module"`, `"module": "NodeNext"`) — all imports use `.js` extension |
-| Strict flags | `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride` |
-| Logging | `pino` only — **no `console.log` or `console.error` anywhere in `src/`** |
-| Validation | `zod` v3 — all external input validated before use |
-| Testing | `vitest` only — no Jest |
-| Dev execution | `tsx` — no `ts-node` |
-| Date handling | `dayjs` — import plugins explicitly at call site |
-| Expressions | `expr-eval` for safe expressions — no `eval()`, no `new Function()` |
-| Path handling | Always `path.join()` / `path.resolve()` — never string concatenation |
-| Credentials | Never hardcoded — always `${ENV_VAR}` tokens resolved from `process.env` |
+| Rule          | Detail                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| Language      | TypeScript 6 strict mode                                                                 |
+| Runtime       | Node.js 24 LTS (`engines.node >= 24`)                                                    |
+| Module system | ESM (`"type": "module"`, `"module": "NodeNext"`) — all imports use `.js` extension       |
+| Strict flags  | `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride` |
+| Logging       | `pino` only — **no `console.log` or `console.error` anywhere in `src/`**                 |
+| Validation    | `zod` v3 — all external input validated before use                                       |
+| Testing       | `vitest` only — no Jest                                                                  |
+| Dev execution | `tsx` — no `ts-node`                                                                     |
+| Date handling | `dayjs` — import plugins explicitly at call site                                         |
+| Expressions   | `expr-eval` for safe expressions — no `eval()`, no `new Function()`                      |
+| Path handling | Always `path.join()` / `path.resolve()` — never string concatenation                     |
+| Credentials   | Never hardcoded — always `${ENV_VAR}` tokens resolved from `process.env`                 |
 
 ### 3.1 Logging convention
 
 ```typescript
 // All module-level loggers
-const logger = pino({ name: 'mcp:<module-name>' });
+const logger = pino({ name: "mcp:<module-name>" });
 
 // Use structured logging
-logger.info({ filePath, dryRun }, 'run_pipeline');
-logger.error({ err }, 'run_pipeline failed');
+logger.info({ filePath, dryRun }, "run_pipeline");
+logger.error({ err }, "run_pipeline failed");
 ```
 
 Logs go to **stderr** — stdout is reserved exclusively for the MCP stdio protocol. This is enforced in `src/index.ts` by configuring pino's transport destination to `2` (stderr).
@@ -124,14 +143,14 @@ export async function handleFoo(args: FooArgs): Promise<FooResult | { error: str
     // ... implementation
     return result;
   } catch (err) {
-    logger.error({ err }, 'handleFoo failed');
+    logger.error({ err }, "handleFoo failed");
     return { error: (err as Error).message };
   }
 }
 
 // Wrong — never throw from a handler
 export async function handleFoo(args: FooArgs): Promise<FooResult> {
-  throw new Error('...');  // ← DO NOT DO THIS
+  throw new Error("..."); // ← DO NOT DO THIS
 }
 ```
 
@@ -140,7 +159,7 @@ export async function handleFoo(args: FooArgs): Promise<FooResult> {
 The `run_pipeline` tool **defaults `dryRun` to `true`**. The implementation enforces this at the code level, not just the schema default:
 
 ```typescript
-const dryRun = args.dryRun !== false;  // undefined → true; only explicit false triggers live run
+const dryRun = args.dryRun !== false; // undefined → true; only explicit false triggers live run
 ```
 
 This ensures an AI hallucinating a `run_pipeline` call without specifying `dryRun: false` will always execute a dry run — no accidental data writes.
@@ -175,24 +194,24 @@ packages/sluice-mcp/
 
 ### 5.1 Runtime dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `@caracal-lynx/sluice` | `workspace:*` | Core engine — PipelineRunner, schemas, adapters |
-| `@modelcontextprotocol/sdk` | `^1.10.0` | MCP Server, stdio transport, request schemas |
-| `js-yaml` | `^4.1.0` | Parse/serialize pipeline YAML files |
-| `pino` | `^9.5.0` | Structured logging (stderr only) |
-| `zod` | `^3.24.1` | Runtime validation of tool arguments |
+| Package                     | Version       | Purpose                                         |
+| --------------------------- | ------------- | ----------------------------------------------- |
+| `@caracal-lynx/sluice`      | `workspace:*` | Core engine — PipelineRunner, schemas, adapters |
+| `@modelcontextprotocol/sdk` | `^1.10.0`     | MCP Server, stdio transport, request schemas    |
+| `js-yaml`                   | `^4.1.0`      | Parse/serialize pipeline YAML files             |
+| `pino`                      | `^9.5.0`      | Structured logging (stderr only)                |
+| `zod`                       | `^3.24.1`     | Runtime validation of tool arguments            |
 
 ### 5.2 Dev dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `@types/js-yaml` | `^4.0.9` | Types for js-yaml |
-| `@types/node` | `^24.0.0` | Node.js types |
-| `pino-pretty` | `^11.3.0` | Human-readable logs in dev |
-| `tsx` | `^4.19.0` | Run TypeScript directly in dev |
-| `typescript` | `^6.0.0` | Compiler |
-| `vitest` | `^2.1.0` | Test runner |
+| Package          | Version   | Purpose                        |
+| ---------------- | --------- | ------------------------------ |
+| `@types/js-yaml` | `^4.0.9`  | Types for js-yaml              |
+| `@types/node`    | `^24.0.0` | Node.js types                  |
+| `pino-pretty`    | `^11.3.0` | Human-readable logs in dev     |
+| `tsx`            | `^4.19.0` | Run TypeScript directly in dev |
+| `typescript`     | `^6.0.0`  | Compiler                       |
+| `vitest`         | `^2.1.0`  | Test runner                    |
 
 ### 5.3 Peer / conditional dependencies
 
@@ -215,6 +234,7 @@ These tools execute the Sluice pipeline engine via `PipelineRunner.fromFile()`.
 Parse and Zod-validate a pipeline YAML file. Safe — does not connect to any data source.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -230,22 +250,33 @@ Parse and Zod-validate a pipeline YAML file. Safe — does not connect to any da
 ```
 
 **Returns on success:**
+
 ```json
 {
   "valid": true,
-  "pipeline": { "name": "customers", "client": "Acme Corp", "entity": "Customer", "version": "1.0.0" }
+  "pipeline": {
+    "name": "customers",
+    "client": "Acme Corp",
+    "entity": "Customer",
+    "version": "1.0.0"
+  }
 }
 ```
 
 **Returns on failure:**
+
 ```json
 {
   "valid": false,
-  "errors": ["source.adapter: Invalid enum value", "transform.fields: Array must contain at least 1 element(s)"]
+  "errors": [
+    "source.adapter: Invalid enum value",
+    "transform.fields: Array must contain at least 1 element(s)"
+  ]
 }
 ```
 
 **Implementation notes:**
+
 - Read file with `fs.readFile`, parse with `js-yaml`, pass to `PipelineSchema.safeParse()`
 - Return `isError: false` even when `valid: false` — a validation failure is a successful tool call that returns useful information, not a tool error
 
@@ -256,6 +287,7 @@ Parse and Zod-validate a pipeline YAML file. Safe — does not connect to any da
 Execute a pipeline with `dryRun: true`. Uses `:memory:` DuckDB so nothing is written to disk and no target adapter is called. Returns row counts, DQ rejection summary, and any transform errors.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -275,6 +307,7 @@ Execute a pipeline with `dryRun: true`. Uses `:memory:` DuckDB so nothing is wri
 **Returns:** Full `RunResult` object from the engine, or `{ error: string }` on fatal failure.
 
 **Implementation notes:**
+
 - Pass `overrides: { run: { dryRun: true, stagingDb: ':memory:' } }` to `PipelineRunner.fromFile()`
 - When `stopOnFirstError: true`, also set `overrides.run.onError = 'stop'`
 
@@ -285,6 +318,7 @@ Execute a pipeline with `dryRun: true`. Uses `:memory:` DuckDB so nothing is wri
 Execute a pipeline. **`dryRun` defaults to `true`** — must be explicitly set to `false` for a live run.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -304,9 +338,10 @@ Execute a pipeline. **`dryRun` defaults to `true`** — must be explicitly set t
 **Returns:** Full `RunResult` object, or `{ error: string }`.
 
 **Implementation notes — critical safety rule:**
+
 ```typescript
 // ALWAYS evaluate dryRun this way — never trust args.dryRun directly
-const dryRun = args.dryRun !== false;  // undefined → true; false → false (live run)
+const dryRun = args.dryRun !== false; // undefined → true; false → false (live run)
 ```
 
 ---
@@ -316,6 +351,7 @@ const dryRun = args.dryRun !== false;  // undefined → true; false → false (l
 Read the run state JSON written by the last pipeline execution.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -330,8 +366,9 @@ Read the run state JSON written by the last pipeline execution.
 **Returns:** The parsed contents of `{run.outputDir}/{pipeline.name}-state.json`, or `{ error: string }` if no state file exists yet.
 
 **State file path resolution:**
+
 ```typescript
-const outputDir = pipeline.run.outputDir || './output';
+const outputDir = pipeline.run.outputDir || "./output";
 const resolvedOutputDir = path.isAbsolute(outputDir)
   ? outputDir
   : path.resolve(path.dirname(pipelineFilePath), outputDir);
@@ -351,6 +388,7 @@ These tools connect to source databases and return structural metadata. Credenti
 Connect to the source defined in a pipeline YAML and return the full column list with types and nullability.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -363,6 +401,7 @@ Connect to the source defined in a pipeline YAML and return the full column list
 ```
 
 **Returns on success:**
+
 ```json
 {
   "adapter": "mssql",
@@ -375,6 +414,7 @@ Connect to the source defined in a pipeline YAML and return the full column list
 ```
 
 **Implementation notes:**
+
 - Load the pipeline YAML → extract `source.adapter` and `source.connection`
 - Call `resolveEnvVars(source.connection)` to expand `${...}` tokens
 - For `mssql`: run `SELECT TOP 0 <query>` and read column metadata from `result.recordset.columns`
@@ -388,6 +428,7 @@ Connect to the source defined in a pipeline YAML and return the full column list
 List all tables and views in a database. Used when setting up a new client to discover available entities.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -408,6 +449,7 @@ List all tables and views in a database. Used when setting up a new client to di
 ```
 
 **Returns:**
+
 ```json
 {
   "tables": [
@@ -418,6 +460,7 @@ List all tables and views in a database. Used when setting up a new client to di
 ```
 
 **Implementation notes:**
+
 - mssql: query `INFORMATION_SCHEMA.TABLES` filtered by `TABLE_TYPE IN ('BASE TABLE', 'VIEW')`
 - pg: query `information_schema.tables`, exclude `pg_catalog` and `information_schema` schemas
 - Dynamic import `mssql`/`pg` — do not static import at module level
@@ -429,6 +472,7 @@ List all tables and views in a database. Used when setting up a new client to di
 Fetch a small number of rows from the pipeline source query to understand actual data values.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -448,6 +492,7 @@ Fetch a small number of rows from the pipeline source query to understand actual
 ```
 
 **Returns:**
+
 ```json
 {
   "columns": ["CustomerID", "CustomerName", "Email"],
@@ -459,6 +504,7 @@ Fetch a small number of rows from the pipeline source query to understand actual
 ```
 
 **Implementation notes:**
+
 - Wrap the source query with a limit before executing — do not rely on `LIMIT` in the original query
 - For mssql: inject `TOP {limit}` — `SELECT <query>` → `SELECT TOP 10 <rest>`; use regex `replace(/^SELECT\s/i, 'SELECT TOP N ')`
 - For pg: wrap — `SELECT * FROM (<query>) __sluice_sample LIMIT N`
@@ -471,6 +517,7 @@ Fetch a small number of rows from the pipeline source query to understand actual
 Compare source columns against pipeline field mappings. Returns three categorised lists.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -483,6 +530,7 @@ Compare source columns against pipeline field mappings. Returns three categorise
 ```
 
 **Returns:**
+
 ```json
 {
   "mapped": ["CustomerID", "CustomerName"],
@@ -492,11 +540,13 @@ Compare source columns against pipeline field mappings. Returns three categorise
 ```
 
 Where:
+
 - `mapped` — source columns that have at least one `transform.fields[].from` entry
 - `unmapped` — source columns present in the query result but not referenced in any mapping (potential gaps — AI should ask the user whether these are intentionally ignored)
 - `missing` — field mappings that reference a source column that does not exist in the query result (will cause runtime errors — must fix before running)
 
 **Implementation notes:**
+
 - All column name comparisons are case-insensitive (use `.toLowerCase()`)
 - A field with `from: [col1, col2]` (array) counts both columns as mapped
 - Fields with `type: constant` have no `from` — do not count toward mapped/missing
@@ -514,6 +564,7 @@ These tools read and write pipeline YAML files and associated state. No DB conne
 Read and parse a pipeline YAML file, returning the validated config as a structured object.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -536,6 +587,7 @@ Read and parse a pipeline YAML file, returning the validated config as a structu
 Write a pipeline YAML string to disk. **Refuses to write invalid configs.**
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -557,6 +609,7 @@ Write a pipeline YAML string to disk. **Refuses to write invalid configs.**
 **Returns:** `{ success: true, filePath: string }` or `{ success: false, validationErrors: string[] }`.
 
 **Implementation notes — write sequence:**
+
 1. Parse YAML with `js-yaml.load()` — return validation error if YAML is malformed
 2. Run `PipelineSchema.safeParse()` — return Zod errors if schema is invalid
 3. Only if both pass: `fs.mkdir(dirname, { recursive: true })` then `fs.writeFile()`
@@ -568,6 +621,7 @@ Write a pipeline YAML string to disk. **Refuses to write invalid configs.**
 List all pipeline YAML files in a client folder, with last run state if available.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -583,6 +637,7 @@ List all pipeline YAML files in a client folder, with last run state if availabl
 ```
 
 **Returns:**
+
 ```json
 {
   "pipelines": [
@@ -604,6 +659,7 @@ List all pipeline YAML files in a client folder, with last run state if availabl
 ```
 
 **Implementation notes:**
+
 - Use `fs.glob('**/*.pipeline.yaml', { cwd: clientDir })` to find files
 - For each file: parse pipeline header only for name/client/entity/version — do not run full schema parse unless needed
 - Attempt to read the state file for each pipeline; if it doesn't exist, omit `lastRun` from the summary
@@ -632,6 +688,7 @@ These tools generate skeleton TypeScript files. They write to disk and return th
 Generate a `.rule.ts` Tier-2 DQ rule plugin skeleton.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -659,13 +716,14 @@ Generate a `.rule.ts` Tier-2 DQ rule plugin skeleton.
 **Generated file name:** `{ruleId}.rule.ts`
 
 **Generated file structure:**
+
 ```typescript
-import type { RulePlugin } from '@caracal-lynx/sluice';
+import type { RulePlugin } from "@caracal-lynx/sluice";
 
 const rule: RulePlugin = {
-  id: '{ruleId}',
-  description: '{description}',
-  defaultSeverity: '{severity}',
+  id: "{ruleId}",
+  description: "{description}",
+  defaultSeverity: "{severity}",
 
   validate(value: unknown, _config: Record<string, unknown>): boolean {
     if (value === null || value === undefined) return false;
@@ -679,6 +737,7 @@ export { rule };
 ```
 
 **Conventions:**
+
 - `validate()` must be synchronous and pure (no async, no I/O)
 - Must not mutate any arguments
 - Export must be named `rule` (the plugin loader looks for this named export)
@@ -690,6 +749,7 @@ export { rule };
 Generate a `.transform.ts` Tier-2 transform plugin skeleton.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -712,18 +772,15 @@ Generate a `.transform.ts` Tier-2 transform plugin skeleton.
 **Generated file name:** `{pluginId}.transform.ts`
 
 **Generated file structure:**
+
 ```typescript
-import type { TransformPlugin, FieldMapping } from '@caracal-lynx/sluice';
+import type { TransformPlugin, FieldMapping } from "@caracal-lynx/sluice";
 
 const transform: TransformPlugin = {
-  id: '{pluginId}',
-  description: '{description}',
+  id: "{pluginId}",
+  description: "{description}",
 
-  apply(
-    value: unknown,
-    _row: Readonly<Record<string, unknown>>,
-    _mapping: FieldMapping,
-  ): unknown {
+  apply(value: unknown, _row: Readonly<Record<string, unknown>>, _mapping: FieldMapping): unknown {
     if (value === null || value === undefined) return null;
     // TODO: implement transform logic
     // Access options via _mapping.options?.someKey
@@ -735,6 +792,7 @@ export { transform };
 ```
 
 **Conventions:**
+
 - `apply()` must be synchronous and pure
 - Must NOT mutate the `row` argument (it is `Readonly<>` by convention)
 - Export must be named `transform`
@@ -746,6 +804,7 @@ export { transform };
 Generate a source or target adapter skeleton.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -771,6 +830,7 @@ Generate a source or target adapter skeleton.
 **Generated file name:** `{adapterName}.adapter.ts`
 
 **Source adapter generated structure:**
+
 ```typescript
 import type { SourceAdapter, SourceConfig, RawRow } from '@caracal-lynx/sluice';
 
@@ -784,6 +844,7 @@ export class {Name}SourceAdapter implements SourceAdapter {
 ```
 
 **Target adapter generated structure:**
+
 ```typescript
 import type { TargetAdapter, TargetConfig, TransformedRow } from '@caracal-lynx/sluice';
 
@@ -804,6 +865,7 @@ export class {Name}TargetAdapter implements TargetAdapter {
 Scan a plugins directory and list discovered rule and transform plugins.
 
 **Input schema:**
+
 ```json
 {
   "type": "object",
@@ -816,11 +878,10 @@ Scan a plugins directory and list discovered rule and transform plugins.
 ```
 
 **Returns:**
+
 ```json
 {
-  "rules": [
-    { "id": "ukVatNumber", "type": "rule", "file": "/path/to/ukVatNumber.rule.ts" }
-  ],
+  "rules": [{ "id": "ukVatNumber", "type": "rule", "file": "/path/to/ukVatNumber.rule.ts" }],
   "transforms": [
     { "id": "ifsDateFormat", "type": "transform", "file": "/path/to/ifsDateFormat.transform.ts" }
   ]
@@ -828,6 +889,7 @@ Scan a plugins directory and list discovered rule and transform plugins.
 ```
 
 **Implementation notes:**
+
 - Scan only the top-level directory — not recursive (plugins are flat by convention)
 - Rule files: `*.rule.ts` — ID is the stem before `.rule.ts`
 - Transform files: `*.transform.ts` — ID is the stem before `.transform.ts`
@@ -843,13 +905,13 @@ Three shared utilities used across all handler modules:
 
 ```typescript
 // Resolves a path — absolute paths pass through, relative resolved from CWD
-export function resolveFile(filePath: string): string
+export function resolveFile(filePath: string): string;
 
 // Expands ${ENV_VAR} tokens using process.env — throws if var is not set
-export function resolveEnvVars(value: string): string
+export function resolveEnvVars(value: string): string;
 
 // Reads {outputDir}/{name}-state.json for a given pipeline YAML path
-export async function readRunState(pipelineFilePath: string): Promise<unknown>
+export async function readRunState(pipelineFilePath: string): Promise<unknown>;
 ```
 
 ### 7.2 `src/lib/schema-inspector.ts`
@@ -857,6 +919,7 @@ export async function readRunState(pipelineFilePath: string): Promise<unknown>
 Factory + implementations for live DB schema inspection.
 
 **Interface:**
+
 ```typescript
 interface SchemaInspector {
   describe(config: SourceConfig): Promise<{ adapter: string; columns: ColumnInfo[] }>;
@@ -866,8 +929,9 @@ interface SchemaInspector {
 ```
 
 **Factory:**
+
 ```typescript
-export function createSourceInspector(adapter: string): SchemaInspector
+export function createSourceInspector(adapter: string): SchemaInspector;
 // 'mssql' → MssqlInspector
 // 'pg'    → PgInspector
 // other   → UnsupportedInspector (throws helpful error)
@@ -880,10 +944,10 @@ export function createSourceInspector(adapter: string): SchemaInspector
 Pure functions returning TypeScript skeleton strings:
 
 ```typescript
-export function ruleTemplate(ruleId: string, description: string, severity: string): string
-export function transformPluginTemplate(pluginId: string, description: string): string
-export function sourceAdapterTemplate(adapterName: string): string
-export function targetAdapterTemplate(adapterName: string): string
+export function ruleTemplate(ruleId: string, description: string, severity: string): string;
+export function transformPluginTemplate(pluginId: string, description: string): string;
+export function sourceAdapterTemplate(adapterName: string): string;
+export function targetAdapterTemplate(adapterName: string): string;
 ```
 
 ### 7.4 `src/server.ts`
@@ -891,7 +955,7 @@ export function targetAdapterTemplate(adapterName: string): string
 MCP Server setup and CallTool dispatcher:
 
 ```typescript
-export function createServer(): Server
+export function createServer(): Server;
 ```
 
 The dispatcher uses a `switch` statement on `request.params.name`. After calling the handler, it checks if the result has shape `{ error: string }` and sets `isError: true` accordingly. All tool results are JSON-stringified into a single MCP text content block.
@@ -907,16 +971,13 @@ Entry point. Configures pino to write to stderr, creates the server, attaches a 
 The following code pattern must be followed in `src/server.ts`:
 
 ```typescript
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
 export function createServer(): Server {
   const server = new Server(
-    { name: '@caracal-lynx/sluice-mcp', version: '0.1.0' },
+    { name: "@caracal-lynx/sluice-mcp", version: "0.1.0" },
     { capabilities: { tools: {} } },
   );
 
@@ -968,15 +1029,15 @@ export class PipelineRunner {
 
 ```typescript
 export interface RunResult {
-  status: 'completed' | 'failed' | 'partial';
-  startedAt: string;       // ISO timestamp
-  completedAt: string;     // ISO timestamp
+  status: "completed" | "failed" | "partial";
+  startedAt: string; // ISO timestamp
+  completedAt: string; // ISO timestamp
   rowsExtracted: number;
   rowsTransformed: number;
   rowsLoaded: number;
   rowsRejected: number;
-  rejectionFile?: string;  // path to rejection CSV, if any rejections
-  stateFile: string;       // path to -state.json
+  rejectionFile?: string; // path to rejection CSV, if any rejections
+  stateFile: string; // path to -state.json
   errors: string[];
   dqSummary: {
     totalChecks: number;
@@ -1013,6 +1074,7 @@ The MCP server is built in four phases, ordered so that each phase delivers work
 11. `npm run build` passes with zero errors
 
 **Tests to write (vitest):**
+
 - `write_pipeline_yaml` refuses invalid YAML
 - `write_pipeline_yaml` refuses invalid pipeline schema (Zod errors)
 - `write_pipeline_yaml` accepts and writes valid pipeline YAML
@@ -1039,6 +1101,7 @@ The MCP server is built in four phases, ordered so that each phase delivers work
 4. Integration tests with a real (or Docker) MSSQL/PG instance (can use vitest's `test.skipIf` to skip when DB not available)
 
 **Key implementation notes:**
+
 - Dynamic import pattern is mandatory: `const sql = await import('mssql')` inside method body
 - `mssql` TOP injection regex: `/^SELECT\s/i` → `SELECT TOP {limit} `
 - All column name comparisons in `diff_schemas` must be case-insensitive
@@ -1046,6 +1109,7 @@ The MCP server is built in four phases, ordered so that each phase delivers work
 - `inspect_source` for csv/xlsx/rest returns `{ error: 'Schema inspection not supported for {adapter}. Use get_sample_rows or dry_run_pipeline.' }`
 
 **Tests to write:**
+
 - `resolveEnvVars` expands `${DB_SERVER}` correctly
 - `diff_schemas` correctly populates `mapped`, `unmapped`, `missing`
 - `diff_schemas` handles array `from` fields
@@ -1061,6 +1125,7 @@ The MCP server is built in four phases, ordered so that each phase delivers work
 **Goal:** Wire up the pipeline engine. Enables the AI to validate, dry-run, and (with explicit opt-in) live-run pipelines, then read results.
 
 **Prerequisites:**
+
 - `PipelineRunner.fromFile(filePath, options)` must be implemented and exported from `@caracal-lynx/sluice`
 - `RunResult` type must be exported
 
@@ -1071,12 +1136,14 @@ The MCP server is built in four phases, ordered so that each phase delivers work
 3. Integration tests against real pipeline YAML files in `clients/` folder
 
 **Key implementation notes:**
+
 - `validate_pipeline` must return `isError: false` even when `valid: false` — validation failure is useful information, not a tool error
 - `dry_run_pipeline` passes `{ run: { dryRun: true, stagingDb: ':memory:' } }` as overrides — the `:memory:` override is critical so dry runs leave no DuckDB files on disk
 - `run_pipeline` safety rule: `const dryRun = args.dryRun !== false` — this single line is the safety gate
 - Log a `logger.warn` when a live run is initiated (non-dry-run) so there is an audit trail
 
 **Tests to write:**
+
 - `validate_pipeline` returns errors for invalid YAML
 - `validate_pipeline` returns `valid: true` for known-good pipeline file
 - `dry_run_pipeline` completes without writing any files to `output/`
@@ -1111,9 +1178,9 @@ mcp:
   tools:
     run_pipeline:
       enabled: true
-      requireConfirmation: true   # AI must include a confirmation message before live run
+      requireConfirmation: true # AI must include a confirmation message before live run
     list_tables:
-      enabled: false              # disable if client doesn't want DB browsing
+      enabled: false # disable if client doesn't want DB browsing
 ```
 
 ---
@@ -1154,14 +1221,14 @@ All `${ENV_VAR}` tokens in pipeline YAML connection strings are resolved by `res
 
 ## 12. Security Considerations
 
-| Risk | Mitigation |
-|------|------------|
-| AI triggers live data write | `dryRun` defaults to `true`; explicit `false` required; `logger.warn` emitted |
-| AI reads credentials | Credentials live in ENV vars resolved server-side; never returned to AI |
-| AI writes arbitrary files | `write_pipeline_yaml` validates schema before writing; path traversal possible — consider restricting writes to `SLUICE_WORKSPACE` subtree |
-| AI drops/truncates target | Sluice has no DDL operations; load-only (INSERT/UPSERT per `onConflict`) |
-| Runaway queries via `list_tables` | Read-only queries; no DML; connection closed after each call |
-| Large sample rows response | `get_sample_rows` hard-capped at 100 rows |
+| Risk                              | Mitigation                                                                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| AI triggers live data write       | `dryRun` defaults to `true`; explicit `false` required; `logger.warn` emitted                                                              |
+| AI reads credentials              | Credentials live in ENV vars resolved server-side; never returned to AI                                                                    |
+| AI writes arbitrary files         | `write_pipeline_yaml` validates schema before writing; path traversal possible — consider restricting writes to `SLUICE_WORKSPACE` subtree |
+| AI drops/truncates target         | Sluice has no DDL operations; load-only (INSERT/UPSERT per `onConflict`)                                                                   |
+| Runaway queries via `list_tables` | Read-only queries; no DML; connection closed after each call                                                                               |
+| Large sample rows response        | `get_sample_rows` hard-capped at 100 rows                                                                                                  |
 
 **Recommended Phase 4 addition:** Validate that `pipelineFile` and `outputDir` arguments resolve to paths within `SLUICE_WORKSPACE` before performing any file operations. Return `{ error: 'Path outside workspace' }` if not.
 

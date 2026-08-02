@@ -24,12 +24,11 @@ pipeline:
 # ───── Multi-source block ─────────────────────────────────────────
 
 sources:
-
   # Source 1: IFS ERP — Primary source (priority 1 = checked first)
   - id: ifs-master
     priority: 1
     adapter: mssql
-    connection: ${IFS_CONNECTION}  # env var: mssql://user:pass@host:port/ifs
+    connection: ${IFS_CONNECTION} # env var: mssql://user:pass@host:port/ifs
     query: |
       SELECT
         StyleNo         AS style_no,
@@ -64,21 +63,20 @@ sources:
 # ───── Merge configuration ─────────────────────────────────────────
 
 merge:
-  key: style_no                  # Join on style number
+  key: style_no # Join on style number
 
-  strategy: coalesce             # Coalesce (first non-null by priority)
+  strategy: coalesce # Coalesce (first non-null by priority)
   # strategy: union              # Alt: include all rows from both sources
   # strategy: intersect          # Alt: only styles present in both
 
   onUnmatched:
-    include                       # Include unmatched styles; warn if found
+    include # Include unmatched styles; warn if found
     # warn                        # Same as above; explicit logging
     # exclude                     # Drop rows only in one source (inner join)
     # error                       # Fail pipeline if any unmatched rows
 
   # Field-level strategy overrides
   fieldStrategies:
-
     # Always trust IFS for cost (business rule)
     - field: unit_cost
       source: ifs-master
@@ -89,7 +87,7 @@ merge:
 
     # For description, prefer enriched version if present (override priority)
     - field: description
-      strategy: priority-override   # Highest-priority non-null wins
+      strategy: priority-override # Highest-priority non-null wins
 
   # Log conflicting values (rows where sources differ)
   conflictLog: ./logs/style-merge-conflicts.csv
@@ -101,10 +99,9 @@ dq:
   rejectionFile: ./logs/merged-styles-rejected.csv
 
   rules:
-
     # Style number format (from shared rules)
     - field: style_no
-      sourceId: ifs-master            # Only validate where ERP is source
+      sourceId: ifs-master # Only validate where ERP is source
       checks:
         - type: notNull
           severity: critical
@@ -150,7 +147,6 @@ dq:
 
 transform:
   fields:
-
     # Key columns
     - name: style_no
       type: string
@@ -212,14 +208,14 @@ transform:
 
 target:
   adapter: pg
-  connection: ${PG_CONNECTION}   # env var: postgresql://user:pass@host/sluice
+  connection: ${PG_CONNECTION} # env var: postgresql://user:pass@host/sluice
   table: stg_style-co_style_merged
-  mode: replace                  # Drop and recreate each run
+  mode: replace # Drop and recreate each run
 
 # ───── Runtime options ────────────────────────────────────────────
 
 run:
-  mode: full                      # full | dryRun | test
+  mode: full # full | dryRun | test
   concurrency:
     sources: 2
     transforms: 4

@@ -32,7 +32,7 @@ This restriction exists because Sluice is the core product of Caracal Lynx's dat
 
 ## I am a consultant. Can I recommend Sluice to my clients and help them set it up?
 
-**Yes, with a distinction.** You may recommend Sluice to clients and help them understand it. The restriction applies when Sluice is central to a commercial service *you* are delivering — i.e. you are operating or running pipelines on the client's behalf as a paid engagement. If the client is operating Sluice themselves after your initial help, that is their internal use and is permitted.
+**Yes, with a distinction.** You may recommend Sluice to clients and help them understand it. The restriction applies when Sluice is central to a commercial service _you_ are delivering — i.e. you are operating or running pipelines on the client's behalf as a paid engagement. If the client is operating Sluice themselves after your initial help, that is their internal use and is permitted.
 
 If you are unsure whether your situation requires a commercial licence, please contact us — we would rather clarify upfront than create problems later.
 
@@ -67,8 +67,8 @@ Contact us. We offer commercial licences for consultancies and service providers
 
 ## Is this "open source"?
 
-Technically, no. The Elastic Licence 2.0 is a *source available* licence — the code is fully public, you can read it, fork it, and use it for internal purposes, but it does not meet the OSI definition of "open source" because of the restriction on commercial service use. We have chosen this approach to keep Sluice accessible to businesses while protecting the consultancy practice that funds its development.
+Technically, no. The Elastic Licence 2.0 is a _source available_ licence — the code is fully public, you can read it, fork it, and use it for internal purposes, but it does not meet the OSI definition of "open source" because of the restriction on commercial service use. We have chosen this approach to keep Sluice accessible to businesses while protecting the consultancy practice that funds its development.
 
 ---
 
-*This FAQ is a plain-English guide and does not constitute legal advice. The [LICENSE](LICENSE) file is the authoritative legal text. Last updated: April 2026.*
+_This FAQ is a plain-English guide and does not constitute legal advice. The [LICENSE](LICENSE) file is the authoritative legal text. Last updated: April 2026._
