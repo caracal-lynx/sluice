@@ -166,13 +166,29 @@ function objectRows(schema: ZodTypeAny): FieldRow[] {
   });
 }
 
+/**
+ * Escape a value for a GFM table cell.
+ *
+ * Backslashes MUST be escaped before pipes — reversing the order double-escapes
+ * the backslashes this function just inserted, and a description containing a
+ * literal `\` before a `|` then renders as an escaped backslash plus a live cell
+ * delimiter, silently breaking the column.
+ *
+ * Only `description` goes through here. `renderType` deliberately emits `\|` to
+ * join union/enum members (see ZodEnum/ZodUnion), so escaping the type column
+ * would double-escape it.
+ */
+function escapeCell(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\n/g, " ").replace(/\|/g, "\\|");
+}
+
 function renderTable(rows: FieldRow[]): string {
   if (rows.length === 0) return "_No fields._\n";
   const header = "| Key | Type | Required | Default | Description |\n|---|---|---|---|---|\n";
   const body = rows
     .map(
       (r) =>
-        `| \`${r.name}\` | ${r.type} | ${r.required} | ${r.default} | ${r.description.replace(/\n/g, " ").replace(/\|/g, "\\|")} |`,
+        `| \`${r.name}\` | ${r.type} | ${r.required} | ${r.default} | ${escapeCell(r.description)} |`,
     )
     .join("\n");
   return header + body + "\n";
