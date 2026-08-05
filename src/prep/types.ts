@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Caracal Lynx Limited
 
 /**
- * Prep phase result types — see docs/PHASE-12-prep-phase-spec.md.
+ * Prep phase result types.
  */
 
 export interface PrepRuleResult {

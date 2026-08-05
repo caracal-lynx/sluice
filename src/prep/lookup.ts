@@ -5,8 +5,7 @@
  * PrepLookupResolver — same shape as transform.LookupResolver but
  * intentionally a separate class with a separate cache instance.
  *
- * The v1 spec keeps prep and transform lookups isolated (see
- * docs/PHASE-12-prep-phase-spec.md → "Open questions"). If duplication
+ * The v1 design keeps prep and transform lookups isolated. If duplication
  * becomes painful in real client pipelines, a shared cache can be
  * retro-fitted without changing this interface.
  *

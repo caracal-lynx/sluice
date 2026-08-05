@@ -1,7 +1,6 @@
 <!--
 Thanks for contributing to Sluice!
 
-Branch and commit message conventions: see docs/branching-strategy.md.
 Branch naming: feat/, fix/, docs/, chore/, hotfix/.
 Commit subject format: [<branch-name>] - <short summary>
 -->

@@ -19,8 +19,6 @@
  *        e. If the value actually changed, write back and rowsChanged++.
  *   5. DROP + CREATE OR REPLACE the table as all-VARCHAR; insertBatch the
  *      mutated rows. Matches how TransformEngine writes stg_transformed.
- *
- * See docs/PHASE-12-prep-phase-spec.md for the full spec.
  */
 
 import type { PrepConfig, PrepRule, RunConfig } from "../config/types.js";

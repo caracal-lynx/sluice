@@ -3,7 +3,7 @@
 Reference files copied directly into private downstream repos. Not consumed by
 the public `@caracal-lynx/sluice` package or its CI — they exist here so the
 configuration shape stays under version control alongside the project that
-governs the cascade ([Phase 7](../PHASE-07-git-npm-workflow-spec.md)).
+governs the cascade.
 
 ## `renovate-downstream.json`
 

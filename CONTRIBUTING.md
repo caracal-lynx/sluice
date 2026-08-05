@@ -18,8 +18,7 @@ willing to send a PR.
 
 ## Submitting a PR
 
-1. Fork the repository and create a feature branch from `master`. Branch naming
-   conventions are documented in [docs/branching-strategy.md](docs/branching-strategy.md):
+1. Fork the repository and create a feature branch from `master`. Use
    short-lived `feat/`, `fix/`, `docs/`, `chore/`, or `hotfix/` branches, with
    the branch name forming the prefix of every commit message:
    `[<branch-name>] - <short summary>`.

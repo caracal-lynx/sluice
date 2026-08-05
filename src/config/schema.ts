@@ -255,7 +255,7 @@ const LookupSchema = z.object({
 // ── Prep (Phase 12) ──────────────────────────────────────────────────────────
 //
 // Pre-enrich data fixup. Mutates a staging table in place so Enrich and DQ
-// both see already-fixed data. See docs/PHASE-12-prep-phase-spec.md.
+// both see already-fixed data.
 
 const PrepRuleSchema = z
   .object({

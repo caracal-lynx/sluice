@@ -12,11 +12,12 @@ import caracal from "@caracal-lynx/eslint-config";
 export default tseslint.config(
   ...caracal,
 
-  // `docs/**` alongside `docs-site/**`: both hold .ts that no tsconfig project
-  // includes. `pnpm lint` is `eslint src tests` so it never saw them, but
-  // lefthook's lint-sluice glob is `packages/sluice/**/*.ts` and does — so
-  // staging docs/pipeline.schema.ts failed the pre-commit hook with "was not
-  // found by the project service". Dormant until a tree-wide change staged it.
+  // `docs/**` alongside `docs-site/**`: neither is covered by a tsconfig
+  // project. `pnpm lint` is `eslint src tests` so it never saw them, but
+  // lefthook's lint-sluice glob is `packages/sluice/**/*.ts` and does — a
+  // stray .ts under either path fails the pre-commit hook with "was not
+  // found by the project service". `docs/` holds no .ts today; the ignore
+  // stays so re-introducing one cannot break the hook again.
   { ignores: ["docs-site/**", "docs/**"] },
 
   {
