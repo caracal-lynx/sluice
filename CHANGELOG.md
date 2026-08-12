@@ -1,5 +1,37 @@
 # @caracal-lynx/sluice
 
+## 0.9.4
+
+### Patch Changes
+
+- [#59](https://github.com/caracal-lynx/data-gubbins/pull/59) [`d17fb07`](https://github.com/caracal-lynx/data-gubbins/commit/d17fb07f117fad34d6e17a1aeb858354042c5edb) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Converge `js-yaml` on v5 across the workspace, removing the deliberate v4/v5 split (DAG-222).
+
+  `sluice` moves from `js-yaml@^4.2.0` to `^5.2.3`, matching `sluice-mcp`, which has run v5 all along.
+  Both floors are set to `5.2.3` rather than `5.2.1` on purpose: 5.2.2 carries GHSA "Quadratic CPU
+  consumption in `!!omap`" (high), so the declared range must exclude it.
+  No source change was needed — every call site in both packages already uses named imports
+  (`{ load }`, `{ dump }`), and v5 only drops the default export. The public API is unchanged.
+
+  `@types/js-yaml` is dropped from both packages: js-yaml v5 ships its own type declarations, so the
+  `@types/js-yaml@^4.0.9` devDependency was redundant in `sluice` and wrong-major in `sluice-mcp`.
+
+  The v4 requirement has not disappeared, it has moved to where it is actually consumed. `docs-site`
+  now declares `js-yaml@^4.3.1` of its own, because astro's prerender bundle needs a default export.
+  4.3.1 is the patched release on the v4 line for the same advisory.
+
+- [#67](https://github.com/caracal-lynx/data-gubbins/pull/67) [`944bd65`](https://github.com/caracal-lynx/data-gubbins/commit/944bd654bd7f7f7e92e504a77827947da9a91aa5) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Narrow the `read-excel-file` dependency range from `^9.3.4` to `>=9.3.4 <9.3.5` (DAG-261).
+
+  From 9.3.5 the reader stops surfacing Excel error cells: a cell containing `#DIV/0!` used to arrive
+  as `#ERROR_#DIV/0!` and now returns an empty string, so a failed formula stages as blank and becomes
+  indistinguishable from a genuinely empty cell.
+
+  The range is consumer-visible, and `^9.3.4` asserted that any 9.x at or above 9.3.4 is acceptable —
+  which is not true. Consumers resolving the caret would silently pick up the data-loss behaviour.
+
+  The Renovate hold added alongside this stops Renovate _proposing_ a newer version; it does not
+  constrain resolution. Lock file maintenance regenerates from the declared range, so the manifest is
+  what actually binds.
+
 ## 0.9.3
 
 ### Patch Changes
