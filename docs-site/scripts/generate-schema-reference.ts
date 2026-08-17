@@ -145,7 +145,20 @@ function renderDefault(value: unknown): string {
   if (value === "") return '`""`';
   if (typeof value === "string") return `\`"${value}"\``;
   if (typeof value === "object") return `\`${JSON.stringify(value)}\``;
-  return `\`${String(value)}\``;
+  // `unknown` does not narrow by exclusion, so the remaining primitives are
+  // listed explicitly rather than handed to String() — a symbol or function
+  // would stringify to noise, and @typescript-eslint/no-base-to-string is
+  // right to refuse it. In practice `unwrap()` has already invoked ZodDefault's
+  // thunk, and the schema it walks is JSON-shaped, so only these three can
+  // reach here.
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return `\`${String(value)}\``;
+  }
+  // Deliberately not "—": that means "no default", and rendering an
+  // unrepresentable default as "no default" would be a quiet lie in published
+  // documentation. If this ever appears, the schema grew a default shape this
+  // generator does not handle.
+  return "`(unrepresentable default)`";
 }
 
 /** Walk a ZodObject and produce one row per field. */

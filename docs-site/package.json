@@ -12,7 +12,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "gen": "tsx scripts/sync-changelog.ts && tsx scripts/generate-schema-reference.ts"
+    "gen": "tsx scripts/sync-changelog.ts && tsx scripts/generate-schema-reference.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.41.0",
@@ -20,8 +22,12 @@
     "sharp": "^0.35.0"
   },
   "devDependencies": {
+    "@caracal-lynx/eslint-config": "workspace:^",
+    "eslint": "catalog:",
     "js-yaml": "^4.3.1",
     "tsx": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.25.2"
   }
