@@ -1,5 +1,29 @@
 # @caracal-lynx/sluice
 
+## 0.9.5
+
+### Patch Changes
+
+- [#76](https://github.com/caracal-lynx/data-gubbins/pull/76) [`6cea65f`](https://github.com/caracal-lynx/data-gubbins/commit/6cea65f5e9b507cf9b440e9d7eaa411c047adbcc) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Correct repository metadata and documentation that still described the ten-repo era.
+
+  `repository`, `homepage` and `bugs` on sluice-enrich, sluice-mcp, spigot, dredge and
+  eslint-config pointed at repos archived on 2026-08-02, so every published package shipped
+  links to a dead repository. They now point at `caracal-lynx/data-gubbins` with a
+  `repository.directory` pointer to the package's path in the monorepo (DAG-255).
+
+  `packages/sluice` is deliberately unchanged and still points at the public mirror — npm
+  requires `repository` to be public and to match the publishing repo for provenance, and
+  repointing it would leak a private repo's name and commit SHAs into the public Sigstore log.
+
+  The public mirror also stopped advertising a contributor workflow it cannot honour: it
+  accepts no pull requests and a clone of it cannot install, so `CONTRIBUTING.md` now says
+  so plainly, the PR template is gone, and the Code of Conduct scopes itself to the issue
+  tracker and Discussions (DAG-253). Issues, Discussions and the security disclosure route
+  are unchanged and still wanted.
+
+  Docs only — no runtime code changed. The sluice patch is what carries the corrected
+  mirror-facing documents into the public repo on release.
+
 ## 0.9.4
 
 ### Patch Changes
