@@ -18,7 +18,7 @@ Sluice is published under the **Elastic Licence 2.0 (ELv2)**. This page explains
 
 ## Can I modify Sluice for my own use?
 
-**Yes.** You can fork the repository, modify the code, and run your modified version internally. You are not required to publish your changes, though contributions back to the project are always welcome.
+**Yes.** You can fork the repository, modify the code, and run your modified version internally. You are not required to publish your changes. Note that this repository is a read-only release mirror, so a fork cannot be merged back — if you want a change in Sluice itself, [open an issue](https://github.com/caracal-lynx/sluice/issues).
 
 ---
 
@@ -52,7 +52,7 @@ If you are unsure whether your situation requires a commercial licence, please c
 
 ## Can I contribute to the Sluice codebase?
 
-**Yes, and thank you.** Pull requests are welcome. By submitting a contribution you agree that your code is licenced under the same ELv2 terms as the rest of the project, and that Caracal Lynx Limited retains the right to include it in future releases (including any future commercial releases).
+**Not as code, no.** Sluice is developed in a private monorepo and this repository is a read-only release mirror, so pull requests have nowhere to merge to — see [CONTRIBUTING.md](../CONTRIBUTING.md). Ideas and bug reports are wanted: open an issue and, if we take it, the work happens upstream and you are credited in the release notes.
 
 ---
 

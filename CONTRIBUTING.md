@@ -1,79 +1,55 @@
 # Contributing to Sluice
 
-Thanks for considering a contribution. Sluice is open-source under the Elastic
-Licence 2.0; bug reports, feature requests, and PRs are all welcome under that
-licence's terms.
+**This repository is a read-only release mirror.** Sluice is developed in a
+private monorepo; what you see here is published from it at each release. The
+mirror exists so the source of a released version is public and auditable under
+the [Elastic Licence 2.0](LICENSE).
 
-## Reporting bugs
+Two consequences, stated plainly:
 
-Use the [bug report issue template](.github/ISSUE_TEMPLATE/bug_report.yml).
-Include the smallest pipeline YAML that reproduces the issue, the Sluice
-version, your Node version, and the OS you're running on.
+- **Pull requests cannot be accepted.** Anything opened here has nowhere to
+  merge to — the mirror is overwritten by the next release. This is not a
+  judgement on the change; there is simply no path from this repository into
+  the one the code is built from.
+- **A clone of this repository will not install.** `packages/sluice`'s manifest
+  carries `catalog:` specifiers that resolve against a workspace file which
+  lives in the monorepo, not here. `pnpm install` fails with
+  `ERR_PNPM_CATALOG_ENTRY_NOT_FOUND_FOR_SPEC`. Installing the published package
+  from npm is unaffected — those specifiers are rewritten at publish time.
 
-## Suggesting features
+## What is welcome
 
-Use the [feature request issue template](.github/ISSUE_TEMPLATE/feature_request.yml).
-Describe the use case, the proposed YAML or API shape, and whether you'd be
-willing to send a PR.
+**Issues.** Bug reports and feature requests are read and acted on, and the
+work happens upstream in the private monorepo.
 
-## Submitting a PR
+- [Bug report](.github/ISSUE_TEMPLATE/bug_report.yml) — include the smallest
+  pipeline YAML that reproduces the issue, the Sluice version, your Node
+  version, and the OS.
+- [Feature request](.github/ISSUE_TEMPLATE/feature_request.yml) — describe the
+  use case and the proposed YAML or API shape.
+- [Discussions](https://github.com/caracal-lynx/sluice/discussions) for general
+  questions and "how do I…?".
 
-1. Fork the repository and create a feature branch from `master`. Use
-   short-lived `feat/`, `fix/`, `docs/`, `chore/`, or `hotfix/` branches, with
-   the branch name forming the prefix of every commit message:
-   `[<branch-name>] - <short summary>`.
-2. Add tests for any new behaviour. Sluice maintains 80% line coverage in
-   `src/dq/` and `src/transform/` — see [CLAUDE.md](CLAUDE.md) for the full
-   testing conventions.
-3. Run `pnpm test`, `pnpm typecheck`, `pnpm lint`, and `pnpm build`
-   locally before opening the PR. (Sluice uses **pnpm**, activated via corepack —
-   see [CLAUDE.md](CLAUDE.md). No global install needed.)
-4. Add a `.changeset/` entry describing your change. Run `pnpm changeset`,
-   answer the prompts (patch / minor / major + a one-line summary), and commit
-   the generated `.changeset/<random-name>.md` file alongside your code changes.
-   Skip this step only for docs-only or CI-only PRs.
-5. Sign off your commits with `git commit -s -m "..."`. By signing off you
-   confirm the contribution is your own and that you agree it can be released
-   under the Elastic Licence 2.0.
+**Security reports** go to **security@caracallynx.com**, never to a public
+issue — see [SECURITY.md](SECURITY.md) for the disclosure process and
+timelines.
 
-## Code style
+**Commercial enquiries** — enrichment service, ERP adapters (IFS, Business
+Central, BlueCherry), domain rule packages, the Sluice MCP server, or migration
+delivery — email **sluice@caracallynx.com**. These are not handled via GitHub
+issues.
 
-- TypeScript strict mode. No `any`.
-- All config types come from Zod inference — never write manual interfaces for
-  anything that maps to pipeline YAML.
-- Prefer dedicated functions over inline lambdas in hot paths.
-- See [CLAUDE.md](CLAUDE.md) for the full conventions, including error handling,
-  logging (`pino`, never `console.log`), and barrel-export rules.
+## If you want to contribute code
 
-## What gets accepted
-
-- Bug fixes with a regression test ✅
-- New rule / transform / merge / source / target plugins (Tier 2 or Tier 3) ✅
-- Documentation improvements ✅
-- Performance improvements with measurements ✅
-
-## What needs a discussion first (open an issue)
-
-- New top-level YAML keys
-- New CLI commands or flags that change exit-code behaviour
-- New core dependencies (anything outside MIT / Apache 2.0 / BSD / ISC)
-- Changes to the public API surface in `src/index.ts`
-
-## Commercial questions
-
-For paid services — enrichment service, ERP adapters (IFS, Business Central,
-BlueCherry), domain rule packages, the Sluice MCP server, or full migration
-delivery — email **sluice@caracallynx.com**. These are not handled via
-GitHub issues.
+Open an issue describing what you want to change and why. If it is something we
+want, it gets built upstream and credited in the release notes. There has never
+been an external code contributor, so there is no fork-and-PR workflow to
+maintain and we are not going to pretend otherwise.
 
 ## Licence
 
-By contributing, you agree that your contributions will be licensed under the
-[Elastic Licence 2.0](LICENSE), the same licence as the rest of the project.
-You also agree that Caracal Lynx Limited retains the right to include your
-contribution in future releases, including any future commercial licences.
-
-If you are unsure about anything, open an issue or email us before doing the
-work — we'd rather discuss upfront than reject after.
+Sluice is licensed under the [Elastic Licence 2.0](LICENSE). See the
+[Licensing FAQ](docs/licensing-faq.md) for a plain-English guide to what the
+licence permits.
 
 — Caracal Lynx Limited

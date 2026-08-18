@@ -1,6 +1,6 @@
-@c:/repos/standards/company.md
+@../../../standards/company.md
 
-@c:/repos/standards/coding/typescript-standards.md
+@../../../standards/coding/typescript-standards.md
 
 # Sluice — CLAUDE.md
 
@@ -55,17 +55,17 @@ Operational notes:
 ## Sluice-specific stack
 
 Additions and deviations from the programme baseline in
-[data-gubbins.md](c:/repos/standards/programmes/data-gubbins.md) — anything
+[data-gubbins.md](../../../standards/programmes/data-gubbins.md) — anything
 not listed here follows the programme stack.
 
-| Concern    | Package                       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SQL Server | `mssql`                       | Trusted + SQL auth both supported                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| PostgreSQL | `pg` + `@types/pg`            |                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| CSV        | `csv-parse` + `csv-stringify` | Streaming                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Excel      | `read-excel-file`             | Read-only by design. Replaced `exceljs` in 2026-07 (DAG-207) — exceljs was stale (last real release 2023-10) and its `archiver`/`unzipper`/`glob` chain produced three transitive advisories. See [ADR-0001](c:/repos/sluice/docs/adr/0001-replace-exceljs-with-read-excel-file.md). Earlier still, `xlsx`/SheetJS was dropped in 2026-05 over two unpatched HIGH advisories (SheetJS ships patches only via their CDN tarball, not npm) — so do not "simplify" back to it. |
-| HTTP retry | `axios-retry`                 | 3 retries, exponential backoff                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Env vars   | `dotenv`                      | Loaded once at CLI entry                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Concern    | Package                       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SQL Server | `mssql`                       | Trusted + SQL auth both supported                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| PostgreSQL | `pg` + `@types/pg`            |                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| CSV        | `csv-parse` + `csv-stringify` | Streaming                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Excel      | `read-excel-file`             | Read-only by design. Replaced `exceljs` in 2026-07 (DAG-207) — exceljs was stale (last real release 2023-10) and its `archiver`/`unzipper`/`glob` chain produced three transitive advisories. See [ADR-0001](docs/adr/0001-replace-exceljs-with-read-excel-file.md). Earlier still, `xlsx`/SheetJS was dropped in 2026-05 over two unpatched HIGH advisories (SheetJS ships patches only via their CDN tarball, not npm) — so do not "simplify" back to it. |
+| HTTP retry | `axios-retry`                 | 3 retries, exponential backoff                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Env vars   | `dotenv`                      | Loaded once at CLI entry                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## Invariants
 
@@ -84,7 +84,7 @@ not listed here follows the programme stack.
   base case, multi-source layers merge on top.
 - **Expression evaluation is `expr-eval-fork` plus a `js:` VM sandbox** —
   never `eval()`, never `new Function()`. (Fork rationale lives in
-  [data-gubbins.md](c:/repos/standards/programmes/data-gubbins.md).)
+  [data-gubbins.md](../../../standards/programmes/data-gubbins.md).)
 
 ## TypeScript config
 
@@ -156,6 +156,6 @@ than just warning, so add it here (or run `pnpm approve-builds`).
 
 ## Related docs
 
-- [README.md](c:/repos/sluice/README.md) — install, quick-start, composite rules (Tier 1)
-- [PLUGINS.md](c:/repos/sluice/PLUGINS.md) — Tier 2 (file) and Tier 3 (npm) plugin authoring
-- [docs/architecture-diagrams.md](c:/repos/sluice/docs/architecture-diagrams.md) — pipeline flow Mermaid diagrams
+- [README.md](README.md) — install, quick-start, composite rules (Tier 1)
+- [PLUGINS.md](PLUGINS.md) — Tier 2 (file) and Tier 3 (npm) plugin authoring
+- [docs/architecture-diagrams.md](docs/architecture-diagrams.md) — pipeline flow Mermaid diagrams

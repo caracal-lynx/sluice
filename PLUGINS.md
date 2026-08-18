@@ -289,6 +289,6 @@ The one exception to Rule 1 is the **enrich phase** (Phase 4) — `EnrichPlugin`
 - The runtime types (`RulePlugin`, `TransformPlugin`, `MergeStrategyPlugin`, `PluginPackage`) are exported from the package root: `import type { RulePlugin } from '@caracal-lynx/sluice'`.
 - Working examples of all three tiers ship in this repo's `tests/fixtures/plugins/` and `tests/fixtures/shared-rules.yaml`.
 
-Questions, gaps, or contributions to this guide? Open a Discussion or send a PR.
+Questions or gaps in this guide? Open a Discussion or an issue — this repository is a read-only release mirror, so corrections are made upstream rather than by PR.
 
 — Caracal Lynx Limited
