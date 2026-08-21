@@ -515,7 +515,7 @@ describe("Merge Strategies", () => {
       const config: MergeConfig = {
         key: "ID",
         strategy: "coalesce",
-        onUnmatched: "ignore",
+        onUnmatched: "include",
       };
 
       const result = await engine.run(store, sources, config);
@@ -656,7 +656,7 @@ describe("Merge Strategies", () => {
       const config: MergeConfig = {
         key: "ID",
         strategy: "intersect",
-        onUnmatched: "ignore",
+        onUnmatched: "include",
       };
 
       const result = await engine.run(store, sources, config);
@@ -678,7 +678,7 @@ describe("Merge Strategies", () => {
       const config: MergeConfig = {
         key: "ID",
         strategy: "unknown-strategy" as any,
-        onUnmatched: "ignore",
+        onUnmatched: "include",
       };
 
       // MergeStrategyRegistry.get throws ConfigError with the supported list.
@@ -694,7 +694,7 @@ describe("Merge Strategies", () => {
       const config: MergeConfig = {
         key: "ID",
         strategy: "coalesce",
-        onUnmatched: "ignore",
+        onUnmatched: "include",
       };
 
       await expect(engine.run(store, sources, config)).rejects.toThrow("at least 2 sources");
@@ -746,7 +746,7 @@ describe("Merge Strategies", () => {
       const config: MergeConfig = {
         key: "ID",
         strategy: "coalesce",
-        onUnmatched: "ignore",
+        onUnmatched: "include",
       };
 
       await engine.run(store, sources, config);
@@ -775,7 +775,7 @@ describe("Merge Strategies", () => {
       const config: MergeConfig = {
         key: "ID",
         strategy: "coalesce",
-        onUnmatched: "ignore",
+        onUnmatched: "include",
       };
 
       await engine.run(store, sources, config);

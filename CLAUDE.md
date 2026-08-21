@@ -94,10 +94,17 @@ not listed here follows the programme stack.
 - **`[SCOPE-02]` deviation — `target`/`lib` are `ES2025`, not the baseline `ES2024`.**
   Intentional: `engines.node` is `>=24.16.0` (`.nvmrc` 24.17.0), which fully supports
   ES2025, so Sluice runs one notch ahead of the `[C-01]` baseline tsconfig.
-- **Tests are not yet typechecked.** `pnpm typecheck` covers `src/` only;
-  `tsconfig.test.json` is used solely as the ESLint parser project, so test type
-  errors are latent. Wiring tests into the typecheck gate (and clearing the backlog)
-  is tracked in **DAG-169** — don't assume test type-safety until it lands.
+- **Tests are not yet typechecked _in this package_.** `pnpm typecheck` here covers
+  `src/` only; run `pnpm typecheck:tests` by hand. **The other four packages now gate
+  on their test project** (their `typecheck` appends
+  `&& tsc -p tsconfig.test.json --noEmit`) — sluice does not, because it still carries
+  ~99 latent errors. Baseline when first measured, 2026-08-21: 100 here, 5 in
+  sluice-enrich, 1 in sluice-mcp; the last two are cleared. Clearing sluice's is
+  **DAG-169** — don't assume test type-safety in this package until it lands.
+- **Strict flags now come from the root `tsconfig.base.json`**, not from this file
+  (DAG-299). `tsconfig.json` here carries only `outDir`/`rootDir`/`paths`/`include`/
+  `exclude`. Do not re-inline compiler options — the point of the base is that
+  `sluice-enrich` cannot drift below sluice again.
 - **Two vitest projects, `unit` and `integration`** (DAG-208). Unit keeps the 5s
   default so a hung test fails fast; integration gets 30s for `testTimeout` _and_
   `hookTimeout` because it stands up real DuckDB staging and drives the CLI — on

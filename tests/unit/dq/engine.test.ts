@@ -214,7 +214,6 @@ describe("DQEngine", () => {
         rules: [
           {
             field: "CUST_CODE",
-            // @ts-expect-error — sourceId lives on the inferred type after Change 2
             sourceId: "sql-server",
             checks: [{ type: "notNull", severity: "critical" }],
           },

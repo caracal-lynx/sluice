@@ -1,3 +1,18 @@
+// Test project: src + tests, no emit.
+//
+// NOT wired into `typecheck` yet, unlike every other package in this workspace.
+// Until DAG-332 this file was passed to tsc by nothing at all — `typecheck` is
+// `tsc --noEmit`, which resolves tsconfig.json (src only) — so it accumulated
+// errors silently. Baseline when first run, 2026-08-21: 100 here, 5 in
+// sluice-enrich, 1 in sluice-mcp. The other four packages are now clean and gate
+// on this file; this one does not yet.
+//
+// ponytail: run it by hand with `pnpm typecheck:tests`. ~99 remain, mostly
+// noUncheckedIndexedAccess in test bodies plus config literals that drifted from
+// their types. Ratchet it down, then append
+// `&& tsc -p tsconfig.test.json --noEmit` to this package's `typecheck` script,
+// which is all the other four needed. Do NOT loosen this config to make the
+// number go down — the errors are the drift signal, not the problem.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
