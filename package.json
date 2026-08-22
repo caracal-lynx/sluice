@@ -63,7 +63,7 @@
     "release": "pnpm build && changeset publish"
   },
   "dependencies": {
-    "@duckdb/node-api": "^1.5.0-r.1",
+    "@duckdb/node-api": "~1.5.5-r.4",
     "axios": "catalog:",
     "axios-retry": "catalog:",
     "cli-progress": "^3.12.0",
