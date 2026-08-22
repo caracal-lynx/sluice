@@ -1,5 +1,33 @@
 # @caracal-lynx/sluice
 
+## 0.9.6
+
+### Patch Changes
+
+- [#96](https://github.com/caracal-lynx/data-gubbins/pull/96) [`14ac1b7`](https://github.com/caracal-lynx/data-gubbins/commit/14ac1b7fd552e476006740567cd92710f64017bb) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Move `@duckdb/node-api` from `^1.5.0-r.1` to `~1.5.5-r.4`, twelve releases forward.
+  
+  The caret was not holding a version deliberately — it could not resolve past
+  `1.5.0-r.1` at all. Every version this package publishes is a semver prerelease
+  (`-r.N`), and a prerelease satisfies a range only when some comparator shares its
+  exact `[major,minor,patch]` tuple, so `^1.5.0-r.1` matched exactly one version and
+  Renovate correctly offered nothing for six weeks. Silence read as "current"; it
+  meant "frozen".
+  
+  `~` is the fix rather than a newer `^`, which would have been decorative:
+  `^1.5.5-r.4` also matches exactly one version, and bare `*` and `>=1.5.0` match
+  none. A tilde admits higher prereleases sharing the tuple, so `-r.N` rebuilds of
+  the pinned DuckDB version arrive automatically while a DuckDB patch bump stays a
+  deliberate decision — which is what `-r.N` means upstream.
+  
+  Staging is the only consumer: `src/staging/store.ts` is the sole importer of
+  `@duckdb/node-api` and that is a documented invariant. Verified on Windows, where
+  PR CI does not run — the native `win32-x64` binding loads, and the full suite is
+  green (84 integration tests over real DuckDB staging, 473 unit tests, typecheck,
+  build and lint). `1.5.5-r.4` also adds musl binding variants and `libc`
+  constraints the old resolution did not carry.
+  
+  DAG-189.
+
 ## 0.9.5
 
 ### Patch Changes
