@@ -6,6 +6,87 @@ blueprint at the bottom mirrors the same structure for whiteboard use.
 
 > _Clean data flows through._
 
+**Verified against `@caracal-lynx/sluice@0.9.6`, 2026-08-22.** Diagrams here are
+checked against `src/`, not maintained from memory; every Mermaid block in this
+file parses. If you change a phase, an adapter, a rule or an exit code, change
+the diagram in the same PR — a diagram that lies is worse than no diagram,
+because it is quoted with confidence.
+
+---
+
+## 0. Pipeline stages at a glance
+
+The whole engine in one picture. Everything below this section is a zoom into
+one part of it.
+
+Six stages run in a fixed order, three of them optional. **Prep, Enrich and
+Merge are skipped entirely unless the pipeline configures them** — a minimal
+pipeline is Extract → DQ → Transform → Load.
+
+```mermaid
+flowchart TB
+    classDef io fill:#ECEFF1,stroke:#546E7A,stroke-width:1.2px,color:#000
+    classDef core fill:#1565C0,stroke:#0D47A1,stroke-width:2px,color:#FFF
+    classDef opt fill:#BBDEFB,stroke:#1565C0,stroke-width:1.5px,color:#000
+    classDef gate fill:#FFE0B2,stroke:#E65100,stroke-width:1.5px,color:#000
+    classDef out fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1.2px,color:#000
+
+    Src[/"Legacy sources<br/>mssql · pg · csv · xlsx · rest · json · odoo-csv"/]:::io
+
+    subgraph Per["Per source — repeated for every entry in sources[]"]
+      direction TB
+      EX["<b>1 Extract</b><br/>adapter → stg_raw or stg_raw_{id}"]:::core
+      PP["<b>2 Prep</b> · optional<br/>reshape rows in place"]:::opt
+      DQ1["<b>3 Data quality</b><br/>source-scoped rules → _accepted"]:::core
+      EX --> PP --> DQ1
+    end
+
+    MRG["<b>4 Merge</b> · multi-source only<br/>coalesce · priority-override · union · intersect"]:::opt
+    PP2["<b>2 Prep</b> · optional<br/>post-merge rules"]:::opt
+    ENR["<b>5 Enrich</b> · optional<br/>private @caracal-lynx/sluice-enrich"]:::opt
+    DQ2["<b>3 Data quality</b><br/>unscoped rules"]:::core
+    TR["<b>6 Transform</b><br/>map · lookup · expression · cleanse"]:::core
+    LD["<b>7 Load</b><br/>adapter → target"]:::core
+
+    Tgt[/"Targets<br/>ifs · bc · bluecherry · csv · pg"/]:::io
+
+    Halt{{"critical violations<br/>+ stopOnCritical → exit 2"}}:::gate
+    Dry{{"dryRun or validate-only<br/>stops before load"}}:::gate
+    Art[/"Run artefacts<br/>rejections · dq-summary · prep-summary · state · log"/]:::out
+
+    Src --> EX
+    DQ1 --> MRG --> PP2 --> ENR --> DQ2 --> TR --> LD --> Tgt
+    DQ1 -. "single source: no merge" .-> PP2
+    DQ2 -.-> Halt
+    TR -.-> Dry
+    DQ2 --> Art
+    LD --> Art
+```
+
+**Reading the order, because it is easy to get wrong:**
+
+- **Extract** — always. One adapter per source; the incremental filter applies
+  here.
+- **Prep** — only when a `prep:` block is present and `--no-prep` was not
+  passed. Mutates the staging table **in place**, before Enrich and DQ. Fires
+  once per source pre-merge (rules carrying that `sourceId`) and again
+  post-merge (rules with no `sourceId`).
+- **Enrich** — only when an `enrich:` block is present, the private package is
+  installed, `--no-enrich` was not passed, and the run is neither a dry run nor
+  `validate-only`. The implementation is `@caracal-lynx/sluice-enrich`; this
+  repo exports only the types. **Skipped silently when the package is absent**,
+  so "enrich did nothing" usually means "not installed".
+- **DQ** — always. Rejected rows are **not deleted**: they are excluded by
+  materialising `{table}_accepted`, leaving the original table inspectable.
+- **Merge** — only for `sources[]` + `merge:`, and only under
+  `MultiSourcePipelineRunner`.
+- **Transform** — always. The only stage that writes `stg_transformed`.
+- **Load** — skipped for `dryRun` and `validate-only`.
+
+**Enrich sits between Prep and DQ, not after Transform.** That ordering is
+deliberate — enrichment adds columns that DQ rules are then allowed to
+validate — and it is the single most common thing people mis-draw.
+
 ---
 
 ## 1. System context
@@ -32,6 +113,7 @@ flowchart LR
       CLI{{sluice CLI}}:::core
       Runner[[PipelineRunner]]:::core
       DuckDB[(DuckDB<br/>staging)]:::core
+      Enrich[[sluice-enrich<br/>private, optional]]:::core
     end
 
     subgraph Sources[Legacy Sources]
@@ -39,6 +121,8 @@ flowchart LR
       PG[(PostgreSQL)]
       CSV[CSV / XLSX]
       REST[REST APIs]
+      JSON[JSON files]
+      Odoo[Odoo CSV exports]
     end
 
     subgraph Targets[Target ERPs & Files]
@@ -51,6 +135,7 @@ flowchart LR
     subgraph Outputs[Run Artifacts]
       Rejections[/Rejection CSV/]:::report
       Summary[/DQ summary JSON/]:::report
+      PrepSum[/Prep summary JSON/]:::report
       State[/Run state JSON/]:::report
       Log[/pino JSON log/]:::report
     end
@@ -66,10 +151,13 @@ flowchart LR
     Sources --> Runner
     Lookups --> Runner
     Runner <--> DuckDB
+    Runner -.optional phase.-> Enrich
+    Enrich <--> DuckDB
     Runner --> Targets
 
     Runner --> Rejections
     Runner --> Summary
+    Runner --> PrepSum
     Runner --> State
     Runner --> Log
 ```
@@ -103,6 +191,8 @@ flowchart TB
       MSSQL[mssql / pg]:::adapter
       CSV[csv / xlsx]:::adapter
       REST[rest]:::adapter
+      JsonSrc[json]:::adapter
+      OdooSrc[odoo-csv]:::adapter
       BC[bc]:::adapter
       IFS[ifs]:::adapter
       BlueCherry[bluecherry]:::adapter
@@ -114,7 +204,13 @@ flowchart TB
       DQ[src/dq<br/>DQEngine + Rules]:::engine
       Transform[src/transform<br/>TransformEngine]:::engine
       Merge[src/merge<br/>MergeEngine]:::engine
-      Expr[expression.ts<br/>expr-eval + vm]:::engine
+      Prep[src/prep<br/>PrepEngine<br/>+ PrepLookupResolver]:::engine
+      Expr[expression.ts<br/>expr-eval-fork + vm]:::engine
+    end
+
+    subgraph Ext[extension points]
+      Plugins[src/plugins<br/>loader + registries]:::infra
+      EnrichT[src/enrich/types.ts<br/>types only — impl is the<br/>private sluice-enrich pkg]:::infra
     end
 
     subgraph Staging[src/staging]
@@ -135,8 +231,11 @@ flowchart TB
     MSRunner --> Runner
     Runner --> SrcReg
     Runner --> TgtReg
+    Runner --> Prep
+    Runner --> EnrichT
     Runner --> DQ
     Runner --> Transform
+    Runner --> Plugins
     MSRunner --> Merge
     Runner --> Store
 
@@ -144,6 +243,8 @@ flowchart TB
     SrcReg --> MSSQL
     SrcReg --> CSV
     SrcReg --> REST
+    SrcReg --> JsonSrc
+    SrcReg --> OdooSrc
     TgtReg --> BC
     TgtReg --> IFS
     TgtReg --> BlueCherry
@@ -154,6 +255,11 @@ flowchart TB
     Transform --> Store
     Transform --> Expr
     Merge --> Store
+    Prep --> Store
+    Prep --> Expr
+    Plugins --> DQ
+    Plugins --> Transform
+    Plugins --> Merge
 
     MSSQL -.-> Store
     CSV -.-> Store
@@ -175,7 +281,8 @@ flowchart TB
 
 ## 3. Single-source runtime (sequence)
 
-Phase ordering as implemented in `PipelineRunner.run()`.
+Phase ordering as implemented in `PipelineRunner.run()`. **Enrich runs between
+Prep and DQ** — see the ordering table in §0.
 
 ```mermaid
 sequenceDiagram
@@ -187,6 +294,7 @@ sequenceDiagram
     participant Src as SourceAdapter
     participant Duck as DuckDB (StagingStore)
     participant Prep as PrepEngine
+    participant Enr as EnrichPhase (private pkg)
     participant DQ as DQEngine
     participant Tx as TransformEngine
     participant Tgt as TargetAdapter
@@ -213,6 +321,12 @@ sequenceDiagram
         Run->>FS: write {name}-prep-summary.json
     end
 
+    opt enrich: block configured, package installed, not dry/validate, --no-enrich not set
+        Run->>Enr: run()
+        Enr->>Duck: resolve lookups + write enriched columns
+        Enr-->>Run: EnrichSummary
+    end
+
     Run->>DQ: validate('stg_raw')
     DQ->>Duck: query
     DQ->>FS: write rejection CSV + summary JSON
@@ -222,9 +336,14 @@ sequenceDiagram
         Run-->>CLI: exit 2
     end
 
+    opt any rows rejected
+        Run->>Duck: CREATE stg_raw_accepted (accepted rows only)
+        Note over Run,Duck: original stg_raw is left intact for inspection
+    end
+
     Run->>Tx: resolveLookups()
     Tx->>Duck: load lookup sources
-    Run->>Tx: transform('stg_raw' → 'stg_transformed')
+    Run->>Tx: transform(accepted table → 'stg_transformed')
 
     alt dryRun OR validate-only
         Run->>FS: write state + summary
@@ -248,6 +367,9 @@ sequenceDiagram
 Pipeline with `sources[]` + `merge:`. Runner is
 `MultiSourcePipelineRunner`.
 
+Note the **two** prep firings and **two** DQ passes: source-scoped rules run
+before the merge, unscoped rules after it. Enrich runs once, post-merge.
+
 ```mermaid
 flowchart TB
     classDef phase fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#000
@@ -265,10 +387,10 @@ flowchart TB
       F1 -- yes & matches<br/>incrementalSource --> I1[filter by<br/>incrementalField] --> P1[🧽 Prep pre-merge<br/>rules where sourceId = s1]:::phase
       F1 -- no --> P1
       P1 --> D1[DQ rules<br/>where sourceId = s1]:::phase
-      D1 --> RW1[rewrite stg_raw_s1<br/>accepted rows only]:::stage
+      D1 --> RW1[stg_raw_s1_accepted<br/>materialised if any row rejected;<br/>stg_raw_s1 left intact]:::stage
 
-      S2[Extract source 2]:::phase --> R2[renameColumns] --> P2[🧽 Prep<br/>where sourceId = s2]:::phase --> D2[DQ rules<br/>where sourceId = s2]:::phase --> RW2[rewrite stg_raw_s2]:::stage
-      SN[Extract source N]:::phase --> RN[renameColumns] --> PN[🧽 Prep<br/>where sourceId = sN]:::phase --> DN[DQ rules<br/>where sourceId = sN]:::phase --> RWN[rewrite stg_raw_sN]:::stage
+      S2[Extract source 2]:::phase --> R2[renameColumns] --> P2[🧽 Prep<br/>where sourceId = s2]:::phase --> D2[DQ rules<br/>where sourceId = s2]:::phase --> RW2[stg_raw_s2_accepted]:::stage
+      SN[Extract source N]:::phase --> RN[renameColumns] --> PN[🧽 Prep<br/>where sourceId = sN]:::phase --> DN[DQ rules<br/>where sourceId = sN]:::phase --> RWN[stg_raw_sN_accepted]:::stage
     end
 
     M[[MergeEngine<br/>strategy: coalesce / priority-override / union / intersect]]:::phase
@@ -279,6 +401,7 @@ flowchart TB
 
     PMP[🧽 Prep post-merge<br/>rules with no sourceId]:::phase
     PSum[/prep-summary.json<br/>aggregates all firings/]:::output
+    ENR[✨ Enrich post-merge<br/>private sluice-enrich<br/>skipped if absent]:::phase
     PMDQ[Post-merge DQ<br/>rules with no sourceId]:::phase
     TX[Transform<br/>stg_merged → stg_transformed]:::phase
     LD[Load to target]:::phase
@@ -292,7 +415,7 @@ flowchart TB
     M --> MJ --> MG
     M --> MC --> CLog
     MG --> PMP --> PSum
-    PMP --> PMDQ --> TX --> LD --> ST --> CL
+    PMP --> ENR --> PMDQ --> TX --> LD --> ST --> CL
 ```
 
 **Merge strategies at a glance:**
@@ -499,16 +622,18 @@ flowchart LR
 
     subgraph Single[Single-source pipeline]
       direction LR
-      R1[(stg_raw)]:::t --> X1[(stg_transformed)]:::t
+      R1[(stg_raw)]:::t --> A1[(stg_raw_accepted<br/>only if rows rejected)]:::t --> X1[(stg_transformed)]:::t
+      R1 -.no rejections: passes straight through.-> X1
     end
 
     subgraph Multi[Multi-source pipeline]
       direction LR
-      RA[(stg_raw_source1)]:::t
-      RB[(stg_raw_source2)]:::t
-      RC[(stg_raw_sourceN)]:::t
+      RA[(stg_raw_source1<br/>+ _accepted)]:::t
+      RB[(stg_raw_source2<br/>+ _accepted)]:::t
+      RC[(stg_raw_sourceN<br/>+ _accepted)]:::t
       J[(stg_merge_joined)]:::t
       M[(stg_merged)]:::t
+      MA[(stg_merged_accepted)]:::t
       C[(stg_merge_conflicts)]:::t
       XT[(stg_transformed)]:::t
 
@@ -517,12 +642,12 @@ flowchart LR
       RC --> J
       J --> M
       J --> C
-      M --> XT
+      M --> MA --> XT
     end
 
-    subgraph Lookups[Lookup tables - loaded once, cached in-process]
-      L1[(currencyMap)]:::t
-      L2[(acctMgrMap)]:::t
+    subgraph Lookups[Lookups - each in its own throwaway :memory: store]
+      L1[(stg_lookup<br/>transform.lookups)]:::t
+      L2[(stg_prep_lookup<br/>prep.lookups)]:::t
     end
 ```
 
@@ -532,6 +657,17 @@ flowchart LR
 - `run.stagingDb: ':memory:'` → in-process only (used by tests, dryRun)
 - Tables are **not** dropped between phases — state is inspectable after a run
 - A fresh run truncates / recreates `stg_*` tables at the start of each phase
+- **DQ never deletes rejected rows.** When a run has rejections it materialises
+  `{table}_accepted` and hands that to Transform, leaving the original table
+  whole so a failed run can be inspected. With no rejections the table is passed
+  straight through and no `_accepted` table is created — do not write a query
+  that assumes one exists
+- **Lookup tables are not in the pipeline's staging database at all.** Each
+  lookup is resolved in its own throwaway `:memory:` `StagingStore` under a
+  fixed table name — `stg_lookup` for `transform.lookups`, `stg_prep_lookup`
+  for `prep.lookups` — reduced to a `Map` and cached in-process. You will not
+  find these tables in `{pipelineName}.duckdb` after a run, and the two caches
+  are deliberately separate (`PrepLookupResolver` vs `LookupResolver`)
 
 ---
 
@@ -557,7 +693,11 @@ stateDiagram-v2
     Full --> Extract
     Validate --> Extract
 
-    Extract --> DQ
+    Extract --> Prep : prep block set
+    Extract --> DQ : no prep
+    Prep --> Enrich : enrich block set and installed
+    Prep --> DQ : no enrich
+    Enrich --> DQ
     DQ --> Transform
     Transform --> Load : full run
     Transform --> Skip : dryRun or validate-only
@@ -651,7 +791,8 @@ classDiagram
 
 ## 12. Client deployment topology
 
-Each client runs Sluice as a CLI against its own private config repo.
+Each client runs Sluice as a CLI against its own private config repo. Client
+names here are aliases, not real engagements.
 
 ```mermaid
 flowchart LR
@@ -660,28 +801,28 @@ flowchart LR
     classDef erp fill:#C8E6C9,stroke:#2E7D32,color:#000
     classDef pkg fill:#1565C0,stroke:#0D47A1,color:#FFF
 
-    Pkg[@caracal-lynx/sluice<br/>npm package]:::pkg
+    Pkg["@caracal-lynx/sluice<br/>npm package"]:::pkg
 
-    subgraph Acme CorpEnv[Acme Corp]
+    subgraph AcmeEnv[Acme Corp]
       direction TB
-      CochRepo[clients/acme-corp<br/>private repo<br/>.env + *.pipeline.yaml]:::repo
-      CochSrc[(MSSQL LegacyDB)]:::client
-      IFS[IFS ERP<br/>CSV import dir]:::erp
-      CochRepo -->|sluice run| CochSrc
-      CochRepo --> IFS
+      AcmeRepo["clients/acme-corp<br/>private repo<br/>.env + *.pipeline.yaml"]:::repo
+      AcmeSrc[(MSSQL LegacyDB)]:::client
+      IFS["IFS ERP<br/>CSV import dir"]:::erp
+      AcmeRepo -->|sluice run| AcmeSrc
+      AcmeRepo --> IFS
     end
 
-    subgraph Style CoEnv[Style Co]
+    subgraph StyleEnv[Style Co]
       direction TB
-      Style CoRepo[clients/style-co<br/>private repo<br/>.env + *.pipeline.yaml]:::repo
-      Style CoSrc[(MSSQL / CSV exports)]:::client
-      BC[BlueCherry ERP<br/>CSV import dir]:::erp
-      Style CoRepo -->|sluice run| Style CoSrc
-      Style CoRepo --> BC
+      StyleRepo["clients/style-co<br/>private repo<br/>.env + *.pipeline.yaml"]:::repo
+      StyleSrc[(MSSQL / CSV exports)]:::client
+      BC["BlueCherry ERP<br/>CSV import dir"]:::erp
+      StyleRepo -->|sluice run| StyleSrc
+      StyleRepo --> BC
     end
 
-    Pkg -.installed via npm.-> CochRepo
-    Pkg -.installed via npm.-> Style CoRepo
+    Pkg -.installed via npm.-> AcmeRepo
+    Pkg -.installed via npm.-> StyleRepo
 ```
 
 ---
@@ -693,6 +834,7 @@ following frames (left-to-right, then wrap):
 
 | #   | Frame title                  | Content                     | Connector style    |
 | --- | ---------------------------- | --------------------------- | ------------------ |
+| 0   | Pipeline Stages Overview     | Diagram 0                   | Top → bottom       |
 | 1   | System Context               | Diagram 1                   | Left → right       |
 | 2   | Component Architecture       | Diagram 2                   | Top → bottom       |
 | 3   | Runtime — Single-Source      | Diagram 3 (sequence)        | Vertical lifelines |
@@ -712,6 +854,13 @@ following frames (left-to-right, then wrap):
   run for debugging._
 - _Per-source DQ runs **before** merge; post-merge DQ runs **after**. Same
   rule library, different scope._
+- _Enrich sits between **Prep and DQ**, not after Transform — enriched columns
+  are meant to be validated. Its implementation is the private
+  `@caracal-lynx/sluice-enrich`; if that package is absent the phase is skipped
+  silently, so an "enrich did nothing" report usually means "not installed"._
+- _DQ never deletes a rejected row. It materialises `{table}_accepted` and
+  passes that on, so the rejected rows survive in the original table for
+  post-mortem._
 - _The `${ENV_VAR}` interpolation happens in `ConfigLoader.load()` — the
   CLI is responsible for calling `loadEnv()` first._
 - _`type: custom` fields and `dq.rulesFile` references are resolved by the
@@ -728,3 +877,25 @@ following frames (left-to-right, then wrap):
 - **Static export:** `npx @mermaid-js/mermaid-cli -i docs/architecture-diagrams.md -o docs/arch.pdf`
 - **FigJam:** paste each Mermaid block as a text node beside its frame for
   source-of-truth reference.
+- **Check every block parses** before committing a change to this file. From
+  `packages/sluice`:
+
+  ```powershell
+  # One-off: mermaid-cli renders through puppeteer and needs a headless browser
+  pnpm dlx puppeteer browsers install chrome-headless-shell
+
+  # The check itself — prints "✅" per block, non-zero exit on a parse error
+  pnpm dlx @mermaid-js/mermaid-cli -i docs/architecture-diagrams.md -o "$env:TEMPrch-check.md"
+  Remove-Item .rch-check-*.svg    # it writes one SVG per block into the CWD
+  ```
+
+  All 15 blocks pass as of 2026-08-22. Two gotchas the command earns its keep
+  on: it writes a numbered `.svg` per diagram into the **current directory**
+  (delete them — they are not wanted in the repo), and without the browser
+  install it fails with a `Could not find chrome-headless-shell` error rather
+  than a syntax complaint.
+
+  Diagram 12 shipped unrenderable for weeks because nothing ran this: node ids
+  cannot contain spaces, and a find-and-replace over client names had left
+  `Style CoRepo`. GitHub renders a broken block as a small error box that is
+  very easy to scroll past.
