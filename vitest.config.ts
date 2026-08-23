@@ -30,6 +30,31 @@ const INTEGRATION_TIMEOUT_MS = 30_000;
 export default defineConfig({
   test: {
     globals: false,
+    /**
+     * Thresholds set from a MEASURED baseline, not chosen (DAG-229). Run
+     * 2026-08-23: statements 83.45, branches 72.01, functions 88.86, lines 84.62.
+     * Floors sit ~2 points below measured — enough headroom that a marginal v8
+     * difference between the ubuntu PR run and the windows master run cannot go
+     * red on its own, and tight enough that a real regression does.
+     *
+     * `include` is load-bearing and must stay. Without it v8 counts only files the
+     * tests happened to load, which flatters the number: the same suite measured
+     * 66.91% branches unscoped and 72.01% scoped to src/. The unscoped figure was
+     * dragged down by non-src files and is not what [TEST-04] is about.
+     *
+     * These clear [TEST-04] (lines >=80, branches >=70) with room to spare. Ratchet
+     * upward in later PRs; never lower a floor to make a red build pass.
+     */
+    coverage: {
+      provider: "v8",
+      include: ["src/**"],
+      thresholds: {
+        statements: 81,
+        branches: 70,
+        functions: 86,
+        lines: 82,
+      },
+    },
     projects: [
       {
         resolve,
