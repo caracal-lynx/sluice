@@ -73,7 +73,7 @@
     "dayjs": "^1.11.21",
     "dotenv": "^17.4.2",
     "expr-eval-fork": "^3.0.3",
-    "js-yaml": "^5.2.3",
+    "js-yaml": "catalog:",
     "mssql": "^12.5.5",
     "pg": "catalog:",
     "picocolors": "catalog:",
