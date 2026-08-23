@@ -127,9 +127,11 @@ export const transform: TransformPlugin = {
   id: "normaliseUkPhone",
   description: "Strip spaces, hyphens, and country prefix from UK phone numbers",
 
-  apply(input) {
-    if (input == null) return null;
-    const digits = String(input).replace(/[\s\-()]+/g, "");
+  // apply(value, row, config) — `row` is the whole source row, `config` carries
+  // the field mapping including any `options:` from the YAML.
+  apply(value, _row, _config) {
+    if (value == null) return null;
+    const digits = String(value).replace(/[\s\-()]+/g, "");
     if (digits.startsWith("+44")) return "0" + digits.slice(3);
     return digits;
   },
@@ -181,28 +183,35 @@ For plugins you want to share across multiple client engagements — or sell as 
 
 ```yaml
 # sluice.config.yaml
+version: "1.0"
+
 plugins:
-  - "@caracal-lynx/etl-rules-uk"
-  - "@caracal-lynx/sluice-adapter-ifs"
-  - "@example/sluice-rules-fashion"
+  - package: "@caracal-lynx/etl-rules-uk"
+  - package: "@example/sluice-rules-fashion"
+    options:
+      strictSeasonCodes: true
 ```
 
-Each package exports a `register()` function that's called once at the start of every pipeline run:
+Both keys are required: `version` is a string, and `plugins` is an array of **objects** with a `package` key — not an array of bare package-name strings. The optional `options` map is passed through verbatim to that package's `register()`.
+
+Each package must export a `plugin` object (or a default export) with a `register()` function, called once at the start of every pipeline run:
 
 ```typescript
-// In your published package
+// In your published package — the export MUST be named `plugin` (or be the default export)
 import type { PluginPackage } from "@caracal-lynx/sluice";
 
-export const sluicePlugin: PluginPackage = {
-  name: "@example/sluice-rules-fashion",
-  version: "1.0.0",
-  register(registry) {
-    registry.rules.add(myCustomRule);
-    registry.transforms.add(myCustomTransform);
-    registry.mergeStrategies.add(myCustomMergeStrategy);
+export const plugin: PluginPackage = {
+  register(rules, transforms, options, mergeStrategies) {
+    rules.register(myCustomRule);
+    transforms.register(myCustomTransform);
+    mergeStrategies?.register(myCustomMergeStrategy);
   },
 };
 ```
+
+`register()` takes four positional arguments — `(rules, transforms, options?, mergeStrategies?)` — not a single registry bag. `mergeStrategies` is optional, so guard it. Every registry's add method is called `register()`.
+
+A package that exports under any other name, or that has no `register` function, fails the run with a `ConfigError` naming the package.
 
 ### Resolution order
 
@@ -223,7 +232,7 @@ sluice merge list-strategies # list all merge strategies
 sluice merge info coalesce  # detail on a specific merge strategy
 ```
 
-`sluice plugins` shows the source of every plugin (built-in, composite, file, or npm package), which is invaluable when debugging "why is my custom rule not being picked up".
+`sluice plugins` prints the registered rule ids, transform ids, and merge-strategy ids as a structured log line. If a custom rule you expect is absent from that list, it was never loaded — check the file suffix, the export name, and that the directory is either `plugins/` next to the pipeline or passed via `--plugins`.
 
 ## See also
 

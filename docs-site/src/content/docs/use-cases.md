@@ -29,11 +29,13 @@ Sluice's value here:
 
 Structured migration into ERP systems such as **IFS**, **Microsoft Dynamics 365 Business Central**, or **BlueCherry** (CGS). ERP imports are unforgiving — column order, date format, and entity ordering all matter.
 
-ERP-specific adapters are paid add-ons from Caracal Lynx — see [Commercial Support](/sluice/commercial-support/). They handle:
+The `ifs`, `bc`, and `bluecherry` target adapters are built in and handle:
 
 - Required-column validation **before** the load (no half-imported rows).
 - ERP-specific date formats and column orderings.
 - OAuth 2.0 (Business Central), CSV with strict headers (BlueCherry), or no-header CSV (IFS).
+
+What Caracal Lynx sells is the engagement around them — the mapping, the rule design, and the delivery. See [Commercial Support](/sluice/commercial-support/).
 
 ## Data warehouse loading
 

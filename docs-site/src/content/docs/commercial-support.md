@@ -1,11 +1,17 @@
 ---
 title: Commercial Support
-description: Sluice is built and maintained by Caracal Lynx Limited. Paid services include AI Data Readiness Audits, ERP adapters, the Enrich service, the MCP server, and full migration delivery.
+description: Sluice is built and maintained by Caracal Lynx Limited. Paid services include AI Data Readiness Audits, the Enrich service, domain rule packages, the MCP server, and full migration delivery.
 ---
 
 Sluice is open source and free under the [Elastic Licence 2.0](https://github.com/caracal-lynx/sluice/blob/master/LICENSE). It is built and maintained by **Caracal Lynx Limited** (Scottish company SC826823) — an IT and data consultancy specialising in data migrations and data quality for organisations adopting AI tools.
 
-The CLI engine, the built-in adapters (MSSQL, PostgreSQL, CSV, XLSX, REST, generic CSV target, generic PostgreSQL target), the DQ engine, the transform engine, the merge engine, and the plugin system are all in the open-source core. There are no feature gates and no licence checks — anything you find in this documentation works in the open core unless it's explicitly tagged as a paid add-on.
+Everything the CLI does is in the open-source core. That includes:
+
+- **All seven source adapters** — MSSQL, PostgreSQL, CSV, XLSX, REST, Odoo CSV, JSON.
+- **All five target adapters** — including the `ifs`, `bluecherry`, and `bc` ERP adapters.
+- The DQ engine, the Prep phase, the transform engine, the multi-source merge engine, and the three-tier plugin system.
+
+There are no feature gates and no licence checks. Anything documented on this site works in a plain `npm install @caracal-lynx/sluice`, unless it is explicitly listed as a paid add-on below.
 
 What Caracal Lynx sells, separately, is the layer of specialist knowledge that turns the engine into a delivered migration. We maintain a small set of premium add-ons and offer hands-on services on top.
 
@@ -19,17 +25,7 @@ For organisations adopting Microsoft Copilot, Power BI, or any LLM-based tooling
 
 ### Enrich Service
 
-The `@caracal-lynx/sluice-enrich` private package adds an **Enrich phase** between Extract and DQ. It runs async API lookups in parallel — EU VAT validation via VIES, UK VAT via HMRC, UK Trade Tariff lookups — and writes the enriched columns straight back into staging so downstream DQ rules can validate against them. Designed for batch-friendly third-party APIs with rate limits and caching baked in.
-
-### Application Adapters
-
-Pre-built target adapters for ERP systems we've spent years implementing:
-
-- **`@caracal-lynx/sluice-adapter-ifs`** — IFS ERP via CSV import
-- **`@caracal-lynx/sluice-adapter-bc`** — Microsoft Dynamics 365 Business Central via OData REST + OAuth 2.0 client credentials
-- **`@caracal-lynx/sluice-adapter-bluecherry`** — BlueCherry (CGS) via fixed-format CSV import per entity
-
-Configured the same way as built-in adapters; drop in the npm dependency and they self-register.
+The `@caracal-lynx/sluice-enrich` private package adds the [**Enrich phase**](/sluice/reference/prep-and-enrich/#enrich--phase-4a) between Extract and DQ. It runs async API lookups in parallel — EU VAT validation via VIES, UK VAT via HMRC, UK Trade Tariff lookups — and writes the enriched columns straight back into staging so downstream DQ rules can validate against them. Designed for batch-friendly third-party APIs with rate limits and caching baked in.
 
 ### Domain Rule Packages
 
@@ -44,6 +40,10 @@ Reusable DQ rule packs for domains where the rules are non-obvious or burdensome
 
 > Without the MCP server: Claude generates YAML → human runs it → human pastes results back → Claude advises.
 > With the MCP server: Claude generates YAML → executes it → inspects results → self-corrects. Human approval only required before live runs.
+
+### ERP Migration Delivery
+
+The `ifs`, `bc`, and `bluecherry` adapters ship in the open core — you do not need to buy anything to use them. What is hard about an ERP migration is not the adapter; it is knowing which of the two hundred columns in `CustomerInfo` your client actually has to populate, in what order, and what the ERP does when one of them is wrong. That is what we sell.
 
 ### Migration Delivery
 

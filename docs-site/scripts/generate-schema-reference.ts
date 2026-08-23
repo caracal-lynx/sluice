@@ -26,6 +26,7 @@ import {
   EnrichSchema,
   MergeSchema,
   MultiSourceEntrySchema,
+  PrepSchema,
   RunSchema,
   SourceSchema,
   TargetSchema,
@@ -234,6 +235,11 @@ const sections = [
     DqSchema,
   ),
   renderSection(
+    "`prep` — Phase 12 (pre-enrich fixup)",
+    "Optional. Runs immediately after Extract (and after `rename`/merge in multi-source mode), **before** Enrich and DQ, mutating the staging table in place so both downstream phases see already-fixed data. Each rule sets exactly one of `cleanse`, `expression`, or `lookup`. Rules are applied top-to-bottom and later rules see earlier rules' mutations. Unlike Enrich, prep still runs under `--dry-run` and `validate-only`, because DQ depends on its output. Skip it with `sluice run --no-prep`.",
+    PrepSchema,
+  ),
+  renderSection(
     "`enrich` — Phase 4a (paid add-on)",
     "Optional. Runs between Extract (or Merge) and DQ. The framework that consumes this block lives in the private `@caracal-lynx/sluice-enrich` package; with that not installed, an `enrich:` block is parsed and validated but the phase is skipped with a `WARN` log.",
     EnrichSchema,
@@ -283,6 +289,7 @@ pipeline:   { ... }   # identity and metadata (always required)
 source:     { ... }   # single-source mode (mutually exclusive with sources+merge)
 sources:    [ ... ]   # multi-source mode — minimum two entries
 merge:      { ... }   # required when sources is present
+prep:       { ... }   # OPTIONAL — Phase 12; pre-enrich fixup, mutates staging in place
 enrich:     { ... }   # OPTIONAL — Phase 4a; private add-on
 dq:         { ... }   # data quality rules
 transform:  { ... }   # field mappings, lookups, transforms

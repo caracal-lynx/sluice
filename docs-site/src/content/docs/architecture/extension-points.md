@@ -41,15 +41,13 @@ Returns `null` if the value passes; returns a `RuleViolation` if it fails. `seve
 export interface TransformPlugin {
   readonly id: string;
   readonly description?: string;
-  apply(
-    input: unknown,
-    config: { options?: Record<string, unknown> },
-    row: Record<string, unknown>,
-  ): unknown | Promise<unknown>;
+  apply(value: unknown, row: Record<string, unknown>, config: CustomFieldMapping): unknown;
 }
 ```
 
-Custom transforms are referenced from `transform.fields[]` as `type: custom` with `customOp: <id>`. Sluice passes the source value (`input`), any per-field `options:` from the YAML, and the whole `row` (in case the transform needs sibling fields).
+Custom transforms are referenced from `transform.fields[]` as `type: custom` with `customOp: <id>`. Sluice passes the source value, the whole `row` (in case the transform needs sibling fields), and the field mapping — which carries any per-field `options:` from the YAML.
+
+Note the argument order: **`(value, row, config)`**. Like `RulePlugin`, `apply()` is contractually **synchronous and pure** — it must not perform I/O and must not mutate `row`. Return `null` to emit a null; throw `TransformError` for an unrecoverable value. The one plugin interface permitted to be async and do I/O is [`EnrichPlugin`](/sluice/reference/prep-and-enrich/#writing-an-enrich-provider).
 
 ### `MergeStrategyPlugin`
 
@@ -98,7 +96,7 @@ export interface TargetAdapter {
 }
 ```
 
-Custom adapters register themselves via a Tier 3 npm package's `register()` function, the same way the paid IFS / Business Central / BlueCherry adapters do.
+Custom adapters register themselves via a Tier 3 npm package's `register()` function. The built-in IFS / Business Central / BlueCherry adapters are not plugins — they are compiled into the core and self-register from `src/adapters/target/index.ts` — but they are the closest reference implementations to read.
 
 ## Registries
 
@@ -113,10 +111,12 @@ A separate registry lives in `src/merge/index.ts`:
 
 Adapters use their own registries:
 
-- `SourceAdapterRegistry` (`src/adapters/source/registry.ts`) — pre-loaded with `csv`, `mssql`, `pg`, `xlsx`, `rest`.
-- `TargetAdapterRegistry` (`src/adapters/target/registry.ts`) — pre-loaded with `csv`, `pg`. Paid ERP adapters add themselves on import.
+- `SourceAdapterRegistry` (`src/adapters/source/registry.ts`) — pre-loaded with `csv`, `mssql`, `pg`, `xlsx`, `rest`, `odoo-csv`, `json`.
+- `TargetAdapterRegistry` (`src/adapters/target/registry.ts`) — pre-loaded with `csv`, `ifs`, `bluecherry`, `pg`, `bc`.
 
-Each registry exposes `add(plugin)`, `get(id)`, `has(id)`, and `list()`.
+Both adapter barrels self-register their built-ins on first import, so importing the barrel is enough to make them resolvable.
+
+Each registry exposes `register(plugin)`, `get(id)`, `has(id)`, and `list()`. The adapter registries also expose `unregister(id)`, which is there for tests. Note the method is `register()`, not `add()` — and the two adapter registries **throw** on a duplicate id rather than overwriting.
 
 ## Discovery: the resolution order
 
@@ -135,7 +135,18 @@ Tier 2 plugins are loaded with `import()` from absolute paths. Node 24's stricte
 
 ## How `sluice plugins` introspects
 
-The `sluice plugins` CLI command iterates all five registries and prints each entry with its id, description, and source (built-in / composite / file / npm package). When debugging "why isn't my custom rule being picked up", that's the first place to look.
+The `sluice plugins` CLI command loads Tier 2 and Tier 3 plugins, then prints the ids held by the `RuleRegistry`, the `TransformRegistry`, and the `MergeStrategyRegistry` as a single structured log line:
+
+```json
+{
+  "rules": ["ifsCustomerNo"],
+  "transforms": ["normaliseUkPhone"],
+  "mergeStrategies": ["coalesce", "priority-override", "union", "intersect", "mostRecent"],
+  "msg": "sluice plugins: loaded"
+}
+```
+
+It reports **ids only** — not descriptions, and not which tier each plugin came from. It also does not list the source or target adapter registries. So it answers "was my plugin loaded at all?", which is the common failure, but not "which of these two things registered `foo`?". For the latter, run with `--log-level debug` and read the per-file load lines.
 
 ## See also
 

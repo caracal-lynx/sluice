@@ -133,7 +133,7 @@ target:
     - SearchName
 ```
 
-The `columnOrder` mirrors the IFS import contract. Get one column wrong and IFS rejects the file, so this list is the most important thing to verify before a live run. See [Target Adapters → ifs](/sluice/reference/target-adapters/#ifs--ifs-erp-csv-import-paid-add-on).
+The `columnOrder` mirrors the IFS import contract. Get one column wrong and IFS rejects the file, so this list is the most important thing to verify before a live run. See [Target Adapters → ifs](/sluice/reference/target-adapters/#ifs--ifs-erp-csv-import).
 
 ## Step 5 — Run state
 
@@ -175,7 +175,7 @@ The development loop:
 sluice check  customers.pipeline.yaml
 
 # 2. Extract + DQ + transform, no load
-sluice validate customers.pipeline.yaml --dry-run
+sluice validate customers.pipeline.yaml
 
 # 3. Inspect the rejection CSV and DQ summary
 Get-Content output\acme-corp-customers-rejected.csv | Select-Object -First 20
@@ -191,9 +191,12 @@ sluice run customers.pipeline.yaml
 - **Date format assumptions.** Source dates often arrive as strings without a clear format. Prefer `type: date` with an explicit `format:` rather than letting dayjs guess.
 - **Encoding.** Source CSVs from European clients are often Latin-1 or Windows-1252, not UTF-8. Set `source.encoding` accordingly.
 - **`unique` and incremental mode.** `unique` checks the whole **extracted** dataset, not the union of past runs. If you incrementally extract daily, duplicates that span days won't be caught — handle uniqueness at the target instead.
+- **Loosening a rule to accommodate dirty data.** If a `pattern` rule rejects every row because the source pads its codes, trim the column in a [`prep:`](/sluice/reference/prep-and-enrich/) rule and keep the rule strict. A rule weakened to fit the data stops being a control.
+- **Assuming `enrich:` ran.** Without `@caracal-lynx/sluice-enrich` installed, an `enrich:` block validates fine and is then skipped with a `WARN` — and any DQ rule reading its output columns validates against nothing. Check the log.
 
 ## Next steps
 
 - Run it in CI: see [CI/CD Integration](/sluice/guides/ci-cd/).
-- Need to consolidate from multiple sources? See the multi-source examples in [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/).
+- Need to consolidate from multiple sources? See [Data Migration Patterns → Pattern 3](/sluice/guides/data-migration-patterns/) for a worked `sources:` + `merge:` example.
+- Need to fix data before it is validated? See [Prep & Enrich Phases](/sluice/reference/prep-and-enrich/).
 - Need a custom rule or transform? See the [Plugin System](/sluice/guides/plugin-system/) guide.

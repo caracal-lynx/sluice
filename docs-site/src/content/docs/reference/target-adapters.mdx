@@ -3,19 +3,19 @@ title: Target Adapters
 description: Reference for every supported Sluice target adapter — config keys, examples, and format-specific notes.
 ---
 
-A Sluice **target adapter** loads transformed records to the system that will own the data going forward. The open-source core ships with two built-in target adapters — `csv` and `pg` — that cover generic flat-file output and PostgreSQL bulk insert. ERP-specific adapters (`bc`, `ifs`, `bluecherry`) are paid add-ons from Caracal Lynx; their config is documented here so the same YAML works whether or not you have the add-on installed.
+A Sluice **target adapter** loads transformed records to the system that will own the data going forward. Five target adapters ship in the package and are registered out of the box: `csv` and `pg` for generic flat-file output and PostgreSQL bulk insert, plus `ifs`, `bluecherry`, and `bc` for the three ERPs Caracal Lynx implements most often. There are no feature gates — every adapter on this page works in a plain `npm install @caracal-lynx/sluice`, under the terms of the [Elastic Licence 2.0](https://github.com/caracal-lynx/sluice/blob/master/LICENSE).
 
 ## Common config
 
 Every target has the same `adapter` field plus adapter-specific keys. The `adapter` value is one of:
 
 ```
-csv | pg | bc | ifs | bluecherry | rest
+csv | pg | ifs | bluecherry | bc
 ```
 
-For ERP adapters, see [Commercial Support](/sluice/commercial-support/).
+Building an ERP migration and want the mapping done for you rather than by you? See [Commercial Support](/sluice/commercial-support/).
 
-## `csv` — Generic CSV output (built-in)
+## `csv` — Generic CSV output
 
 The simplest target. Writes the transformed staging table to a CSV file. Use this when you need a portable, human-readable load file or a CI artefact.
 
@@ -37,7 +37,7 @@ target:
 | `encoding`      | string  | `utf-8` | File encoding.                       |
 | `nullValue`     | string  | `""`    | How nulls are rendered.              |
 
-## `pg` — PostgreSQL bulk insert (built-in)
+## `pg` — PostgreSQL bulk insert
 
 Loads the staging table into a PostgreSQL table. Supports insert, ignore-on-conflict, and upsert modes.
 
@@ -59,7 +59,7 @@ target:
 | `onConflict` | enum     | `fail`   | `fail` \| `upsert` \| `ignore`.                                                  |
 | `upsertKey`  | string[] | —        | **Required** when `onConflict: upsert`. Column names that form the conflict key. |
 
-## `ifs` — IFS ERP CSV import (paid add-on)
+## `ifs` — IFS ERP CSV import
 
 IFS imports CSV with no header row, in a column order defined by the IFS entity import contract.
 
@@ -93,7 +93,7 @@ target:
 - Date columns are formatted with dayjs using `dateFormat`.
 - The exact column order is critical — IFS imports by position, not by name.
 
-## `bluecherry` — BlueCherry ERP CSV import (paid add-on)
+## `bluecherry` — BlueCherry ERP CSV import
 
 BlueCherry (CGS) uses fixed-format CSV imports per entity type. The adapter validates required columns at `connect()` time, before any data is read, so misconfigured pipelines fail fast.
 
@@ -134,7 +134,7 @@ target:
 - If your BlueCherry instance uses different column names, point `template` at a header-only template CSV — the adapter uses that as the definitive column order.
 - These column names are conventions; verify against your BlueCherry import documentation before running a live migration.
 
-## `bc` — Business Central REST (paid add-on)
+## `bc` — Business Central REST
 
 Loads to Microsoft Dynamics 365 Business Central via OData REST. Uses OAuth 2.0 client credentials for authentication and OData `$batch` for throughput.
 
@@ -167,3 +167,7 @@ target:
 ## Custom target adapters
 
 For systems Sluice doesn't cover, implement the `TargetAdapter` interface as a Tier 2 file plugin or a Tier 3 npm package — see the [Plugin System](/sluice/guides/plugin-system/) guide.
+
+:::caution[There is no `rest` target adapter]
+The pipeline schema currently accepts `rest` as a `target.adapter` value, but no REST target is registered. A pipeline that sets it passes `sluice check` and then fails at load time with `No target adapter registered for "rest"`. To push transformed rows at an arbitrary HTTP API today, write a `TargetAdapter` plugin; the `bc` adapter is the closest reference implementation.
+:::

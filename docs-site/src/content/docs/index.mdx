@@ -39,8 +39,9 @@ import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
     Pipelines defined in YAML, no code required for standard migrations.
   </Card>
   <Card title="Source & target agnostic" icon="random">
-    Built-in adapters for **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, **REST**. ERP connectors
-    (IFS, Business Central, BlueCherry) available as paid add-ons.
+    Reads **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, **REST**, **Odoo CSV**, and **JSON**. Writes
+    **CSV**, **PostgreSQL**, and the **IFS**, **Business Central**, and **BlueCherry** ERPs — all
+    built in.
   </Card>
   <Card title="Data quality first" icon="approve-check-circle">
     Validate before you load. Rejection CSVs and DQ summary reports built in.
@@ -112,7 +113,7 @@ That's the whole product. Read the [Quickstart](/sluice/getting-started/quicksta
   />
   <LinkCard
     title="How It Works"
-    description="The runtime architecture and the six pipeline phases"
+    description="The runtime architecture and the pipeline phases"
     href="/sluice/architecture/how-it-works/"
   />
   <LinkCard

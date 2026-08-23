@@ -1,0 +1,220 @@
+---
+title: Prep & Enrich Phases
+description: The two optional pipeline phases — Prep (in-place data fixup, open core) and Enrich (async third-party lookups, paid add-on) — and how they interact with DQ.
+---
+
+Most pipelines are Extract → DQ → Transform → Load. Two **optional** phases slot in between Extract and DQ, and both exist for the same reason: some data cannot be validated honestly until it has been fixed or filled in first.
+
+| Phase      | Runs                        | Ships in                               | What it does                                                              |
+| ---------- | --------------------------- | -------------------------------------- | ------------------------------------------------------------------------- |
+| **Prep**   | Extract → **Prep** → Enrich | Open core                              | Mutates staging columns in place using cleanse ops, expressions, lookups. |
+| **Enrich** | Prep → **Enrich** → DQ      | `@caracal-lynx/sluice-enrich` (add-on) | Async third-party API lookups; writes results into new staging columns.   |
+
+Both run **before** DQ, deliberately. Fixing a postcode's casing and then validating it is useful; validating it first and rejecting the row is not.
+
+## Ordering
+
+```
+Extract  →  [Prep]  →  [Enrich]  →  DQ  →  Transform  →  [Load]
+```
+
+In multi-source pipelines, prep rules scoped with `sourceId` fire **per source before the merge**; rules without a `sourceId` fire once **after** the merge, against `stg_merged`.
+
+---
+
+## Prep — Phase 12
+
+Prep mutates an existing staging column **in place**. It adds no columns and drops no rows; it rewrites values so that Enrich and DQ see already-corrected data.
+
+The classic case: a legacy system pads account codes to ten characters with spaces, and your DQ `pattern` rule rejects every one of them. You could loosen the pattern — or you could trim the column once in prep and keep the rule strict.
+
+```yaml
+prep:
+  lookups:
+    - name: countryFixups
+      source: { adapter: csv, file: ./lookups/country-fixups.csv }
+      key: wrong
+      value: right
+
+  rules:
+    # 1. Cleanse chain — same syntax as transform.fields[].cleanse
+    - field: ACCT_CODE
+      cleanse: trim|uppercase
+
+    # 2. Expression, guarded by a row predicate
+    - field: CREDIT_LIMIT
+      when: "CREDIT_LIMIT == ''"
+      expression: "0"
+
+    # 3. Lookup-driven correction
+    - field: COUNTRY
+      lookup: countryFixups
+      onMiss: keep
+
+  summaryFile: ./output/customers-prep-summary.json
+```
+
+### Rule keys
+
+| Key          | Type   | Default | Notes                                                                                                                       |
+| ------------ | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `field`      | string | —       | **Required.** An existing column, mutated in place.                                                                         |
+| `cleanse`    | string | —       | Pipe-separated cleanse chain. See [Transforms → Cleanse operations](/sluice/reference/transforms/#cleanse-operations).      |
+| `expression` | string | —       | `expr-eval` expression, or `js:` prefix for the vm sandbox.                                                                 |
+| `lookup`     | string | —       | Name of a `prep.lookups[]` entry.                                                                                           |
+| `when`       | string | —       | Optional row predicate. Falsy → the rule is skipped for that row and counted in `rowsSkipped`.                              |
+| `onMiss`     | enum   | `keep`  | Lookup misses only. `keep` leaves the value untouched; `null` overwrites with SQL `NULL`; `error` throws and halts the run. |
+| `sourceId`   | string | —       | Multi-source only. Scopes the rule to one pre-merge source. Rules with no `sourceId` run post-merge.                        |
+
+**Exactly one** of `cleanse`, `expression`, or `lookup` must be set on each rule — the schema rejects zero or two. `onMiss` is only valid alongside `lookup`.
+
+### Rules are ordered and cumulative
+
+Rules apply top-to-bottom and **later rules see earlier rules' mutations**. That is the point — chain a trim, then a lookup against the trimmed value, then an expression over the result.
+
+### When prep runs
+
+Unlike Enrich, prep runs **even under `--dry-run` and `sluice validate`**, because DQ depends on its output. A validate run that skipped prep would report violations the real run would never produce.
+
+```powershell
+sluice run customers.pipeline.yaml --no-prep       # skip it explicitly
+sluice validate customers.pipeline.yaml --no-prep
+```
+
+### Prep summary JSON
+
+Prep writes `{outputDir}/{pipeline.name}-prep-summary.json` (override with `prep.summaryFile`). One entry per _firing_ — one for a single-source pipeline, up to N + 1 for multi-source:
+
+```json
+{
+  "pipeline": "acme-corp-customers",
+  "runAt": "2026-08-23T09:30:00.000Z",
+  "firings": [
+    {
+      "table": "stg_raw",
+      "sourceId": null,
+      "rulesApplied": 3,
+      "rules": [
+        {
+          "field": "ACCT_CODE",
+          "op": "cleanse:trim|uppercase",
+          "rowsChanged": 1842,
+          "rowsSkipped": 0,
+          "rowsFailed": 0
+        },
+        {
+          "field": "CREDIT_LIMIT",
+          "op": "expression",
+          "rowsChanged": 14,
+          "rowsSkipped": 1828,
+          "rowsFailed": 0
+        },
+        {
+          "field": "COUNTRY",
+          "op": "lookup:countryFixups",
+          "rowsChanged": 106,
+          "rowsSkipped": 0,
+          "rowsFailed": 0
+        }
+      ]
+    }
+  ]
+}
+```
+
+`rowsChanged` counts rows where the new value actually **differed** from the old one, so a rule reporting `rowsChanged: 0` across a full dataset is a rule that is not earning its place.
+
+A prep failure exits with code **`5`**.
+
+---
+
+## Enrich — Phase 4a
+
+Enrich calls **external APIs** and writes the answers into new staging columns, so DQ rules can then validate against a third party rather than against a regex.
+
+The schema, the public `EnrichPlugin` interface, and the injection hook are all in the open-source core. The framework that executes the phase — the provider registry, the concurrency runner, the cache — lives in the private **`@caracal-lynx/sluice-enrich`** package. See [Commercial Support](/sluice/commercial-support/).
+
+:::caution[Silently skipped when not installed]
+With the private package absent, an `enrich:` block is still parsed and validated — but the phase is **skipped with a `WARN` log** and the run continues. If your DQ rules reference enrich output columns, they will validate against columns that were never written. Check the log rather than assuming enrich ran.
+:::
+
+```yaml
+enrich:
+  cache: persist # true (memory) | false | "persist" (on disk, between runs)
+  onError: flag # flag | skip | fail
+  lookups:
+    - field: VAT_NUMBER
+      provider: vies
+      preValidate: ukVatNumber
+      writeColumns:
+        valid: VAT_VALID
+        name: VAT_REGISTERED_NAME
+        address: VAT_REGISTERED_ADDRESS
+      onError: flag
+      cache: true
+```
+
+### `enrich` keys
+
+| Key       | Type                       | Default | Notes                                                                                     |
+| --------- | -------------------------- | ------- | ----------------------------------------------------------------------------------------- |
+| `cache`   | boolean \| `"persist"`     | `true`  | `true` in-memory for the run; `"persist"` on disk between runs; `false` disables caching. |
+| `onError` | `flag` \| `skip` \| `fail` | `flag`  | Pipeline-wide policy. `flag` marks the row and keeps it; `skip` drops it; `fail` halts.   |
+| `lookups` | object[]                   | —       | **Required**, minimum one entry.                                                          |
+
+### `enrich.lookups[]` keys
+
+| Key            | Type    | Notes                                                                                                     |
+| -------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `field`        | string  | **Required.** The staging column whose value is sent to the provider.                                     |
+| `provider`     | string  | **Required.** Provider id (e.g. `vies`, `hmrc`).                                                          |
+| `writeColumns` | object  | **Required.** Must contain `valid:`; any further keys map provider data fields to staging column names.   |
+| `preValidate`  | string  | Optional rule id applied before the call — skip a network round-trip on a value that is malformed anyway. |
+| `onError`      | enum    | Per-lookup override of the pipeline-wide `onError`.                                                       |
+| `cache`        | boolean | Per-lookup override of the pipeline-wide `cache`.                                                         |
+| `options`      | object  | Arbitrary per-provider config, passed through verbatim.                                                   |
+
+### Tuning from `run:`
+
+These live in the `run:` block and are consumed by the private package if installed:
+
+| Key                 | Default | Notes                                   |
+| ------------------- | ------- | --------------------------------------- |
+| `enrichConcurrency` | `5`     | Concurrent in-flight provider requests. |
+| `enrichTimeoutMs`   | `5000`  | Per-request timeout.                    |
+| `enrichMaxRetries`  | `3`     | Max retries per call (0–5).             |
+
+### When enrich runs
+
+Enrich is skipped when the pipeline is a `--dry-run` or `sluice validate` run, when `--no-enrich` is passed, or when the private package is not installed. An enrich failure exits with code **`4`**.
+
+```powershell
+sluice run customers.pipeline.yaml --no-enrich
+```
+
+### Writing an enrich provider
+
+`EnrichPlugin` is the only plugin interface in Sluice permitted to perform I/O — every other plugin type is contractually pure and synchronous.
+
+```typescript
+import type { EnrichPlugin, EnrichResult, EnrichOptions } from "@caracal-lynx/sluice";
+
+export const plugin: EnrichPlugin = {
+  id: "companies-house",
+  description: "Look up a UK company registration number.",
+
+  async enrich(value: string, options: EnrichOptions): Promise<EnrichResult> {
+    // MUST respect options.timeoutMs, and MUST NOT throw except on HTTP 429
+    // (let 429 bubble so axios-retry can apply exponential backoff).
+    return { valid: true, data: { name: "Example Ltd" } };
+  },
+};
+```
+
+Drop it in as a `*.enrich.ts` file in your `plugins/` directory; the private package's loader discovers it through the registered phase factory.
+
+## See also
+
+- [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/) — generated field-by-field reference
+- [Data Quality Rules](/sluice/reference/dq-rules/) — validating what prep and enrich produced
+- [How It Works](/sluice/architecture/how-it-works/) — where both phases sit in the runtime

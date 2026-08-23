@@ -20,6 +20,7 @@ These keys are valid on most transform types:
 | `default`  | any                | Fallback value when source is null/empty.                                                          |
 | `optional` | boolean            | If `true`, null result is allowed without raising a `TransformError`. Default: `false`.            |
 | `max`      | number             | Truncate string output to N characters **after** cleanse.                                          |
+| `unmapped` | boolean            | If `true`, emit `transform.unmappedPlaceholder` and ignore `from`/`type`. See below.               |
 
 ## Transform types
 
@@ -169,9 +170,29 @@ Delegates to a [Tier 2 / Tier 3 transform plugin](/sluice/guides/plugin-system/)
 
 Custom transforms are how the Enrich service (`@caracal-lynx/sluice-enrich`) ships VAT validation, postcode lookup, and HMRC tariff lookups.
 
+### `unmapped` — iterative mapping placeholder
+
+Not a `type`, but a flag valid on any field mapping. When `unmapped: true`, the engine ignores `from` and `type` entirely and emits `transform.unmappedPlaceholder` for every row.
+
+```yaml
+transform:
+  unmappedPlaceholder: "*** TBC ***" # this is the default
+  fields:
+    - { from: CUST_CODE, to: CustomerNo, type: string }
+    - { to: SalesDistrict, type: string, unmapped: true } # no source identified yet
+```
+
+This exists so a draft pipeline can run **end to end** before every source field has been identified. Declare the full target column list on day one, mark the unknowns `unmapped: true`, and you get a load file with the right shape and an obvious placeholder in the gaps — which is far easier to walk a client through than a column that silently isn't there.
+
+Because `unmapped: true` overrides the normal requirement for `from`, it also silences the schema error you would otherwise get for a `string` field with no source.
+
+:::caution
+Grep for the placeholder before any live run. `*** TBC ***` reaching a production ERP is a failed migration, not a draft.
+:::
+
 ## Cleanse operations
 
-Apply via the `cleanse:` key on any transform that produces a string. Operations are applied **left-to-right** in the pipe chain.
+Apply via the `cleanse:` key on any transform that produces a string. Operations are applied **left-to-right** in the pipe chain. The same syntax is accepted by [prep rules](/sluice/reference/prep-and-enrich/#prep--phase-12), which apply a chain to a staging column in place before DQ runs.
 
 | Op                 | Example input               | Example output         |
 | ------------------ | --------------------------- | ---------------------- |
@@ -183,12 +204,15 @@ Apply via the `cleanse:` key on any transform that produces a string. Operations
 | `stripNonNumeric`  | `"AB-12!"`                  | `"12"`                 |
 | `stripWhitespace`  | `"h e l l o"`               | `"hello"`              |
 | `padStart:6:0`     | `"42"`                      | `"000042"`             |
+| `padEnd:6:_`       | `"42"`                      | `"42____"`             |
 | `truncate:20`      | 21-char string              | 20-char string         |
 | `nullIfEmpty`      | `""`                        | `null`                 |
 | `normaliseQuotes`  | `"it's"` (curly apostrophe) | `"it's"` (straight)    |
 | `normaliseUnicode` | `"café"`                    | `"cafe"` (NFD → ASCII) |
 
-Operations that take arguments use `:` as a separator: `padStart:6:0` means "pad start to 6 characters with `0`".
+Three ops take arguments, separated by `:` — `padStart:<width>[:<fill>]`, `padEnd:<width>[:<fill>]`, and `truncate:<length>`. `padStart:6:0` means "pad the start to 6 characters using `0`"; the fill character defaults to a space if you omit it.
+
+A `nullIfEmpty` that yields `null` **short-circuits the rest of the chain** — later ops are not applied to a null.
 
 Chain ops with `|`:
 

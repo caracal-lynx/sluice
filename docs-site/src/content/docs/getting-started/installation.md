@@ -50,13 +50,15 @@ In that mode every command becomes `npx sluice <command>` instead of plain `slui
 The `@caracal-lynx/sluice` npm package includes:
 
 - The `sluice` CLI binary.
-- Built-in source adapters for **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, and **REST**.
-- Built-in target adapters for **CSV** and **PostgreSQL**.
-- The full Data Quality and Transform engines.
+- Source adapters for **MSSQL**, **PostgreSQL**, **CSV**, **XLSX**, **REST**, **Odoo CSV exports**, and **JSON files**.
+- Target adapters for **CSV**, **PostgreSQL**, **IFS**, **BlueCherry**, and **Business Central**.
+- The full Data Quality, Prep, Transform, and multi-source Merge engines.
 - The plugin system (Tier 1 YAML composite rules, Tier 2 file plugins, Tier 3 npm packages).
 - The DuckDB-backed staging layer.
 
-ERP-specific target adapters (IFS, Business Central, BlueCherry), the Enrich service, country/region rule packages, and the MCP server are **paid add-ons** delivered via private npm packages — see [Commercial Support](/sluice/commercial-support/).
+All of the above works in a plain install, with no feature gates and no licence checks, under the [Elastic Licence 2.0](https://github.com/caracal-lynx/sluice/blob/master/LICENSE).
+
+Delivered separately as private packages: the **Enrich** service (`@caracal-lynx/sluice-enrich`, which adds the async third-party lookup phase), the country and domain **rule packages**, and the **MCP server** — see [Commercial Support](/sluice/commercial-support/).
 
 ## Next step
 

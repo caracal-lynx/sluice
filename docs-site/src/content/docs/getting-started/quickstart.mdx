@@ -64,7 +64,10 @@ Install the CLI globally if you haven't already — see [Installation](/sluice/g
      file: ./data/customers.csv
 
    dq:
-     stopOnCritical: true
+     # false so the run continues past the deliberate critical violation below and
+     # still writes the target file. The critical row is excluded from the output
+     # either way — see the note after step 6.
+     stopOnCritical: false
      rejectionFile: ./output/customers-rejected.csv
      rules:
        - field: name
@@ -109,14 +112,18 @@ Install the CLI globally if you haven't already — see [Installation](/sluice/g
 
    `validate` extracts, runs DQ, and applies transforms — but **does not load** to the target. This is the safe way to iterate on rules and mappings.
 
-   You'll see a phase-by-phase progress bar end with a coloured summary line:
+   You'll see a phase-by-phase progress bar, then a summary line:
 
    ```
-   ✅ Extracted 6 rows
-   ⚠️  4 passed · 2 rejected · 0 critical · 1 warning
+   [1/3] [EX] Extract        [ok]    6 rows  0.0s
+   [2/3] [DQ] Data quality   [fail]  6 rows  0.0s
+   [3/3] [TX] Transform      [ok]    5 rows  0.0s
+   [warn] · customers-quickstart · 6 rows extracted · 1 warnings · 5 loaded · 0.1s
    ```
 
-   The two rejected rows are the broken ones from step 2.
+   `Data quality` shows `[fail]` because a `critical` check fired — that is the phase
+   reporting what it found, not the run aborting. Transform emits **5** rows, not 6:
+   the empty-name row was dropped.
 
 6. **Run the full pipeline.**
 
@@ -130,58 +137,80 @@ Install the CLI globally if you haven't already — see [Installation](/sluice/g
 
 ## Inspect the output
 
-Three files land in `./output/`:
+Five files land in `./output/`:
 
 ```powershell
 Get-ChildItem output
-# customers-clean.csv          ← only the clean rows, with transformed columns
-# customers-rejected.csv       ← every row that failed any DQ check
-# customers-quickstart-dq-summary.json   ← machine-readable summary
+# customers-clean.csv                     ← the loaded rows, with transformed columns
+# customers-rejected.csv                  ← every DQ violation, one row per violation
+# customers-quickstart-dq-summary.json    ← machine-readable DQ summary
 # customers-quickstart-state.json         ← run state (for incremental mode)
+# customers-quickstart.duckdb             ← the staging database; safe to delete
 ```
 
-`customers-clean.csv` should look like this:
+That last one is the DuckDB staging file. It is rebuilt from scratch on every run, so you can delete it freely — or open it in the DuckDB CLI and query `stg_raw` and `stg_transformed` directly when something looks wrong.
+
+`customers-clean.csv` looks like this:
 
 ```csv
 Name,Email,Country,Source
 Ada Lovelace,ada@example.com,GB,quickstart
 Grace Hopper,grace@example.com,US,quickstart
 Alan Turing,alan@example.com,GB,quickstart
+Margaret Hamilton,not-an-email,US,quickstart
 Linus Torvalds,linus@example.com,FI,quickstart
 ```
 
-Notice what changed:
+Five rows out of six. Notice what changed:
 
-- `name` → `Name`, `email` → `Email`, `country` → `Country` (renamed by `to:`).
-- `Margaret Hamilton`'s row is **missing** because her email failed the `email` warning **and** her row was kept — but wait, it isn't here. That's because the warning still records a rejection in `customers-rejected.csv`; only `critical` checks remove rows from output. Look again at the rejection file:
+- `name` → `Name`, `email` → `Email`, `country` → `Country` (renamed by `to:`), and every row gained a constant `Source` column.
+- **Margaret Hamilton is still here**, bad email and all. Her `email` check was a `warning`, and warnings never remove a row — they only record it.
+- **The empty-name row is gone.** Its `notNull` check on `name` was `critical`, and critical violations exclude the row from the output.
+
+The rejection CSV records both:
 
 ```csv
 row_index,field,value,rule,severity,message
-4,email,not-an-email,email,warning,must be a valid email address
-5,name,,notNull,critical,must not be null
+3,email,not-an-email,email,warning,email is not a valid email address
+4,name,,notNull,critical,name must not be null or empty
 ```
 
-Row 5 (the empty-name row) was **dropped** because `notNull` on `name` is `critical`. Row 4 (the bad email) was **kept** in the output because the `email` rule was `warning` — but it was logged so you can fix the source.
+`row_index` is **0-based** and counts data rows, not file lines — so `3` is Margaret's row (the fourth data row) and `4` is the empty-name row.
 
-That distinction — `critical` rejects the row, `warning` keeps it but flags it — is the heart of the data quality model. See [Data Quality Rules](/sluice/reference/dq-rules/) for the complete reference.
+That distinction — `critical` removes the row, `warning` keeps it but flags it — is the heart of the data quality model. See [Data Quality Rules](/sluice/reference/dq-rules/) for the complete reference.
+
+### About `stopOnCritical`
+
+The pipeline above sets `stopOnCritical: false`. The **default is `true`**, and it behaves differently in a way worth understanding before you write a real pipeline:
+
+```yaml
+dq:
+  stopOnCritical: true # the default
+```
+
+With the default, that one critical violation **halts the run before the load phase**. You get the rejection CSV and the DQ summary, exit code `2`, and **no `customers-clean.csv` at all** — the point being that a pipeline quietly loading 5 of 6 rows into a production ERP is usually worse than one that stops and tells you.
+
+Set it to `false`, as this walkthrough does, when you want the clean rows anyway and intend to work through the rejections separately. Either way the critical row never reaches the output.
 
 ## What just happened?
 
-Sluice ran six phases:
+Sluice ran five phases:
 
 1. **Config load** — parsed and validated the YAML against the Zod schema.
 2. **Extract** — read `data/customers.csv` into an embedded DuckDB staging table called `stg_raw`.
-3. **DQ** — ran every rule against `stg_raw` and wrote the rejection CSV.
-4. **Transform** — applied your `cleanse` ops, `default`s, and `constant` to produce `stg_transformed`.
-5. **Load** — wrote `stg_transformed` to the target CSV.
-6. **Run state** — wrote `customers-quickstart-state.json` so the next run can resume incrementally if you want.
+3. **DQ** — ran every rule against `stg_raw` and wrote the rejection CSV and summary JSON.
+4. **Transform** — applied your `cleanse` ops, `default`s, and `constant` to produce `stg_transformed`, excluding rows with critical violations.
+5. **Load** — wrote `stg_transformed` to the target CSV, then wrote the run state file.
+
+Two further phases — [**Prep** and **Enrich**](/sluice/reference/prep-and-enrich/) — slot in between Extract and DQ when a pipeline configures them. This one doesn't, so they were skipped.
 
 Want to see the diagram of how the phases fit together? Read [How It Works](/sluice/architecture/how-it-works/).
 
 ## Where to go next
 
 - **Add more checks.** [Data Quality Rules](/sluice/reference/dq-rules/) lists every built-in rule with examples — `unique`, `pattern`, `ukPostcode`, `min`/`max`, `maxLength`, `allowedValues`.
-- **Connect a real source.** [Source Adapters](/sluice/reference/source-adapters/) covers MSSQL, PostgreSQL, XLSX, and REST.
+- **Connect a real source.** [Source Adapters](/sluice/reference/source-adapters/) covers MSSQL, PostgreSQL, XLSX, REST, Odoo CSV exports, and JSON files.
 - **Map to an ERP target.** [Target Adapters](/sluice/reference/target-adapters/) covers IFS, Business Central, BlueCherry, generic CSV, and PostgreSQL.
+- **Fix data before you validate it.** [Prep & Enrich Phases](/sluice/reference/prep-and-enrich/) covers in-place fixup and third-party lookups.
 - **Write your first non-trivial pipeline.** [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/) walks through one end-to-end.
 - **Run it in CI.** [CI/CD Integration](/sluice/guides/ci-cd/) shows the GitHub Actions pattern.

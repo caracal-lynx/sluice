@@ -7,20 +7,21 @@ Every migration looks unique up close, but a small set of patterns shows up in e
 
 ## Common migration challenges
 
-| Challenge                          | The Sluice answer                                                                               |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Data quality in legacy systems** | Front-load the rules. Configure `dq:` so rejections are caught before the load, not after.      |
-| **Date format mismatches**         | `type: date` with explicit `format:` (dayjs tokens). Targets reformat with `target.dateFormat`. |
-| **Lookup / enum mapping**          | `type: lookup` with a CSV or SQL-backed lookup table. Cached in memory once per run.            |
-| **Encoding issues**                | `source.encoding` accepts any Node-supported encoding (`utf-8`, `latin1`, `windows-1252`).      |
-| **Duplicate records**              | `dq.rules` with a `unique` check on the primary-key field, severity `critical`.                 |
-| **Broken referential integrity**   | `notNull` + `pattern` on FK fields, severity `critical`. Catches orphaned rows.                 |
+| Challenge                                        | The Sluice answer                                                                                              |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **Data quality in legacy systems**               | Front-load the rules. Configure `dq:` so rejections are caught before the load, not after.                     |
+| **Date format mismatches**                       | `type: date` with explicit `format:` (dayjs tokens). Targets reformat with `target.dateFormat`.                |
+| **Lookup / enum mapping**                        | `type: lookup` with a CSV or SQL-backed lookup table. Cached in memory once per run.                           |
+| **Encoding issues**                              | `source.encoding` accepts any Node-supported encoding (`utf-8`, `latin1`, `windows-1252`).                     |
+| **Duplicate records**                            | `dq.rules` with a `unique` check on the primary-key field, severity `critical`.                                |
+| **Values that fail only because they are dirty** | Fix them in [`prep:`](/sluice/reference/prep-and-enrich/) before DQ sees them, rather than loosening the rule. |
+| **Broken referential integrity**                 | `notNull` + `pattern` on FK fields, severity `critical`. Catches orphaned rows.                                |
 
 ## Pattern 1 — Legacy database modernisation
 
 Lift data out of an ageing SQL Server or flat-file system into a modern platform (PostgreSQL, Snowflake, BigQuery, …). The pattern:
 
-1. **Profile** the source first: `sluice profile <pipeline.yaml>` runs Extract + column-level summary statistics so you know what you're dealing with before you write any rules.
+1. **Profile** the source first: `sluice profile <pipeline.yaml>` runs Extract plus column-level statistics and writes `{outputDir}/{pipeline.name}-profile.json` — per column, the DuckDB type, row count, null count, distinct count, min/max length, and a handful of sample values. Read that before you write a single rule.
 2. **Iterate DQ rules** against staged data: `sluice validate` is fast and idempotent because the rejection CSV regenerates from the staged extract — no need to re-extract.
 3. **Transform** to the new shape with `transform.fields[]`, including `lookup`s for any code translation.
 4. **Load** to the modern target. Use the built-in `pg` adapter for PostgreSQL, or write a Tier 2/3 plugin for anything else.
@@ -34,10 +35,10 @@ Sluice's pattern:
 1. One pipeline YAML per entity (customers, vendors, items, BOMs, purchase orders, sales orders, …). Pipelines stay independent so you can run them in dependency order.
 2. **Strict DQ on identity columns.** Every `*_NO`/`*_CODE` field gets `notNull` + `unique` + a `pattern` rule.
 3. **Lookup tables for every code translation** — currency, country, account manager, division, season. The lookup CSV is checked into the repo so changes are reviewable.
-4. **Target-specific column order and date format** — IFS, Business Central, and BlueCherry each demand different shapes. Use the appropriate paid adapter (see [Commercial Support](/sluice/commercial-support/)).
+4. **Target-specific column order and date format** — IFS, Business Central, and BlueCherry each demand different shapes. Use the matching built-in adapter; see [Target Adapters](/sluice/reference/target-adapters/).
 5. **Dry-run first.** `--dry-run` runs DQ + transform without loading. This is the safest way to iterate.
 
-The IFS, Business Central, and BlueCherry adapters Caracal Lynx maintains were built precisely because hand-rolling these targets the first time is the most painful part of an ERP migration.
+The IFS, Business Central, and BlueCherry adapters were built precisely because hand-rolling these targets the first time is the most painful part of an ERP migration.
 
 ## Pattern 3 — Multi-source consolidation
 
@@ -130,7 +131,7 @@ A bulk import from a spreadsheet should never be a one-shot manual upload. Wrap 
 
 - Source = `csv` or `xlsx`.
 - DQ runs the same rules whether the data came from SQL Server or from a spreadsheet — so the receiving system gets the same quality bar.
-- Target can be PostgreSQL, an ERP via paid adapter, or a generic CSV bound for a downstream tool.
+- Target can be PostgreSQL, one of the built-in ERP adapters, or a generic CSV bound for a downstream tool.
 
 This pattern is how most onboarding flows should run. The cost is a YAML file; the saving is every customer-support ticket that would have come from bad spreadsheet data.
 

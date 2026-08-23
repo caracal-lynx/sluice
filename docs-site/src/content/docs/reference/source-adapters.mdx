@@ -3,7 +3,7 @@ title: Source Adapters
 description: Reference for every built-in Sluice source adapter — config keys, examples, and adapter-specific notes.
 ---
 
-A Sluice **source adapter** is the component that reads raw data from a system and stages it in DuckDB for downstream DQ, transform, and load. Sluice ships with five built-in source adapters covering the patterns most data migrations need: SQL Server, PostgreSQL, CSV, XLSX, and REST.
+A Sluice **source adapter** is the component that reads raw data from a system and stages it in DuckDB for downstream DQ, transform, and load. Sluice ships with seven built-in source adapters covering the patterns most data migrations need: SQL Server, PostgreSQL, CSV, XLSX, REST, Odoo CSV exports, and local JSON files.
 
 This page is the reference for each adapter's `source:` configuration. For the broader pipeline structure, see [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/).
 
@@ -12,10 +12,10 @@ This page is the reference for each adapter's `source:` configuration. For the b
 Every source has the same `adapter` + at least one of `query` (for SQL adapters), `file` (for file adapters), or `endpoint` (for REST). The `adapter` value is one of:
 
 ```
-mssql | pg | csv | xlsx | rest
+mssql | pg | csv | xlsx | rest | odoo-csv | json
 ```
 
-ERP-specific source adapters are not built in — they are paid add-ons (`@caracal-lynx/sluice-adapter-ifs`, `@caracal-lynx/sluice-adapter-bc`, `@caracal-lynx/sluice-adapter-bluecherry`). See [Commercial Support](/sluice/commercial-support/).
+Sluice does not ship ERP-specific **source** adapters — reading out of IFS, Business Central, or BlueCherry is usually a SQL query or a REST call, which the `mssql`, `pg`, and `rest` adapters already cover. For anything genuinely bespoke, implement the `SourceAdapter` interface as a plugin — see [Plugin System](/sluice/guides/plugin-system/).
 
 ## `mssql` — Microsoft SQL Server
 
@@ -91,7 +91,7 @@ source:
 
 ## `xlsx` — Excel workbooks
 
-Read-only access to `.xlsx` files via ExcelJS.
+Read-only access to `.xlsx` files via [`read-excel-file`](https://www.npmjs.com/package/read-excel-file).
 
 ```yaml
 source:
@@ -100,16 +100,21 @@ source:
   sheet: "Customer Export"
 ```
 
-| Key     | Type             | Default | Notes                        |
-| ------- | ---------------- | ------- | ---------------------------- |
-| `file`  | string           | —       | Path to the workbook.        |
-| `sheet` | string \| number | `0`     | Sheet name or 0-based index. |
+| Key     | Type             | Default | Notes                                              |
+| ------- | ---------------- | ------- | -------------------------------------------------- |
+| `file`  | string           | —       | Path to the workbook.                              |
+| `sheet` | string \| number | first   | Sheet name, or 0-based index into the sheet order. |
 
 **Notes:**
 
-- Sluice converts the sheet to CSV via `xlsx.utils.sheet_to_csv` and pipes through the same parser as the `csv` adapter — every column is `VARCHAR` in staging.
-- A warning is logged if the workbook has more than one sheet and `sheet` is unset.
+- The first row is treated as the header row; every remaining row is emitted keyed by those headers. All columns stage as `VARCHAR` — type coercion happens later, in the transform phase.
+- Formula cells resolve to their **cached result**, and date cells arrive as real dates rather than Excel serial numbers.
+- A warning is logged if the workbook has more than one sheet and `sheet` is unset; the first sheet is used.
 - Sluice does not write XLSX. For Excel-shaped output, use the `csv` target adapter and let the consumer open it in Excel.
+
+:::note[Reader history]
+`read-excel-file` replaced `exceljs` in July 2026, which had itself replaced `xlsx`/SheetJS. Both predecessors were dropped over unpatched transitive advisories. Do not "simplify" back to either — see [ADR-0001](https://github.com/caracal-lynx/sluice/blob/master/docs/adr/0001-replace-exceljs-with-read-excel-file.md).
+:::
 
 ## `rest` — HTTP REST APIs
 
@@ -185,6 +190,67 @@ Sluice fetches until the response's `nextCursor` is absent or null.
 - Retries: `axios-retry` with **3 retries**, exponential backoff, retrying on `429` and `5xx`.
 - Nested JSON fields are flattened using `__` as a separator: `address.postCode` becomes a `address__postCode` column in staging.
 
+## `odoo-csv` — Odoo CSV exports
+
+A `csv` reader with one extra trick: Odoo exports a repeating attribute column (canonically **Variant Values**) as `Key: value` text, and spills additional entries onto **continuation rows** where every other column is blank. This adapter merges those continuation rows back into their parent row and pivots each key into its own column.
+
+```yaml
+source:
+  adapter: odoo-csv
+  file: ./data/product-variants.csv
+  delimiter: ","
+  pivot:
+    column: Variant Values
+    keys: [Colour, Size, Fabric]
+    onUnknownKey: warn
+    dropOriginal: true
+```
+
+| Key         | Type   | Default | Notes                                                       |
+| ----------- | ------ | ------- | ----------------------------------------------------------- |
+| `file`      | string | —       | Path or glob, same as the `csv` adapter.                    |
+| `delimiter` | string | `,`     | Field delimiter.                                            |
+| `encoding`  | string | `utf-8` | File encoding.                                              |
+| `pivot`     | object | —       | The pivot declaration. Omit it and this behaves like `csv`. |
+
+### `pivot` keys
+
+| Key            | Type     | Default | Notes                                                                                                                                    |
+| -------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `column`       | string   | —       | The source column carrying `Key: value` entries. Continuation rows are detected as rows where every column **except** this one is empty. |
+| `keys`         | string[] | —       | Expected key names. Each becomes a new output column populated with that key's value.                                                    |
+| `onUnknownKey` | enum     | `warn`  | `warn` adds a column named after the unexpected key and logs a warning; `error` halts the run.                                           |
+| `dropOriginal` | boolean  | `true`  | When true the pivot column is removed from the output; when false it carries the parent row's raw value through.                         |
+
+**Notes:**
+
+- Every column stages as `VARCHAR`, exactly as with `csv`.
+- `onUnknownKey: error` is the right setting once you know the full key set — it turns a silently-dropped attribute into a failed run.
+
+## `json` — Local JSON files
+
+Reads a single JSON file from disk and flattens it into staging columns. This is the local-file counterpart to `rest`; it makes no HTTP requests.
+
+```yaml
+source:
+  adapter: json
+  file: ./data/scan-results.json
+  recordPath: data.items
+```
+
+| Key          | Type   | Default | Notes                                                                                                             |
+| ------------ | ------ | ------- | ----------------------------------------------------------------------------------------------------------------- |
+| `file`       | string | —       | Path to the JSON file.                                                                                            |
+| `recordPath` | string | —       | Dot-path to the records array inside the file (e.g. `data.items`). Omit when the file's root is already an array. |
+| `encoding`   | string | `utf-8` | File encoding.                                                                                                    |
+
+**Notes:**
+
+- Nested objects are flattened with `__`, the same separator the `rest` adapter uses: `address.postCode` becomes `address__postCode`.
+- Nested **arrays** land as JSON text in a single `VARCHAR` column.
+- The value at `recordPath` must be an array, and it must be non-empty — a `VARCHAR` staging schema cannot be inferred from zero rows, so an empty result raises a `SourceError` rather than staging an empty table. If an empty extract is a legitimate outcome for your job, skip the run in your orchestration rather than letting it fail.
+- If the root of your file is an object keyed by something else (many scanners emit this shape), reshape it into an array first — a few lines of `jq` or a small script — then point Sluice at the result.
+
 ## Multi-source pipelines
 
 To consolidate data from multiple sources into one target, use the multi-source form. Each source needs an `id`, a `priority`, and (optionally) a `rename` map to harmonise column names from CSV/XLSX sources.
@@ -207,7 +273,7 @@ sources:
       Fibre: FIBRE_CONTENT
 ```
 
-Combined with the [`merge:`](/sluice/reference/pipeline-yaml/) block, sources can be joined with strategies like `coalesce`, `priority-override`, `union`, or `intersect`. See [Writing a Pipeline YAML](/sluice/guides/writing-pipelines/) for a worked multi-source example.
+Combined with the [`merge:`](/sluice/reference/pipeline-yaml/) block, sources can be joined with strategies like `coalesce`, `priority-override`, `union`, or `intersect`. See [Data Migration Patterns → Pattern 3](/sluice/guides/data-migration-patterns/) for a worked multi-source example.
 
 ## Custom source adapters
 

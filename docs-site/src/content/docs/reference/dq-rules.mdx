@@ -11,13 +11,15 @@ This page is the reference for every built-in rule. To wire DQ into a pipeline, 
 
 Every check declares a `severity`. Severity decides what happens when a row fails:
 
-| Severity   | Effect on the row                                        | Effect on the run                                                |
-| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| `critical` | **Removed** from the output.                             | Halts the pipeline if `dq.stopOnCritical: true` (the default).   |
-| `warning`  | **Kept** in the output, but logged in the rejection CSV. | Run continues.                                                   |
-| `info`     | Kept in the output.                                      | Recorded in the DQ summary JSON only — not in the rejection CSV. |
+| Severity   | Effect on the row                                        | Effect on the run                                              |
+| ---------- | -------------------------------------------------------- | -------------------------------------------------------------- |
+| `critical` | **Removed** from the output.                             | Halts the pipeline if `dq.stopOnCritical: true` (the default). |
+| `warning`  | **Kept** in the output, but logged in the rejection CSV. | Run continues.                                                 |
+| `info`     | Kept in the output.                                      | Recorded in both the rejection CSV and the DQ summary JSON.    |
 
-The default `dq.stopOnCritical: true` makes Sluice fail loud on any critical violation, so a failing pipeline never silently drops half its data. Set it to `false` in pipelines where you'd rather emit the clean rows and inspect rejections out-of-band.
+All three severities are written to the rejection CSV — it is a complete violation log, not a rejected-rows list. What separates them is what happens to the row and to the run: only `critical` removes the row from the output, and only `critical` can stop the run.
+
+The default `dq.stopOnCritical: true` makes Sluice fail loud on any critical violation, so a failing pipeline never silently drops half its data. **Note what that means in practice: with the default, a single critical violation halts the run before the load phase, so no target output is written at all.** Set `stopOnCritical: false` when you'd rather emit the clean rows and work through the rejections out-of-band — the critical rows are still excluded from the output either way.
 
 ## Rule reference
 
@@ -141,11 +143,13 @@ When DQ runs, Sluice writes a rejection CSV at `dq.rejectionFile` (default: `./o
 
 ```csv
 row_index,field,value,rule,severity,message
-4,EMAIL,not-an-email,email,warning,must be a valid email address
-5,CUST_CODE,,notNull,critical,must not be null
-5,CUST_NAME,,notNull,critical,must not be null
-12,POST_CODE,12345,ukPostcode,warning,must be a valid UK postcode
+4,EMAIL,not-an-email,email,warning,EMAIL is not a valid email address
+5,CUST_CODE,,notNull,critical,CUST_CODE must not be null or empty
+5,CUST_NAME,,notNull,critical,CUST_NAME must not be null or empty
+12,POST_CODE,12345,ukPostcode,warning,POST_CODE is not a valid UK postcode
 ```
+
+`row_index` is **0-based** and refers to the position of the row in the extracted dataset — so `row_index: 4` is the fifth data row, not the fifth line of your source file. Default messages name the field; `message:` on the check overrides them.
 
 Hand the rejection CSV back to whoever owns the source data; it's the actionable output from a Sluice run.
 
@@ -156,17 +160,20 @@ Alongside the rejection CSV, Sluice writes `{outputDir}/{pipeline.name}-dq-summa
 ```json
 {
   "pipeline": "acme-corp-customers",
-  "runAt": "2026-04-15T09:30:00Z",
+  "runAt": "2026-04-15T09:30:00.000Z",
   "rowsChecked": 1842,
   "rowsPassed": 1801,
   "rowsRejected": 41,
   "violations": { "critical": 0, "warning": 38, "info": 3 },
   "byField": {
-    "POST_CODE": { "critical": 0, "warning": 22 },
-    "EMAIL": { "critical": 0, "warning": 16 }
-  }
+    "POST_CODE": { "critical": 0, "warning": 22, "info": 0 },
+    "EMAIL": { "critical": 0, "warning": 16, "info": 3 }
+  },
+  "reportPath": "./output/acme-corp-customers-dq-summary.json"
 }
 ```
+
+`rowsRejected` counts **rows carrying at least one critical violation** — the rows removed from the output — not the number of violations. A row that trips three warnings is still a passing row.
 
 Drop this into a GitHub Actions artefact step and it becomes a per-PR data-quality report.
 

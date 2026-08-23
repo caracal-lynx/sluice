@@ -5,6 +5,8 @@ description: Run Sluice in GitHub Actions — validate on PR, run on merge, exit
 
 Sluice is built to run in CI. The CLI emits structured pino logs to stderr, the progress bar to stdout, and uses exit codes that map cleanly to "stop the merge" vs "let it through". This page covers the GitHub Actions pattern; other CI systems work the same way once you understand the exit codes.
 
+Pass `--silent` in CI to suppress the progress bar on stdout while leaving the structured logs on stderr intact.
+
 ## Exit codes
 
 | Code | Meaning                                                                                        |
@@ -13,9 +15,10 @@ Sluice is built to run in CI. The CLI emits structured pino logs to stderr, the 
 | `1`  | Pipeline error (adapter failure, DuckDB error, expression error, …).                           |
 | `2`  | DQ critical violations — at least one row failed a `critical` rule and `stopOnCritical: true`. |
 | `3`  | Config error — YAML parse failed or Zod validation failed.                                     |
-| `4`  | Enrich error — Phase 4a private-add-on path.                                                   |
+| `4`  | Enrich error — Phase 4a; only reachable with `@caracal-lynx/sluice-enrich` installed.          |
+| `5`  | Prep error — a Phase 12 rule failed, e.g. a lookup miss under `onMiss: error`.                 |
 
-Most CI rules want **`exit 0` only**. A `2` or `3` should fail the job; a `1` indicates an infrastructure problem.
+Most CI rules want **`exit 0` only**. A `2`, `3`, or `5` should fail the job; a `1` indicates an infrastructure problem.
 
 ## The two-job pattern
 
@@ -46,8 +49,8 @@ jobs:
       - name: Validate every pipeline against fixtures
         run: |
           for pipeline in pipelines/*.pipeline.yaml; do
-            npx sluice check  "$pipeline"
-            npx sluice validate "$pipeline" --dry-run
+            npx sluice check    "$pipeline"
+            npx sluice validate "$pipeline"
           done
       - name: Upload DQ summaries
         if: always()
@@ -83,6 +86,7 @@ jobs:
           path: |
             output/*-rejected.csv
             output/*-dq-summary.json
+            output/*-prep-summary.json
             output/*-state.json
 ```
 

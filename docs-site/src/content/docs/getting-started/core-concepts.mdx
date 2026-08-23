@@ -13,7 +13,7 @@ Pipelines have a lowercase, hyphenated `name:` (used for output filenames and lo
 
 ## Source adapter
 
-Where data comes from. Sluice ships with five built-in source adapters: `mssql`, `pg`, `csv`, `xlsx`, and `rest`. Each one knows how to stream raw records from its system into the staging store.
+Where data comes from. Sluice ships with seven built-in source adapters: `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`, and `json`. Each one knows how to stream raw records from its system into the staging store.
 
 A pipeline has either a single `source:` block or a `sources:` array (multi-source mode). See [Source Adapters](/sluice/reference/source-adapters/).
 
@@ -21,14 +21,16 @@ A pipeline has either a single `source:` block or a `sources:` array (multi-sour
 
 Between every phase, data lives in an embedded **DuckDB** database — a single file (or `:memory:` if you'd rather not touch disk). DuckDB is fast, columnar, and ships with the `@duckdb/node-api` npm package; there's nothing else to install.
 
-Three named tables show up:
+These named tables show up:
 
-| Table                | When            | Contents                                 |
-| -------------------- | --------------- | ---------------------------------------- |
-| `stg_raw`            | After Extract   | Untouched source records (single-source) |
-| `stg_raw_{sourceId}` | After Extract   | Per-source raw records (multi-source)    |
-| `stg_merged`         | After Merge     | Merged records (multi-source only)       |
-| `stg_transformed`    | After Transform | Final shape, ready to load               |
+| Table                 | When            | Contents                                                          |
+| --------------------- | --------------- | ----------------------------------------------------------------- |
+| `stg_raw`             | After Extract   | Source records (single-source). Prep mutates this table in place. |
+| `stg_raw_{sourceId}`  | After Extract   | Per-source raw records (multi-source)                             |
+| `stg_merge_joined`    | During Merge    | Intermediate priority-ordered join (multi-source only)            |
+| `stg_merged`          | After Merge     | Merged records (multi-source only)                                |
+| `stg_merge_conflicts` | After Merge     | Per-conflict detail behind the `conflictLog` CSV                  |
+| `stg_transformed`     | After Transform | Final shape, ready to load                                        |
 
 The default staging file is `{outputDir}/{pipeline.name}.duckdb`. You can open it in DuckDB CLI or DBeaver and query it directly — handy for debugging.
 
@@ -40,9 +42,9 @@ Each check declares a `severity`:
 
 - `critical` — failing rows are removed from the output. With `dq.stopOnCritical: true` (default), the pipeline halts.
 - `warning` — failing rows are kept in the output but logged in the rejection CSV.
-- `info` — recorded in the DQ summary JSON only.
+- `info` — kept in the output; recorded in both the rejection CSV and the DQ summary JSON.
 
-Rejected rows go to `{outputDir}/{pipeline.name}-rejected.csv`. A summary lands at `{outputDir}/{pipeline.name}-dq-summary.json`. See [Data Quality Rules](/sluice/reference/dq-rules/).
+Every violation, at any severity, goes to `{outputDir}/{pipeline.name}-rejected.csv`; a summary lands at `{outputDir}/{pipeline.name}-dq-summary.json`. Note that with the default `stopOnCritical: true`, one critical violation halts the run **before** the load phase — so a failing pipeline writes no target output at all. See [Data Quality Rules](/sluice/reference/dq-rules/).
 
 ## Transform
 
@@ -52,7 +54,7 @@ Lookup tables — small key/value mappings used for currency-code translation, a
 
 ## Target adapter
 
-Where data goes. The open-source core ships with two targets: `csv` and `pg`. ERP-specific targets (`bc` for Business Central, `ifs` for IFS, `bluecherry` for BlueCherry) are paid add-ons. See [Target Adapters](/sluice/reference/target-adapters/).
+Where data goes. Five target adapters ship in the package: `csv` and `pg` for generic output, plus `ifs`, `bluecherry`, and `bc` for the three ERPs Caracal Lynx implements most often. There are no feature gates — all five work in a plain install. See [Target Adapters](/sluice/reference/target-adapters/).
 
 ## Run state
 
@@ -73,18 +75,28 @@ After every run, Sluice writes `{outputDir}/{pipeline.name}-state.json`:
 
 When you run with `mode: incremental`, Sluice reads `lastRunAt` from this file and only extracts records newer than that timestamp. The state file is the only built-in incremental marker — there's no central daemon, no scheduled job, no shared metadata store.
 
-## The six phases
+## The phases
 
-Every single-source run walks through six phases in order. Each phase has its own engine module so the boundaries stay clean.
+Every single-source run walks six core phases in order, with up to two optional phases in between. Each phase has its own engine module so the boundaries stay clean.
 
 ```mermaid
 flowchart LR
     A[Config Load<br/>+ Zod Validation] --> B[Source Adapter<br/>Extract → stg_raw]
+    B -.-> P[Prep<br/>fix in place]
+    P -.-> N[Enrich<br/>API lookups]
     B --> C[DQ Engine<br/>Validate stg_raw]
+    N -.-> C
     C --> D[Transform Engine<br/>stg_raw → stg_transformed]
     D --> E[Target Adapter<br/>Load Output]
     E --> F[Write Run<br/>State File]
 ```
+
+The dotted phases run only when the pipeline configures them:
+
+- **Prep** (open core) rewrites staging values in place — trim a padded code, default an empty number, correct a country via lookup — so DQ validates the fixed value.
+- **Enrich** (paid add-on) calls external APIs and writes the answers into new columns, so DQ can validate against a third party rather than a regex.
+
+See [Prep & Enrich Phases](/sluice/reference/prep-and-enrich/) for both.
 
 Multi-source pipelines insert a **Merge** phase between Extract and DQ — see [How It Works](/sluice/architecture/how-it-works/) for the full picture.
 
@@ -100,18 +112,21 @@ See [Plugin System](/sluice/guides/plugin-system/) for the author guide.
 
 ## CLI
 
-Five commands cover everything Sluice does:
+Seven commands cover everything Sluice does:
 
-| Command                           | What                                                |
-| --------------------------------- | --------------------------------------------------- |
-| `sluice run <pipeline.yaml>`      | Full pipeline run (extract → DQ → transform → load) |
-| `sluice validate <pipeline.yaml>` | DQ + transform only; no load                        |
-| `sluice profile <pipeline.yaml>`  | Extract + column profiling; no DQ                   |
-| `sluice check <pipeline.yaml>`    | Config validation only; no execution                |
-| `sluice plugins`                  | List all loaded rule, transform, and merge plugins  |
-| `sluice merge list-strategies`    | List all registered merge strategies                |
+| Command                           | What                                                             |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `sluice run <pipeline.yaml>`      | Full pipeline run (extract → DQ → transform → load)              |
+| `sluice validate <pipeline.yaml>` | DQ + transform only; no load                                     |
+| `sluice profile <pipeline.yaml>`  | Extract + column profiling; no DQ. Writes `{name}-profile.json`. |
+| `sluice check <pipeline.yaml>`    | Config validation only; no execution                             |
+| `sluice plugins`                  | List loaded rule, transform, and merge plugin ids                |
+| `sluice merge list-strategies`    | List all registered merge strategies                             |
+| `sluice merge info <strategy>`    | Show detail for one merge strategy                               |
 
-Exit codes: `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error · `4` enrich error.
+Global flags: `--env <file>` · `--log-level <level>` · `--output <dir>` · `--plugins <dir...>` · `--dry-run` · `--silent`. `run` also accepts `--no-enrich` and `--no-prep`; `validate` accepts `--no-prep`.
+
+Exit codes: `0` success · `1` pipeline error · `2` DQ critical violations · `3` config error · `4` enrich error · `5` prep error.
 
 ## Where to go next
 

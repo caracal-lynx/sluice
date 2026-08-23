@@ -49,6 +49,7 @@ export default defineConfig({
             { label: "Source Adapters", slug: "reference/source-adapters" },
             { label: "Target Adapters", slug: "reference/target-adapters" },
             { label: "Data Quality Rules", slug: "reference/dq-rules" },
+            { label: "Prep & Enrich Phases", slug: "reference/prep-and-enrich" },
             { label: "Transforms", slug: "reference/transforms" },
           ],
         },

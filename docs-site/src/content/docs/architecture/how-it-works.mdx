@@ -1,11 +1,17 @@
 ---
 title: How It Works
-description: The Sluice runtime architecture — six pipeline phases, DuckDB staging, and the dependency direction between modules.
+description: The Sluice runtime architecture — the pipeline phases, DuckDB staging, and the dependency direction between modules.
 ---
 
 This page is for the technically curious — anyone evaluating Sluice for a real migration who wants to know what's happening under the hood.
 
-The short version: every Sluice pipeline runs through **six phases**, with an embedded DuckDB instance acting as the staging store between them. The phases are sequenced by `PipelineRunner` (or `MultiSourcePipelineRunner` for pipelines with multiple sources). Adapters are pluggable; everything else is engine code with strict module boundaries.
+The short version: every Sluice pipeline runs through **six core phases plus up to two optional ones**, with an embedded DuckDB instance acting as the staging store between them. The phases are sequenced by `PipelineRunner` (or `MultiSourcePipelineRunner` for pipelines with multiple sources). Adapters are pluggable; everything else is engine code with strict module boundaries.
+
+```
+Config load → Extract → [Prep] → [Enrich] → DQ → Transform → [Load] → Run state
+```
+
+`Prep` and `Enrich` run only when the pipeline configures them — see [Prep & Enrich Phases](/sluice/reference/prep-and-enrich/). `Load` is skipped under `--dry-run` and `sluice validate`.
 
 ## System context
 
@@ -75,7 +81,7 @@ flowchart LR
 
 ## Single-source runtime
 
-For a pipeline with a single `source:` block, `PipelineRunner` walks six phases in order:
+For a pipeline with a single `source:` block, `PipelineRunner` walks the phases in order:
 
 ```mermaid
 sequenceDiagram
@@ -86,6 +92,8 @@ sequenceDiagram
     participant Cfg as ConfigLoader
     participant Src as SourceAdapter
     participant Duck as DuckDB (StagingStore)
+    participant Prep as PrepEngine
+    participant Enr as Enrich (private)
     participant DQ as DQEngine
     participant Tx as TransformEngine
     participant Tgt as TargetAdapter
@@ -104,6 +112,17 @@ sequenceDiagram
     Src->>Duck: createTable + insertBatch*
     Src-->>Run: ExtractResult
     Run->>Src: disconnect()
+
+    opt prep: configured
+        Run->>Prep: apply rules in place on 'stg_raw'
+        Prep->>Duck: UPDATE stg_raw SET ...
+        Run->>FS: write prep summary JSON
+    end
+
+    opt enrich: configured AND not dry-run AND package installed
+        Run->>Enr: enrich('stg_raw')
+        Enr->>Duck: add + populate writeColumns
+    end
 
     Run->>DQ: validate('stg_raw')
     DQ->>Duck: query
@@ -135,14 +154,18 @@ sequenceDiagram
 
 Each phase is its own engine module:
 
-| Phase          | Module                 | Responsibility                                                              |
-| -------------- | ---------------------- | --------------------------------------------------------------------------- |
-| 1. Config load | `src/config/`          | YAML → `${ENV_VAR}` resolution → Zod validation → composite-rule expansion  |
-| 2. Extract     | `src/adapters/source/` | Stream source data into DuckDB `stg_raw`                                    |
-| 3. DQ          | `src/dq/`              | Run rules against `stg_raw`; write rejection CSV + summary JSON             |
-| 4. Transform   | `src/transform/`       | Apply field mappings, lookups, cleanse ops, expressions → `stg_transformed` |
-| 5. Load        | `src/adapters/target/` | Stream `stg_transformed` to the target adapter                              |
-| 6. Run state   | `src/runner.ts`        | Write `{outputDir}/{pipeline.name}-state.json` for incremental mode         |
+| Phase                   | Module                 | Responsibility                                                                        |
+| ----------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| 1. Config load          | `src/config/`          | YAML → `${ENV_VAR}` resolution → Zod validation → composite-rule expansion            |
+| 2. Extract              | `src/adapters/source/` | Stream source data into DuckDB `stg_raw`                                              |
+| 2a. Prep _(optional)_   | `src/prep/`            | Mutate `stg_raw` columns in place — cleanse chains, expressions, lookups              |
+| 2b. Enrich _(optional)_ | `src/enrich/` (types)  | Async third-party lookups written into new staging columns; impl is a private package |
+| 3. DQ                   | `src/dq/`              | Run rules against `stg_raw`; write rejection CSV + summary JSON                       |
+| 4. Transform            | `src/transform/`       | Apply field mappings, lookups, cleanse ops, expressions → `stg_transformed`           |
+| 5. Load                 | `src/adapters/target/` | Stream `stg_transformed` to the target adapter                                        |
+| 6. Run state            | `src/runner.ts`        | Write `{outputDir}/{pipeline.name}-state.json` for incremental mode                   |
+
+Prep and Enrich both sit **before** DQ on purpose: they exist to fix or fill in data so that DQ validates the corrected value, not the raw one. They differ in when they are skipped — Enrich does not run under `--dry-run` or `validate`, but Prep does, because DQ's result depends on it.
 
 ## Multi-source runtime
 
@@ -244,6 +267,7 @@ cli.ts → runner.ts / multi-source-runner.ts
             ├─→ merge/    (multi-source merge engine)
             ├─→ plugins/  (Tier 2/3 plugin discovery)
             ├─→ config/   (schema + loader)
+            ├─→ prep/     (Phase 12 — in-place staging fixup)
             └─→ enrich/   (Phase 4a — types only; impl is private)
 
 utils/ ← (imported by everyone)
@@ -255,4 +279,5 @@ utils/ ← (imported by everyone)
 
 - [Core Concepts](/sluice/getting-started/core-concepts/) — the same picture at a higher level
 - [Extension Points](/sluice/architecture/extension-points/) — where to plug into the engine
+- [Prep & Enrich Phases](/sluice/reference/prep-and-enrich/) — the two optional phases in detail
 - [Pipeline YAML Schema](/sluice/reference/pipeline-yaml/) — the declarative contract in full
