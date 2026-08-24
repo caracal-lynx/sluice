@@ -29,11 +29,11 @@ The `@caracal-lynx/sluice-enrich` private package adds the [**Enrich phase**](/s
 
 ### Domain Rule Packages
 
-Reusable DQ rule packs for domains where the rules are non-obvious or burdensome to maintain:
+Reusable DQ rule packs for domains where the rules are non-obvious or burdensome to maintain. They load as [Tier 3 plugin packages](/sluice/guides/plugin-system/#tier-3--npm-packages) and are provided as part of a paid engagement — they are not listed on a public registry:
 
-- **`@caracal-lynx/etl-rules-uk`** — UK VAT number, Companies House number, UTR (with HMRC checksum), National Insurance number, bank sort code and UK IBAN (with mod-97 checksum).
-- **`@caracal-lynx/etl-rules-fashion`** — GTIN/EAN-13/UPC-A check digits, ISO 2076 fibre codes, fibre-composition totals, season codes and textile HS commodity codes.
-- **`@caracal-lynx/etl-rules-date`** — weekday/weekend assertions, UK bank holidays and business days across England & Wales, Scotland and Northern Ireland.
+- **UK compliance** — UK VAT number, Companies House number, UTR (with HMRC checksum), National Insurance number, bank sort code and UK IBAN (with mod-97 checksum).
+- **Fashion and retail** — GTIN/EAN-13/UPC-A check digits, ISO 2076 fibre codes, fibre-composition totals, season codes and textile HS commodity codes.
+- **Dates and business days** — weekday/weekend assertions, UK bank holidays and business days across England & Wales, Scotland and Northern Ireland.
 
 ### Sluice MCP Server
 

@@ -463,9 +463,9 @@ When plugins are useful across multiple clients, promote them to scoped npm pack
 ```yaml
 # sluice.config.yaml
 plugins:
-  - package: "@caracal-lynx/etl-rules-uk"
-  - package: "@caracal-lynx/etl-rules-fashion"
-  - package: "@caracal-lynx/etl-transform-ifs"
+  - package: "@example/sluice-rules-uk"
+  - package: "@example/sluice-rules-fashion"
+  - package: "@example/sluice-transform-ifs"
 ```
 
 All three tiers use the same registry interfaces and are invoked identically by the engines. The engine doesn't know or care which tier a rule came from. 🤷
