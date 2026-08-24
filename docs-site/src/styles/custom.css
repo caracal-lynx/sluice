@@ -269,3 +269,60 @@
   max-width: none;
   flex: none;
 }
+
+/* Wide screens: give media the room, keep prose at its readable measure.
+
+   Starlight caps the content at --sl-content-width (45rem / 720px), so on a wide
+   display the page uses ~1300px and the rest is gutter. Measured on a 2514px
+   viewport: 720px of content with ~1200px empty, and the phases diagram showing
+   41% of its 1750px.
+
+   The obvious fix — widen --sl-content-width — was measured and rejected. Prose is
+   already at 82 characters per line, the top of the comfortable range; at 64rem it
+   becomes 117, which is materially harder to read. So the container widens and
+   running text keeps exactly the measure it had.
+
+   Accepted cost: paragraphs no longer fill their container, so there is ragged
+   space to the right of text beside a wide diagram.
+
+   Three rules, and the order they were discovered matters because the first two
+   each looked sufficient and were not:
+
+   1. right-sidebar-container reserves ~889px for a table of contents whose content
+      is 268px. Capping it at 20rem frees ~570px.
+   2. That alone changed nothing. .main-pane is a flex item at the default
+      `0 1 auto`, so it sizes to its CONTENT, not to the space available — it stayed
+      at 1309px while the freed space simply went unused. `flex: 1 1 auto` with
+      min-width:0 is what makes it claim the room.
+   3. .sl-container is used by the TOC as well as the content, so the max-width is
+      scoped to .content-panel. Unscoped it also lands on the TOC's container.
+
+   Result at 2514px: content 720 -> 1831px, the 1750px diagram fully visible with no
+   scrolling, prose unchanged at 82 characters. The splash home page is unaffected —
+   it has no right sidebar, and the hero override above keeps its own max-width. */
+@media (min-width: 100rem) {
+  .right-sidebar-container {
+    flex: 0 0 auto;
+    width: 20rem;
+  }
+
+  .main-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .content-panel .sl-container {
+    max-width: 120rem;
+  }
+
+  .sl-markdown-content > p,
+  .sl-markdown-content > ul,
+  .sl-markdown-content > ol,
+  .sl-markdown-content > blockquote,
+  .sl-markdown-content > h1,
+  .sl-markdown-content > h2,
+  .sl-markdown-content > h3,
+  .sl-markdown-content > h4 {
+    max-width: var(--sl-content-width);
+  }
+}
