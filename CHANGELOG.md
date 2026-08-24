@@ -1,5 +1,11 @@
 # @caracal-lynx/sluice
 
+## 0.10.1
+
+### Patch Changes
+
+- [#113](https://github.com/caracal-lynx/data-gubbins/pull/113) [`4c84f0e`](https://github.com/caracal-lynx/data-gubbins/commit/4c84f0e571a5610daba41f04074de6816b7044f8) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Drop `rest` from the `target.adapter` enum. No REST target adapter exists, so a pipeline naming it passed `sluice check` and then failed at load — after a full extract and transform. `sluice check` now rejects it up front. `rest` remains a valid **source** adapter. Added a test asserting the source and target enums match the adapter registries so they cannot drift apart again.
+
 ## 0.10.0
 
 ### Minor Changes
