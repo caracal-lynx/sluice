@@ -221,3 +221,51 @@
 .mermaid {
   margin-block: 1.5rem;
 }
+
+/* Wide diagrams scroll instead of shrinking.
+
+   Mermaid's default is max-width:100%, which fits any diagram to the column by
+   SCALING it. The content column is 720px and two of these diagrams are ~2400px
+   wide, so they were being drawn at 0.27-0.29x: 16px labels landing on screen at
+   4.3-4.6px. Rendered, technically, and still unreadable — which is most of the
+   complaint the diagrams started with.
+
+   useMaxWidth:false in astro.config.mjs turns off that scaling, so this container
+   has to take the overflow. Diagrams narrower than the column are unaffected and
+   show no scrollbar. Horizontal scroll is not lovely; illegible is worse.
+
+   If a diagram ever needs to be READ at a glance rather than scrolled, the fix is
+   to narrow the diagram, not to re-enable scaling. */
+.sl-markdown-content pre.mermaid {
+  overflow-x: auto;
+
+  /* The container is display:flex with justify-content:center. Centring a child
+     WIDER than its box overflows it equally on both sides, and scrollLeft cannot go
+     negative — so the left overflow becomes unreachable. Measured before this line:
+     the system-context SVG started 827px left of the container with scrollLeft
+     already at 0, and scrollWidth reported 1563 instead of 2374 because the browser
+     only counts the right-hand overflow. A third of the diagram was simply gone, and
+     every other measurement (scale 1.0, 16px labels) looked perfect.
+
+     `safe center` centres while it fits and falls back to start once it does not,
+     which is precisely this case. flex-start first as the fallback for anything that
+     does not support the safe keyword — left-aligned is right, just less pretty. */
+  justify-content: flex-start;
+  justify-content: safe center;
+}
+
+/* Two overrides, both load-bearing — verified in the browser, not assumed:
+
+   max-width: astro-mermaid ships `pre.mermaid svg { max-width: 100% }`, which caps
+   the SVG back to the column even after useMaxWidth:false has given it a natural
+   2374px width attribute. The measured result was identical to having changed
+   nothing at all: 688px, 0.29x, 4.6px labels.
+
+   flex: the container is display:flex, so a 2374px child in a 720px box gets shrunk
+   by the flex algorithm rather than overflowing. `flex: none` opts it out.
+
+   Specificity here (0,2,2) beats astro-mermaid's (0,1,2), so no !important. */
+.sl-markdown-content pre.mermaid svg {
+  max-width: none;
+  flex: none;
+}

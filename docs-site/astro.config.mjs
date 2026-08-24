@@ -29,6 +29,16 @@ export default defineConfig({
       autoTheme: true,
       // Default is true, which console.logs on every page load of a public site.
       enableLog: false,
+      mermaidConfig: {
+        // Mermaid otherwise sets max-width:100% and SCALES a diagram down to the
+        // column. Measured on the built site: the system-context flowchart has a
+        // 2374px viewBox in a 720px column, so it drew at 0.29x and its 16px labels
+        // landed at 4.6px; the sequence diagram at 0.27x / 4.3px. Both rendered and
+        // neither could be read. Natural size + overflow-x on the container (see
+        // custom.css) trades a horizontal scrollbar for legible text.
+        flowchart: { useMaxWidth: false },
+        sequence: { useMaxWidth: false },
+      },
     }),
     starlight({
       title: "Sluice",
