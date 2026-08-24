@@ -1,12 +1,35 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import mermaid from "astro-mermaid";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://caracal-lynx.github.io",
   base: "/sluice/",
   integrations: [
+    // MUST stay before starlight(). Both process markdown, and mermaid has to claim
+    // the ```mermaid blocks before Expressive Code (Starlight's highlighter) does.
+    // Ordered after it, Expressive Code wins and renders the diagram source as a
+    // syntax-highlighted code block — which is exactly the bug this fixes, and had
+    // been the site's behaviour since the diagrams were first written.
+    //
+    // Client-side rendering, deliberately, over build-time SVG (rehype-mermaid):
+    // that route needs Playwright at build time, an allowBuilds entry, and a heavier
+    // docs job, and it bakes ONE theme's colours into static SVG. Starlight has a
+    // light/dark toggle, so a static SVG would be wrong in one of them. autoTheme
+    // re-renders on the data-theme attribute instead.
+    //
+    // No @mermaid-js/layout-elk. It is an optional peer, it only affects flowcharts
+    // (the sequence diagram cannot use it at all), and the four flowcharts here are
+    // small and linear — dagre handles them. Choosing a layout engine before anyone
+    // has seen a single rendered diagram would be tuning output nobody has looked at.
+    // Add it later, per-diagram, if one of them actually renders badly.
+    mermaid({
+      autoTheme: true,
+      // Default is true, which console.logs on every page load of a public site.
+      enableLog: false,
+    }),
     starlight({
       title: "Sluice",
       description:
