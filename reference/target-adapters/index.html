@@ -1,0 +1,384 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-ibu2z2po"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Target Adapters | Sluice</title><link rel="canonical" href="https://caracal-lynx.github.io/sluice/reference/target-adapters/"/><link rel="sitemap" href="/sluice/sitemap-index.xml"/><link rel="shortcut icon" href="/sluice/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.2.4"/><meta name="generator" content="Starlight v0.41.7"/><meta property="og:title" content="Target Adapters"/><meta property="og:type" content="article"/><meta property="og:url" content="https://caracal-lynx.github.io/sluice/reference/target-adapters/"/><meta property="og:locale" content="en"/><meta property="og:description" content="Reference for every supported Sluice target adapter — config keys, examples, and format-specific notes."/><meta property="og:site_name" content="Sluice"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Reference for every supported Sluice target adapter — config keys, examples, and format-specific notes."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/sluice/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/sluice/_astro/common.qZQ2umhd.css"><style>@layer starlight.components{.card:where(.astro-jl5ic3b4){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-jl5ic3b4):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-jl5ic3b4):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-jl5ic3b4):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-jl5ic3b4):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-jl5ic3b4){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-jl5ic3b4) .icon:where(.astro-jl5ic3b4){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-jl5ic3b4) .body:where(.astro-jl5ic3b4){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-dlundx7g){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-dlundx7g)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-dlundx7g){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-dlundx7g){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-dlundx7g)>:nth-child(2n){transform:translateY(var(--stagger-height))}}.sl-link-card:where(.astro-7glyinih){border:1px solid var(--sl-color-gray-5);box-shadow:var(--sl-shadow-sm);border-radius:.5rem;grid-template-columns:1fr auto;gap:.5rem;padding:1rem;display:grid;position:relative}a:where(.astro-7glyinih){line-height:var(--sl-line-height-headings);text-decoration:none}a:where(.astro-7glyinih):before{content:"";position:absolute;inset:0}.stack:where(.astro-7glyinih){flex-direction:column;gap:.5rem}.title:where(.astro-7glyinih){color:var(--sl-color-white);font-weight:600;font-size:var(--sl-text-lg)}.description:where(.astro-7glyinih){color:var(--sl-color-gray-3);line-height:1.5}.icon:where(.astro-7glyinih){color:var(--sl-color-gray-3)}.sl-link-card:where(.astro-7glyinih):hover{background:var(--sl-color-gray-7,var(--sl-color-gray-6));border-color:var(--sl-color-gray-2)}.sl-link-card:where(.astro-7glyinih):hover .icon:where(.astro-7glyinih){color:var(--sl-color-white)}}
+@layer starlight.components{svg:where(.astro-yfyzwi74){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/sluice/_astro/page.WW9DoxGh.js"></script></head><body class="astro-ibu2z2po"><a class="sl-skip-link astro-3mdz6nor" href="#_top">Skip to content</a><div class="page sl-flex astro-xlvs3fzy"><header class="header astro-xlvs3fzy"><div class="header astro-34ravesg"><div class="title-wrapper sl-flex astro-34ravesg"><a href="/sluice/" class="site-title sl-flex astro-lsd65d3d"><img class="astro-lsd65d3d" alt="Sluice" src="/sluice/_astro/sluice-logo.gpIBb-nu.png" width="1000" height="320"><span class="sr-only astro-lsd65d3d" translate="no">Sluice</span></a></div><div class="sl-flex print:hidden astro-34ravesg"><site-search class="astro-34ravesg astro-a34zhn7r" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-a34zhn7r"><svg aria-hidden="true" class="astro-a34zhn7r astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-a34zhn7r" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-a34zhn7r" style="display: none;"><kbd class="astro-a34zhn7r">Ctrl</kbd><kbd class="astro-a34zhn7r">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-a34zhn7r"><div class="dialog-frame sl-flex astro-a34zhn7r"><button data-close-modal class="sl-flex md:sl-hidden astro-a34zhn7r">Cancel</button><div class="search-container astro-a34zhn7r"><div id="starlight__search" class="astro-a34zhn7r"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/sluice/_astro/Search.astro_astro_type_script_index_0_lang.BuKwbOZn.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-34ravesg"><div class="sl-flex social-icons astro-34ravesg"><a href="https://github.com/caracal-lynx/sluice" rel="me" class="sl-flex astro-7vwfimpl"><span class="sr-only astro-7vwfimpl">GitHub</span><svg aria-hidden="true" class="astro-7vwfimpl astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-hj3oxj5q"><span class="sr-only astro-hj3oxj5q">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-hj3oxj5q"><option value="dark" class="astro-hj3oxj5q">Dark</option><option value="light" class="astro-hj3oxj5q">Light</option><option value="auto" selected class="astro-hj3oxj5q">Auto</option></select><svg aria-hidden="true" class="icon caret astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-xlvs3fzy" aria-label="Main"><starlight-menu-button class="print:hidden astro-k3vl3ulc"><button aria-expanded="false" aria-label="Menu" aria-controls="starlight__sidebar" class="sl-flex md:sl-hidden astro-k3vl3ulc"><svg aria-hidden="true" class="open-menu astro-k3vl3ulc astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-k3vl3ulc astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg></button></starlight-menu-button><script type="module">var e=class extends HTMLElement{btn=this.querySelector(`button`);constructor(){super(),this.btn.addEventListener(`click`,()=>this.toggleExpanded());let e=this.closest(`nav`);e&&e.addEventListener(`keyup`,e=>this.closeOnEscape(e)),matchMedia(`(min-width: 50em)`).addEventListener(`change`,()=>this.setExpanded(!1))}setExpanded(e){this.setAttribute(`aria-expanded`,String(e)),document.body.toggleAttribute(`data-mobile-menu-expanded`,e),document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}toggleExpanded(){this.setExpanded(this.getAttribute(`aria-expanded`)!==`true`)}closeOnEscape(e){e.code===`Escape`&&(this.setExpanded(!1),this.btn.focus())}};customElements.define(`starlight-menu-button`,e);</script><div id="starlight__sidebar" class="sidebar-pane astro-xlvs3fzy"><div class="sidebar-content sl-flex astro-xlvs3fzy"><sl-sidebar-state-persist data-hash="1xildef" class="astro-uy7rhxqn"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-kz4rnfra"><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Getting Started</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/getting-started/installation/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Installation</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/getting-started/quickstart/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Quickstart</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/getting-started/core-concepts/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Core Concepts</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Pipeline Reference</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/reference/pipeline-yaml/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Pipeline YAML Schema</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/source-adapters/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Source Adapters</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/target-adapters/" aria-current="page" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Target Adapters</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/dq-rules/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Data Quality Rules</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/prep-and-enrich/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Prep &amp; Enrich Phases</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/transforms/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Transforms</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Guides</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/guides/writing-pipelines/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Writing a Pipeline YAML</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/guides/data-migration-patterns/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Data Migration Patterns</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/guides/plugin-system/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Plugin System</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/guides/ci-cd/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">CI/CD Integration</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Architecture</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/architecture/how-it-works/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">How It Works</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/architecture/extension-points/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Extension Points</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">About</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/use-cases/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Use Cases</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/commercial-support/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Commercial Support</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/changelog/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Changelog</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-64jtkzqy"><div class="social-icons astro-64jtkzqy"><a href="https://github.com/caracal-lynx/sluice" rel="me" class="sl-flex astro-7vwfimpl"><span class="sr-only astro-7vwfimpl">GitHub</span><svg aria-hidden="true" class="astro-7vwfimpl astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-hj3oxj5q"><span class="sr-only astro-hj3oxj5q">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-hj3oxj5q"><option value="dark" class="astro-hj3oxj5q">Dark</option><option value="light" class="astro-hj3oxj5q">Light</option><option value="auto" selected class="astro-hj3oxj5q">Auto</option></select><svg aria-hidden="true" class="icon caret astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script></div></div></div></div></nav><div class="main-frame astro-xlvs3fzy"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-nf6en5ax"><aside class="right-sidebar-container print:hidden astro-nf6en5ax"><div class="right-sidebar astro-nf6en5ax"><div class="lg:sl-hidden astro-fr2ssi7i"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-gxkmwbof"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-gxkmwbof"><details id="starlight__mobile-toc" class="astro-gxkmwbof"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-gxkmwbof"><span class="toggle sl-flex astro-gxkmwbof">On this page<svg aria-hidden="true" class="caret astro-gxkmwbof astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-gxkmwbof"></span></summary><div class="dropdown astro-gxkmwbof"><ul class="isMobile astro-kh45eswd" style="--depth: 0;"><li style="--depth: 0;" class="astro-kh45eswd"><a href="#_top" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Overview</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#common-config" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Common config</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#csv--generic-csv-output" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">csv — Generic CSV output</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#pg--postgresql-bulk-insert" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">pg — PostgreSQL bulk insert</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#ifs--ifs-erp-csv-import" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">ifs — IFS ERP CSV import</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#bluecherry--bluecherry-erp-csv-import" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">bluecherry — BlueCherry ERP CSV import</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#bc--business-central-rest" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">bc — Business Central REST</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#custom-target-adapters" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Custom target adapters</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/sluice/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-fr2ssi7i"><div class="sl-container astro-fr2ssi7i"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-kh45eswd" style="--depth: 0;"><li style="--depth: 0;" class="astro-kh45eswd"><a href="#_top" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Overview</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#common-config" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Common config</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#csv--generic-csv-output" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">csv — Generic CSV output</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#pg--postgresql-bulk-insert" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">pg — PostgreSQL bulk insert</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#ifs--ifs-erp-csv-import" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">ifs — IFS ERP CSV import</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#bluecherry--bluecherry-erp-csv-import" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">bluecherry — BlueCherry ERP CSV import</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#bc--business-central-rest" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">bc — Business Central REST</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#custom-target-adapters" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Custom target adapters</span></a></li></ul></nav></starlight-toc><script type="module" src="/sluice/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-nf6en5ax"><main data-pagefind-body class="astro-ibu2z2po" lang="en" dir="ltr"><div class="content-panel astro-igfqrgsa"><div class="sl-container astro-igfqrgsa"><h1 id="_top" class="astro-u7qhtul4">Target Adapters</h1></div></div><div class="content-panel astro-igfqrgsa"><div class="sl-container astro-igfqrgsa"><div class="sl-markdown-content"><p>A Sluice <strong>target adapter</strong> loads transformed records to the system that will own the data going forward. Five target adapters ship in the package and are registered out of the box: <code dir="auto">csv</code> and <code dir="auto">pg</code> for generic flat-file output and PostgreSQL bulk insert, plus <code dir="auto">ifs</code>, <code dir="auto">bluecherry</code>, and <code dir="auto">bc</code> for the three ERPs Caracal Lynx implements most often. There are no feature gates — every adapter on this page works in a plain <code dir="auto">npm install @caracal-lynx/sluice</code>, under the terms of the <a href="https://github.com/caracal-lynx/sluice/blob/master/LICENSE">Elastic Licence 2.0</a>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="common-config">Common config</h2><a class="sl-anchor-link" href="#common-config"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Common config”</span></a></div>
+<p>Every target has the same <code dir="auto">adapter</code> field plus adapter-specific keys. The <code dir="auto">adapter</code> value is one of:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/sluice/_astro/ec.w36nc.css"><script type="module" src="/sluice/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">csv | pg | ifs | bluecherry | bc</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="csv | pg | ifs | bluecherry | bc"><div></div></button></div></figure></div>
+<p>Building an ERP migration and want the mapping done for you rather than by you? See <a href="/sluice/commercial-support/">Commercial Support</a>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="csv--generic-csv-output"><code dir="auto">csv</code> — Generic CSV output</h2><a class="sl-anchor-link" href="#csv--generic-csv-output"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “csv — Generic CSV output”</span></a></div>
+<p>The simplest target. Writes the transformed staging table to a CSV file. Use this when you need a portable, human-readable load file or a CI artefact.</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">csv</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">output</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">./output/customers.csv</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">includeHeader</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">delimiter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">,</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">encoding</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">utf-8</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">nullValue</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">""</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="target:  adapter: csv  output: ./output/customers.csv  includeHeader: true  delimiter: &quot;,&quot;  encoding: utf-8  nullValue: &quot;&quot;"><div></div></button></div></figure></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">output</code></td>
+<td>string</td>
+<td>—</td>
+<td>Path to write.</td>
+</tr>
+<tr>
+<td><code dir="auto">includeHeader</code></td>
+<td>boolean</td>
+<td><code dir="auto">true</code></td>
+<td>Write column names on the first row.</td>
+</tr>
+<tr>
+<td><code dir="auto">delimiter</code></td>
+<td>string</td>
+<td><code dir="auto">,</code></td>
+<td>Field delimiter.</td>
+</tr>
+<tr>
+<td><code dir="auto">encoding</code></td>
+<td>string</td>
+<td><code dir="auto">utf-8</code></td>
+<td>File encoding.</td>
+</tr>
+<tr>
+<td><code dir="auto">nullValue</code></td>
+<td>string</td>
+<td><code dir="auto">""</code></td>
+<td>How nulls are rendered.</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="pg--postgresql-bulk-insert"><code dir="auto">pg</code> — PostgreSQL bulk insert</h2><a class="sl-anchor-link" href="#pg--postgresql-bulk-insert"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “pg — PostgreSQL bulk insert”</span></a></div>
+<p>Loads the staging table into a PostgreSQL table. Supports insert, ignore-on-conflict, and upsert modes.</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">pg</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">connection</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">${TARGET_PG}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">table</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">customers</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">schema</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">public</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">onConflict</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">upsert</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">upsertKey</span><span style="--0:#D6DEEB;--1:#403F53">: [</span><span style="--0:#ECC48D;--1:#3B61B0">customer_no</span><span style="--0:#D6DEEB;--1:#403F53">]</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="target:  adapter: pg  connection: ${TARGET_PG}  table: customers  schema: public  onConflict: upsert  upsertKey: [customer_no]"><div></div></button></div></figure></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">connection</code></td>
+<td>string</td>
+<td>—</td>
+<td>PostgreSQL connection string. Resolved from <code dir="auto">${ENV_VAR}</code> at runtime.</td>
+</tr>
+<tr>
+<td><code dir="auto">table</code></td>
+<td>string</td>
+<td>—</td>
+<td>Target table name.</td>
+</tr>
+<tr>
+<td><code dir="auto">schema</code></td>
+<td>string</td>
+<td><code dir="auto">public</code></td>
+<td>Target schema.</td>
+</tr>
+<tr>
+<td><code dir="auto">onConflict</code></td>
+<td>enum</td>
+<td><code dir="auto">fail</code></td>
+<td><code dir="auto">fail</code> | <code dir="auto">upsert</code> | <code dir="auto">ignore</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">upsertKey</code></td>
+<td>string[]</td>
+<td>—</td>
+<td><strong>Required</strong> when <code dir="auto">onConflict: upsert</code>. Column names that form the conflict key.</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="ifs--ifs-erp-csv-import"><code dir="auto">ifs</code> — IFS ERP CSV import</h2><a class="sl-anchor-link" href="#ifs--ifs-erp-csv-import"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “ifs — IFS ERP CSV import”</span></a></div>
+<p>IFS imports CSV with no header row, in a column order defined by the IFS entity import contract.</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">ifs</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">entity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerInfo</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">output</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">./output/acme-corp-customers-ifs.csv</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">includeHeader</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">false</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">columnOrder</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerNo</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#ECC48D;--1:#3B61B0">Name</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#ECC48D;--1:#3B61B0">Address1</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#ECC48D;--1:#3B61B0">ZipCode</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#ECC48D;--1:#3B61B0">Country</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">dateFormat</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">YYYY-MM-DD</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="target:  adapter: ifs  entity: CustomerInfo  output: ./output/acme-corp-customers-ifs.csv  includeHeader: false  columnOrder:    - CustomerNo    - Name    - Address1    - ZipCode    - Country  dateFormat: YYYY-MM-DD"><div></div></button></div></figure></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">entity</code></td>
+<td>string</td>
+<td>—</td>
+<td>IFS entity name (e.g. <code dir="auto">CustomerInfo</code>, <code dir="auto">Supplier</code>). Recorded in the load log.</td>
+</tr>
+<tr>
+<td><code dir="auto">output</code></td>
+<td>string</td>
+<td>—</td>
+<td>Path to write.</td>
+</tr>
+<tr>
+<td><code dir="auto">includeHeader</code></td>
+<td>boolean</td>
+<td><code dir="auto">false</code></td>
+<td>IFS expects no header.</td>
+</tr>
+<tr>
+<td><code dir="auto">columnOrder</code></td>
+<td>string[]</td>
+<td>—</td>
+<td>Forces the column order. Must match transform <code dir="auto">to:</code> field names.</td>
+</tr>
+<tr>
+<td><code dir="auto">dateFormat</code></td>
+<td>string</td>
+<td><code dir="auto">YYYY-MM-DD</code></td>
+<td>dayjs format token.</td>
+</tr>
+<tr>
+<td><code dir="auto">delimiter</code></td>
+<td>string</td>
+<td><code dir="auto">,</code></td>
+<td>Field delimiter.</td>
+</tr>
+<tr>
+<td><code dir="auto">encoding</code></td>
+<td>string</td>
+<td><code dir="auto">utf-8</code></td>
+<td>File encoding.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Date columns are formatted with dayjs using <code dir="auto">dateFormat</code>.</li>
+<li>The exact column order is critical — IFS imports by position, not by name.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="bluecherry--bluecherry-erp-csv-import"><code dir="auto">bluecherry</code> — BlueCherry ERP CSV import</h2><a class="sl-anchor-link" href="#bluecherry--bluecherry-erp-csv-import"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “bluecherry — BlueCherry ERP CSV import”</span></a></div>
+<p>BlueCherry (CGS) uses fixed-format CSV imports per entity type. The adapter validates required columns at <code dir="auto">connect()</code> time, before any data is read, so misconfigured pipelines fail fast.</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">bluecherry</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">entity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">Style</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">output</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">./output/style-co-styles-bc.csv</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">template</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">default</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">includeHeader</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">dateFormat</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">MM/DD/YYYY</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">nullValue</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">""</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="target:  adapter: bluecherry  entity: Style  output: ./output/style-co-styles-bc.csv  template: default  includeHeader: true  dateFormat: MM/DD/YYYY  nullValue: &quot;&quot;"><div></div></button></div></figure></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">entity</code></td>
+<td>enum</td>
+<td>—</td>
+<td>One of <code dir="auto">Style</code>, <code dir="auto">Vendor</code>, <code dir="auto">PurchaseOrder</code>, <code dir="auto">PODetail</code>, <code dir="auto">Season</code>, <code dir="auto">ColourSize</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">output</code></td>
+<td>string</td>
+<td>—</td>
+<td>Path to write.</td>
+</tr>
+<tr>
+<td><code dir="auto">template</code></td>
+<td>string</td>
+<td><code dir="auto">default</code></td>
+<td><code dir="auto">default</code> uses built-in column order; or path to a header-only template CSV.</td>
+</tr>
+<tr>
+<td><code dir="auto">includeHeader</code></td>
+<td>boolean</td>
+<td><code dir="auto">true</code></td>
+<td>BlueCherry expects headers.</td>
+</tr>
+<tr>
+<td><code dir="auto">dateFormat</code></td>
+<td>string</td>
+<td><code dir="auto">MM/DD/YYYY</code></td>
+<td>BlueCherry is US-origin; default is US date format.</td>
+</tr>
+<tr>
+<td><code dir="auto">nullValue</code></td>
+<td>string</td>
+<td><code dir="auto">""</code></td>
+<td>How nulls are rendered.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Required columns per entity</strong> (validated at <code dir="auto">connect()</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Required columns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">Style</code></td>
+<td><code dir="auto">StyleNo</code>, <code dir="auto">StyleDesc</code>, <code dir="auto">Division</code>, <code dir="auto">Season</code>, <code dir="auto">CostPrice</code>, <code dir="auto">RetailPrice</code>, <code dir="auto">ActiveFlag</code></td>
+</tr>
+<tr>
+<td><code dir="auto">Vendor</code></td>
+<td><code dir="auto">VendorNo</code>, <code dir="auto">VendorName</code>, <code dir="auto">Country</code>, <code dir="auto">CurrencyCode</code></td>
+</tr>
+<tr>
+<td><code dir="auto">PurchaseOrder</code></td>
+<td><code dir="auto">PONumber</code>, <code dir="auto">VendorNo</code>, <code dir="auto">Season</code>, <code dir="auto">OrderDate</code>, <code dir="auto">DeliveryDate</code></td>
+</tr>
+<tr>
+<td><code dir="auto">PODetail</code></td>
+<td><code dir="auto">PONumber</code>, <code dir="auto">StyleNo</code>, <code dir="auto">ColourCode</code>, <code dir="auto">SizeCode</code>, <code dir="auto">Quantity</code>, <code dir="auto">CostPrice</code></td>
+</tr>
+<tr>
+<td><code dir="auto">Season</code></td>
+<td><code dir="auto">SeasonCode</code>, <code dir="auto">SeasonDesc</code>, <code dir="auto">StartDate</code>, <code dir="auto">EndDate</code></td>
+</tr>
+<tr>
+<td><code dir="auto">ColourSize</code></td>
+<td><code dir="auto">StyleNo</code>, <code dir="auto">ColourCode</code>, <code dir="auto">ColourDesc</code>, <code dir="auto">SizeCode</code>, <code dir="auto">SizeDesc</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Any column whose name ends with <code dir="auto">Date</code> (case-insensitive) is automatically formatted using <code dir="auto">dateFormat</code> via dayjs.</li>
+<li>If your BlueCherry instance uses different column names, point <code dir="auto">template</code> at a header-only template CSV — the adapter uses that as the definitive column order.</li>
+<li>These column names are conventions; verify against your BlueCherry import documentation before running a live migration.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="bc--business-central-rest"><code dir="auto">bc</code> — Business Central REST</h2><a class="sl-anchor-link" href="#bc--business-central-rest"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “bc — Business Central REST”</span></a></div>
+<p>Loads to Microsoft Dynamics 365 Business Central via OData REST. Uses OAuth 2.0 client credentials for authentication and OData <code dir="auto">$batch</code> for throughput.</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">bc</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">baseUrl</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">${BC_BASE_URL}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">company</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">${BC_COMPANY}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">entity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">customers</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">apiVersion</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">v2.0</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">onConflict</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">upsert</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">batchEndpoint</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="target:  adapter: bc  baseUrl: ${BC_BASE_URL}  company: ${BC_COMPANY}  entity: customers  apiVersion: v2.0  onConflict: upsert  batchEndpoint: true"><div></div></button></div></figure></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">baseUrl</code></td>
+<td>string</td>
+<td>—</td>
+<td>Resolved from <code dir="auto">${ENV_VAR}</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">company</code></td>
+<td>string</td>
+<td>—</td>
+<td>BC company GUID or name.</td>
+</tr>
+<tr>
+<td><code dir="auto">entity</code></td>
+<td>string</td>
+<td>—</td>
+<td>OData entity name (lowercase, plural — e.g. <code dir="auto">customers</code>, <code dir="auto">salesInvoices</code>).</td>
+</tr>
+<tr>
+<td><code dir="auto">apiVersion</code></td>
+<td>string</td>
+<td><code dir="auto">v2.0</code></td>
+<td>OData API version.</td>
+</tr>
+<tr>
+<td><code dir="auto">onConflict</code></td>
+<td>enum</td>
+<td><code dir="auto">fail</code></td>
+<td><code dir="auto">fail</code> | <code dir="auto">upsert</code> | <code dir="auto">ignore</code>. With <code dir="auto">upsert</code>, a <code dir="auto">409</code> triggers a <code dir="auto">PATCH</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">batchEndpoint</code></td>
+<td>boolean</td>
+<td><code dir="auto">true</code></td>
+<td>Use OData <code dir="auto">$batch</code> (max 100 ops per batch).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>OAuth 2.0 client credentials: <code dir="auto">POST https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token</code>. Tokens are cached in memory and refreshed 60 seconds before expiry.</li>
+<li><code dir="auto">$batch</code> endpoint: <code dir="auto">POST {baseUrl}/api/{apiVersion}/companies({company})/$batch</code> with <code dir="auto">Content-Type: multipart/mixed; boundary=batch_{uuid}</code>.</li>
+<li>4xx errors (other than <code dir="auto">409</code> on upsert) are logged and <code dir="auto">rowsFailed</code> is incremented; the run continues if <code dir="auto">run.onError: continue</code>.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="custom-target-adapters">Custom target adapters</h2><a class="sl-anchor-link" href="#custom-target-adapters"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Custom target adapters”</span></a></div>
+<p>For systems Sluice doesn’t cover, implement the <code dir="auto">TargetAdapter</code> interface as a Tier 2 file plugin or a Tier 3 npm package — see the <a href="/sluice/guides/plugin-system/">Plugin System</a> guide.</p>
+<aside aria-label="There is no rest target adapter" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"/></svg>There is no <code dir="auto">rest</code> target adapter</p><div class="starlight-aside__content"><p><code dir="auto">rest</code> is a <strong>source</strong> adapter only. <code dir="auto">target.adapter: rest</code> is rejected by <code dir="auto">sluice check</code>. To push transformed rows at an arbitrary HTTP API today, write a <code dir="auto">TargetAdapter</code> plugin; the <code dir="auto">bc</code> adapter is the closest reference implementation.</p></div></aside></div><footer class="sl-flex astro-dnby3mml"><div class="meta sl-flex astro-dnby3mml"><a href="https://github.com/caracal-lynx/sluice/edit/master/docs-site/src/content/docs/reference/target-adapters.mdx" class="sl-flex print:hidden astro-pymesg6t"><svg aria-hidden="true" class="astro-pymesg6t astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.2em;"><path d="M22 7.24a1 1 0 0 0-.29-.71l-4.24-4.24a1 1 0 0 0-1.1-.22 1 1 0 0 0-.32.22l-2.83 2.83L2.29 16.05a1 1 0 0 0-.29.71V21a1 1 0 0 0 1 1h4.24a1 1 0 0 0 .76-.29l10.87-10.93L21.71 8c.1-.1.17-.2.22-.33a1 1 0 0 0 0-.24v-.14l.07-.05ZM6.83 20H4v-2.83l9.93-9.93 2.83 2.83L6.83 20ZM18.17 8.66l-2.83-2.83 1.42-1.41 2.82 2.82-1.41 1.42Z"/></svg>Edit page</a><p>Last updated: <time datetime="2026-08-24T16:06:36.000Z">Aug 24, 2026</time></p></div><div class="pagination-links print:hidden astro-ekexbecj" dir="ltr"><a href="/sluice/reference/source-adapters/" rel="prev" class="astro-ekexbecj"><svg aria-hidden="true" class="astro-ekexbecj astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-ekexbecj">Previous<br class="astro-ekexbecj"><span class="link-title astro-ekexbecj">Source Adapters</span></span></a><a href="/sluice/reference/dq-rules/" rel="next" class="astro-ekexbecj"><svg aria-hidden="true" class="astro-ekexbecj astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-ekexbecj">Next<br class="astro-ekexbecj"><span class="link-title astro-ekexbecj">Data Quality Rules</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

@@ -1,0 +1,827 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-ibu2z2po"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Pipeline YAML Schema | Sluice</title><link rel="canonical" href="https://caracal-lynx.github.io/sluice/reference/pipeline-yaml/"/><link rel="sitemap" href="/sluice/sitemap-index.xml"/><link rel="shortcut icon" href="/sluice/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.2.4"/><meta name="generator" content="Starlight v0.41.7"/><meta property="og:title" content="Pipeline YAML Schema"/><meta property="og:type" content="article"/><meta property="og:url" content="https://caracal-lynx.github.io/sluice/reference/pipeline-yaml/"/><meta property="og:locale" content="en"/><meta property="og:description" content="Definitive reference for every key in a Sluice pipeline YAML — auto-generated from the Zod schema in the source code."/><meta property="og:site_name" content="Sluice"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Definitive reference for every key in a Sluice pipeline YAML — auto-generated from the Zod schema in the source code."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/sluice/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/sluice/_astro/common.qZQ2umhd.css"><style>@layer starlight.components{.card:where(.astro-jl5ic3b4){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-jl5ic3b4):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-jl5ic3b4):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-jl5ic3b4):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-jl5ic3b4):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-jl5ic3b4){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-jl5ic3b4) .icon:where(.astro-jl5ic3b4){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-jl5ic3b4) .body:where(.astro-jl5ic3b4){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-dlundx7g){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-dlundx7g)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-dlundx7g){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-dlundx7g){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-dlundx7g)>:nth-child(2n){transform:translateY(var(--stagger-height))}}.sl-link-card:where(.astro-7glyinih){border:1px solid var(--sl-color-gray-5);box-shadow:var(--sl-shadow-sm);border-radius:.5rem;grid-template-columns:1fr auto;gap:.5rem;padding:1rem;display:grid;position:relative}a:where(.astro-7glyinih){line-height:var(--sl-line-height-headings);text-decoration:none}a:where(.astro-7glyinih):before{content:"";position:absolute;inset:0}.stack:where(.astro-7glyinih){flex-direction:column;gap:.5rem}.title:where(.astro-7glyinih){color:var(--sl-color-white);font-weight:600;font-size:var(--sl-text-lg)}.description:where(.astro-7glyinih){color:var(--sl-color-gray-3);line-height:1.5}.icon:where(.astro-7glyinih){color:var(--sl-color-gray-3)}.sl-link-card:where(.astro-7glyinih):hover{background:var(--sl-color-gray-7,var(--sl-color-gray-6));border-color:var(--sl-color-gray-2)}.sl-link-card:where(.astro-7glyinih):hover .icon:where(.astro-7glyinih){color:var(--sl-color-white)}}
+@layer starlight.components{svg:where(.astro-yfyzwi74){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/sluice/_astro/page.WW9DoxGh.js"></script></head><body class="astro-ibu2z2po"><a class="sl-skip-link astro-3mdz6nor" href="#_top">Skip to content</a><div class="page sl-flex astro-xlvs3fzy"><header class="header astro-xlvs3fzy"><div class="header astro-34ravesg"><div class="title-wrapper sl-flex astro-34ravesg"><a href="/sluice/" class="site-title sl-flex astro-lsd65d3d"><img class="astro-lsd65d3d" alt="Sluice" src="/sluice/_astro/sluice-logo.gpIBb-nu.png" width="1000" height="320"><span class="sr-only astro-lsd65d3d" translate="no">Sluice</span></a></div><div class="sl-flex print:hidden astro-34ravesg"><site-search class="astro-34ravesg astro-a34zhn7r" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-a34zhn7r"><svg aria-hidden="true" class="astro-a34zhn7r astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-a34zhn7r" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-a34zhn7r" style="display: none;"><kbd class="astro-a34zhn7r">Ctrl</kbd><kbd class="astro-a34zhn7r">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-a34zhn7r"><div class="dialog-frame sl-flex astro-a34zhn7r"><button data-close-modal class="sl-flex md:sl-hidden astro-a34zhn7r">Cancel</button><div class="search-container astro-a34zhn7r"><div id="starlight__search" class="astro-a34zhn7r"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/sluice/_astro/Search.astro_astro_type_script_index_0_lang.BuKwbOZn.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-34ravesg"><div class="sl-flex social-icons astro-34ravesg"><a href="https://github.com/caracal-lynx/sluice" rel="me" class="sl-flex astro-7vwfimpl"><span class="sr-only astro-7vwfimpl">GitHub</span><svg aria-hidden="true" class="astro-7vwfimpl astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-hj3oxj5q"><span class="sr-only astro-hj3oxj5q">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-hj3oxj5q"><option value="dark" class="astro-hj3oxj5q">Dark</option><option value="light" class="astro-hj3oxj5q">Light</option><option value="auto" selected class="astro-hj3oxj5q">Auto</option></select><svg aria-hidden="true" class="icon caret astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-xlvs3fzy" aria-label="Main"><starlight-menu-button class="print:hidden astro-k3vl3ulc"><button aria-expanded="false" aria-label="Menu" aria-controls="starlight__sidebar" class="sl-flex md:sl-hidden astro-k3vl3ulc"><svg aria-hidden="true" class="open-menu astro-k3vl3ulc astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-k3vl3ulc astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg></button></starlight-menu-button><script type="module">var e=class extends HTMLElement{btn=this.querySelector(`button`);constructor(){super(),this.btn.addEventListener(`click`,()=>this.toggleExpanded());let e=this.closest(`nav`);e&&e.addEventListener(`keyup`,e=>this.closeOnEscape(e)),matchMedia(`(min-width: 50em)`).addEventListener(`change`,()=>this.setExpanded(!1))}setExpanded(e){this.setAttribute(`aria-expanded`,String(e)),document.body.toggleAttribute(`data-mobile-menu-expanded`,e),document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}toggleExpanded(){this.setExpanded(this.getAttribute(`aria-expanded`)!==`true`)}closeOnEscape(e){e.code===`Escape`&&(this.setExpanded(!1),this.btn.focus())}};customElements.define(`starlight-menu-button`,e);</script><div id="starlight__sidebar" class="sidebar-pane astro-xlvs3fzy"><div class="sidebar-content sl-flex astro-xlvs3fzy"><sl-sidebar-state-persist data-hash="1xildef" class="astro-uy7rhxqn"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-kz4rnfra"><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Getting Started</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/getting-started/installation/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Installation</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/getting-started/quickstart/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Quickstart</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/getting-started/core-concepts/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Core Concepts</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Pipeline Reference</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/reference/pipeline-yaml/" aria-current="page" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Pipeline YAML Schema</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/source-adapters/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Source Adapters</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/target-adapters/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Target Adapters</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/dq-rules/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Data Quality Rules</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/prep-and-enrich/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Prep &amp; Enrich Phases</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/reference/transforms/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Transforms</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Guides</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/guides/writing-pipelines/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Writing a Pipeline YAML</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/guides/data-migration-patterns/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Data Migration Patterns</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/guides/plugin-system/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Plugin System</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/guides/ci-cd/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">CI/CD Integration</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">Architecture</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/architecture/how-it-works/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">How It Works</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/architecture/extension-points/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Extension Points</span></a></li></ul></details></li><li class="astro-kz4rnfra"><details open class="astro-kz4rnfra"><summary class="astro-kz4rnfra"><span class="group-label astro-kz4rnfra"><span class="large astro-kz4rnfra">About</span></span><svg aria-hidden="true" class="caret astro-kz4rnfra astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-kz4rnfra"><li class="astro-kz4rnfra"><a href="/sluice/use-cases/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Use Cases</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/commercial-support/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Commercial Support</span></a></li><li class="astro-kz4rnfra"><a href="/sluice/changelog/" class="astro-kz4rnfra"><span class="astro-kz4rnfra">Changelog</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-64jtkzqy"><div class="social-icons astro-64jtkzqy"><a href="https://github.com/caracal-lynx/sluice" rel="me" class="sl-flex astro-7vwfimpl"><span class="sr-only astro-7vwfimpl">GitHub</span><svg aria-hidden="true" class="astro-7vwfimpl astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-hj3oxj5q"><span class="sr-only astro-hj3oxj5q">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-hj3oxj5q"><option value="dark" class="astro-hj3oxj5q">Dark</option><option value="light" class="astro-hj3oxj5q">Light</option><option value="auto" selected class="astro-hj3oxj5q">Auto</option></select><svg aria-hidden="true" class="icon caret astro-hj3oxj5q astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script></div></div></div></div></nav><div class="main-frame astro-xlvs3fzy"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-nf6en5ax"><aside class="right-sidebar-container print:hidden astro-nf6en5ax"><div class="right-sidebar astro-nf6en5ax"><div class="lg:sl-hidden astro-fr2ssi7i"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-gxkmwbof"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-gxkmwbof"><details id="starlight__mobile-toc" class="astro-gxkmwbof"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-gxkmwbof"><span class="toggle sl-flex astro-gxkmwbof">On this page<svg aria-hidden="true" class="caret astro-gxkmwbof astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-gxkmwbof"></span></summary><div class="dropdown astro-gxkmwbof"><ul class="isMobile astro-kh45eswd" style="--depth: 0;"><li style="--depth: 0;" class="astro-kh45eswd"><a href="#_top" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Overview</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#top-level-structure" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Top-level structure</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#pipeline--identity-and-metadata" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">pipeline — identity and metadata</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#source--single-source-pipelines" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">source — single-source pipelines</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#sources--multi-source-pipelines" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">sources[] — multi-source pipelines</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#merge--multi-source-merge-config" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">merge — multi-source merge config</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#dq--data-quality" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">dq — data quality</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#prep--phase-12-pre-enrich-fixup" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">prep — Phase 12 (pre-enrich fixup)</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#enrich--phase-4a-paid-add-on" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">enrich — Phase 4a (paid add-on)</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#transform" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">transform</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#target" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">target</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#run--execution-options" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">run — execution options</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#worked-example" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Worked example</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#see-also" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">See also</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/sluice/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-fr2ssi7i"><div class="sl-container astro-fr2ssi7i"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-kh45eswd" style="--depth: 0;"><li style="--depth: 0;" class="astro-kh45eswd"><a href="#_top" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Overview</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#top-level-structure" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Top-level structure</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#pipeline--identity-and-metadata" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">pipeline — identity and metadata</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#source--single-source-pipelines" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">source — single-source pipelines</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#sources--multi-source-pipelines" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">sources[] — multi-source pipelines</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#merge--multi-source-merge-config" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">merge — multi-source merge config</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#dq--data-quality" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">dq — data quality</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#prep--phase-12-pre-enrich-fixup" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">prep — Phase 12 (pre-enrich fixup)</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#enrich--phase-4a-paid-add-on" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">enrich — Phase 4a (paid add-on)</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#transform" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">transform</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#target" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">target</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#run--execution-options" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">run — execution options</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#worked-example" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">Worked example</span></a></li><li style="--depth: 0;" class="astro-kh45eswd"><a href="#see-also" style="--depth: 0;" class="astro-kh45eswd"><span style="--depth: 0;" class="astro-kh45eswd">See also</span></a></li></ul></nav></starlight-toc><script type="module" src="/sluice/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-nf6en5ax"><main data-pagefind-body class="astro-ibu2z2po" lang="en" dir="ltr"><div class="content-panel astro-igfqrgsa"><div class="sl-container astro-igfqrgsa"><h1 id="_top" class="astro-u7qhtul4">Pipeline YAML Schema</h1></div></div><div class="content-panel astro-igfqrgsa"><div class="sl-container astro-igfqrgsa"><div class="sl-markdown-content">
+<p>This page is the definitive, searchable reference for every key in a Sluice pipeline YAML. It is <strong>auto-generated from the Zod schema</strong> in <a href="https://github.com/caracal-lynx/sluice/blob/master/src/config/schema.ts"><code dir="auto">src/config/schema.ts</code></a> so it cannot drift from the code.</p>
+<aside aria-label="Generated content" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"/></svg>Generated content</p><div class="starlight-aside__content"><p>Field descriptions come from <code dir="auto">.describe()</code> calls in the Zod schema. If a row’s description is blank, contribute a description by adding a <code dir="auto">.describe('…')</code> to the corresponding field in <a href="https://github.com/caracal-lynx/sluice/blob/master/src/config/schema.ts"><code dir="auto">src/config/schema.ts</code></a>.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="top-level-structure">Top-level structure</h2><a class="sl-anchor-link" href="#top-level-structure"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Top-level structure”</span></a></div>
+<div class="expressive-code"><link rel="stylesheet" href="/sluice/_astro/ec.w36nc.css"><script type="module" src="/sluice/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">pipeline</span><span style="--0:#D6DEEB;--1:#403F53">:   { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># identity and metadata (always required)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">source</span><span style="--0:#D6DEEB;--1:#403F53">:     { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># single-source mode (mutually exclusive with sources+merge)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">sources</span><span style="--0:#D6DEEB;--1:#403F53">:    [ </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> ]   </span><span style="--0:#919F9F;--1:#5F636F"># multi-source mode — minimum two entries</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">merge</span><span style="--0:#D6DEEB;--1:#403F53">:      { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># required when sources is present</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">prep</span><span style="--0:#D6DEEB;--1:#403F53">:       { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># OPTIONAL — Phase 12; pre-enrich fixup, mutates staging in place</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">enrich</span><span style="--0:#D6DEEB;--1:#403F53">:     { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># OPTIONAL — Phase 4a; private add-on</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">dq</span><span style="--0:#D6DEEB;--1:#403F53">:         { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># data quality rules</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">transform</span><span style="--0:#D6DEEB;--1:#403F53">:  { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># field mappings, lookups, transforms</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:     { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># load destination</span></div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">run</span><span style="--0:#D6DEEB;--1:#403F53">:        { </span><span style="--0:#F78C6C;--1:#AA0982">...</span><span style="--0:#D6DEEB;--1:#403F53"> }   </span><span style="--0:#919F9F;--1:#5F636F"># execution options (defaults provided)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pipeline:   { ... }   # identity and metadata (always required)source:     { ... }   # single-source mode (mutually exclusive with sources+merge)sources:    [ ... ]   # multi-source mode — minimum two entriesmerge:      { ... }   # required when sources is presentprep:       { ... }   # OPTIONAL — Phase 12; pre-enrich fixup, mutates staging in placeenrich:     { ... }   # OPTIONAL — Phase 4a; private add-ondq:         { ... }   # data quality rulestransform:  { ... }   # field mappings, lookups, transformstarget:     { ... }   # load destinationrun:        { ... }   # execution options (defaults provided)"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="pipeline--identity-and-metadata"><code dir="auto">pipeline</code> — identity and metadata</h2><a class="sl-anchor-link" href="#pipeline--identity-and-metadata"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “pipeline — identity and metadata”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">name</code></td>
+<td>string (lowercase, hyphenated)</td>
+<td>yes</td>
+<td>—</td>
+<td>Pipeline slug used in output filenames and log records. Must match <code dir="auto">^[a-z0-9-]+$</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">client</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Client identifier; appears in load reports and run state.</td>
+</tr>
+<tr>
+<td><code dir="auto">version</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Pipeline version (quote in YAML to keep it a string).</td>
+</tr>
+<tr>
+<td><code dir="auto">entity</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Logical entity name (used in load reports and target adapter metadata).</td>
+</tr>
+<tr>
+<td><code dir="auto">description</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Human-readable description.</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="source--single-source-pipelines"><code dir="auto">source</code> — single-source pipelines</h2><a class="sl-anchor-link" href="#source--single-source-pipelines"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “source — single-source pipelines”</span></a></div>
+<p>Where the data comes from. Exactly one of <code dir="auto">query</code>, <code dir="auto">file</code>, or <code dir="auto">endpoint</code> must be set. See <a href="/sluice/reference/source-adapters/">Source Adapters</a> for adapter-specific config.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">adapter</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Source adapter id. Built-in: <code dir="auto">mssql</code>, <code dir="auto">pg</code>, <code dir="auto">csv</code>, <code dir="auto">xlsx</code>, <code dir="auto">rest</code>, <code dir="auto">odoo-csv</code>, <code dir="auto">json</code>. An id contributed by a plugin adapter is also accepted; ConfigLoader validates it against SourceAdapterRegistry once plugins are loaded.</td>
+</tr>
+<tr>
+<td><code dir="auto">connection</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Connection string for SQL adapters. Resolves <code dir="auto">${ENV_VAR}</code> tokens at load time. Required for <code dir="auto">mssql</code> and <code dir="auto">pg</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">query</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>SELECT statement for SQL adapters. Required for <code dir="auto">mssql</code> and <code dir="auto">pg</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">file</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Path or glob for file adapters. Required for <code dir="auto">csv</code>, <code dir="auto">xlsx</code>, <code dir="auto">odoo-csv</code>, and <code dir="auto">json</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">recordPath</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Used by the <code dir="auto">json</code> adapter only. Dot-path to the records array inside the file (e.g. <code dir="auto">data.items</code>). Omit when the file’s root is already an array.</td>
+</tr>
+<tr>
+<td><code dir="auto">endpoint</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Full URL for the <code dir="auto">rest</code> adapter. Required for <code dir="auto">rest</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">headers</code></td>
+<td><code dir="auto">Record&lt;string, string&gt;</code></td>
+<td>no</td>
+<td>—</td>
+<td>Optional HTTP headers, applied to every request from the <code dir="auto">rest</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">delimiter</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">","</code></td>
+<td>Field delimiter for the <code dir="auto">csv</code> and <code dir="auto">odoo-csv</code> adapters.</td>
+</tr>
+<tr>
+<td><code dir="auto">encoding</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"utf-8"</code></td>
+<td>File encoding for <code dir="auto">csv</code>, <code dir="auto">xlsx</code>, and <code dir="auto">odoo-csv</code> (any Node-supported encoding).</td>
+</tr>
+<tr>
+<td><code dir="auto">sheet</code></td>
+<td>string | number</td>
+<td>no</td>
+<td>—</td>
+<td>Sheet name or 0-based index for the <code dir="auto">xlsx</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">pagination</code></td>
+<td>object</td>
+<td>no</td>
+<td>—</td>
+<td>Pagination config for the <code dir="auto">rest</code> adapter. Omit for single-page responses.</td>
+</tr>
+<tr>
+<td><code dir="auto">pivot</code></td>
+<td>object</td>
+<td>no</td>
+<td>—</td>
+<td>Used by the <code dir="auto">odoo-csv</code> adapter only. Declares one column whose <code dir="auto">Key: value</code> cells should be pivoted into new columns named after the keys.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="sources--multi-source-pipelines"><code dir="auto">sources[]</code> — multi-source pipelines</h2><a class="sl-anchor-link" href="#sources--multi-source-pipelines"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “sources[] — multi-source pipelines”</span></a></div>
+<p>In multi-source mode, replace <code dir="auto">source:</code> with a <code dir="auto">sources:</code> array (minimum two entries). Each entry inherits the single-source <code dir="auto">source</code> keys above plus the three multi-source-only keys below: <code dir="auto">id</code>, <code dir="auto">priority</code>, and <code dir="auto">rename</code>. Mutually exclusive with <code dir="auto">source</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">adapter</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Source adapter id. Built-in: <code dir="auto">mssql</code>, <code dir="auto">pg</code>, <code dir="auto">csv</code>, <code dir="auto">xlsx</code>, <code dir="auto">rest</code>, <code dir="auto">odoo-csv</code>, <code dir="auto">json</code>. An id contributed by a plugin adapter is also accepted; ConfigLoader validates it against SourceAdapterRegistry once plugins are loaded.</td>
+</tr>
+<tr>
+<td><code dir="auto">connection</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Connection string for SQL adapters. Resolves <code dir="auto">${ENV_VAR}</code> tokens at load time. Required for <code dir="auto">mssql</code> and <code dir="auto">pg</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">query</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>SELECT statement for SQL adapters. Required for <code dir="auto">mssql</code> and <code dir="auto">pg</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">file</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Path or glob for file adapters. Required for <code dir="auto">csv</code>, <code dir="auto">xlsx</code>, <code dir="auto">odoo-csv</code>, and <code dir="auto">json</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">recordPath</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Used by the <code dir="auto">json</code> adapter only. Dot-path to the records array inside the file (e.g. <code dir="auto">data.items</code>). Omit when the file’s root is already an array.</td>
+</tr>
+<tr>
+<td><code dir="auto">endpoint</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Full URL for the <code dir="auto">rest</code> adapter. Required for <code dir="auto">rest</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">headers</code></td>
+<td><code dir="auto">Record&lt;string, string&gt;</code></td>
+<td>no</td>
+<td>—</td>
+<td>Optional HTTP headers, applied to every request from the <code dir="auto">rest</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">delimiter</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">","</code></td>
+<td>Field delimiter for the <code dir="auto">csv</code> and <code dir="auto">odoo-csv</code> adapters.</td>
+</tr>
+<tr>
+<td><code dir="auto">encoding</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"utf-8"</code></td>
+<td>File encoding for <code dir="auto">csv</code>, <code dir="auto">xlsx</code>, and <code dir="auto">odoo-csv</code> (any Node-supported encoding).</td>
+</tr>
+<tr>
+<td><code dir="auto">sheet</code></td>
+<td>string | number</td>
+<td>no</td>
+<td>—</td>
+<td>Sheet name or 0-based index for the <code dir="auto">xlsx</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">pagination</code></td>
+<td>object</td>
+<td>no</td>
+<td>—</td>
+<td>Pagination config for the <code dir="auto">rest</code> adapter. Omit for single-page responses.</td>
+</tr>
+<tr>
+<td><code dir="auto">pivot</code></td>
+<td>object</td>
+<td>no</td>
+<td>—</td>
+<td>Used by the <code dir="auto">odoo-csv</code> adapter only. Declares one column whose <code dir="auto">Key: value</code> cells should be pivoted into new columns named after the keys.</td>
+</tr>
+<tr>
+<td><code dir="auto">id</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Source id — lowercase alphanumeric with hyphens only. Must be unique across the array; used as the staging table suffix (<code dir="auto">stg_raw_{id}</code>).</td>
+</tr>
+<tr>
+<td><code dir="auto">priority</code></td>
+<td>number</td>
+<td>yes</td>
+<td>—</td>
+<td>Positive integer priority. Lower priority = higher precedence in <code dir="auto">coalesce</code> and <code dir="auto">priority-override</code> strategies.</td>
+</tr>
+<tr>
+<td><code dir="auto">rename</code></td>
+<td><code dir="auto">Record&lt;string, string&gt;</code></td>
+<td>no</td>
+<td>—</td>
+<td>Optional rename map <code dir="auto">{ "old column": "new column" }</code> applied in-place after extract. Useful for harmonising CSV/XLSX column headers; SQL/REST sources should rename in the query instead.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="merge--multi-source-merge-config"><code dir="auto">merge</code> — multi-source merge config</h2><a class="sl-anchor-link" href="#merge--multi-source-merge-config"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “merge — multi-source merge config”</span></a></div>
+<p>Required whenever <code dir="auto">sources</code> is set. See <a href="/sluice/architecture/how-it-works/">How It Works</a> for the merge flow diagram.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">key</code></td>
+<td>string | string[]</td>
+<td>yes</td>
+<td>—</td>
+<td>Merge key — single column name or array of columns (composite key). Must exist in every source after <code dir="auto">rename</code> is applied.</td>
+</tr>
+<tr>
+<td><code dir="auto">strategy</code></td>
+<td><code dir="auto">coalesce</code> | <code dir="auto">priority-override</code> | <code dir="auto">union</code> | <code dir="auto">intersect</code></td>
+<td>no</td>
+<td><code dir="auto">"coalesce"</code></td>
+<td>Merge strategy. <code dir="auto">coalesce</code> = first non-null wins (priority-ordered); <code dir="auto">priority-override</code> = highest-priority source always wins; <code dir="auto">union</code> = all rows deduped by key; <code dir="auto">intersect</code> = rows present in every source.</td>
+</tr>
+<tr>
+<td><code dir="auto">onUnmatched</code></td>
+<td><code dir="auto">include</code> | <code dir="auto">exclude</code> | <code dir="auto">warn</code> | <code dir="auto">error</code></td>
+<td>no</td>
+<td><code dir="auto">"include"</code></td>
+<td>What to do with rows present in fewer than all sources. Ignored by <code dir="auto">intersect</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">fieldStrategies</code></td>
+<td>object[]</td>
+<td>no</td>
+<td><code dir="auto">[]</code></td>
+<td>Per-field overrides of the top-level strategy. Use to pin a specific field to a specific source, or to override the strategy on a single field.</td>
+</tr>
+<tr>
+<td><code dir="auto">conflictLog</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Optional CSV path to log per-conflict detail (key, field, winning source, source values). Only written when at least one conflict is detected.</td>
+</tr>
+<tr>
+<td><code dir="auto">incrementalSource</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Source id used for incremental filtering. Required when <code dir="auto">run.mode: incremental</code>. Other sources run full each time.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="dq--data-quality"><code dir="auto">dq</code> — data quality</h2><a class="sl-anchor-link" href="#dq--data-quality"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “dq — data quality”</span></a></div>
+<p>See <a href="/sluice/reference/dq-rules/">Data Quality Rules</a> for the full check-type reference.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">rulesFile</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Optional path to a composite rule library YAML (Tier 1 plugins). Composite-rule references in <code dir="auto">rules[]</code> are expanded into built-in checks before Zod validation.</td>
+</tr>
+<tr>
+<td><code dir="auto">stopOnCritical</code></td>
+<td>boolean</td>
+<td>no</td>
+<td><code dir="auto">true</code></td>
+<td>When true, the pipeline halts (exit code 2) if any <code dir="auto">critical</code> check fails. When false, critical violations are logged but the run continues.</td>
+</tr>
+<tr>
+<td><code dir="auto">rejectionFile</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Path for the per-violation rejection CSV. Defaults to <code dir="auto">{outputDir}/{pipeline.name}-rejected.csv</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">rules</code></td>
+<td>object[]</td>
+<td>no</td>
+<td><code dir="auto">[]</code></td>
+<td>List of DQ rules. Each entry binds a field to one or more checks.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="prep--phase-12-pre-enrich-fixup"><code dir="auto">prep</code> — Phase 12 (pre-enrich fixup)</h2><a class="sl-anchor-link" href="#prep--phase-12-pre-enrich-fixup"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “prep — Phase 12 (pre-enrich fixup)”</span></a></div>
+<p>Optional. Runs immediately after Extract (and after <code dir="auto">rename</code>/merge in multi-source mode), <strong>before</strong> Enrich and DQ, mutating the staging table in place so both downstream phases see already-fixed data. Each rule sets exactly one of <code dir="auto">cleanse</code>, <code dir="auto">expression</code>, or <code dir="auto">lookup</code>. Rules are applied top-to-bottom and later rules see earlier rules’ mutations. Unlike Enrich, prep still runs under <code dir="auto">--dry-run</code> and <code dir="auto">validate-only</code>, because DQ depends on its output. Skip it with <code dir="auto">sluice run --no-prep</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">lookups</code></td>
+<td>object[]</td>
+<td>no</td>
+<td><code dir="auto">[]</code></td>
+<td>Named lookup tables consumed by prep.rules[].lookup. Loaded once at the start of the prep phase. Cache is separate from transform.lookups in v1.</td>
+</tr>
+<tr>
+<td><code dir="auto">rules</code></td>
+<td>object[]</td>
+<td>yes</td>
+<td>—</td>
+<td>Prep rules — applied top-to-bottom against the staging table. Later rules see earlier rules’ mutations.</td>
+</tr>
+<tr>
+<td><code dir="auto">summaryFile</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Optional path for the prep summary JSON. Defaults to <code dir="auto">{outputDir}/{pipeline.name}-prep-summary.json</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="enrich--phase-4a-paid-add-on"><code dir="auto">enrich</code> — Phase 4a (paid add-on)</h2><a class="sl-anchor-link" href="#enrich--phase-4a-paid-add-on"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “enrich — Phase 4a (paid add-on)”</span></a></div>
+<p>Optional. Runs between Extract (or Merge) and DQ. The framework that consumes this block lives in the private <code dir="auto">@caracal-lynx/sluice-enrich</code> package; with that not installed, an <code dir="auto">enrich:</code> block is parsed and validated but the phase is skipped with a <code dir="auto">WARN</code> log.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">cache</code></td>
+<td>boolean | <code dir="auto">"persist"</code></td>
+<td>no</td>
+<td><code dir="auto">true</code></td>
+<td>Cache strategy for enrich providers. <code dir="auto">true</code> = in-memory cache; <code dir="auto">false</code> = no cache; <code dir="auto">"persist"</code> = on-disk cache between runs.</td>
+</tr>
+<tr>
+<td><code dir="auto">onError</code></td>
+<td><code dir="auto">flag</code> | <code dir="auto">skip</code> | <code dir="auto">fail</code></td>
+<td>no</td>
+<td><code dir="auto">"flag"</code></td>
+<td>Pipeline-wide error policy when an enrich call fails. <code dir="auto">flag</code> = mark row but keep it; <code dir="auto">skip</code> = drop the row; <code dir="auto">fail</code> = halt the pipeline.</td>
+</tr>
+<tr>
+<td><code dir="auto">lookups</code></td>
+<td>object[]</td>
+<td>yes</td>
+<td>—</td>
+<td>At least one enrich lookup. Each binds a source field to a provider (e.g. VIES, HMRC) and writes the result into named columns.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="transform"><code dir="auto">transform</code></h2><a class="sl-anchor-link" href="#transform"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “transform”</span></a></div>
+<p>Field mappings, lookups, transforms, and cleanse ops. See <a href="/sluice/reference/transforms/">Transforms</a> for every available type.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">lookups</code></td>
+<td>object[]</td>
+<td>no</td>
+<td><code dir="auto">[]</code></td>
+<td>Named lookup tables, loaded once at the start of the transform phase and cached in memory. Any source adapter (CSV, MSSQL, REST, …) is valid here.</td>
+</tr>
+<tr>
+<td><code dir="auto">fields</code></td>
+<td>object[]</td>
+<td>yes</td>
+<td>—</td>
+<td>Field mappings — one entry per output column. Order is preserved.</td>
+</tr>
+<tr>
+<td><code dir="auto">unmappedPlaceholder</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"*** TBC ***"</code></td>
+<td>Value emitted by field mappings with <code dir="auto">unmapped: true</code>. Used during iterative mapping so draft pipelines run end-to-end before source fields are identified.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="target"><code dir="auto">target</code></h2><a class="sl-anchor-link" href="#target"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “target”</span></a></div>
+<p>Where the data goes. See <a href="/sluice/reference/target-adapters/">Target Adapters</a> for adapter-specific config.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">adapter</code></td>
+<td>string</td>
+<td>yes</td>
+<td>—</td>
+<td>Target adapter id. Built-in: <code dir="auto">csv</code>, <code dir="auto">pg</code>, <code dir="auto">bc</code>, <code dir="auto">ifs</code>, <code dir="auto">bluecherry</code>. An id contributed by a plugin adapter is also accepted; ConfigLoader validates it against TargetAdapterRegistry once plugins are loaded.</td>
+</tr>
+<tr>
+<td><code dir="auto">output</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Output file path for file-based targets (<code dir="auto">csv</code>, <code dir="auto">ifs</code>, <code dir="auto">bluecherry</code>).</td>
+</tr>
+<tr>
+<td><code dir="auto">entity</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Logical entity name. ERP adapters use this to resolve required-column lists; OData adapters use it as the entity-set name.</td>
+</tr>
+<tr>
+<td><code dir="auto">connection</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Connection string for the <code dir="auto">pg</code> adapter. Resolves <code dir="auto">${ENV_VAR}</code> at load time.</td>
+</tr>
+<tr>
+<td><code dir="auto">includeHeader</code></td>
+<td>boolean</td>
+<td>no</td>
+<td>—</td>
+<td>Whether to write a header row. Defaults: <code dir="auto">csv</code> true, <code dir="auto">ifs</code> false, <code dir="auto">bluecherry</code> true.</td>
+</tr>
+<tr>
+<td><code dir="auto">columnOrder</code></td>
+<td>string[]</td>
+<td>no</td>
+<td>—</td>
+<td>Explicit column ordering for file-based targets. Required by ERP imports that load by position rather than by name.</td>
+</tr>
+<tr>
+<td><code dir="auto">dateFormat</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>dayjs format token for date columns. Defaults: <code dir="auto">YYYY-MM-DD</code> for <code dir="auto">csv</code>/<code dir="auto">ifs</code>, <code dir="auto">MM/DD/YYYY</code> for <code dir="auto">bluecherry</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">delimiter</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">","</code></td>
+<td>Field delimiter for file-based targets.</td>
+</tr>
+<tr>
+<td><code dir="auto">encoding</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"utf-8"</code></td>
+<td>Output file encoding.</td>
+</tr>
+<tr>
+<td><code dir="auto">nullValue</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">""</code></td>
+<td>Rendered value for null/undefined cells in CSV output.</td>
+</tr>
+<tr>
+<td><code dir="auto">template</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Path to a header-only CSV template, used to override the default required-column ordering for <code dir="auto">bluecherry</code>. The literal <code dir="auto">default</code> selects the built-in column set.</td>
+</tr>
+<tr>
+<td><code dir="auto">baseUrl</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Base URL for the <code dir="auto">bc</code> adapter. Resolves <code dir="auto">${ENV_VAR}</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">company</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Company GUID or name for the <code dir="auto">bc</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">apiVersion</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"v2.0"</code></td>
+<td>OData API version for the <code dir="auto">bc</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">onConflict</code></td>
+<td><code dir="auto">fail</code> | <code dir="auto">upsert</code> | <code dir="auto">ignore</code></td>
+<td>no</td>
+<td><code dir="auto">"fail"</code></td>
+<td>Behaviour when the target rejects an insert as a conflict. <code dir="auto">upsert</code> issues a PATCH (<code dir="auto">bc</code>) or INSERT … ON CONFLICT UPDATE (<code dir="auto">pg</code>).</td>
+</tr>
+<tr>
+<td><code dir="auto">upsertKey</code></td>
+<td>string[]</td>
+<td>no</td>
+<td>—</td>
+<td>Conflict key for <code dir="auto">pg</code> upserts. <strong>Required</strong> when <code dir="auto">onConflict: upsert</code>.</td>
+</tr>
+<tr>
+<td><code dir="auto">batchEndpoint</code></td>
+<td>boolean</td>
+<td>no</td>
+<td><code dir="auto">true</code></td>
+<td>Use OData <code dir="auto">$batch</code> for the <code dir="auto">bc</code> adapter (max 100 ops per batch). Disable for adapters that don’t support batching.</td>
+</tr>
+<tr>
+<td><code dir="auto">table</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Target table name for the <code dir="auto">pg</code> adapter.</td>
+</tr>
+<tr>
+<td><code dir="auto">schema</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"public"</code></td>
+<td>Target schema for the <code dir="auto">pg</code> adapter.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="run--execution-options"><code dir="auto">run</code> — execution options</h2><a class="sl-anchor-link" href="#run--execution-options"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “run — execution options”</span></a></div>
+<p>Every field is optional with a sensible default; you can omit the entire <code dir="auto">run:</code> block.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">mode</code></td>
+<td><code dir="auto">full</code> | <code dir="auto">incremental</code> | <code dir="auto">validate-only</code></td>
+<td>no</td>
+<td><code dir="auto">"full"</code></td>
+<td>Run mode. <code dir="auto">full</code> extracts and loads everything; <code dir="auto">incremental</code> filters source records by <code dir="auto">incrementalField</code>; <code dir="auto">validate-only</code> runs DQ + transform but skips the load.</td>
+</tr>
+<tr>
+<td><code dir="auto">batchSize</code></td>
+<td>number</td>
+<td>no</td>
+<td><code dir="auto">500</code></td>
+<td>DuckDB insert batch size during extract and transform.</td>
+</tr>
+<tr>
+<td><code dir="auto">onError</code></td>
+<td><code dir="auto">continue</code> | <code dir="auto">stop</code></td>
+<td>no</td>
+<td><code dir="auto">"continue"</code></td>
+<td>Behaviour when a target adapter rejects a row. <code dir="auto">continue</code> increments <code dir="auto">rowsFailed</code>; <code dir="auto">stop</code> aborts the load.</td>
+</tr>
+<tr>
+<td><code dir="auto">logLevel</code></td>
+<td><code dir="auto">debug</code> | <code dir="auto">info</code> | <code dir="auto">warn</code> | <code dir="auto">error</code></td>
+<td>no</td>
+<td><code dir="auto">"info"</code></td>
+<td>pino log level. <code dir="auto">debug</code> adds per-row progress lines and disables the progress bar.</td>
+</tr>
+<tr>
+<td><code dir="auto">dryRun</code></td>
+<td>boolean</td>
+<td>no</td>
+<td><code dir="auto">false</code></td>
+<td>When true, skip the load phase even if a target is configured. Equivalent to passing <code dir="auto">--dry-run</code> on the command line.</td>
+</tr>
+<tr>
+<td><code dir="auto">outputDir</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">"./output"</code></td>
+<td>Base directory for run artefacts (rejection CSV, DQ summary JSON, run state JSON, default DuckDB staging file).</td>
+</tr>
+<tr>
+<td><code dir="auto">stagingDb</code></td>
+<td>string</td>
+<td>no</td>
+<td><code dir="auto">""</code></td>
+<td>DuckDB staging file path. Empty string defaults to <code dir="auto">{outputDir}/{pipeline.name}.duckdb</code>. Set to <code dir="auto">:memory:</code> to force in-memory mode.</td>
+</tr>
+<tr>
+<td><code dir="auto">enrichConcurrency</code></td>
+<td>number</td>
+<td>no</td>
+<td><code dir="auto">5</code></td>
+<td>Phase 4a — concurrent in-flight enrich provider requests. Consumed by <code dir="auto">@caracal-lynx/sluice-enrich</code> if installed.</td>
+</tr>
+<tr>
+<td><code dir="auto">enrichTimeoutMs</code></td>
+<td>number</td>
+<td>no</td>
+<td><code dir="auto">5000</code></td>
+<td>Phase 4a — per-request timeout for enrich provider calls. Consumed by <code dir="auto">@caracal-lynx/sluice-enrich</code> if installed.</td>
+</tr>
+<tr>
+<td><code dir="auto">enrichMaxRetries</code></td>
+<td>number</td>
+<td>no</td>
+<td><code dir="auto">3</code></td>
+<td>Phase 4a — max retries for enrich provider calls. Consumed by <code dir="auto">@caracal-lynx/sluice-enrich</code> if installed.</td>
+</tr>
+<tr>
+<td><code dir="auto">incrementalField</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>Source column used to filter incremental runs (must be timestamp-coercible).</td>
+</tr>
+<tr>
+<td><code dir="auto">incrementalSince</code></td>
+<td>string</td>
+<td>no</td>
+<td>—</td>
+<td>ISO datetime override for the incremental window start. If empty, the runner reads <code dir="auto">lastRunAt</code> from the state file.</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="worked-example">Worked example</h2><a class="sl-anchor-link" href="#worked-example"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Worked example”</span></a></div>
+<p>A complete single-source pipeline migrating customers from MSSQL to IFS via the paid <code dir="auto">ifs</code> adapter:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">pipeline</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">name</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">acme-corp-customers</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">client</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">acme-corp</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">version</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">1.0</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">entity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerInfo</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">description</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">Customer master — legacy SQL to IFS ERP</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">source</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">mssql</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">connection</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">${SOURCE_MSSQL}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">query</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#C792EA;--1:#8844AE">|</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">SELECT c.CUST_CODE, c.CUST_NAME, c.POST_CODE, c.EMAIL, c.CREDIT_LIMIT</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">FROM dbo.Customers c</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">WHERE c.Active = 1 AND c.DELETED = 0</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">dq</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">stopOnCritical</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">rejectionFile</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">./output/acme-corp-customers-rejected.csv</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">rules</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#7FDBCA;--1:#111111">field</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CUST_CODE</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#7FDBCA;--1:#111111">checks</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">        </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">notNull</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">severity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">critical</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">        </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">unique</span><span style="--0:#D6DEEB;--1:#403F53">,  </span><span style="--0:#7FDBCA;--1:#111111">severity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">critical</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- </span><span style="--0:#7FDBCA;--1:#111111">field</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">EMAIL</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#7FDBCA;--1:#111111">checks</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">        </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">email</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">severity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">warning</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">transform</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">fields</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">from</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CUST_CODE</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">to</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerNo</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">string</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">max</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#F78C6C;--1:#AA0982">20</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">from</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CUST_NAME</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">to</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">Name</span><span style="--0:#D6DEEB;--1:#403F53">,       </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">string</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">cleanse</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">trim|titleCase</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">from</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">EMAIL</span><span style="--0:#D6DEEB;--1:#403F53">,     </span><span style="--0:#7FDBCA;--1:#111111">to</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">Email</span><span style="--0:#D6DEEB;--1:#403F53">,      </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">string</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">cleanse</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">trim|lowercase</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">- { </span><span style="--0:#7FDBCA;--1:#111111">to</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerGroup</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">type</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">constant</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#7FDBCA;--1:#111111">value</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">DOMESTIC</span><span style="--0:#D6DEEB;--1:#403F53"> }</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">target</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">adapter</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">ifs</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">entity</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerInfo</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">output</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">./output/acme-corp-customers-ifs.csv</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">includeHeader</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#FF6A83;--1:#A24848">false</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">columnOrder</span><span style="--0:#D6DEEB;--1:#403F53">: [</span><span style="--0:#ECC48D;--1:#3B61B0">CustomerNo</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#ECC48D;--1:#3B61B0">Name</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#ECC48D;--1:#3B61B0">Email</span><span style="--0:#D6DEEB;--1:#403F53">, </span><span style="--0:#ECC48D;--1:#3B61B0">CustomerGroup</span><span style="--0:#D6DEEB;--1:#403F53">]</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#7FDBCA;--1:#111111">run</span><span style="--0:#D6DEEB;--1:#403F53">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">mode</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">full</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">batchSize</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#F78C6C;--1:#AA0982">500</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#7FDBCA;--1:#111111">logLevel</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#ECC48D;--1:#3B61B0">info</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pipeline:  name: acme-corp-customers  client: acme-corp  version: &quot;1.0&quot;  entity: CustomerInfo  description: Customer master — legacy SQL to IFS ERPsource:  adapter: mssql  connection: ${SOURCE_MSSQL}  query: |    SELECT c.CUST_CODE, c.CUST_NAME, c.POST_CODE, c.EMAIL, c.CREDIT_LIMIT    FROM dbo.Customers c    WHERE c.Active = 1 AND c.DELETED = 0dq:  stopOnCritical: true  rejectionFile: ./output/acme-corp-customers-rejected.csv  rules:    - field: CUST_CODE      checks:        - { type: notNull, severity: critical }        - { type: unique,  severity: critical }    - field: EMAIL      checks:        - { type: email, severity: warning }transform:  fields:    - { from: CUST_CODE, to: CustomerNo, type: string, max: 20 }    - { from: CUST_NAME, to: Name,       type: string, cleanse: trim|titleCase }    - { from: EMAIL,     to: Email,      type: string, cleanse: trim|lowercase }    - { to: CustomerGroup, type: constant, value: DOMESTIC }target:  adapter: ifs  entity: CustomerInfo  output: ./output/acme-corp-customers-ifs.csv  includeHeader: false  columnOrder: [CustomerNo, Name, Email, CustomerGroup]run:  mode: full  batchSize: 500  logLevel: info"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="see-also">See also</h2><a class="sl-anchor-link" href="#see-also"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “See also”</span></a></div>
+<ul>
+<li><a href="/sluice/reference/source-adapters/">Source Adapters</a></li>
+<li><a href="/sluice/reference/target-adapters/">Target Adapters</a></li>
+<li><a href="/sluice/reference/dq-rules/">Data Quality Rules</a></li>
+<li><a href="/sluice/reference/transforms/">Transforms</a></li>
+<li><a href="/sluice/guides/writing-pipelines/">Writing a Pipeline YAML</a></li>
+</ul></div><footer class="sl-flex astro-dnby3mml"><div class="meta sl-flex astro-dnby3mml"><a href="https://github.com/caracal-lynx/sluice/edit/master/docs-site/src/content/docs/reference/pipeline-yaml.mdx" class="sl-flex print:hidden astro-pymesg6t"><svg aria-hidden="true" class="astro-pymesg6t astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.2em;"><path d="M22 7.24a1 1 0 0 0-.29-.71l-4.24-4.24a1 1 0 0 0-1.1-.22 1 1 0 0 0-.32.22l-2.83 2.83L2.29 16.05a1 1 0 0 0-.29.71V21a1 1 0 0 0 1 1h4.24a1 1 0 0 0 .76-.29l10.87-10.93L21.71 8c.1-.1.17-.2.22-.33a1 1 0 0 0 0-.24v-.14l.07-.05ZM6.83 20H4v-2.83l9.93-9.93 2.83 2.83L6.83 20ZM18.17 8.66l-2.83-2.83 1.42-1.41 2.82 2.82-1.41 1.42Z"/></svg>Edit page</a><p>Last updated: <time datetime="2026-07-31T14:23:14.000Z">Jul 31, 2026</time></p></div><div class="pagination-links print:hidden astro-ekexbecj" dir="ltr"><a href="/sluice/getting-started/core-concepts/" rel="prev" class="astro-ekexbecj"><svg aria-hidden="true" class="astro-ekexbecj astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-ekexbecj">Previous<br class="astro-ekexbecj"><span class="link-title astro-ekexbecj">Core Concepts</span></span></a><a href="/sluice/reference/source-adapters/" rel="next" class="astro-ekexbecj"><svg aria-hidden="true" class="astro-ekexbecj astro-yfyzwi74" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-ekexbecj">Next<br class="astro-ekexbecj"><span class="link-title astro-ekexbecj">Source Adapters</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
