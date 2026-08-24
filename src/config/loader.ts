@@ -5,12 +5,33 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { load as yamlLoad } from "js-yaml";
 import { PipelineSchema, CompositeRuleLibrarySchema, CheckType } from "./schema.js";
+import { isMultiSource, isSingleSource } from "./schema.js";
 import type { Pipeline } from "./schema.js";
+// Barrel imports, not registry-module imports: importing the barrel self-registers
+// the built-in adapters, which is what makes `.list()` below non-empty. [M-06]
+import { SourceAdapterRegistry } from "../adapters/source/index.js";
+import { TargetAdapterRegistry } from "../adapters/target/index.js";
 import { ConfigError } from "../utils/errors.js";
 import { requireEnv } from "../utils/env.js";
 
+/**
+ * Ids contributed by plugins, which the config schema cannot know about.
+ *
+ * DAG-344: `CheckSchema.type` and the adapter fields used to be closed `z.enum`s,
+ * so a Tier-2/Tier-3 plugin could register a rule or adapter that no pipeline
+ * YAML was then allowed to name. The enums are now open strings and membership
+ * is checked here instead — against built-ins UNION whatever is registered — so
+ * an unknown id still fails at config-load time rather than mid-run.
+ *
+ * Callers that have loaded plugins pass `rules`. Adapters are not passed: their
+ * registries are process-wide singletons, so this module reads them directly.
+ */
+export interface KnownPluginIds {
+  rules?: Iterable<string>;
+}
+
 export class ConfigLoader {
-  static async load(yamlPath: string): Promise<Pipeline> {
+  static async load(yamlPath: string, known: KnownPluginIds = {}): Promise<Pipeline> {
     // 1. Read file
     let raw: string;
     try {
@@ -37,82 +58,93 @@ export class ConfigLoader {
       throw new ConfigError(`Invalid YAML in pipeline file: ${yamlPath}`, err);
     }
 
-    // 4. Expand composite DQ rules (rulesFile → built-in checks)
-    parsed = await expandCompositeRules(parsed, yamlPath);
+    // 4. Expand composite DQ rules (rulesFile → built-in checks) and reject any
+    //    check id that is neither built-in, composite, nor plugin-registered.
+    parsed = await expandCompositeRules(parsed, yamlPath, new Set(known.rules ?? []));
 
     // 5. Validate with Zod schema (let ZodError propagate to the caller)
-    return PipelineSchema.parse(parsed);
+    const pipeline = PipelineSchema.parse(parsed);
+
+    // 6. Adapter ids are open strings in the schema, so membership is checked
+    //    against the registries here — after parse, where the shape is typed.
+    assertAdaptersRegistered(pipeline);
+
+    return pipeline;
   }
 }
 
 /**
- * If the raw parsed pipeline object references `dq.rulesFile`, load the
- * composite rule library, build a map of id → checks, then walk
- * `dq.rules[].checks[]` replacing any composite check entries with their
- * constituent built-in checks (applying a severity override if present).
+ * Expand composite DQ rules, then reject any check id that does not exist.
  *
- * Mutates and returns `raw` so downstream code sees built-in check types only.
+ * Runs on EVERY load, not only when `dq.rulesFile` is set. Before DAG-344 the
+ * whole walk was skipped without a rules file, and the closed `CheckType` enum
+ * was the only gate — which is exactly why a plugin-contributed rule id could
+ * never be named in a pipeline. Now `CheckSchema.type` is an open string and
+ * this walk is the gate, admitting built-ins UNION composites UNION registered
+ * plugin ids. A typo in a built-in name still fails here, at config-load time.
+ *
+ * Composite expansion happens first, so a composite may now wrap a plugin rule.
+ * The membership check runs over the POST-expansion checks, so a composite that
+ * references a rule nobody registered fails too.
+ *
+ * Mutates and returns `raw`.
  */
-async function expandCompositeRules(raw: unknown, pipelineYamlPath: string): Promise<unknown> {
+async function expandCompositeRules(
+  raw: unknown,
+  pipelineYamlPath: string,
+  knownRuleIds: ReadonlySet<string>,
+): Promise<unknown> {
   const obj = raw as Record<string, unknown>;
   const dq = obj["dq"] as Record<string, unknown> | undefined;
+  if (!dq) return raw;
 
-  if (!dq || dq["rulesFile"] === undefined || dq["rulesFile"] === null || dq["rulesFile"] === "") {
-    return raw;
-  }
+  const rulesFileRel = dq["rulesFile"];
+  const compositeMap = new Map<string, readonly unknown[]>();
 
-  const rulesFileRel = dq["rulesFile"] as string;
-  const rulesFilePath = path.resolve(path.dirname(pipelineYamlPath), rulesFileRel);
+  if (typeof rulesFileRel === "string" && rulesFileRel !== "") {
+    const rulesFilePath = path.resolve(path.dirname(pipelineYamlPath), rulesFileRel);
 
-  // Load the composite rule library
-  let rulesFileContent: string;
-  try {
-    rulesFileContent = await readFile(rulesFilePath, "utf-8");
-  } catch (err) {
-    if (isEnoent(err)) {
-      throw new ConfigError(`rulesFile not found: ${rulesFilePath}`, err);
+    let rulesFileContent: string;
+    try {
+      rulesFileContent = await readFile(rulesFilePath, "utf-8");
+    } catch (err) {
+      if (isEnoent(err)) {
+        throw new ConfigError(`rulesFile not found: ${rulesFilePath}`, err);
+      }
+      throw err;
     }
-    throw err;
-  }
 
-  let rawLibrary: unknown;
-  try {
-    rawLibrary = yamlLoad(rulesFileContent);
-  } catch (err) {
-    throw new ConfigError(`Invalid YAML in rulesFile: ${rulesFilePath}`, err);
-  }
-
-  // Validate library schema (let ZodError propagate)
-  const library = CompositeRuleLibrarySchema.parse(rawLibrary);
-
-  // Reject duplicate ids explicitly — silently picking the last one would
-  // surprise anyone authoring a rules library.
-  const seen = new Set<string>();
-  for (const r of library.rules) {
-    if (seen.has(r.id)) {
-      throw new ConfigError(
-        `Duplicate composite rule id "${r.id}" in ${rulesFilePath}. ` +
-          `Each id in the rules library must be unique.`,
-      );
+    let rawLibrary: unknown;
+    try {
+      rawLibrary = yamlLoad(rulesFileContent);
+    } catch (err) {
+      throw new ConfigError(`Invalid YAML in rulesFile: ${rulesFilePath}`, err);
     }
-    seen.add(r.id);
+
+    // Validate library schema (let ZodError propagate)
+    const library = CompositeRuleLibrarySchema.parse(rawLibrary);
+
+    // Reject duplicate ids explicitly — silently picking the last one would
+    // surprise anyone authoring a rules library.
+    for (const r of library.rules) {
+      if (compositeMap.has(r.id)) {
+        throw new ConfigError(
+          `Duplicate composite rule id "${r.id}" in ${rulesFilePath}. ` +
+            `Each id in the rules library must be unique.`,
+        );
+      }
+      compositeMap.set(r.id, r.checks);
+    }
+
+    // rulesFile has served its purpose — drop it so the post-expansion shape
+    // matches the engine's expectation that only resolvable check types exist.
+    delete dq["rulesFile"];
   }
 
-  // Build composite map: id → checks[]
-  const compositeMap = new Map(library.rules.map((r) => [r.id, r.checks]));
-
-  // Built-in check type names
-  const builtInTypes = new Set<string>(CheckType.options);
-
-  // Expand checks in each dq rule
   const rules = dq["rules"];
   if (!Array.isArray(rules)) {
     return raw;
   }
-
-  // rulesFile has served its purpose — drop it so the post-expansion shape
-  // matches the engine's expectation that only built-in check types exist.
-  delete dq["rulesFile"];
 
   dq["rules"] = rules.map((rule: unknown) => {
     const r = rule as Record<string, unknown>;
@@ -123,31 +155,104 @@ async function expandCompositeRules(raw: unknown, pipelineYamlPath: string): Pro
     for (const check of checks) {
       const c = check as Record<string, unknown>;
       const checkType = c["type"] as string;
+      const composite = compositeMap.get(checkType);
 
-      if (builtInTypes.has(checkType)) {
-        // Built-in check — keep as-is
+      if (composite === undefined) {
         expanded.push(c);
-      } else if (compositeMap.has(checkType)) {
-        // Composite rule — expand, applying severity override if present
-        const compositeChecks = compositeMap.get(checkType)!;
-        const severityOverride = c["severity"] as string | undefined;
-        for (const cc of compositeChecks) {
-          expanded.push(
-            severityOverride !== undefined ? { ...cc, severity: severityOverride } : { ...cc },
-          );
-        }
-      } else {
-        throw new ConfigError(
-          `Unknown rule type "${checkType}" in field rule — not a built-in check and not found in rulesFile. ` +
-            `Available composite rules: [${[...compositeMap.keys()].join(", ")}]`,
+        continue;
+      }
+
+      // Composite rule — expand one level, applying a severity override if present
+      const severityOverride = c["severity"] as string | undefined;
+      for (const cc of composite) {
+        expanded.push(
+          severityOverride !== undefined
+            ? { ...(cc as object), severity: severityOverride }
+            : { ...(cc as object) },
         );
       }
+    }
+
+    const unknown = unknownCheckTypes(expanded, knownRuleIds);
+    if (unknown.length > 0) {
+      throw new ConfigError(
+        `Unknown DQ check type "${unknown[0] ?? ""}" on field "${String(r["field"])}". ` +
+          `Built-in: [${CheckType.options.join(", ")}]. ` +
+          `Composite rules from rulesFile: [${listOrNone([...compositeMap.keys()])}]. ` +
+          `Registered plugin rules: [${listOrNone([...knownRuleIds])}]. ` +
+          `If this id comes from a plugin package, check it is declared in sluice.config.yaml ` +
+          `or present in a plugins/ directory.`,
+      );
     }
 
     return { ...r, checks: expanded };
   });
 
   return raw;
+}
+
+/**
+ * Check ids in `checks` that are neither built-in nor registered, in order.
+ *
+ * Exported because `sluice-mcp` validates AI-authored pipeline objects before
+ * writing them and cannot use `ConfigLoader.load` for it: that interpolates
+ * `${ENV_VAR}` and would reject a perfectly good pipeline whose variables simply
+ * are not set in the MCP server's environment.
+ *
+ * Composite ids are NOT known here — call this after expansion, or pass the
+ * composite ids in `knownIds`.
+ */
+export function unknownCheckTypes(
+  checks: readonly unknown[],
+  knownIds: ReadonlySet<string>,
+): string[] {
+  const builtIn = new Set<string>(CheckType.options);
+  const unknown: string[] = [];
+  for (const check of checks) {
+    const type = (check as Record<string, unknown>)["type"];
+    if (typeof type !== "string") continue;
+    if (builtIn.has(type) || knownIds.has(type)) continue;
+    unknown.push(type);
+  }
+  return unknown;
+}
+
+/**
+ * DAG-344: `source.adapter` / `target.adapter` are open strings in the schema so
+ * that a plugin-registered adapter can be named at all. Membership is checked
+ * here instead — at config-load time, not inside `runLoad()` where a bad target
+ * id used to surface only after a full extract and transform had been paid for
+ * (DAG-336).
+ *
+ * The adapter registries are process-wide singletons, so unlike rule ids these
+ * need no threading from the caller — but the caller MUST have imported any
+ * plugin that registers an adapter before calling `ConfigLoader.load`.
+ */
+export function assertAdaptersRegistered(pipeline: Pipeline): void {
+  const sources: readonly { adapter: string }[] = isMultiSource(pipeline)
+    ? pipeline.sources
+    : isSingleSource(pipeline)
+      ? [pipeline.source]
+      : [];
+  for (const [i, source] of sources.entries()) {
+    if (SourceAdapterRegistry.has(source.adapter)) continue;
+    throw new ConfigError(
+      `No source adapter registered for "${source.adapter}"` +
+        (sources.length > 1 ? ` (sources[${String(i)}])` : "") +
+        `. Registered: ${listOrNone(SourceAdapterRegistry.list())}.`,
+    );
+  }
+
+  if (!TargetAdapterRegistry.has(pipeline.target.adapter)) {
+    throw new ConfigError(
+      `No target adapter registered for "${pipeline.target.adapter}". ` +
+        `Registered: ${listOrNone(TargetAdapterRegistry.list())}.`,
+    );
+  }
+}
+
+function listOrNone(ids: readonly string[]): string {
+  return ids.length > 0 ? ids.join(", ") : "(none)";
 }
 
 function isEnoent(err: unknown): boolean {

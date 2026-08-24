@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import { createRunnerForPipeline } from "../../src/cli.js";
 import { ConfigLoader } from "../../src/config/loader.js";
+import { MultiSourcePipelineRunner } from "../../src/multi-source-runner.js";
 
 describe("CLI check-oriented multi-source validation", () => {
   const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -34,10 +35,17 @@ describe("CLI check-oriented multi-source validation", () => {
     );
   });
 
-  it("fails runner selection for a structurally invalid multi-source config", async () => {
+  it("defers validation of a structurally invalid multi-source config to the load", async () => {
     const fixture = path.join(fixturesDir, "multi-source-no-merge.pipeline.yaml");
 
-    await expect(createRunnerForPipeline(fixture)).rejects.toThrow(
+    // Runner selection is structural only. It must NOT validate: it runs before
+    // any plugin is registered, and ConfigLoader now rejects unregistered rule
+    // and adapter ids (DAG-344), so validating here would reject every plugin
+    // pipeline before the runner that loads the plugins exists. The invalid
+    // config is still rejected one step later — before any extract work.
+    const runner = await createRunnerForPipeline(fixture);
+    expect(runner).toBeInstanceOf(MultiSourcePipelineRunner);
+    await expect(runner.run(fixture)).rejects.toThrow(
       /pipeline must have either source \(single\) or both sources and merge \(multi\)/i,
     );
   });

@@ -132,6 +132,18 @@ export class PipelineRunner {
    * - Tier 2: Scans `{cwd}/plugins/` for `*.rule.{ts,js}` and `*.transform.{ts,js}`.
    * - Tier 3: Reads `{cwd}/sluice.config.yaml` for npm plugin declarations.
    */
+  /**
+   * Load this runner's plugins and report the rule ids they registered, so a
+   * caller can pass them to `ConfigLoader.load` (DAG-344).
+   *
+   * Idempotent — `loadAllPlugins` short-circuits on `pluginsLoaded`, so calling
+   * this before `run()` costs nothing and registers nothing twice.
+   */
+  async loadPluginsFor(yamlPath: string, pluginDirs: string[] = []): Promise<string[]> {
+    await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), pluginDirs);
+    return this.ruleRegistry.list();
+  }
+
   protected async loadAllPlugins(cwd: string, pluginDirs: string[] = []): Promise<void> {
     if (this.pluginsLoaded) return;
 
@@ -177,9 +189,13 @@ export class PipelineRunner {
 
     const runStartMs = Date.now();
 
-    const loaded = await ConfigLoader.load(yamlPath);
-    const config = this.applyOverrides(loaded, overrides);
+    // Plugins first: ConfigLoader validates check ids against built-ins UNION the
+    // registered plugin ids, so anything registering rules has to have run by now
+    // (DAG-344). Safe to reorder — loadAllPlugins reads only the yaml path and the
+    // overrides, never the parsed config.
     await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
+    const loaded = await ConfigLoader.load(yamlPath, { rules: this.ruleRegistry.list() });
+    const config = this.applyOverrides(loaded, overrides);
     logger.info(
       { pipeline: config.pipeline.name, yaml: yamlPath, mode: config.run.mode },
       "pipeline: start",
@@ -578,9 +594,13 @@ export class PipelineRunner {
     this.prepEngine = undefined;
     this.prepFirings = [];
     if (overrides.progress) this.progress = overrides.progress;
-    const loaded = await ConfigLoader.load(yamlPath);
-    const config = this.applyOverrides(loaded, overrides);
+    // Plugins first: ConfigLoader validates check ids against built-ins UNION the
+    // registered plugin ids, so anything registering rules has to have run by now
+    // (DAG-344). Safe to reorder — loadAllPlugins reads only the yaml path and the
+    // overrides, never the parsed config.
     await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
+    const loaded = await ConfigLoader.load(yamlPath, { rules: this.ruleRegistry.list() });
+    const config = this.applyOverrides(loaded, overrides);
     if (isMultiSource(config)) {
       throw new ConfigError(
         `Pipeline "${config.pipeline.name}" declares multiple sources. ` +

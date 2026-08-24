@@ -3,7 +3,7 @@ title: Plugin System
 description: Extend Sluice with custom DQ rules, transforms, merge strategies, and adapters across three tiers — composite YAML, TypeScript file plugins, and npm packages.
 ---
 
-Sluice's pipeline configs are intentionally constrained — the schema is fixed, the field types are enumerated, the DQ check types are an explicit list. That keeps configs readable and reviewable. But every real migration eventually needs _something_ the built-ins don't cover: a regex pattern that only makes sense for one client's data, a date format only one ERP uses, a merge strategy with custom precedence rules.
+Sluice's pipeline configs are intentionally constrained — the schema is fixed and the field types are enumerated. DQ check ids and adapter ids are the deliberate exception: they accept anything a plugin has registered, and are checked against the live registries when the config loads. That keeps configs readable and reviewable. But every real migration eventually needs _something_ the built-ins don't cover: a regex pattern that only makes sense for one client's data, a date format only one ERP uses, a merge strategy with custom precedence rules.
 
 Plugins fill that gap without forcing you to fork the engine. Sluice exposes a **three-tier extension model** that scales from "I just want a reusable composite rule for this client" to "I want to publish a paid adapter package on npm."
 
@@ -68,7 +68,7 @@ dq:
 ### Constraints
 
 - Composite rule ids must be valid identifiers (`^[a-zA-Z][a-zA-Z0-9_-]*$`) and must not collide with built-in check type names (`notNull`, `unique`, `pattern`, etc.).
-- Composite rules can only contain built-in checks — they cannot reference other composite rules (no nesting).
+- Composite rules can contain built-in checks and plugin-contributed rule ids, but **not** other composite rules — there is no nesting.
 
 ## Tier 2 — File-based plugins
 
@@ -215,14 +215,19 @@ A package that exports under any other name, or that has no `register` function,
 
 ### Resolution order
 
-When two plugins register the same id, the later registration wins. The order is:
+When two **plugins** register the same id, the later registration wins:
 
-1. Built-in rules / transforms / merge strategies.
-2. Composite rules (Tier 1).
-3. File plugins (Tier 2).
-4. npm package plugins (Tier 3).
+1. Composite rules (Tier 1).
+2. File plugins (Tier 2).
+3. npm package plugins (Tier 3).
 
-This means an npm package can override a built-in if you really want it to — but the convention is to give plugins distinctive ids and avoid the collision in the first place.
+**Built-in DQ rules cannot be overridden.** The DQ engine looks a check id up in the built-in table first and only falls through to the plugin registry on a miss, so registering a plugin with the id `notNull` has no effect — the built-in still runs. Give plugins distinctive ids; a collision with a built-in fails silently rather than loudly.
+
+### When ids are validated
+
+Check ids and adapter ids are open strings in the schema, because a closed list could never admit a plugin's id. They are validated when the config loads, against the built-ins plus everything registered — so `sluice check` still rejects a typo like `notNul`, naming the built-ins and the plugin rules it found.
+
+This means **plugins are loaded before the config is validated**. If a plugin package is missing from `sluice.config.yaml`, or a `plugins/` file fails to import, every rule id it would have contributed is reported as unknown at that point.
 
 ## Discovering and inspecting plugins
 

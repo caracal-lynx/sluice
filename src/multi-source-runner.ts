@@ -56,9 +56,13 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     this.prepEngine = undefined;
     this.prepFirings = [];
     if (overrides.progress) this.progress = overrides.progress;
-    const loaded = await ConfigLoader.load(yamlPath);
-    const config = this.applyOverrides(loaded, overrides);
+    // Plugins first: ConfigLoader validates check ids against built-ins UNION the
+    // registered plugin ids, so anything registering rules has to have run by now
+    // (DAG-344). Safe to reorder — loadAllPlugins reads only the yaml path and the
+    // overrides, never the parsed config.
     await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
+    const loaded = await ConfigLoader.load(yamlPath, { rules: this.ruleRegistry.list() });
+    const config = this.applyOverrides(loaded, overrides);
 
     if (!isMultiSource(config)) {
       throw new ConfigError(
@@ -134,9 +138,13 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     if (overrides.progress) this.progress = overrides.progress;
     const runStartMs = Date.now();
 
-    const loaded = await ConfigLoader.load(yamlPath);
-    const config = this.applyOverrides(loaded, overrides);
+    // Plugins first: ConfigLoader validates check ids against built-ins UNION the
+    // registered plugin ids, so anything registering rules has to have run by now
+    // (DAG-344). Safe to reorder — loadAllPlugins reads only the yaml path and the
+    // overrides, never the parsed config.
     await this.loadAllPlugins(path.dirname(path.resolve(yamlPath)), overrides.pluginDirs ?? []);
+    const loaded = await ConfigLoader.load(yamlPath, { rules: this.ruleRegistry.list() });
+    const config = this.applyOverrides(loaded, overrides);
 
     if (!isMultiSource(config)) {
       throw new ConfigError(

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Caracal Lynx Limited
 
-import { z } from "zod";
-
-import { CheckType } from "../../config/schema.js";
+import type { BuiltInCheckType } from "../../config/schema.js";
 import { AllowedValuesRule } from "./allowedValues.js";
 import { EmailRule } from "./email.js";
 import { MaxLengthRule } from "./maxLength.js";
@@ -14,7 +12,7 @@ import { UkPostcodeRule } from "./ukPostcode.js";
 import { UniqueRule } from "./unique.js";
 import type { Rule } from "./types.js";
 
-export type BuiltInCheckType = z.infer<typeof CheckType>;
+export type { BuiltInCheckType };
 
 export const BUILT_IN_RULES: Readonly<Record<BuiltInCheckType, Rule>> = Object.freeze({
   notNull: new NotNullRule(),

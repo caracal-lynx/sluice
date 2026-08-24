@@ -22,10 +22,20 @@ import { z } from "zod";
 // ── Primitives ────────────────────────────────────────────────────────────────
 
 const Severity = z.enum(["critical", "warning", "info"]);
-// Exported so tests can assert .options matches the adapter registries — the
-// enum and the registry drifting apart is DAG-336.
+// `SourceAd` / `TargetAd` / `CheckType` are the BUILT-IN id lists. They are no
+// longer applied to the config fields directly: a closed enum cannot admit an id
+// contributed by a plugin, which made every Tier-2/Tier-3 plugin unusable from a
+// pipeline YAML (DAG-344). The fields take `AdapterId` / `RuleId` instead, and
+// ConfigLoader validates the value against built-ins UNION registered ids once
+// plugins have loaded — so an unknown id still fails at config-load time, not
+// mid-run. They stay exported for introspection, docs and those checks.
 export const SourceAd = z.enum(["mssql", "pg", "csv", "xlsx", "rest", "odoo-csv", "json"]);
 export const TargetAd = z.enum(["bc", "ifs", "bluecherry", "csv", "pg"]);
+
+// Shape only — membership is ConfigLoader's job. Non-empty so a null or `""`
+// still fails in Zod, where the error carries the config path.
+const AdapterId = z.string().min(1);
+const RuleId = z.string().min(1);
 const CleanseOps = z.string().regex(/^[a-zA-Z|:0-9]+$/);
 
 // ── Pagination (REST source) ──────────────────────────────────────────────────
@@ -93,8 +103,10 @@ const OdooPivotSchema = z.object({
 });
 
 const SourceBaseSchema = z.object({
-  adapter: SourceAd.describe(
-    "Source adapter id. One of `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`, `json`.",
+  adapter: AdapterId.describe(
+    "Source adapter id. Built-in: `mssql`, `pg`, `csv`, `xlsx`, `rest`, `odoo-csv`, `json`. " +
+      "An id contributed by a plugin adapter is also accepted; ConfigLoader validates it against " +
+      "SourceAdapterRegistry once plugins are loaded.",
   ),
   connection: z
     .string()
@@ -165,7 +177,11 @@ export const CheckType = z.enum([
 ]);
 
 const CheckSchema = z.object({
-  type: CheckType,
+  type: RuleId.describe(
+    "DQ check id. Built-in: `notNull`, `unique`, `pattern`, `email`, `ukPostcode`, `maxLength`, " +
+      "`min`, `max`, `allowedValues`. A composite-rule id from `dq.rulesFile`, or an id contributed " +
+      "by a plugin rule package, is also accepted; ConfigLoader validates it once plugins are loaded.",
+  ),
   value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
   severity: Severity,
   message: z.string().optional(),
@@ -413,8 +429,10 @@ export const TransformSchema = z.object({
 
 export const TargetSchema = z
   .object({
-    adapter: TargetAd.describe(
-      "Target adapter id. Built-in: `csv`, `pg`. Paid add-ons: `bc`, `ifs`, `bluecherry`.",
+    adapter: AdapterId.describe(
+      "Target adapter id. Built-in: `csv`, `pg`, `bc`, `ifs`, `bluecherry`. " +
+        "An id contributed by a plugin adapter is also accepted; ConfigLoader validates it against " +
+        "TargetAdapterRegistry once plugins are loaded.",
     ),
     output: z
       .string()
@@ -741,16 +759,35 @@ export const CompositeRuleLibrarySchema = z.object({
   rules: z.array(CompositeRuleSchema).min(1),
 });
 
+// `string & {}` keeps editor autocomplete for the built-in ids while still
+// accepting any plugin-contributed id. A bare `string` would swallow the union
+// and offer no completions at all — which is why the etl-rules packs each
+// carried a `tests/support/checkConfig.ts` cast helper before DAG-344.
+type OpenId = string & {};
+
+export type BuiltInSourceAdapter = z.infer<typeof SourceAd>;
+export type BuiltInTargetAdapter = z.infer<typeof TargetAd>;
+export type BuiltInCheckType = z.infer<typeof CheckType>;
+
 // ── Exported TypeScript types ─────────────────────────────────────────────────
 // Use these everywhere — do not write manual interfaces for config types.
 
 export type Pipeline = z.infer<typeof PipelineSchema>;
-export type SourceConfig = z.infer<typeof SourceSchema>;
-export type TargetConfig = z.infer<typeof TargetSchema>;
+export type SourceConfig = Omit<z.infer<typeof SourceSchema>, "adapter"> & {
+  /** Built-in source adapter id, or one contributed by a plugin adapter. */
+  adapter: BuiltInSourceAdapter | OpenId;
+};
+export type TargetConfig = Omit<z.infer<typeof TargetSchema>, "adapter"> & {
+  /** Built-in target adapter id, or one contributed by a plugin adapter. */
+  adapter: BuiltInTargetAdapter | OpenId;
+};
 export type RunConfig = z.infer<typeof RunSchema>;
 export type FieldMapping = z.infer<typeof FieldMappingSchema>;
 export type DqRule = z.infer<typeof DqRuleSchema>;
-export type CheckConfig = z.infer<typeof CheckSchema>;
+export type CheckConfig = Omit<z.infer<typeof CheckSchema>, "type"> & {
+  /** Built-in check id, a composite-rule id, or one contributed by a plugin rule package. */
+  type: BuiltInCheckType | OpenId;
+};
 export type Lookup = z.infer<typeof LookupSchema>;
 export type ToolkitConfig = z.infer<typeof ToolkitConfigSchema>;
 export type CompositeRule = z.infer<typeof CompositeRuleSchema>;

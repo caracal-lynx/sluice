@@ -22,6 +22,8 @@
 
 import { Command } from "commander";
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { load as yamlLoad } from "js-yaml";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -162,8 +164,35 @@ function buildProgressReporter(
 export async function createRunnerForPipeline(
   yaml: string,
 ): Promise<PipelineRunner | MultiSourcePipelineRunner> {
-  const config = await ConfigLoader.load(yaml);
-  return isMultiSource(config) ? new MultiSourcePipelineRunner() : new PipelineRunner();
+  // Deliberately NOT a validating load. This runs before any plugin has been
+  // registered, and ConfigLoader now rejects unregistered rule and adapter ids
+  // (DAG-344) — so a full load here would reject every plugin pipeline before
+  // the runner that loads the plugins even exists. All this needs is single-
+  // versus multi-source; a malformed file produces its proper ConfigError a few
+  // lines later, when the chosen runner does the real load.
+  let raw: unknown;
+  try {
+    raw = yamlLoad(await readFile(yaml, "utf-8"));
+  } catch {
+    return new PipelineRunner();
+  }
+  const hasSources = (raw as { sources?: unknown } | null)?.sources !== undefined;
+  return hasSources ? new MultiSourcePipelineRunner() : new PipelineRunner();
+}
+
+/**
+ * Load the pipeline's plugins, then load its config with the registered rule ids
+ * admitted. Every command that reads a config outside `runner.run()` goes through
+ * here — the CLI loads the config a second time to size the progress bar, and
+ * that second load has to admit plugin ids too or it throws before the run starts.
+ */
+async function loadConfigWithPlugins(
+  runner: PipelineRunner | MultiSourcePipelineRunner,
+  yaml: string,
+  overrides: RunOverrides,
+): Promise<Pipeline> {
+  const ruleIds = await runner.loadPluginsFor(yaml, overrides.pluginDirs ?? []);
+  return ConfigLoader.load(yaml, { rules: ruleIds });
 }
 
 interface RunCmdOpts {
@@ -179,7 +208,7 @@ async function cmdRun(yaml: string, program: Command, cmdOpts: RunCmdOpts = {}):
   let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
-    const config = await ConfigLoader.load(yaml);
+    const config = await loadConfigWithPlugins(runner, yaml, overrides);
     progress = buildProgressReporter(
       opts,
       config,
@@ -225,7 +254,7 @@ async function cmdValidate(
   let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
-    const config = await ConfigLoader.load(yaml);
+    const config = await loadConfigWithPlugins(runner, yaml, overrides);
     progress = buildProgressReporter(
       opts,
       { ...config, run: { ...config.run, mode: "validate-only" } },
@@ -258,7 +287,7 @@ async function cmdProfile(yaml: string, program: Command): Promise<never> {
   let progress: ProgressReporter | undefined;
   try {
     const runner = await createRunnerForPipeline(yaml);
-    const config = await ConfigLoader.load(yaml);
+    const config = await loadConfigWithPlugins(runner, yaml, overrides);
     // profile = extract-only for single-source; extract+merge for multi-source.
     progress = new ProgressReporter({
       silent: opts.silent ?? false,
@@ -284,9 +313,10 @@ async function cmdProfile(yaml: string, program: Command): Promise<never> {
 }
 
 async function cmdCheck(yaml: string, program: Command): Promise<never> {
-  applyGlobals(program.opts<GlobalOpts>());
+  const overrides = applyGlobals(program.opts<GlobalOpts>());
   try {
-    const config = await ConfigLoader.load(yaml);
+    const runner = await createRunnerForPipeline(yaml);
+    const config = await loadConfigWithPlugins(runner, yaml, overrides);
     const isMulti = isMultiSource(config);
     logger.info(
       {

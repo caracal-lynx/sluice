@@ -114,8 +114,16 @@ describe("PipelineSchema", () => {
       expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
     });
 
-    it("throws ZodError for unknown source adapter", () => {
+    // DAG-344: adapter ids are open strings by design — a closed enum could not
+    // admit an adapter contributed by a plugin. Membership moved to ConfigLoader,
+    // which checks the registries; see adapter-id-validation.test.ts.
+    it("accepts an unknown source adapter id — the registry check is ConfigLoader's job", () => {
       const raw = { ...minimal, source: { adapter: "oracle", file: "./data/test.csv" } };
+      expect(() => PipelineSchema.parse(raw)).not.toThrow();
+    });
+
+    it("still throws ZodError for an empty source adapter id", () => {
+      const raw = { ...minimal, source: { adapter: "", file: "./data/test.csv" } };
       expect(() => PipelineSchema.parse(raw)).toThrow(ZodError);
     });
 
