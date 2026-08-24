@@ -3,6 +3,7 @@
 
 export { logger } from "./logger.js";
 export { loadEnv, requireEnv } from "./env.js";
+export { stringifyValue } from "./stringify.js";
 export {
   ProgressReporter,
   createSilentProgress,
