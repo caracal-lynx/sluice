@@ -1,5 +1,27 @@
 # @caracal-lynx/sluice
 
+## 0.11.0
+
+### Minor Changes
+
+- [#115](https://github.com/caracal-lynx/data-gubbins/pull/115) [`abe6061`](https://github.com/caracal-lynx/data-gubbins/commit/abe6061dcbfc8481b7c7061c693472bc5dd7d0bc) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Allow plugin-contributed rule and adapter ids to be named in a pipeline config.
+  
+  `CheckSchema.type`, `source.adapter` and `target.adapter` were closed `z.enum`s, so an id registered by a Tier-2 file plugin or a Tier-3 npm package could never pass config validation — `ConfigLoader.load()` failed before the DQ engine, which has always consulted the plugin registry, could reach it. Three rule packs shipped with 201 passing tests and not one of their rules could be referenced from a pipeline YAML.
+  
+  The three fields are now open strings, and membership is checked in `ConfigLoader` against built-ins plus whatever is registered. An unknown id — including a typo in a built-in name — still fails at config-load time, now with a message naming the built-ins, the composite rules and the registered plugin ids.
+  
+  - Plugins are loaded **before** the config is validated in every runner and CLI path.
+  - `ConfigLoader.load` takes an optional second argument carrying the registered rule ids; it stays static and every existing call site keeps working.
+  - A composite rule may now wrap a plugin rule.
+  - `CheckConfig["type"]`, `SourceConfig["adapter"]` and `TargetConfig["adapter"]` admit plugin ids while keeping editor autocomplete for the built-ins, so plugin packages no longer need a cast helper to construct one.
+  - `sluice-mcp`'s `write_pipeline_yaml` loads plugins from the target directory and validates ids the same way, so it does not silently accept `notNul`.
+
+### Patch Changes
+
+- [#117](https://github.com/caracal-lynx/data-gubbins/pull/117) [`c2d07be`](https://github.com/caracal-lynx/data-gubbins/commit/c2d07beadc23c2aa029d43b92cf10c814a77e88f) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Correct the public docs about the domain rule packs. The commercial-support page named `@caracal-lynx/etl-rules-uk`, `-fashion` and `-date` by npm scope alongside `@caracal-lynx/sluice-enrich`, which is published — implying all four were installable packages. The three rule packs are `private: true` and are not on npm. They are now described as delivered with a paid engagement, which stays true after any future publish (they would be restricted, not public).
+  
+  Plugin syntax examples in the README and the plugin-system guide now use an `@example/` scope instead of naming packages a reader cannot install, and the DQ-rules page no longer tells readers to publish under Caracal Lynx's own npm scope.
+
 ## 0.10.1
 
 ### Patch Changes
