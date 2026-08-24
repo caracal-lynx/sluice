@@ -1,5 +1,17 @@
 # @caracal-lynx/sluice
 
+## 0.10.0
+
+### Minor Changes
+
+- [#111](https://github.com/caracal-lynx/data-gubbins/pull/111) [`2dafbd1`](https://github.com/caracal-lynx/data-gubbins/commit/2dafbd1bb72b9426e96c99483dbf22873cf02459) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Export `stringifyValue` from the package root.
+  
+  Tier-3 plugin rules receive `value: unknown` by contract, so every rule pack needs
+  to render that as a string. The obvious `String(value)` yields `"[object Object]"`
+  for a non-scalar cell and trips `@typescript-eslint/no-base-to-string`, and Sluice's
+  own built-in rules already used this helper internally — it was simply not reachable
+  from outside the package. Additive: no existing behaviour changes.
+
 ## 0.9.6
 
 ### Patch Changes
