@@ -168,6 +168,6 @@ target:
 
 For systems Sluice doesn't cover, implement the `TargetAdapter` interface as a Tier 2 file plugin or a Tier 3 npm package — see the [Plugin System](/sluice/guides/plugin-system/) guide.
 
-:::caution[There is no `rest` target adapter]
-The pipeline schema currently accepts `rest` as a `target.adapter` value, but no REST target is registered. A pipeline that sets it passes `sluice check` and then fails at load time with `No target adapter registered for "rest"`. To push transformed rows at an arbitrary HTTP API today, write a `TargetAdapter` plugin; the `bc` adapter is the closest reference implementation.
+:::note[There is no `rest` target adapter]
+`rest` is a **source** adapter only. `target.adapter: rest` is rejected by `sluice check`. To push transformed rows at an arbitrary HTTP API today, write a `TargetAdapter` plugin; the `bc` adapter is the closest reference implementation.
 :::

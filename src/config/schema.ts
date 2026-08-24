@@ -22,8 +22,10 @@ import { z } from "zod";
 // ── Primitives ────────────────────────────────────────────────────────────────
 
 const Severity = z.enum(["critical", "warning", "info"]);
-const SourceAd = z.enum(["mssql", "pg", "csv", "xlsx", "rest", "odoo-csv", "json"]);
-const TargetAd = z.enum(["bc", "ifs", "bluecherry", "csv", "pg", "rest"]);
+// Exported so tests can assert .options matches the adapter registries — the
+// enum and the registry drifting apart is DAG-336.
+export const SourceAd = z.enum(["mssql", "pg", "csv", "xlsx", "rest", "odoo-csv", "json"]);
+export const TargetAd = z.enum(["bc", "ifs", "bluecherry", "csv", "pg"]);
 const CleanseOps = z.string().regex(/^[a-zA-Z|:0-9]+$/);
 
 // ── Pagination (REST source) ──────────────────────────────────────────────────
@@ -412,7 +414,7 @@ export const TransformSchema = z.object({
 export const TargetSchema = z
   .object({
     adapter: TargetAd.describe(
-      "Target adapter id. Built-in: `csv`, `pg`. Paid add-ons: `bc`, `ifs`, `bluecherry`, `rest`.",
+      "Target adapter id. Built-in: `csv`, `pg`. Paid add-ons: `bc`, `ifs`, `bluecherry`.",
     ),
     output: z
       .string()
