@@ -71,7 +71,7 @@
     "csv-parse": "^7.0.0",
     "csv-stringify": "catalog:",
     "dayjs": "^1.11.21",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.0",
     "expr-eval-fork": "^3.0.3",
     "js-yaml": "catalog:",
     "mssql": "^12.5.5",
