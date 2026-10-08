@@ -147,7 +147,8 @@ honoured (so docs-site's `devalue` override lives here too). Renovate does not
 manage these; review and drop each when its parent ships a patched release.
 
 - **`esbuild >=0.28.1`** — [GHSA-gv7w-rqvm-qjhr](https://github.com/advisories/GHSA-gv7w-rqvm-qjhr) (binary integrity, dev-only via `tsx`/`vitest`/`astro`). Surfaced by pnpm's workspace-wide audit.
-- **`devalue >=5.8.1`** — docs-site (`astro`) transitive.
+- **`devalue ^5.9.3`** — docs-site (`astro`) transitive. [GHSA-j22f-vq7h-c4qm](https://github.com/advisories/GHSA-j22f-vq7h-c4qm), [GHSA-mcm9-63f2-9j32](https://github.com/advisories/GHSA-mcm9-63f2-9j32), [GHSA-x5rw-q4pp-hg5g](https://github.com/advisories/GHSA-x5rw-q4pp-hg5g). Caret-bounded on purpose: devalue 6.x is `latest` and astro declares `^5.8.1`, so the old open-ended `>=5.8.1` would force an untested major into astro on the next re-resolve (DAG-395). Do not widen it back.
+- **`http-cache-semantics ^4.3.0`** — docs-site (`astro`) transitive. [GHSA-ch52-4w7c-c8xp](https://github.com/advisories/GHSA-ch52-4w7c-c8xp). Caret-bounded so it cannot pull a 5.x into astro, which declares `^4.2.0` (DAG-395).
 
 **Three overrides were removed in 2026-07 when `exceljs` went (DAG-207)** — `tmp`, `uuid`, and `brace-expansion`. All three existed only to patch exceljs's transitive chain; with the dependency gone, `pnpm audit` (full, not just `--prod`) reports zero advisories without them. If a future change reintroduces a heavyweight Excel writer, expect these to come back with it.
 
