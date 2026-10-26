@@ -1,5 +1,13 @@
 # @caracal-lynx/sluice
 
+## 0.12.0
+
+### Minor Changes
+
+- [#210](https://github.com/caracal-lynx/data-gubbins/pull/210) [`102138d`](https://github.com/caracal-lynx/data-gubbins/commit/102138d55455a036842aa640e1d5e1d6ab5dd900) Thanks [@renovate](https://github.com/apps/renovate)! - Upgrade `@duckdb/node-api` from 1.5.6 to 2.0.0, which bundles the DuckDB 2.0 engine. sluice's staging store uses only APIs whose signatures are unchanged in v2, and the full suite passes on Linux (CI) and Windows.
+  
+  Released as a minor so that consumers pinned to `^0.11.0` stay on DuckDB 1.x until they opt in. The one behaviour change to know about is the storage format: DuckDB 1.x cannot open a database file written by 2.0. sluice rebuilds its staging database on every run, so this matters only if you keep a `.duckdb` file between runs and later open it with an older sluice or an older DuckDB CLI.
+
 ## 0.11.0
 
 ### Minor Changes
