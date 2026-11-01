@@ -104,6 +104,31 @@ describe("MergeEngine", () => {
     expect(rows[0]!.STYLE_DESC).toBeNull();
   });
 
+  it("priority-override falls through to a lower-priority source when the top source has no row for the key", async () => {
+    // DAG-390: C exists only in excel (priority 2). It used to come out with every column
+    // NULL, key included, because the field expression read the top source unconditionally.
+    const result = await engine.run(
+      store,
+      sources(),
+      makeConfig({ strategy: "priority-override" }),
+    );
+
+    expect(result.rowsMerged).toBe(4);
+    const rows = await store.query<Array<Record<string, unknown>>>(
+      "SELECT STYLE_NO, COST_PRICE, STYLE_DESC, FIBRE_CONTENT FROM stg_merged ORDER BY STYLE_NO",
+    );
+
+    expect(rows).toEqual([
+      // A and B: sql is present, so it wins every column it has, nulls included.
+      { STYLE_NO: "A", COST_PRICE: "10.00", STYLE_DESC: null, FIBRE_CONTENT: "Wool" },
+      { STYLE_NO: "B", COST_PRICE: "20.00", STYLE_DESC: "FromSQL", FIBRE_CONTENT: null },
+      // C: only excel has it.
+      { STYLE_NO: "C", COST_PRICE: "30.00", STYLE_DESC: "FromExcelC", FIBRE_CONTENT: "Cotton" },
+      // D: only sql has it.
+      { STYLE_NO: "D", COST_PRICE: "40.00", STYLE_DESC: "OnlySQL", FIBRE_CONTENT: null },
+    ]);
+  });
+
   it("onUnmatched=exclude removes records present in only one source", async () => {
     const result = await engine.run(store, sources(), makeConfig({ onUnmatched: "exclude" }));
 

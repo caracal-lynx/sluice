@@ -381,6 +381,86 @@ run:
       expect(output).toContain("Widget B"); // Primary name
       // Price for I001 should be empty (primary is null, priority-override respects that)
     });
+
+    it("keeps a key that exists only in a lower-priority source (DAG-390)", async () => {
+      const primaryCsv = join(workDir, "primary.csv");
+      const secondaryCsv = join(workDir, "secondary.csv");
+      const outputCsv = join(workDir, "merged.csv");
+      const pipelineYaml = join(workDir, "priority-override-fallthrough.pipeline.yaml");
+
+      writeFileSync(
+        primaryCsv,
+        `ITEM_ID,ITEM_NAME,PRICE
+I001,Widget A,
+I002,Widget B,9.99`,
+      );
+      // I003 is only in the secondary source. It used to come out as a fully blank row.
+      writeFileSync(
+        secondaryCsv,
+        `ITEM_ID,ITEM_NAME,PRICE
+I001,Widget Alpha,10.00
+I003,Widget Gamma,7.25`,
+      );
+
+      writeFileSync(
+        pipelineYaml,
+        `
+pipeline:
+  name: priority-override-fallthrough
+  client: test
+  version: "1.0"
+  entity: Item
+  description: Priority-override with a key missing from the top source
+
+sources:
+  - id: primary
+    priority: 1
+    adapter: csv
+    file: ${yamlPath(primaryCsv)}
+  - id: secondary
+    priority: 2
+    adapter: csv
+    file: ${yamlPath(secondaryCsv)}
+
+merge:
+  strategy: priority-override
+  key: ITEM_ID
+  onUnmatched: include
+
+dq:
+  stopOnCritical: false
+  rules: []
+
+transform:
+  fields:
+    - { from: ITEM_ID, to: ITEM_ID, type: string }
+    - { from: ITEM_NAME, to: ITEM_NAME, type: string }
+    - { from: PRICE, to: PRICE, type: string }
+
+target:
+  adapter: csv
+  output: ${yamlPath(outputCsv)}
+  includeHeader: true
+
+run:
+  mode: full
+  dryRun: false
+  outputDir: ${yamlPath(workDir)}
+`,
+      );
+
+      const runner = new MultiSourcePipelineRunner();
+      const result = await runner.run(pipelineYaml);
+
+      expect(result.merge?.rowsMerged).toBe(3);
+
+      const lines = readFileSync(outputCsv, "utf-8").trim().split(/\r?\n/).slice(1).sort();
+      expect(lines).toEqual([
+        'I001,Widget A,""', // primary present: its empty PRICE wins over secondary's 10.00
+        "I002,Widget B,9.99",
+        "I003,Widget Gamma,7.25", // only secondary has it: falls through
+      ]);
+    });
   });
 
   describe("merge with composite keys", () => {

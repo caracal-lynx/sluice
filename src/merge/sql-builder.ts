@@ -135,13 +135,23 @@ export function buildFieldValueExpr(
     return quoteIdent(prefixedColumn(forcedSource, column));
   }
 
-  const refs = context.sources
-    .filter((s) => sourceHasColumn(context.sourceColumns, s.id, column))
-    .map((s) => quoteIdent(prefixedColumn(s.id, column)));
+  const sourcesWithColumn = context.sources.filter((s) =>
+    sourceHasColumn(context.sourceColumns, s.id, column),
+  );
+  const refs = sourcesWithColumn.map((s) => quoteIdent(prefixedColumn(s.id, column)));
 
   const [firstRef, ...restRefs] = refs;
   if (firstRef === undefined) return "NULL";
-  if (strategy === "priority-override") return firstRef;
+  if (strategy === "priority-override") {
+    // The highest-priority source that has a row for this key wins, nulls included. Guard on
+    // presence, as buildFieldWinnerSourceExpr does: after the FULL OUTER JOIN a source with no
+    // row for the key reads NULL in every column, and must not blank out a lower source (DAG-390).
+    const whenClauses = sourcesWithColumn.map(
+      (s) =>
+        `WHEN ${buildPresenceExpr(s.id, context.keyColumns)} = 1 THEN ${quoteIdent(prefixedColumn(s.id, column))}`,
+    );
+    return `CASE ${whenClauses.join(" ")} ELSE NULL END`;
+  }
   const normalizedRefs = [firstRef, ...restRefs].map(
     (r) => `NULLIF(TRIM(CAST(${r} AS VARCHAR)), '')`,
   );
