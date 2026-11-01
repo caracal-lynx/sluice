@@ -42,9 +42,9 @@ Out of scope (these are private commercial packages — report directly to
 **security@caracallynx.com** if you have access):
 
 - `@caracal-lynx/sluice-enrich` and built-in enrich providers
-- `@caracal-lynx/sluice-rules` and individual rule packages
-- `@caracal-lynx/sluice-adapter-*` ERP adapter packages
 - `@caracal-lynx/sluice-mcp` (MCP server)
+- `@caracal-lynx/spigot` and `@caracal-lynx/dredge`
+- `@caracal-lynx/etl-rules-*` domain rule packages
 - Per-client engagement repositories
 
 ## Out of scope (general)

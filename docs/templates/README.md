@@ -5,38 +5,34 @@ the public `@caracal-lynx/sluice` package or its CI — they exist here so the
 configuration shape stays under version control alongside the project that
 governs the cascade.
 
-## `renovate-downstream.json`
-
-Drop into the root of each **internal/intermediate** private repo:
-
-- `caracal-lynx/sluice-enrich`
-- `caracal-lynx/sluice-rules`
-- `caracal-lynx/sluice-adapter-ifs`
-- `caracal-lynx/sluice-adapter-bc`
-- `caracal-lynx/sluice-adapter-bluecherry`
-
-Patch bumps of `@caracal-lynx/*` open a real PR (`automergeType: pr` with
-`automerge: true` — Renovate will auto-merge it once required CI checks pass).
-Minor bumps open a PR for human review. Major bumps open a PR with a
-`major-bump` label and never auto-merge.
+The internal packages (sluice-enrich, the rule packages, sluice-mcp, spigot,
+dredge) live in the same monorepo as Sluice and share its Renovate config, so
+there is no longer an internal downstream template. The old
+`renovate-downstream.json` and the standalone repos it targeted were retired in
+the August 2026 monorepo consolidation.
 
 ## `renovate-downstream-client.json`
 
-Drop into the root of each **client engagement** private repo:
+Drop into the root of each **client engagement** private repo
+(`caracal-lynx/sluice-client-<alias>`).
 
-- `caracal-lynx/sluice-client-acme-corp`
-- `caracal-lynx/sluice-client-style-co`
+It uses `automergeType: pr` (rather than `branch`), so client repos always
+have a visible PR record of every dependency change. Major bumps get the
+`major-bump` and `client-impact` labels and never auto-merge, so they aren't
+landed without explicit client engagement.
 
-Same patch-vs-major policy as the internal template, but `automergeType: pr`
-(rather than `branch`) so client repos always have a visible PR record of
-every dependency change. Major bumps additionally get the `client-impact`
-label so they're not landed without explicit client engagement.
+> **Known defect, fix pending:** the template's `@caracal-lynx/*` patch rule
+> comes after the no-auto-merge rule and wins. As written, it auto-merges
+> **runtime** patches of `@caracal-lynx/sluice` and `sluice-enrich` without
+> review. Until the template is corrected, add
+> `"matchDepTypes": ["devDependencies"]` to the patch rule after copying it,
+> and extend the fleet Renovate presets as the existing client repo does.
 
 ## How to use
 
 1. Create the downstream repo (private, with a minimal `package.json` listing
    `@caracal-lynx/sluice` as a peer/regular dep — see Phase 7 spec Stage 0.3).
-2. Copy the appropriate template file to the repo root as `renovate.json`.
+2. Copy the template file to the repo root as `renovate.json`.
 3. Commit and push.
 4. Within ~1 h, the Renovate GitHub App opens an Onboarding PR — review and
    merge it. After that the repo is part of the cascade.
