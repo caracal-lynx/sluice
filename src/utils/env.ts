@@ -8,10 +8,15 @@ let envLoaded = false;
 
 export function loadEnv(envFile?: string): void {
   if (envLoaded) return;
+  // `quiet: true` stops dotenv printing its own "injected env (N) from <path>"
+  // line on every call. dotenv 17 wrote it, with a random advert, to stdout,
+  // where it broke `--silent`. dotenv 18 writes it to stderr, where it is the
+  // one non-JSON line in pino's NDJSON log stream. Either way it is not ours
+  // to print (DAG-362).
   if (envFile !== undefined) {
-    dotenvConfig({ path: envFile });
+    dotenvConfig({ path: envFile, quiet: true });
   } else {
-    dotenvConfig();
+    dotenvConfig({ quiet: true });
   }
   envLoaded = true;
 }
