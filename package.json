@@ -73,6 +73,7 @@
     "dayjs": "^1.11.21",
     "dotenv": "^18.0.0",
     "expr-eval-fork": "^3.0.3",
+    "import-meta-resolve": "^4.2.0",
     "js-yaml": "catalog:",
     "mssql": "^12.5.5",
     "pg": "catalog:",

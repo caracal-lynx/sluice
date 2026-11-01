@@ -9,7 +9,9 @@
  * plugins directory and registers them with the provided registries.
  *
  * Tier 3: reads sluice.config.yaml, imports declared npm packages, and
- * calls each package's register() function.
+ * calls each package's register() function. Packages resolve from the
+ * directory holding sluice.config.yaml (the client project), not from where
+ * sluice itself is installed (DAG-361).
  *
  * Neither function throws if the directory / config file does not exist —
  * both are optional for any given project.
@@ -17,8 +19,10 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { resolve as esmResolve } from "import-meta-resolve";
 import { load as yamlLoad } from "js-yaml";
 
 import { ToolkitConfigSchema } from "../config/schema.js";
@@ -137,10 +141,94 @@ export async function loadPlugins(
 
 // ── Tier 3: npm package plugins ───────────────────────────────────────────────
 
+/** `./x`, `../x`, `.\x`, an absolute path (POSIX or Windows) or a `file:` URL. */
+function isPathSpecifier(spec: string): boolean {
+  return /^\.\.?([\\/]|$)/.test(spec) || path.isAbsolute(spec) || spec.startsWith("file:");
+}
+
+function errorCode(err: unknown): string | undefined {
+  return typeof err === "object" && err !== null && "code" in err ? String(err.code) : undefined;
+}
+
+/**
+ * Entry URL for a plugin given as a directory (e.g. `./vendor/my-pack`).
+ *
+ * With an `exports` map the package is resolved by self-reference through the
+ * ESM resolver, so `import`-only conditions work. Without one, CommonJS-style
+ * directory resolution applies (`main`, extension probing, then `index.js`) —
+ * which is what a directory with only `main` means in every other tool.
+ */
+async function resolvePackageDir(dir: string): Promise<string> {
+  const manifestPath = path.join(dir, "package.json");
+  let manifest: { name?: unknown; exports?: unknown } | undefined;
+  try {
+    manifest = JSON.parse(await fs.readFile(manifestPath, "utf-8")) as typeof manifest;
+  } catch {
+    manifest = undefined;
+  }
+  if (manifest?.exports !== undefined && typeof manifest.name === "string") {
+    return esmResolve(manifest.name, pathToFileURL(manifestPath).href);
+  }
+  const require = createRequire(pathToFileURL(manifestPath).href);
+  return pathToFileURL(require.resolve(dir)).href;
+}
+
+/**
+ * Resolve a `plugins[].package` value to an importable URL.
+ *
+ * A dynamic `import(spec)` resolves bare specifiers against the IMPORTING file
+ * — `dist/plugins/loader.js`, wherever sluice is installed — so a package
+ * `npm install`ed in the client project, as PLUGINS.md documents, was never
+ * found (DAG-361). Resolution is therefore anchored on `configDir`:
+ *
+ * - Bare specifiers go through Node's ESM algorithm (`import-meta-resolve`,
+ *   conditions `node` + `import`) with `<configDir>/package.json` as parent, so
+ *   `exports` maps — including ESM-only ones with just an `import` condition —
+ *   behave exactly as `import` would from the project. `createRequire` was
+ *   rejected: it resolves with the `require` condition and fails on those.
+ *   If the project cannot see the package, sluice's own location is tried
+ *   last, so a plugin installed globally alongside sluice keeps working.
+ * - Path specifiers resolve against `configDir`, never the process cwd or
+ *   sluice's install directory. A directory is treated as a package root.
+ *
+ * Every filesystem path goes through `pathToFileURL`, which is what makes
+ * `C:\…` paths importable on Windows.
+ */
+async function resolvePluginEntry(spec: string, configDir: string): Promise<string> {
+  if (isPathSpecifier(spec)) {
+    const abs = spec.startsWith("file:") ? fileURLToPath(spec) : path.resolve(configDir, spec);
+    const stat = await fs.stat(abs).catch(() => undefined);
+    if (stat?.isDirectory()) return resolvePackageDir(abs);
+    if (!stat) {
+      throw new Error(
+        `"${abs}" does not exist (relative plugin paths resolve against ${configDir})`,
+      );
+    }
+    return pathToFileURL(abs).href;
+  }
+
+  const projectParent = pathToFileURL(path.join(configDir, "package.json")).href;
+  try {
+    return esmResolve(spec, projectParent);
+  } catch (projectErr) {
+    if (errorCode(projectErr) !== "ERR_MODULE_NOT_FOUND") throw projectErr;
+    try {
+      return esmResolve(spec, import.meta.url);
+    } catch {
+      throw new Error(
+        `Cannot find package "${spec}" from ${configDir} (the directory holding ` +
+          `sluice.config.yaml) or from sluice's own install location. Run ` +
+          `"npm install ${spec}" in ${configDir}. Cause: ${String(projectErr)}`,
+      );
+    }
+  }
+}
+
 /**
  * Read `sluice.config.yaml` at `configPath`, parse it with
  * `ToolkitConfigSchema`, then import each declared npm package and call its
- * `plugin.register()` function.
+ * `plugin.register()` function. Packages resolve from the directory holding
+ * `configPath` — see `resolvePluginEntry`.
  *
  * Silently returns if `configPath` does not exist.
  * Throws `ConfigError` for unreadable config files, packages that fail to
@@ -166,10 +254,12 @@ export async function loadNpmPlugins(
   }
 
   const config = ToolkitConfigSchema.parse(raw);
+  const configDir = path.dirname(path.resolve(configPath));
 
   for (const entry of config.plugins) {
     try {
-      const pkg = (await import(entry.package)) as Record<string, unknown>;
+      const url = await resolvePluginEntry(entry.package, configDir);
+      const pkg = (await import(url)) as Record<string, unknown>;
       const exported = (pkg["plugin"] ?? pkg["default"]) as
         | {
             register: (

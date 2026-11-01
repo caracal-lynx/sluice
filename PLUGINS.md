@@ -255,6 +255,8 @@ npm install @your-org/sluice-rules-uk @your-org/sluice-rules-fashion
 sluice run customers.pipeline.yaml
 ```
 
+**Where packages are resolved from.** Each `package` value resolves from the directory holding `sluice.config.yaml` — your project — exactly as an `import` written in that directory would, `exports` maps included. That is why a globally installed `sluice` finds packages installed in the project. If the project cannot see a package, Sluice falls back to its own install location, so a plugin installed globally alongside a global `sluice` also works. A `package` value can also be a path: `./vendor/my-rules/index.js`, or a package directory such as `./vendor/my-rules`, resolved against the same directory.
+
 ### When to reach for Tier 3
 
 - You want to share a plugin across multiple projects or teams.

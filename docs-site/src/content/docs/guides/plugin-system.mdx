@@ -194,6 +194,8 @@ plugins:
 
 Both keys are required: `version` is a string, and `plugins` is an array of **objects** with a `package` key — not an array of bare package-name strings. The optional `options` map is passed through verbatim to that package's `register()`.
 
+Install the packages in the project, next to `sluice.config.yaml`. Each `package` value resolves from that directory as an `import` written there would, `exports` maps included, so a globally installed `sluice` picks them up. If the project cannot see a package, Sluice falls back to its own install location. A relative path such as `./vendor/my-rules/index.js`, or a package directory, also works and resolves against the same directory.
+
 Each package must export a `plugin` object (or a default export) with a `register()` function, called once at the start of every pipeline run:
 
 ```typescript
