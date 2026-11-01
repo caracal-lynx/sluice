@@ -113,6 +113,7 @@ export class PipelineRunner {
   protected progress: ProgressReporter = createSilentProgress();
   private pluginsLoaded = false;
   private incrementalSinceUsed = "";
+  private incrementalWatermark: string | undefined;
   /** Per-run prep state — reset at the top of every run/profile call. */
   protected prepResolver: PrepLookupResolver | undefined;
   protected prepEngine: PrepEngine | undefined;
@@ -182,6 +183,7 @@ export class PipelineRunner {
 
   async run(yamlPath: string, overrides: RunOverrides = {}): Promise<RunResult> {
     this.incrementalSinceUsed = "";
+    this.incrementalWatermark = undefined;
     this.prepResolver = undefined;
     this.prepEngine = undefined;
     this.prepFirings = [];
@@ -241,6 +243,13 @@ export class PipelineRunner {
             "pipeline: incremental filter applied",
           );
         }
+        // Read before Prep, which can rewrite stg_raw in place.
+        this.incrementalWatermark = await this.computeWatermark(
+          store,
+          extractResult.tableName,
+          config.run.incrementalField,
+          incrementalSince,
+        );
       }
 
       // Phase 12 — Prep mutates stg_raw in place before Enrich and DQ.
@@ -573,6 +582,10 @@ export class PipelineRunner {
       warnings: dq.violations.warning,
       incrementalSince: this.incrementalSinceUsed || (config.run.incrementalSince ?? ""),
     };
+    // Incremental runs only, so non-incremental state files are unchanged.
+    if (this.incrementalWatermark !== undefined) {
+      state["watermark"] = this.incrementalWatermark;
+    }
     // Omit the key entirely when no enrich phase ran, so existing pipelines
     // produce byte-for-byte identical state files.
     if (enrichSummary !== undefined) {
@@ -727,11 +740,34 @@ export class PipelineRunner {
 
     try {
       const raw = await fs.readFile(statePath, "utf-8");
-      const parsed = JSON.parse(raw) as { lastRunAt?: string };
-      return typeof parsed.lastRunAt === "string" ? parsed.lastRunAt : "";
+      return watermarkFromState(JSON.parse(raw) as StateWatermark, statePath);
     } catch {
       return "";
     }
+  }
+
+  /**
+   * The newest incremental-field value in the extracted rows, as a timestamp string the
+   * next run's filter can cast. An empty extract keeps `previous`: falling back to the
+   * clock would skip every later row dated before "now", which is DAG-381.
+   */
+  protected async computeWatermark(
+    store: StagingStore,
+    tableName: string,
+    incrementalField: string,
+    previous: string,
+  ): Promise<string> {
+    const columns = await store.columnNames(tableName);
+    if (!columns.includes(incrementalField)) {
+      throw new ConfigError(
+        `incrementalField "${incrementalField}" was not found in source table "${tableName}"`,
+      );
+    }
+    const rows = await store.query<{ wm: unknown }>(
+      `SELECT CAST(max(TRY_CAST(${quoteIdent(incrementalField)} AS TIMESTAMP)) AS VARCHAR) AS wm FROM ${quoteIdent(tableName)}`,
+    );
+    const wm = rows[0]?.wm;
+    return typeof wm === "string" && wm.length > 0 ? wm : previous;
   }
 
   protected async applyIncrementalFilter(
@@ -927,6 +963,30 @@ interface ProfileColumn {
   minLen: number | null;
   maxLen: number | null;
   sample: (string | null)[];
+}
+
+/** The incremental fields of a state file entry: the top level, or one `sources` entry. */
+export interface StateWatermark {
+  watermark?: unknown;
+  lastRunAt?: unknown;
+}
+
+/**
+ * Where the next incremental run starts. Before DAG-381 the state file held only
+ * `lastRunAt`, the wall-clock time of the run, and that was used as the filter start.
+ * For legacy data it sits ahead of every source row, so trusting it would keep dropping
+ * rows. A state entry without a `watermark` therefore re-extracts everything, once.
+ */
+export function watermarkFromState(entry: StateWatermark | undefined, statePath: string): string {
+  if (typeof entry?.watermark === "string") return entry.watermark;
+  if (typeof entry?.lastRunAt === "string") {
+    logger.warn(
+      { statePath, lastRunAt: entry.lastRunAt },
+      "pipeline: state file has no incremental watermark (written before DAG-381); " +
+        "extracting all rows once to recover any the old wall-clock filter skipped",
+    );
+  }
+  return "";
 }
 
 function stubDqSummary(pipelineName: string, rowsChecked: number): DQSummary {

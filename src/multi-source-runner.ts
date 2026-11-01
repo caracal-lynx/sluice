@@ -10,7 +10,13 @@ import { isMultiSource, type MultiSourceEntry, type Pipeline } from "./config/ty
 import type { DQSummary } from "./dq/index.js";
 import type { EnrichSummary } from "./enrich/types.js";
 import { MergeEngine } from "./merge/index.js";
-import { PipelineRunner, type RunOverrides, type RunResult } from "./runner.js";
+import {
+  PipelineRunner,
+  type RunOverrides,
+  type RunResult,
+  type StateWatermark,
+  watermarkFromState,
+} from "./runner.js";
 import { type ColumnMeta, StagingStore, quoteIdent } from "./staging/index.js";
 import { type LoadResult } from "./adapters/target/index.js";
 import { ConfigError, PipelineDQError } from "./utils/errors.js";
@@ -38,6 +44,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
   private readonly mergeEngine = new MergeEngine();
   private sourceExtracts: SourceExtractMeta[] = [];
   private sourceIncrementalSince: Record<string, string> = {};
+  private sourceWatermark: Record<string, string> = {};
 
   // Keep merge ordering deterministic when two sources share the same priority.
   private sortSourcesForMerge(sources: MultiSourceEntry[]): MultiSourceEntry[] {
@@ -166,6 +173,7 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
 
       this.sourceExtracts = [];
       this.sourceIncrementalSince = Object.fromEntries(config.sources.map((s) => [s.id, ""]));
+      this.sourceWatermark = {};
       const sortedSources = this.sortSourcesForMerge(config.sources);
       const incrementalSourceId =
         config.run.mode === "incremental" ? config.merge.incrementalSource : undefined;
@@ -356,6 +364,9 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
           lastRunAt: new Date().toISOString(),
           rowsExtracted: s.rowsExtracted,
           incrementalSince: this.sourceIncrementalSince[s.sourceId] ?? "",
+          ...(this.sourceWatermark[s.sourceId] !== undefined
+            ? { watermark: this.sourceWatermark[s.sourceId] }
+            : {}),
         },
       ]),
     );
@@ -429,6 +440,17 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
       );
     }
 
+    // Only the incremental source is passed a since value ("" on a first run). Read the
+    // watermark after rename and filter, before this source's Prep can rewrite values.
+    if (incrementalSince !== undefined && config.run.incrementalField) {
+      this.sourceWatermark[sourceEntry.id] = await this.computeWatermark(
+        store,
+        tableName,
+        config.run.incrementalField,
+        incrementalSince,
+      );
+    }
+
     if (!runSourceDqAndPrep) return;
 
     // Phase 12 — pre-merge prep firing: applies only rules scoped to this source.
@@ -491,11 +513,8 @@ export class MultiSourcePipelineRunner extends PipelineRunner {
     );
     try {
       const raw = await fs.readFile(statePath, "utf-8");
-      const parsed = JSON.parse(raw) as {
-        sources?: Record<string, { lastRunAt?: string }>;
-      };
-      const lastRunAt = parsed.sources?.[incrementalSourceId]?.lastRunAt;
-      return typeof lastRunAt === "string" ? lastRunAt : "";
+      const parsed = JSON.parse(raw) as { sources?: Record<string, StateWatermark> };
+      return watermarkFromState(parsed.sources?.[incrementalSourceId], statePath);
     } catch {
       return "";
     }

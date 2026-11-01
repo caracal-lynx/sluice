@@ -94,7 +94,7 @@ run:
   incrementalField: UPDATED_AT
 ```
 
-The first run extracts everything and writes `lastRunAt` into the state file. Subsequent runs filter `WHERE UPDATED_AT >= lastRunAt`. Commit the state JSON to the repo (or store it externally) so the next run resumes from the right point.
+The first run extracts everything and writes the newest `UPDATED_AT` it saw into the state file as `watermark`. Subsequent runs filter `WHERE UPDATED_AT >= watermark`, so the window follows the source's own timestamps, not the clock of the machine running the pipeline. The `>=` re-extracts rows at exactly the watermark, so use a target that tolerates a repeated row (for example `onConflict: upsert`). Commit the state JSON to the repo (or store it externally) so the next run resumes from the right point.
 
 For multi-source pipelines, set `merge.incrementalSource: <id>` to mark which source drives the incremental window — the others run full each time.
 

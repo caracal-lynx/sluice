@@ -584,7 +584,7 @@ export const RunSchema = z.object({
     .string()
     .optional()
     .describe(
-      "ISO datetime override for the incremental window start. If empty, the runner reads `lastRunAt` from the state file.",
+      "ISO datetime override for the incremental window start. If empty, the runner reads `watermark` (the newest `incrementalField` value from the last incremental run) from the state file.",
     ),
 });
 

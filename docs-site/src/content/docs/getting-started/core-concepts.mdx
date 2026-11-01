@@ -73,7 +73,7 @@ After every run, Sluice writes `{outputDir}/{pipeline.name}-state.json`:
 }
 ```
 
-When you run with `mode: incremental`, Sluice reads `lastRunAt` from this file and only extracts records newer than that timestamp. The state file is the only built-in incremental marker — there's no central daemon, no scheduled job, no shared metadata store.
+`lastRunAt` is when the run happened. An incremental run (`mode: incremental`) also writes a `watermark`: the newest `incrementalField` value it extracted. The next incremental run only extracts records whose `incrementalField` is at or after that watermark. The watermark comes from your data, not the clock, so it still works when source timestamps lag far behind the machine running Sluice. A run that extracts nothing keeps the previous watermark. The state file is the only built-in incremental marker — there's no central daemon, no scheduled job, no shared metadata store.
 
 ## The phases
 

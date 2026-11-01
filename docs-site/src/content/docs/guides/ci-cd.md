@@ -156,7 +156,7 @@ run:
   incrementalField: UPDATED_AT
 ```
 
-The first run extracts everything; subsequent runs read `lastRunAt` from the state file and filter `WHERE UPDATED_AT >= lastRunAt`. Commit the state JSON back to the repo (or store it in an S3 bucket — see the [Plugin System](/sluice/guides/plugin-system/) for custom state backends, planned for v2).
+The first run extracts everything and records the newest `UPDATED_AT` it saw as `watermark` in the state file; subsequent runs filter `WHERE UPDATED_AT >= watermark`. Commit the state JSON back to the repo (or store it in an S3 bucket — see the [Plugin System](/sluice/guides/plugin-system/) for custom state backends, planned for v2).
 
 ## See also
 
