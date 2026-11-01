@@ -106,7 +106,7 @@ flowchart LR
 
 | What           | Package                       | Why                                                                               |
 | -------------- | ----------------------------- | --------------------------------------------------------------------------------- |
-| 🔤 Language    | TypeScript 5.x `strict`       | Because `any` is a cry for help                                                   |
+| 🔤 Language    | TypeScript 6.x `strict`       | Because `any` is a cry for help                                                   |
 | 🟢 Runtime     | Node.js 24 LTS                | Active LTS until April 2028; OpenSSL 3.5; ESM-stable                              |
 | 📋 Config      | `js-yaml` + `zod`             | YAML in, typed objects out                                                        |
 | 🗄️ SQL Server  | `mssql`                       | Because the legacy DB is always SQL Server                                        |
@@ -218,12 +218,14 @@ When multiple plugin directories resolve to the same absolute path (for example,
 
 ### Exit codes
 
-| Code | Meaning                                       |
-| ---- | --------------------------------------------- |
-| `0`  | ✅ All good                                   |
-| `1`  | ❌ Pipeline error                             |
-| `2`  | 🛑 Critical DQ violations halted the pipeline |
-| `3`  | 📋 Config validation failed                   |
+| Code | Meaning                                               |
+| ---- | ----------------------------------------------------- |
+| `0`  | ✅ All good                                           |
+| `1`  | ❌ Pipeline error                                     |
+| `2`  | 🛑 Critical DQ violations halted the pipeline         |
+| `3`  | 📋 Config validation failed                           |
+| `4`  | 🧩 Enrich error (needs `@caracal-lynx/sluice-enrich`) |
+| `5`  | 🧹 Prep error (Phase 12 rule failed)                  |
 
 ---
 
