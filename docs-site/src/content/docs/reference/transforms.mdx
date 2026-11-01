@@ -145,7 +145,7 @@ Evaluates an expression against the source row.
 Two evaluation modes:
 
 - **`expr-eval`** (default) — a safe, sandboxed expression parser. Supports arithmetic, comparison, logical operators, and method calls on `String`, `Number`, `Math`. **Cannot** access globals, `eval`, or `Function`.
-- **`js:` prefix** — escapes to `vm.runInNewContext` with a 1-second timeout. The sandbox exposes only `row`, `Date`, `Math`, `JSON`, `String`, `Number`, `Boolean`. Use sparingly; **every `js:` evaluation logs a warning** so they're easy to find later.
+- **`js:` prefix** — runs as JavaScript in a fresh `node:vm` context per evaluation, with a 1-second timeout. The context has `row` (a copy of the current row) and the standard JavaScript built-ins (`Math`, `Date`, `JSON`, `String`, `Array` and so on). It has no Node.js APIs: no `process`, no `require`, no file system. `eval()`, `new Function()` and other ways of compiling code from strings are refused. Use sparingly; **the first evaluation of each `js:` expression logs a warning**, so they're easy to find later.
 
 ```yaml
 - to: NetPrice
@@ -154,6 +154,10 @@ Two evaluation modes:
 ```
 
 Sluice **never** uses `eval()` or `new Function()`.
+
+:::caution[`js:` is not a security boundary]
+`node:vm` isolates the expression from Sluice's own objects, but Node.js [does not offer it as a security mechanism](https://nodejs.org/api/vm.html). Treat a pipeline containing `js:` expressions like a script: run it only if you trust whoever wrote it. If pipeline YAML can come from an untrusted source, use only plain `expr-eval` expressions, which cannot reach JavaScript at all.
+:::
 
 ### `custom`
 

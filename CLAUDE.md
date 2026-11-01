@@ -82,9 +82,14 @@ not listed here follows the programme stack.
   inferred from there — never hand-write types that mirror config shapes.
 - **`MultiSourcePipelineRunner extends PipelineRunner`** — single-source is the
   base case, multi-source layers merge on top.
-- **Expression evaluation is `expr-eval-fork` plus a `js:` VM sandbox** —
+- **Expression evaluation is `expr-eval-fork` plus a `js:` VM context** —
   never `eval()`, never `new Function()`. (Fork rationale lives in
-  [data-gubbins.md](../../../standards/programmes/data-gubbins.md).)
+  [data-gubbins.md](../../../standards/programmes/data-gubbins.md).) The
+  `js:` context is `DONT_CONTEXTIFY` with `codeGeneration.strings: false`, and
+  **no host object may be placed in it**: each one's `constructor.constructor`
+  is the host `Function`, which reaches `process` (DAG-397). Copy values in
+  with `intoRealm`. `node:vm` is not a security boundary; don't describe `js:`
+  as a sandbox.
 
 ## TypeScript config
 

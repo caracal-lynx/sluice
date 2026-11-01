@@ -516,7 +516,7 @@ flowchart TB
     Expr[ExpressionEvaluator]:::op
     ExprPrefix{starts with<br/>js:?}:::branch
     SafeEval[expr-eval Parser<br/>row context]:::op
-    VmEval[vm.runInNewContext<br/>warn logged]:::op
+    VmEval[node:vm context<br/>warn logged]:::op
     Custom["Plugin.apply row, options<br/>via customOp + options"]:::op
 
     Default[use default]:::op

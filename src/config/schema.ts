@@ -288,7 +288,7 @@ const PrepRuleSchema = z
       .string()
       .optional()
       .describe(
-        "Optional row predicate (expr-eval; `js:` prefix for the vm sandbox). Falsy → rule skipped for that row.",
+        "Optional row predicate (expr-eval; `js:` prefix for JavaScript). Falsy → rule skipped for that row.",
       ),
     cleanse: CleanseOps.optional().describe(
       "Pipe-separated cleanse op chain — same syntax as transform.fields.cleanse. Exactly one of cleanse / expression / lookup must be set.",
@@ -297,7 +297,7 @@ const PrepRuleSchema = z
       .string()
       .optional()
       .describe(
-        "expr-eval expression, or `js:` prefix for the vm sandbox. Exactly one of cleanse / expression / lookup must be set.",
+        "expr-eval expression, or `js:` prefix for JavaScript. Exactly one of cleanse / expression / lookup must be set.",
       ),
     lookup: z
       .string()

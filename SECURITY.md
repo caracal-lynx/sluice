@@ -53,6 +53,11 @@ Out of scope (these are private commercial packages — report directly to
   first; we'll track the upgrade
 - Denial-of-service via deliberately malformed YAML configs (the operator
   controls what configs they run)
+- Code that a `js:` expression runs, in a pipeline the operator chose to run.
+  `js:` expressions run in a `node:vm` context, which is not a security
+  boundary, so treat a pipeline with `js:` like a script you are about to run.
+  A `js:` expression that reaches Node.js APIs (`process`, `require`, the file
+  system) **is** in scope: the context is meant to expose none of them.
 - Issues that require physical access to the operator's machine
 
 — Caracal Lynx Limited

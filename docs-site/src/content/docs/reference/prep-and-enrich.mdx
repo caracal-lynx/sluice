@@ -60,7 +60,7 @@ prep:
 | ------------ | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `field`      | string | —       | **Required.** An existing column, mutated in place.                                                                         |
 | `cleanse`    | string | —       | Pipe-separated cleanse chain. See [Transforms → Cleanse operations](/sluice/reference/transforms/#cleanse-operations).      |
-| `expression` | string | —       | `expr-eval` expression, or `js:` prefix for the vm sandbox.                                                                 |
+| `expression` | string | —       | `expr-eval` expression, or `js:` prefix for a JavaScript expression.                                                        |
 | `lookup`     | string | —       | Name of a `prep.lookups[]` entry.                                                                                           |
 | `when`       | string | —       | Optional row predicate. Falsy → the rule is skipped for that row and counted in `rowsSkipped`.                              |
 | `onMiss`     | enum   | `keep`  | Lookup misses only. `keep` leaves the value untouched; `null` overwrites with SQL `NULL`; `error` throws and halts the run. |
