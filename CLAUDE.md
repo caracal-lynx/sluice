@@ -45,7 +45,7 @@ Rule specifics worth restating for this repo:
 
 Operational notes:
 
-- **Standalone pnpm honours the pin — no corepack** (DAG-152). Node is managed by [`fnm`](https://github.com/Schniz/fnm) (reads `.nvmrc`); pnpm is the **official standalone install** (`get.pnpm.io`, on `PNPM_HOME`). The standalone launcher self-honours the `packageManager: pnpm@11.7.0` pin automatically — it downloads and runs the pinned version even when the launcher itself is a different build — so `pnpm -v` here is **11.7.0** with no corepack, no `corepack enable`, and no elevation. Do **not** run `pnpm config set manage-package-manager-versions true`: that key is rejected by pnpm 11's global config (`ERR_PNPM_CONFIG_SET_UNSUPPORTED_YAML_CONFIG_KEY`) and the self-management is on by default. Verified corepack-free on Node 26 (where corepack is unbundled).
+- **Standalone pnpm honours the pin — no corepack** (DAG-152). Node is managed by [`fnm`](https://github.com/Schniz/fnm) (reads `.nvmrc`); pnpm is the **official standalone install** (`get.pnpm.io`, on `PNPM_HOME`). The standalone launcher self-honours the root `package.json` `packageManager` pin automatically — it downloads and runs the pinned version even when the launcher itself is a different build — so `pnpm -v` here prints whatever that field pins (Renovate bumps it; deliberately not restated here, because a copied version number went stale), with no corepack, no `corepack enable`, and no elevation. Do **not** run `pnpm config set manage-package-manager-versions true`: that key was rejected by pnpm 11's global config (`ERR_PNPM_CONFIG_SET_UNSUPPORTED_YAML_CONFIG_KEY`) and the self-management is on by default. Verified corepack-free on Node 26 (where corepack is unbundled).
 - **Workspace** — root (the published package) + `docs-site` (Astro docs) share one `pnpm-lock.yaml` via `pnpm-workspace.yaml`. Build docs with `pnpm --filter docs-site build`.
 - **Renovate `rangeStrategy: update-lockfile`** (`renovate.json`) — overrides the shared preset's `bump`. With `bump`, in-range caret updates desync the lockfile importer specifier for non-root workspace members (`docs-site`), failing `--frozen-lockfile` in CI. Don't revert to `bump` while this stays a pnpm repo. Folding this + `minimumReleaseAge` into a shared `.github` pnpm preset is tracked in **DAG-144**.
 - **pnpm 11 `minimumReleaseAge` (24h, on by default)** — pnpm refuses to install versions published <1 day ago and re-validates this on `pnpm install --frozen-lockfile`, so a same-day dependency bump fails CI with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` until it ages out. `renovate.json` sets `minimumReleaseAge: "3 days"` so Renovate only opens a PR once it can pass. It's a supply-chain safeguard — don't disable pnpm's gate; for an urgent patch use `minimumReleaseAgeExclude`.
@@ -114,9 +114,12 @@ not listed here follows the programme stack.
   default so a hung test fails fast; integration gets 30s for `testTimeout` _and_
   `hookTimeout` because it stands up real DuckDB staging and drives the CLI — on
   Windows those were running at 60–110% of the 5s default and flaking. Run one
-  with `pnpm vitest run --project unit|integration`. **A new test directory needs
-  adding to a project's `include`** or it silently runs nowhere; after touching
-  `vitest.config.ts`, check the file/test counts still match.
+  with `pnpm vitest run --project unit|integration`. `unit` includes
+  `tests/**/*.test.ts` and **excludes** `tests/integration/**`; `integration`
+  includes only `tests/integration/**`. So a new directory under `tests/` runs as
+  unit by default — a slow new suite needs moving under `tests/integration/`, not
+  adding to an `include`. After touching `vitest.config.ts`, check the file/test
+  counts still match.
 
 ## Targets
 
