@@ -10,7 +10,13 @@
 #   - Respects field-level overrides (e.g., cost always from IFS)
 #
 # Usage:
-#   sluice run style-co-style-merge.pipeline.yaml
+#   sluice check examples/style-co-style-merge.pipeline.yaml
+#   sluice run   examples/style-co-style-merge.pipeline.yaml
+#
+# `check` validates the config. It resolves ${IFS_CONNECTION} and
+# ${PG_CONNECTION} first, so set both (dummy values are fine for `check`).
+# `run` needs a reachable IFS database, a Postgres target, and the enrichment
+# workbook at ./data/style-co-style-enrichment.xlsx, which is not shipped.
 
 pipeline:
   name: style-co-style-merge
@@ -39,7 +45,8 @@ sources:
         TargetRetail    AS target_retail,
         LaunchDate      AS launch_date,
         NULL            AS sustainability_notes,
-        NULL            AS best_price_vendor
+        NULL            AS best_price_vendor,
+        'IFS'           AS record_origin -- marker: non-null only where IFS has the style
       FROM StyleMaster
       WHERE IsActive = 1
 
@@ -77,7 +84,9 @@ merge:
 
   # Field-level strategy overrides
   fieldStrategies:
-    # Always trust IFS for cost (business rule)
+    # Always trust IFS for cost (business rule). A style that exists only in
+    # the Excel sheet therefore has no cost, fails the critical notNull rule on
+    # unit_cost below, and stops the run: cost must come from the ERP.
     - field: unit_cost
       source: ifs-master
 
@@ -85,9 +94,12 @@ merge:
     - field: launch_date
       source: ifs-master
 
-    # For description, prefer enriched version if present (override priority)
+    # For description, the highest-priority source that HAS the style wins,
+    # even when its value is blank: IFS's description is kept as-is, and Excel
+    # only supplies one for styles IFS doesn't have. (Plain coalesce would let
+    # Excel fill a blank IFS description instead.)
     - field: description
-      strategy: priority-override # Highest-priority non-null wins
+      strategy: priority-override
 
   # Log conflicting values (rows where sources differ)
   conflictLog: ./logs/style-merge-conflicts.csv
@@ -144,79 +156,54 @@ dq:
           severity: info
 
 # ───── Transform ─────────────────────────────────────────────────
+#
+# Each field maps a merged column (`from`) to an output column (`to`).
+# `expression` fields take their expression in `value`: plain expr-eval by
+# default, or JavaScript with the `js:` prefix (see the transforms reference).
 
 transform:
   fields:
     # Key columns
-    - name: style_no
-      type: string
-      source: style_no
-
-    - name: colour_code
-      type: string
-      source: colour_code
-
-    - name: season_code
-      type: string
-      source: season_code
+    - { from: style_no, to: style_no, type: string }
+    - { from: colour_code, to: colour_code, type: string }
+    - { from: season_code, to: season_code, type: string }
 
     # Enriched columns
-    - name: description
-      type: string
-      source: description
+    - { from: description, to: description, type: string }
+    - { from: unit_cost, to: unit_cost, type: decimal, precision: 2 }
+    - { from: target_retail, to: target_retail, type: decimal, precision: 2 }
+    - { from: launch_date, to: launch_date, type: date }
+    - { from: sustainability_notes, to: sustainability_notes, type: string, optional: true }
+    - { from: best_price_vendor, to: best_price_vendor, type: string, optional: true }
 
-    - name: unit_cost
-      type: decimal
-      source: unit_cost
-
-    - name: target_retail
-      type: decimal
-      source: target_retail
-
-    - name: launch_date
-      type: date
-      source: launch_date
-
-    - name: sustainability_notes
-      type: string
-      source: sustainability_notes
-
-    - name: best_price_vendor
-      type: string
-      source: best_price_vendor
-
-    # Derived: retail margin %
-    - name: margin_pct
-      type: decimal
-      expression: |
-        CASE
-          WHEN unit_cost > 0 AND target_retail > 0
-          THEN ROUND((target_retail - unit_cost) / target_retail * 100, 1)
-          ELSE NULL
-        END
+    # Derived: retail margin %, to 1 decimal place; null unless both prices are
+    # positive. Uses `js:` because expr-eval has no `null` literal.
+    - to: margin_pct
+      type: expression
+      value: >-
+        js: row.unit_cost > 0 && row.target_retail > 0
+        ? Math.round(((row.target_retail - row.unit_cost) / row.target_retail) * 1000) / 10
+        : null
 
     # Audit columns
-    - name: merged_at
-      type: date
-      constant: "2026-04-15"
+    - { to: merged_at, type: constant, value: "2026-04-15" }
 
-    - name: merge_source
-      type: string
-      expression: "CASE WHEN source_ifs_master THEN 'IFS' ELSE 'Excel' END"
+    # 'IFS' where the style came from IFS (the query's record_origin marker),
+    # otherwise 'Excel'. The merged row carries no per-source flag of its own.
+    - { from: record_origin, to: merge_source, type: string, default: Excel }
 
 # ───── Target ────────────────────────────────────────────────────
 
 target:
   adapter: pg
   connection: ${PG_CONNECTION} # env var: postgresql://user:pass@host/sluice
-  table: stg_style-co_style_merged
-  mode: replace # Drop and recreate each run
+  table: stg_style_co_style_merged
+  # Re-runnable: update existing styles in place. Needs a unique constraint
+  # on style_no in the target table.
+  onConflict: upsert
+  upsertKey: [style_no]
 
 # ───── Runtime options ────────────────────────────────────────────
 
 run:
-  mode: full # full | dryRun | test
-  concurrency:
-    sources: 2
-    transforms: 4
-    target: 1
+  mode: full # full | incremental | validate-only

@@ -14,35 +14,32 @@ pipeline:
     Uses union merge to combine all warehouse locations and style-color-size combinations.
 
 sources:
-  # UK Distribution Center — primary warehouse
+  # UK Distribution Center — primary warehouse.
+  # UK warehouse inventory (Sheffield distribution center).
+  # Updated daily from WMS extract at 06:00 GMT.
   - id: warehouse-uk
     priority: 1
     adapter: csv
     file: ./data/inventory-uk-dc.csv
     delimiter: ","
-    description: |
-      UK warehouse inventory (Sheffield distribution center).
-      Updated daily from WMS extract at 06:00 GMT.
 
-  # EU Distribution Center — secondary
+  # EU Distribution Center — secondary.
+  # EU warehouse inventory (Rotterdam distribution center).
+  # Updated daily from WMS extract at 07:00 CET.
   - id: warehouse-eu
     priority: 2
     adapter: csv
     file: ./data/inventory-eu-dc.csv
     delimiter: ","
-    description: |
-      EU warehouse inventory (Rotterdam distribution center).
-      Updated daily from WMS extract at 07:00 CET.
 
-  # US Distribution Center — tertiary
+  # US Distribution Center — tertiary.
+  # US warehouse inventory (New Jersey distribution center).
+  # Updated daily from WMS extract at 01:00 EST (previous day).
   - id: warehouse-us
     priority: 3
     adapter: csv
     file: ./data/inventory-us-dc.csv
     delimiter: ","
-    description: |
-      US warehouse inventory (New Jersey distribution center).
-      Updated daily from WMS extract at 01:00 EST (previous day).
 
 merge:
   strategy: union
@@ -125,9 +122,10 @@ transform:
       }
     - { from: STYLE_NO, to: STYLE_DESC, type: lookup, lookup: style-catalog, optional: true }
 
-    # Derived/computed fields
+    # Derived/computed fields. Plain expr-eval handles arithmetic and row access;
+    # `new Date()` needs the `js:` prefix because expr-eval has no globals.
     - { to: total_inventory, type: expression, value: "row.QTY_ON_HAND + row.QTY_ON_ORDER" }
-    - { to: sync_timestamp, type: expression, value: "new Date().toISOString()" }
+    - { to: sync_timestamp, type: expression, value: "js: new Date().toISOString()" }
     - { to: sync_source, type: expression, value: "row.WAREHOUSE_ID" }
 
 target:

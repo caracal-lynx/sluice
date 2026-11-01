@@ -15,21 +15,21 @@ pipeline:
     This pipeline serves as a validation gate before cutover.
 
 sources:
-  # Legacy IFS ERP — source of truth until migration complete
+  # Legacy IFS ERP — source of truth until migration complete.
+  # Complete export from IFS ERP production.
   - id: ifs-legacy
     priority: 1
     adapter: csv
     file: ./data/ifs-customers-export.csv
     delimiter: ","
-    description: Complete export from IFS ERP production
 
-  # New Business Central — target of migration
+  # New Business Central — target of migration.
+  # Complete export from BC production environment.
   - id: business-central
     priority: 2
     adapter: csv
     file: ./data/bc-customers-export.csv
     delimiter: ","
-    description: Complete export from BC production environment
 
 merge:
   strategy: intersect
@@ -83,9 +83,14 @@ transform:
     - { from: COUNTRY_CODE, to: COUNTRY_CODE, type: string, default: GB }
     - { from: POST_CODE, to: POST_CODE, type: string, cleanse: trim|uppercase }
 
-    # Status fields for reconciliation reporting
+    # Status fields for reconciliation reporting.
+    # `new Date()` needs the `js:` prefix: plain expr-eval has no globals.
     - { to: reconciliation_status, type: constant, value: MATCHED }
-    - { to: reconciliation_date, type: expression, value: "new Date().toISOString().split('T')[0]" }
+    - {
+        to: reconciliation_date,
+        type: expression,
+        value: "js: new Date().toISOString().split('T')[0]",
+      }
 
 target:
   adapter: csv
