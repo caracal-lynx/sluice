@@ -1,5 +1,27 @@
 # @caracal-lynx/sluice
 
+## 0.13.0
+
+### Minor Changes
+
+- [#232](https://github.com/caracal-lynx/data-gubbins/pull/232) [`a7e4c33`](https://github.com/caracal-lynx/data-gubbins/commit/a7e4c330d3ecdd222136b4906f0bbcec53513271) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Fix incremental mode silently dropping new rows. The next run's start used to be `lastRunAt`, the wall-clock time of the previous run. Legacy source timestamps usually lag far behind that, so any new row dated before "now" was skipped, with a clean exit.
+  
+  Incremental runs now write a `watermark` to the state file: the newest `incrementalField` value they extracted. The next run filters on that. `lastRunAt` is still written, but now only records when the run happened. A run that extracts nothing keeps the previous watermark. Multi-source pipelines track the watermark on `merge.incrementalSource`.
+  
+  **Upgrading:** an incremental pipeline whose state file was written by an earlier version has no `watermark` yet. Its first run on this version extracts **all** rows once, logs a warning, and then records a real watermark. This recovers any rows the old filter skipped. Make sure the target tolerates rows it has already loaded (for example `onConflict: upsert`), or set `run.incrementalSince` explicitly for that one run.
+
+### Patch Changes
+
+- [#237](https://github.com/caracal-lynx/data-gubbins/pull/237) [`0851c3f`](https://github.com/caracal-lynx/data-gubbins/commit/0851c3fa5f08fbeeeeafd07d67bd0da0a94ac3de) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - `loadEnv` (and so every `sluice` command, which loads `--env`, default `./.env`, on start-up) no longer lets dotenv print its own `injected env (N) from <path>` line. Under dotenv 17 that line, with a random advert, went to stdout and appeared even with `--silent`; under dotenv 18, which sluice 0.12.0 ships with, it goes to stderr as the one non-JSON line in the NDJSON log stream, which breaks piping stderr to `jq` or `pino-pretty`. Variables are loaded exactly as before.
+
+- [#233](https://github.com/caracal-lynx/data-gubbins/pull/233) [`f34a256`](https://github.com/caracal-lynx/data-gubbins/commit/f34a2566db4498e7558862ce6c53b0518fb8e51c) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Harden `js:` expressions. They now run in a fresh `node:vm` context that holds no Sluice or Node.js objects: `row` is copied in, results are copied out, and `eval()`, `new Function()` and other code generation from strings are refused. Previously, built-ins passed into the context could be used to reach Node.js APIs and to compile code. One expression could also change shared built-ins such as `Math` for the rest of the process.
+  
+  Ordinary expressions are unaffected. Expressions that relied on `eval` or `Function` will now fail with an `ExpressionError`. `node:vm` is still not a security boundary, so only run pipelines with `js:` expressions whose author you trust (see the transforms reference and SECURITY.md).
+
+- [#230](https://github.com/caracal-lynx/data-gubbins/pull/230) [`795bc84`](https://github.com/caracal-lynx/data-gubbins/commit/795bc84b6123bb252f9cee2749c1a080201b47df) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Fix `priority-override` merges silently blanking rows. When a key existed only in a lower-priority source, every output column for that row, the key included, came out empty, with no warning and a clean exit. Each field now comes from the highest-priority source that actually has a row for the key. As before, that source's nulls still win over values in lower-priority sources.
+
+- [#239](https://github.com/caracal-lynx/data-gubbins/pull/239) [`8857231`](https://github.com/caracal-lynx/data-gubbins/commit/8857231c6fb7b0a601ad8475e6434a9a74c5f7b9) Thanks [@michaelscott-1963](https://github.com/michaelscott-1963)! - Tier 3 plugin packages declared in `sluice.config.yaml` now resolve from the directory holding that file, so a package `npm install`ed in your project is found by a globally installed `sluice`. Before, `sluice check` and `sluice run` failed with `ERR_MODULE_NOT_FOUND` (exit 3) in exactly the setup PLUGINS.md documents. Resolution follows Node's ESM rules, so packages with an `import`-only `exports` map work; relative and absolute paths resolve against the config directory; and a package Sluice can see from its own install location still loads as before.
+
 ## 0.12.0
 
 ### Minor Changes
